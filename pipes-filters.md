@@ -19,82 +19,75 @@ A figura abaixo ilustra uma configuração típica do estilo Pipes and Filters:
 
 2. **Pipeline com Ramificação:** Após passar pelo primeiro filtro, o fluxo de dados é dividido em dois caminhos distintos. Um dos caminhos retorna ao fluxo principal após processamento adicional. Esse padrão é útil em sistemas que necessitam de validação ou processamento condicional em diferentes ramificações.
 
-#### Exemplos 
+#### Exemplos
 
-5. **Exemplo com Apache Kafka:**
-   Abaixo está um exemplo mínimo de pipeline de dados utilizando Apache Kafka para ilustrar o estilo Pipes and Filters.
+##### Exemplo com Apache Kafka
+Abaixo está um exemplo mínimo de pipeline de dados utilizando Apache Kafka para ilustrar o estilo Pipes and Filters. Cada parte do código é explicada para maior compreensão:
 
-   **Produção de Dados (Producer):**
-   ```python
-   from kafka import KafkaProducer
-   import json
+**Produção de Dados (Producer):**
+```python
+from kafka import KafkaProducer
+import json
 
-   producer = KafkaProducer(
-       bootstrap_servers='localhost:9092',
-       value_serializer=lambda v: json.dumps(v).encode('utf-8')
-   )
+# Configura o produtor para enviar mensagens para o Kafka.
+producer = KafkaProducer(
+    bootstrap_servers='localhost:9092',
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
 
-   # Envia mensagens para o tópico "entrada"
-   for i in range(5):
-       producer.send('entrada', {'id': i, 'valor': i * 10})
-   producer.close()
-   ```
+# Envia mensagens para o tópico "entrada".
+for i in range(5):
+    producer.send('entrada', {'id': i, 'valor': i * 10})
+producer.close()
+```
+*Este código inicializa um produtor Kafka que envia cinco mensagens para o tópico "entrada". Cada mensagem contém um ID e um valor calculado.*
 
-   **Filtro (Consumer e Transformer):**
-   ```python
-   from kafka import KafkaConsumer, KafkaProducer
-   import json
+**Filtro (Consumer e Transformer):**
+```python
+from kafka import KafkaConsumer, KafkaProducer
+import json
 
-   consumer = KafkaConsumer(
-       'entrada',
-       bootstrap_servers='localhost:9092',
-       value_deserializer=lambda v: json.loads(v.decode('utf-8'))
-   )
+# Configura o consumidor para ler mensagens do tópico "entrada".
+consumer = KafkaConsumer(
+    'entrada',
+    bootstrap_servers='localhost:9092',
+    value_deserializer=lambda v: json.loads(v.decode('utf-8'))
+)
 
-   producer = KafkaProducer(
-       bootstrap_servers='localhost:9092',
-       value_serializer=lambda v: json.dumps(v).encode('utf-8')
-   )
+# Configura o produtor para enviar mensagens processadas para o tópico "saida".
+producer = KafkaProducer(
+    bootstrap_servers='localhost:9092',
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
 
-   # Processa mensagens e envia para o próximo tópico
-   for message in consumer:
-       dado = message.value
-       dado['processado'] = True
-       producer.send('saida', dado)
-   consumer.close()
-   producer.close()
-   ```
+# Processa cada mensagem lida e adiciona um campo "processado".
+for message in consumer:
+    dado = message.value
+    dado['processado'] = True
+    producer.send('saida', dado)
+consumer.close()
+producer.close()
+```
+*Neste trecho, o consumidor lê mensagens do tópico "entrada", processa os dados adicionando um novo campo, e envia para o tópico "saida".*
 
-   **Consumo de Dados Processados:**
-   ```python
-   consumer = KafkaConsumer(
-       'saida',
-       bootstrap_servers='localhost:9092',
-       value_deserializer=lambda v: json.loads(v.decode('utf-8'))
-   )
+**Consumo de Dados Processados:**
+```python
+from kafka import KafkaConsumer
+import json
 
-   for message in consumer:
-       print(f"Dados processados: {message.value}")
-   consumer.close()
-   ```
+# Configura o consumidor para ler mensagens do tópico "saida".
+consumer = KafkaConsumer(
+    'saida',
+    bootstrap_servers='localhost:9092',
+    value_deserializer=lambda v: json.loads(v.decode('utf-8'))
+)
 
-   Esse exemplo simula um pipeline onde dados brutos são produzidos em um tópico Kafka (`entrada`), transformados em outro processo intermediário e, por fim, consumidos no tópico de saída (`saida`).
-
-1. **ETL (Extract, Transform, Load):**
-   - Ferramentas como Apache NiFi e Talend utilizam o estilo Pipes and Filters para extrair dados de múltiplas fontes, transformá-los de acordo com regras definidas e carregá-los em sistemas de destino.
-
-2. **Pipeline de Processamento de Dados em Streaming:**
-   - Plataformas como Apache Kafka Streams e Apache Flink permitem construir pipelines onde dados são consumidos, transformados e retransmitidos para tópicos ou sistemas de armazenamento.
-
-3. **Processamento de Imagens:**
-   - Ferramentas como OpenCV seguem o padrão Pipes and Filters ao aplicar filtros sequenciais para transformar imagens, como redimensionamento, alteração de cores ou detecção de bordas.
-
-4. **Sistemas Unix/Linux:**
-   - O uso de pipes (`|`) em comandos do terminal exemplifica diretamente esse estilo. Por exemplo, o comando:
-     ```bash
-     cat arquivo.txt | grep "erro" | sort > erros_ordenados.txt
-     ```
-     Nesse caso, os dados são processados por diferentes filtros: o comando `grep` filtra linhas com a palavra "erro", e o comando `sort` organiza as linhas antes de salvar em um arquivo.
+# Exibe as mensagens processadas.
+for message in consumer:
+    print(f"Dados processados: {message.value}")
+consumer.close()
+```
+*Aqui, um consumidor lê e imprime as mensagens do tópico "saida", exibindo os dados processados.*
 
 #### Benefícios do Estilo Pipes and Filters
 
@@ -107,4 +100,8 @@ A figura abaixo ilustra uma configuração típica do estilo Pipes and Filters:
 1. **Latência:** A comunicação entre filtros pode introduzir atrasos, especialmente em pipelines com muitos componentes.
 2. **Erro de Acoplamento:** Se não bem projetado, um filtro pode depender excessivamente de outros, reduzindo a independência dos componentes.
 3. **Gerenciamento de Estado:** Filtros normalmente são projetados como componentes sem estado. Se for necessário gerenciar estado, isso pode complicar a implementação.
+
+#### Conclusão
+
+O estilo Pipes and Filters é ideal para sistemas que requerem processamento sequencial de dados de maneira modular e escalável. Ao combinar filtros reutilizáveis e pipelines flexíveis, esse estilo oferece uma solução robusta para diversos desafios modernos, como processamento de grandes volumes de dados e integração de sistemas heterogêneos.
 
