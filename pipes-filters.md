@@ -31,7 +31,9 @@ Service C,up,95
 **Passo a Passo**
 
 **1. Exibir o conteúdo do arquivo**
+
 O comando `cat` é usado para exibir o conteúdo do arquivo:
+
 **Comando:**
 ```bash
 cat dados.txt
@@ -44,10 +46,12 @@ Service C,up,95
 ```
 
 **2. Filtrar serviços com status "up"**
+
 Usamos o comando `grep` para selecionar apenas as linhas onde o status seja "up":
+
 **Comando:**
 ```bash
-cat dados.txt | grep ",up,""
+cat dados.txt | grep ",up,"
 ```
 **Saída:**
 ```
@@ -59,7 +63,9 @@ Service C,up,95
 - `grep ",up,": Filtra as linhas que contêm a palavra "up" seguida por uma vírgula.
 
 **3. Filtrar serviços com duração maior que 100 segundos**
+
 Adicionamos mais um filtro usando `grep` para selecionar apenas as linhas onde a duração seja maior que 100 segundos:
+
 **Comando:**
 ```bash
 cat dados.txt | grep ",up," | grep ",120"
@@ -81,10 +87,11 @@ cat dados.txt | grep ",up," | grep ",120"
 - Apenas os serviços que atendem às condições especificadas serão exibidos no terminal.
 
 
-##### Exemplo com Apache Kafka
-Abaixo está um exemplo mínimo de pipeline de dados utilizando Apache Kafka para ilustrar o estilo Pipes and Filters. Cada parte do código é explicada para maior compreensão:
+**Exemplo de Kafka com Arquivos Simulados**
 
-**Produção de Dados (Producer):**
+Este exemplo expande o uso do Kafka simulando o trânsito de mensagens entre as etapas como arquivos intermediários. Os arquivos representam os dados que seriam transferidos entre os tópicos no Kafka.
+
+**1. Produção de Dados (Producer)**
 ```python
 from kafka import KafkaProducer
 import json
@@ -95,14 +102,29 @@ producer = KafkaProducer(
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-# Envia mensagens para o tópico "entrada".
-for i in range(5):
-    producer.send('entrada', {'id': i, 'valor': i * 10})
+# Simula a escrita das mensagens em um arquivo.
+with open('entrada.json', 'w') as file:
+    messages = []
+    for i in range(5):
+        message = {'id': i, 'valor': i * 10}
+        messages.append(message)
+        producer.send('entrada', message)
+    json.dump(messages, file, indent=4)
+
 producer.close()
 ```
-*Este código inicializa um produtor Kafka que envia cinco mensagens para o tópico "entrada". Cada mensagem contém um ID e um valor calculado.*
+**Arquivo Gerado:** `entrada.json`
+```json
+[
+    {"id": 0, "valor": 0},
+    {"id": 1, "valor": 10},
+    {"id": 2, "valor": 20},
+    {"id": 3, "valor": 30},
+    {"id": 4, "valor": 40}
+]
+```
 
-**Filtro (Consumer e Transformer):**
+**2. Filtro (Consumer e Transformer)**
 ```python
 from kafka import KafkaConsumer, KafkaProducer
 import json
@@ -121,16 +143,32 @@ producer = KafkaProducer(
 )
 
 # Processa cada mensagem lida e adiciona um campo "processado".
+processed_messages = []
 for message in consumer:
     dado = message.value
     dado['processado'] = True
+    processed_messages.append(dado)
     producer.send('saida', dado)
+
+# Simula a escrita das mensagens processadas em um arquivo.
+with open('saida_intermediaria.json', 'w') as file:
+    json.dump(processed_messages, file, indent=4)
+
 consumer.close()
 producer.close()
 ```
-*Neste trecho, o consumidor lê mensagens do tópico "entrada", processa os dados adicionando um novo campo, e envia para o tópico "saida".*
+**Arquivo Gerado:** `saida_intermediaria.json`
+```json
+[
+    {"id": 0, "valor": 0, "processado": true},
+    {"id": 1, "valor": 10, "processado": true},
+    {"id": 2, "valor": 20, "processado": true},
+    {"id": 3, "valor": 30, "processado": true},
+    {"id": 4, "valor": 40, "processado": true}
+]
+```
 
-**Consumo de Dados Processados:**
+**3. Consumo de Dados Processados**
 ```python
 from kafka import KafkaConsumer
 import json
@@ -142,12 +180,32 @@ consumer = KafkaConsumer(
     value_deserializer=lambda v: json.loads(v.decode('utf-8'))
 )
 
-# Exibe as mensagens processadas.
+# Exibe as mensagens processadas e as salva em um arquivo final.
+final_messages = []
 for message in consumer:
+    final_messages.append(message.value)
     print(f"Dados processados: {message.value}")
+
+with open('saida_final.json', 'w') as file:
+    json.dump(final_messages, file, indent=4)
+
 consumer.close()
 ```
-*Aqui, um consumidor lê e imprime as mensagens do tópico "saida", exibindo os dados processados.*
+**Arquivo Gerado:** `saida_final.json`
+```json
+[
+    {"id": 0, "valor": 0, "processado": true},
+    {"id": 1, "valor": 10, "processado": true},
+    {"id": 2, "valor": 20, "processado": true},
+    {"id": 3, "valor": 30, "processado": true},
+    {"id": 4, "valor": 40, "processado": true}
+]
+```
+
+**Resumo do Processo**
+1. O arquivo `entrada.json` representa os dados originais enviados pelo produtor.
+2. O arquivo `saida_intermediaria.json` contém os dados processados pelo filtro e enviados ao tópico "saida".
+3. O arquivo `saida_final.json` armazena os dados finais consumidos do tópico "saida".
 
 #### Benefícios do Estilo Pipes and Filters
 
