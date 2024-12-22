@@ -17,6 +17,70 @@ O conceito principal do Pipes and Filters é dividir um sistema em uma cadeia de
 
 #### Exemplos
 
+##### Exemplo de linha de comando Linux
+
+Este exemplo simplificado utiliza os comandos **cat** e **grep** para demonstrar o padrão **Pipes and Filters**. Suponha que você tenha um arquivo chamado `dados.txt` contendo os seguintes dados:
+
+**dados.txt**:
+```
+Service A,up,120
+Service B,down,0
+Service C,up,95
+```
+
+**Passo a Passo**
+
+**1. Exibir o conteúdo do arquivo**
+O comando `cat` é usado para exibir o conteúdo do arquivo:
+**Comando:**
+```bash
+cat dados.txt
+```
+**Saída:**
+```
+Service A,up,120
+Service B,down,0
+Service C,up,95
+```
+
+**2. Filtrar serviços com status "up"**
+Usamos o comando `grep` para selecionar apenas as linhas onde o status seja "up":
+**Comando:**
+```bash
+cat dados.txt | grep ",up,""
+```
+**Saída:**
+```
+Service A,up,120
+Service C,up,95
+```
+**Explicação:**
+- `cat dados.txt`: Lê o conteúdo do arquivo.
+- `grep ",up,": Filtra as linhas que contêm a palavra "up" seguida por uma vírgula.
+
+**3. Filtrar serviços com duração maior que 100 segundos**
+Adicionamos mais um filtro usando `grep` para selecionar apenas as linhas onde a duração seja maior que 100 segundos:
+**Comando:**
+```bash
+cat dados.txt | grep ",up," | grep ",120"
+```
+**Saída:**
+```
+Service A,up,120
+```
+**Explicação:**
+- `grep ",120"`: Filtra as linhas que contêm ",120" (duração de 120 segundos).
+
+**Combinação dos Comandos**
+Os comandos podem ser encadeados com pipes (`|`) para formar um pipeline:
+```bash
+cat dados.txt | grep ",up," | grep ",120"
+```
+
+**Resultado Final**
+- Apenas os serviços que atendem às condições especificadas serão exibidos no terminal.
+
+
 ##### Exemplo com Apache Kafka
 Abaixo está um exemplo mínimo de pipeline de dados utilizando Apache Kafka para ilustrar o estilo Pipes and Filters. Cada parte do código é explicada para maior compreensão:
 
