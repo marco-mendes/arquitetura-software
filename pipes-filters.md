@@ -2,6 +2,9 @@
 
 O estilo arquitetural Pipes and Filters (Tubos e Filtros) é amplamente utilizado em sistemas que necessitam processar fluxos de dados de maneira sequencial e independente. Nesse estilo, os dados fluem através de uma série de componentes de processamento, denominados "Filtros", conectados por canais de comunicação, chamados de "Pipes".
 
+<img width="1098" alt="image" src="https://github.com/user-attachments/assets/dbf18625-fe5a-4142-b9e5-58ac0ff93ff3" />
+
+
 #### Definição e Características
 
 O conceito principal do Pipes and Filters é dividir um sistema em uma cadeia de filtros que realizam transformações específicas nos dados, interligados por pipes que transportam os dados de um filtro para outro. Algumas características principais desse estilo incluem:
@@ -11,13 +14,6 @@ O conceito principal do Pipes and Filters é dividir um sistema em uma cadeia de
 - **Reutilização:** Filtros podem ser usados em diferentes pipelines.
 - **Concorrência:** Cada filtro pode ser executado em paralelo, processando dados de forma independente.
 
-#### Explicação da Figura
-
-A figura abaixo ilustra uma configuração típica do estilo Pipes and Filters:
-
-1. **Pipeline Linear:** O fluxo de dados passa sequencialmente por três filtros conectados por pipes. Este é o padrão mais simples e reflete sistemas onde as etapas de processamento são claramente definidas e interdependentes.
-
-2. **Pipeline com Ramificação:** Após passar pelo primeiro filtro, o fluxo de dados é dividido em dois caminhos distintos. Um dos caminhos retorna ao fluxo principal após processamento adicional. Esse padrão é útil em sistemas que necessitam de validação ou processamento condicional em diferentes ramificações.
 
 #### Exemplos
 
