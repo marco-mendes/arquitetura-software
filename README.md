@@ -2,7 +2,7 @@
 
 ## Fundamentos
 
-O que é uma arquitetura de software?
+[1.0 O que é uma arquitetura de software?](https://github.com/marco-mendes/arquitetura-software/blob/main/1.0%20O%20que%20é%20uma%20arquitetura%20de%20software.md)
 
 [1.1 O que é um estilo arquitetural?](https://github.com/marco-mendes/arquitetura-software/blob/main/1.1%20O%20que%20%C3%A9%20um%20estilo%20arquitetural.md)
 
