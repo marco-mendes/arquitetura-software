@@ -13,3 +13,5 @@
 [1.4 O Estilo Pipes and Filters](https://github.com/marco-mendes/arquitetura-software/blob/main/1.4%20pipes-filters.md)
 
 [1.5 O Estilo MicroKernel](https://github.com/marco-mendes/arquitetura-software/blob/main/1.3%20micro-kernel.md)
+
+## Estilo de APIs
