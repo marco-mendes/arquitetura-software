@@ -1,4 +1,4 @@
-#  Livro de fundamentos em  arquitetura de software
+#  Livro de fundamentos em  arquitetura de software (em construção).
 
 ## Fundamentos
 
@@ -32,3 +32,7 @@
 
 [2.8 Tecnologias de APIs](https://github.com/marco-mendes/arquitetura-software/blob/main/2.8%20Tecnologias%20de%20APIs.md)
 
+## Sobre esse livro
+
+Sugestões, críticas e ideias são muito bem vindas!
+Obrigado.
