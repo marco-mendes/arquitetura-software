@@ -46,14 +46,15 @@ func obterProduto(w http.ResponseWriter, r *http.Request) {
 
 // Função para consumir mensagens da fila RabbitMQ
 func consumirMensagens(canal *amqp091.Channel, nomeFila string, handler func(*amqp091.Channel, amqp091.Delivery)) {
+	// Consome mensagens da fila especificada
 	mensagens, err := canal.Consume(
-		nomeFila,
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
+		nomeFila, // Nome da fila da qual consumir as mensagens
+		"",       // Identificador do consumidor (vazio para gerar automaticamente)
+		true,     // Auto-ack (true para confirmar automaticamente as mensagens)
+		false,    // Exclusivo (false para permitir múltiplos consumidores)
+		false,    // No-local (false para permitir que o consumidor consuma suas próprias mensagens)
+		false,    // No-wait (false para esperar pelo servidor)
+		nil,      // Argumentos adicionais (nil para nenhum)
 	)
 	if err != nil {
 		log.Fatalf("Erro ao iniciar consumo: %v", err)
@@ -73,16 +74,16 @@ func handleProdutoRequest(canal *amqp091.Channel, mensagem amqp091.Delivery) {
 	for _, produto := range listaProdutos {
 		if produto.ID == produtoID {
 			resposta, _ := json.Marshal(produto)
-			// Publica a resposta na fila de retorno
+			// Publica a resposta na fila de retorno especificada na mensagem original
 			canal.Publish(
-				"",
-				mensagem.ReplyTo,
-				false,
-				false,
+				"",               // Exchange (vazio para usar o exchange padrão)
+				mensagem.ReplyTo, // Routing key (nome da fila de retorno especificada na mensagem original)
+				false,            // Mandatory (false para permitir que a mensagem seja descartada se a fila não existir)
+				false,            // Immediate (false para permitir que a mensagem seja enfileirada se o consumidor não estiver pronto)
 				amqp091.Publishing{
-					ContentType:   "application/json",
-					CorrelationId: mensagem.CorrelationId,
-					Body:          resposta,
+					ContentType:   "application/json",     // Tipo de conteúdo da mensagem (JSON)
+					CorrelationId: mensagem.CorrelationId, // ID de correlação para associar a resposta à requisição original
+					Body:          resposta,               // Corpo da mensagem (resposta em formato JSON)
 				},
 			)
 			return
