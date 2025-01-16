@@ -10,13 +10,15 @@ type Produto struct {
 	Preco float64
 }
 
-// Repositorio Produto define a interface para operações de repositório de produtos
+// RepositorioProduto define a interface para operações de repositório de produtos
+// Esta interface permite a implementação de diferentes repositórios (MySQL, PostgreSQL, etc.)
 type RepositorioProduto interface {
 	Salvar(produto Produto)
 	Listar() []Produto
 }
 
 // MySQLRepositorioProduto é uma implementação de RepositorioProduto para MySQL
+// Esta estrutura armazena produtos em uma lista simulando um banco de dados MySQL
 type MySQLRepositorioProduto struct {
 	produtos []Produto
 }
@@ -32,6 +34,7 @@ func (r *MySQLRepositorioProduto) Listar() []Produto {
 }
 
 // PostgreSQLRepositorioProduto é uma implementação de RepositorioProduto para PostgreSQL
+// Esta estrutura armazena produtos em uma lista simulando um banco de dados PostgreSQL
 type PostgreSQLRepositorioProduto struct {
 	produtos []Produto
 }
@@ -46,7 +49,8 @@ func (r *PostgreSQLRepositorioProduto) Listar() []Produto {
 	return r.produtos
 }
 
-// Produto Servico usa um repositório para gerenciar produtos
+// ProdutoServico usa um repositório para gerenciar produtos
+// Esta camada de serviço abstrai a lógica de negócios e interage com a camada de repositório
 type ProdutoServico struct {
 	repositorio RepositorioProduto
 }
@@ -64,12 +68,14 @@ func (s *ProdutoServico) ExibirProdutos() {
 }
 
 func main() {
+	// Configuração do serviço com repositório MySQL
 	repositorioMySQL := &MySQLRepositorioProduto{}
 	servicoMySQL := &ProdutoServico{repositorio: repositorioMySQL}
 
 	servicoMySQL.AdicionarProduto("Notebook", 5000)
 	servicoMySQL.ExibirProdutos()
 
+	// Configuração do serviço com repositório PostgreSQL
 	repositorioPostgreSQL := &PostgreSQLRepositorioProduto{}
 	servicoPostgreSQL := &ProdutoServico{repositorio: repositorioPostgreSQL}
 
