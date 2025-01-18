@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  kong:
+    image: kong:latest
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+    volumes:
+      - ./kong.yml:/kong/kong.yml
+    networks:
+      - kong-net
+
+  go-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - kong-net
+
+networks:
+  kong-net:
+    driver: bridge

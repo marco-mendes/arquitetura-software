@@ -1,0 +1,41 @@
+# Define a versão do formato do arquivo de configuração
+_format_version: "2.1"
+
+# Lista de serviços a serem configurados no Kong
+services:
+  # Definição do serviço 'go-app'
+  - name: go-app
+    # URL do serviço Go que o Kong irá rotear as requisições
+    url: http://go-app:8080
+    # Lista de rotas associadas ao serviço 'go-app'
+    routes:
+      # Definição da rota 'go-app-route'
+      - name: go-app-route
+        # Caminhos que a rota irá corresponder
+        paths:
+          - /
+        # Plugins aplicados à rota
+        plugins:
+          # Plugin de limitação de taxa
+          - name: rate-limiting
+            config:
+              minute: 5  # Limita a 5 requisições por minuto
+              policy: local
+          # Plugin de autenticação básica
+          - name: basic-auth
+
+# Lista de consumidores (usuários) que podem acessar os serviços
+consumers:
+  # Definição do consumidor 'user1'
+  - username: user1
+    # Credenciais de autenticação básica para 'user1'
+    basicauth_credentials:
+      - username: user1
+        password: password123
+
+# Lista de plugins globais aplicados a todas as requisições
+plugins:
+  # Plugin de log de requisições
+  - name: file-log
+    config:
+      path: /usr/local/kong/logs/kong.log
