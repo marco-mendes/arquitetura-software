@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option go_package = "grpc/proto";
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.helloworld";
+option java_outer_classname = "HelloWorldProto";
+
+package helloworld;
+
+// Definição do serviço de saudação.
+service Cumprimentador {
+  // Envia uma saudação
+  rpc DizerOla (SolicitacaoOla) returns (RespostaOla) {}
+}
+
+// A mensagem de solicitação contendo o nome do usuário.
+message SolicitacaoOla {
+  string nome = 1;
+}
+
+// A mensagem de resposta contendo as saudações
+message RespostaOla {
+  string mensagem = 1;
+}
