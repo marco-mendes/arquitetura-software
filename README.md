@@ -54,6 +54,17 @@
 
 [3.10 Chassi Arquitetural](https://github.com/marco-mendes/arquitetura-software/blob/main/3.10%20Chassi%20Arquitetural.md)
 
+## Estilos de Arquitetura de Eventos
+
+[4.1 Introdução a Arquitetura de Eventos](https://github.com/marco-mendes/arquitetura-software/blob/main/4.1%20Arquiteturas%20Orientadas%20por%20Eventos.md)
+
+[4.2 Padrão Broker](https://github.com/marco-mendes/arquitetura-software/blob/main/4.2%20Padrões%20Broker.md)
+
+[4.3 Padrão Mediator](https://github.com/marco-mendes/arquitetura-software/blob/main/4.3%20Padrão%20Mediator.md)
+
+[4.3.1 Caso do Kafka no LinkedIn](https://github.com/marco-mendes/arquitetura-software/blob/main/4.3.1%20Estudo%20de%20Caso%20LinkedIn%20-%20Kafka.md)
+
+
 
 ## Sobre esse livro
 
