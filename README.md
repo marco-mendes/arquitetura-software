@@ -50,6 +50,10 @@
 
 [3.8 Exemplos de Adoção de Microsservicos](https://github.com/marco-mendes/arquitetura-software/blob/main/3.8%20Exemplos%20de%20Adoção%20de%20Microsserviços.md)
 
+[3.9 O Padrão Estrangulador](https://github.com/marco-mendes/arquitetura-software/blob/main/3.9%20O%20padrão%20estrangulador.md)
+
+[3.10 Chassi Arquitetural](https://github.com/marco-mendes/arquitetura-software/blob/main/3.10%20Chassi%20Arquitetural.md)
+
 
 ## Sobre esse livro
 
