@@ -52,7 +52,7 @@
 
 [3.9 O Padrão Estrangulador](https://github.com/marco-mendes/arquitetura-software/blob/main/3.9%20O%20padrão%20estrangulador.md)
 
-[3.10 Chassi Arquitetural](https://github.com/marco-mendes/arquitetura-software/blob/main/3.10%20Chassi%20Arquitetural.md)
+[3.10 O Padrão Chassi Arquitetural](https://github.com/marco-mendes/arquitetura-software/blob/main/3.10%20Chassi%20Arquitetural.md)
 
 ## Estilos de Arquitetura de Eventos
 
