@@ -1,4 +1,4 @@
-#  Livro de fundamentos em  arquitetura de software (em construção).
+#  Livro de Fundamentos de Arquitetura de Software Modernas
 
 ## Fundamentos
 
