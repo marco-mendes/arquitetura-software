@@ -66,13 +66,13 @@
 
 ## Estilos de Conteineres, Orquestradores de Conteineres e Nuvens
 
-[4.1 Introdução a Computação em Nuvens](https://github.com/marco-mendes/arquitetura-software/blob/main/5.1%20O%20estilo%20da%20computa%C3%A7%C3%A3o%20em%20nuvem.md)
+[5.1 Introdução a Computação em Nuvens](https://github.com/marco-mendes/arquitetura-software/blob/main/5.1%20O%20estilo%20da%20computa%C3%A7%C3%A3o%20em%20nuvem.md)
 
-[4.2 Exemplo de Arquitetura em Topologia de Nuvem]([https://github.com/marco-mendes/arquitetura-software/blob/main/4.2%20Padrões%20Broker.md](https://github.com/marco-mendes/arquitetura-software/blob/main/5.2%20Exemplo%20de%20um%20Sistema%20com%20o%20Conceito%20de%20Computucao%20em%20Nuvem.md))
+[5.2 Exemplo de Arquitetura em Topologia de Nuvem](https://github.com/marco-mendes/arquitetura-software/blob/main/5.2%20Exemplo%20de%20um%20Sistema%20com%20o%20Conceito%20de%20Computucao%20em%20Nuvem.md)
 
-[4.3 Introdução a Conteineres](https://github.com/marco-mendes/arquitetura-software/blob/main/5.3%20O%20conceito%20de%20conteinerizacao.md)
+[5.3 Introdução a Conteineres](https://github.com/marco-mendes/arquitetura-software/blob/main/5.3%20O%20conceito%20de%20conteinerizacao.md)
 
-[4.3.1 Introdução a Orquestração de Conteineres](https://github.com/marco-mendes/arquitetura-software/blob/main/5.4%20Orquestracao%20de%20conteineres.md)
+[5.4 Introdução a Orquestração de Conteineres](https://github.com/marco-mendes/arquitetura-software/blob/main/5.4%20Orquestracao%20de%20conteineres.md)
 
 ## Sobre esse livro
 
