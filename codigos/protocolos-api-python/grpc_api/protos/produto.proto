@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package produto;
+
+message Produto {
+  string codigo = 1;
+  string nome = 2;
+  float preco = 3;
+}
+
+service ProdutoService {
+  rpc ListarProdutos (ProdutoVazio) returns (ListaProdutos);
+  rpc ObterProduto (ProdutoId) returns (Produto);
+}
+
+message ProdutoVazio {}
+message ProdutoId { string codigo = 1; }
+message ListaProdutos { repeated Produto produtos = 1; }

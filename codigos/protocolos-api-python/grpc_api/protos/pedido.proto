@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package pedido;
+
+import "produto.proto";
+
+message Pedido {
+  string codigo = 1;
+  string data = 2;
+  float preco_total = 3;
+  repeated produto.Produto produtos = 4;
+}
+
+service PedidoService {
+  rpc ListarPedidos (PedidoVazio) returns (ListaPedidos);
+  rpc ObterPedido (PedidoId) returns (Pedido);
+}
+
+message PedidoVazio {}
+message PedidoId { string codigo = 1; }
+message ListaPedidos { repeated Pedido pedidos = 1; }
