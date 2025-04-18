@@ -79,7 +79,8 @@ func executeQuery(query string) {
 	fmt.Println()
 
 	requestBody, _ := json.Marshal(graphqlRequest{Query: query})
-	resp, err := http.Post("http://localhost:8080/graphql", "application/json", bytes.NewBuffer(requestBody))
+	resp, err := http.Post("http://localhost:8080/graphql", "application/json", 
+                            bytes.NewBuffer(requestBody))
 	if err != nil {
 		log.Fatalf("Erro na requisição: %v", err)
 	}

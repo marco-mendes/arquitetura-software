@@ -1,0 +1,56 @@
+# Ignore Python bytecode and intermediate files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore C extensions
+*.so
+
+# Ignore distribution/build directories
+dist/
+build/
+.eggs/
+*.egg-info/
+
+# Ignore virtual environments
+.venv/
+venv/
+ENV/
+.venv-cpython/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore test coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+
+# Ignore mypy/mypy cache
+.mypy_cache/
+.dmypy.json
+
+# Ignore Pyre type checker
+.pyre/
+
+# Ignore pytype
+.pytype/
+
+# Ignore pipenv
+Pipfile.lock
+
+# Ignore pytest cache
+.pytest_cache/
+
+# Ignore other common binary/intermediate files
+*.pyo
+*.pyd
+*.dll
+*.exe
+*.obj
+*.o
+*.a
+*.lib
+*.bin
+*.log

@@ -32,11 +32,12 @@ func main() {
 	}()
 
 	// Enviar mensagem para o servidor
-	err = conn.WriteMessage(websocket.TextMessage, []byte("Olá, servidor WebSocket!"))
+	mensagem := "Ola, servidor WebSocket!"
+	err = conn.WriteMessage(websocket.TextMessage, []byte(mensagem))
 	if err != nil {
 		log.Fatalf("Erro ao enviar mensagem: %v", err)
 	}
-	log.Println("Mensagem enviada para o servidor: Olá, servidor WebSocket!")
+	log.Println("Mensagem enviada para o servidor:   " + mensagem)
 
 	// Ler mensagem do servidor
 	_, message, err := conn.ReadMessage()

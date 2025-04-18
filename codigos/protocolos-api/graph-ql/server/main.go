@@ -69,6 +69,15 @@ var schema = graphql.MustParseSchema(`
 // Resolver
 type resolver struct{}
 
+type pedidoResolver struct {
+	pedido Pedido
+}
+
+type produtoResolver struct {
+	produto Produto
+}
+
+
 func (r *resolver) Pedidos() []*pedidoResolver {
 	res := make([]*pedidoResolver, len(pedidos))
 	for i, p := range pedidos {
@@ -86,9 +95,6 @@ func (r *resolver) Pedido(args struct{ ID graphql.ID }) *pedidoResolver {
 	return nil
 }
 
-type pedidoResolver struct {
-	pedido Pedido
-}
 
 func (r *pedidoResolver) ID() graphql.ID {
 	return graphql.ID(r.pedido.ID)
@@ -110,9 +116,6 @@ func (r *pedidoResolver) Produtos() []*produtoResolver {
 	return res
 }
 
-type produtoResolver struct {
-	produto Produto
-}
 
 func (r *produtoResolver) ID() graphql.ID {
 	return graphql.ID(r.produto.ID)

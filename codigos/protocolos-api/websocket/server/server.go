@@ -7,15 +7,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Configuração do WebSocket Upgrader com suporte para permessage-deflate
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Permite conexões de qualquer origem
-	},
-	EnableCompression: true, // Habilita a compressão permessage-deflate
-}
 
 // Função para lidar com conexões WebSocket
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +25,17 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Lê e ecoa mensagens
 	readAndEchoMessages(conn)
 }
+
+// Configuração do WebSocket Upgrader com suporte para permessage-deflate
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Permite conexões de qualquer origem
+	},
+	EnableCompression: true, // Habilita a compressão permessage-deflate
+}
+
 
 // Função para fechar a conexão WebSocket
 func closeWebSocket(conn *websocket.Conn) {
