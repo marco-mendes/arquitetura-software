@@ -6,7 +6,7 @@ URL = "ws://localhost:7001/ws/produtos"
 
 async def listar_produtos():
     async with websockets.connect(URL) as ws:
-        await ws.send("listar")
+        await ws.send("criar")
         resposta = await ws.recv()
         try:
             produtos = json.loads(resposta)
