@@ -1,4 +1,4 @@
-# Como Arquitetar Sistemas de Software
+# Lista curada de podcasts sobre casos reais de arquitetura
 
 ## Time de Engenharia da Halo (Podcast de 9 min)
 
