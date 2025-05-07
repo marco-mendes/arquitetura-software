@@ -1,6 +1,6 @@
 # Lista curada de podcasts sobre casos reais de arquitetura
 
-## Introdução a Microsserviços - Artigo de James Lewis e Martin Fowler (Podcast de 9 min)
+## Introdução a Microsserviços - Artigo de James Lewis e Martin Fowler 
 
 <img width="500" alt="image" src="https://github.com/user-attachments/assets/e1828cb3-abd2-495e-a885-2b2f0e848375" />
 
@@ -11,7 +11,7 @@
 ---
   
 
-## Time de Engenharia da Halo (Podcast de 9 min)
+## Time de Engenharia da Halo 
 
 <img width="500" alt="image" src="image.png" />
 
