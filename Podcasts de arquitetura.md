@@ -13,7 +13,7 @@
 
 ## Time de Engenharia da Halo (Podcast de 9 min)
 
-![alt text](image.png)
+<img width="500" alt="image" src="image.png" />
 
 Durante o desenvolvimento de Halo 4, a equipe de engenharia enfrentou desafios de escala sem precedentes, nunca antes encontrados em títulos anteriores da franquia.
 
