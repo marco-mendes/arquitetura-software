@@ -2,7 +2,6 @@
 
 ## Fundamentos
 - [1.0 O que é uma arquitetura de software?](https://github.com/marco-mendes/arquitetura-software/blob/main/1.0%20O%20que%20é%20uma%20arquitetura%20de%20software.md)
-
   Introduz o conceito de arquitetura de software e sua importância para sistemas complexos.
 - [1.1 O que é um estilo arquitetural?](https://github.com/marco-mendes/arquitetura-software/blob/main/1.1%20O%20que%20%C3%A9%20um%20estilo%20arquitetural.md) – Explica o que são estilos arquiteturais e como ajudam a organizar sistemas.
 - [1.2 O Racional do Arquiteto e ADRs](https://github.com/marco-mendes/arquitetura-software/blob/main/1.2%20O%20racional%20arquietural%20e%20o%20conceito%20de%20ADRs.md) – Discute o racional por trás das decisões arquiteturais e o uso de ADRs (Architecture Decision Records).
