@@ -22,7 +22,7 @@
 - [2.7 Cenários de Gateway de API](https://github.com/marco-mendes/arquitetura-software/blob/main/2.7%20Cenarios%20de%20Gateway%20de%20API.md) – Discute diferentes cenários e padrões para gateways de API.  
 - [2.8 Tecnologias de APIs](https://github.com/marco-mendes/arquitetura-software/blob/main/2.8%20Tecnologias%20de%20APIs.md) – Examina tecnologias utilizadas para desenvolver e consumir APIs.  
 - [2.8.1 Exercícios de Fixação de Tecnologias de APIs](https://github.com/marco-mendes/arquitetura-software/blob/main/2.8.1%20Exercicios%20de%20Fixacao%20de%20Tecnologias%20de%20APIs.md) – Exercícios para fixar conhecimentos sobre tecnologias de APIs.  
-- [2.9 Caso Prático – Modelagem de uma Aplicação Hospitalar](https://github.com/marco-mendes/arquitetura-software/blob/main/2.9%20Caso%20Pratico%20-%20Modelagem%20de%20uma%20Aplicacao%20Hospitalar.md) – Estudo de caso que modela uma aplicação hospitalar com foco em APIs.  
+- [2.9 Caso Prático – Modelagem de uma Aplicação Hospitalar](https://github.com/marco-mendes/arquitetura-software/blob/main/2.9%20Caso%20Pr%C3%A1tico%20-%20Modelagem%20de%20uma%20Aplica%C3%A7%C3%A3o%20Hospitalar.md) – Estudo de caso que modela uma aplicação hospitalar com foco em APIs.  
   
 ## Microsserviços e Padrões de Integração  
 - [3.1 Introdução a Microsserviços](https://github.com/marco-mendes/arquitetura-software/blob/main/3.1%20Introdu%C3%A7%C3%A3o%20a%20Microsservicos.md) – Apresenta o paradigma de microsserviços e sua motivação.  
