@@ -17,7 +17,7 @@ Sem dependências externas — apenas Python 3.10+.
 ## Arquitetura
 
 ```mermaid
-graph LR
+graph TD
     IN(["Entrada\n6 currículos brutos\n(list[dict])"])
 
     subgraph pipeline["Pipeline — composição em main.py"]
