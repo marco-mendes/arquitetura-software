@@ -31,11 +31,11 @@ Um glossário de uma página com definição, exemplo hospitalar e limite de cad
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Precisão das definições | 35% |
-| Relação entre domínio e infraestrutura | 35% |
-| Limites e consequências identificados | 30% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Precisão das definições | 35% | Evidência: termo e exemplo; insuficiente: definição circular. |
+| Relação entre domínio e infraestrutura | 35% | Evidência: fato separado do transporte; insuficiente: broker tratado como domínio. |
+| Limites e consequências identificados | 30% | Evidência: limite descrito; insuficiente: mecanismo sem consequência. |
 
 ## Compreender
 
@@ -66,11 +66,11 @@ Uma explicação ilustrada com uma linha do tempo de duas tentativas e um efeito
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Sequência de falha coerente | 30% |
-| Uso correto de idempotência | 35% |
-| Distinção entre transporte e negócio | 35% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Sequência de falha coerente | 30% | Evidência: tentativas ordenadas; insuficiente: falha sem sequência. |
+| Uso correto de idempotência | 35% | Evidência: efeito único; insuficiente: duplicação tratada como impossível. |
+| Distinção entre transporte e negócio | 35% | Evidência: mensagem e efeito separados; insuficiente: entrega confundida com cobrança. |
 
 ## Aplicar
 
@@ -103,13 +103,13 @@ Um contrato, diagrama de fluxo, pseudocódigo de consumidor e plano de evidênci
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Semântica e ownership explícitos | 20% |
-| Payload mínimo e versionamento | 20% |
-| Idempotência verificável | 25% |
-| Consistência eventual comunicada | 20% |
-| Falha e DLQ tratadas | 15% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Semântica e ownership explícitos | 20% | Evidência: fato e dono; insuficiente: evento sem responsabilidade. |
+| Payload mínimo e versionamento | 20% | Evidência: campos necessários e versão; insuficiente: dado excessivo sem justificativa. |
+| Idempotência verificável | 25% | Evidência: repetição testada; insuficiente: chave apenas citada. |
+| Consistência eventual comunicada | 20% | Evidência: estado pendente explicado; insuficiente: atraso escondido. |
+| Falha e DLQ tratadas | 15% | Evidência: rejeição e destino; insuficiente: mensagem perdida sem sinal. |
 
 ## Analisar
 
@@ -142,13 +142,13 @@ Um diagnóstico com linha do tempo, mapa de evidências, hipóteses alternativas
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Separação de evidência e hipótese | 25% |
-| Comparação de causas plausíveis | 25% |
-| Uso dos sinais de fila e DLQ | 20% |
-| Verificação segura proposta | 20% |
-| Limites da conclusão | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Separação de evidência e hipótese | 25% | Evidência: fonte marcada; insuficiente: hipótese vira observação. |
+| Comparação de causas plausíveis | 25% | Evidência: causas contrastadas; insuficiente: causa única assumida. |
+| Uso dos sinais de fila e DLQ | 20% | Evidência: atraso e rejeição lidos; insuficiente: fila vista sem contexto. |
+| Verificação segura proposta | 20% | Evidência: teste sintético; insuficiente: produção alterada para investigar. |
+| Limites da conclusão | 10% | Evidência: incerteza declarada; insuficiente: conclusão definitiva cedo. |
 
 ## Avaliar
 
@@ -181,13 +181,13 @@ Um registro de decisão com alternativas, escolha, consequências, riscos, sinai
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Comparação contextual das alternativas | 25% |
-| Requisitos e hipóteses separados | 20% |
-| Ordem, retenção e dados tratados | 20% |
-| Idempotência ponta a ponta | 20% |
-| Gatilhos de revisão mensuráveis | 15% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Comparação contextual das alternativas | 25% | Evidência: contexto por opção; insuficiente: tecnologia escolhida por fama. |
+| Requisitos e hipóteses separados | 20% | Evidência: hipótese rotulada; insuficiente: requisito inventado. |
+| Ordem, retenção e dados tratados | 20% | Evidência: regra de cada aspecto; insuficiente: ordem global presumida. |
+| Idempotência ponta a ponta | 20% | Evidência: efeito externo considerado; insuficiente: deduplicação apenas no broker. |
+| Gatilhos de revisão mensuráveis | 15% | Evidência: limiar definido; insuficiente: revisar quando necessário. |
 
 ## Criar
 
@@ -220,10 +220,10 @@ Um pacote com contrato versionado, diagrama de convivência, plano de rollout, s
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Semântica da evolução | 20% |
-| Compatibilidade e transição | 20% |
-| Preservação de idempotência | 20% |
-| Observabilidade e recuperação | 20% |
-| Proteção de dados e ownership | 20% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Semântica da evolução | 20% | Evidência: mudança nomeada; insuficiente: versão sem significado. |
+| Compatibilidade e transição | 20% | Evidência: convivência descrita; insuficiente: consumidor antigo ignorado. |
+| Preservação de idempotência | 20% | Evidência: mesma chave mantida; insuficiente: nova versão duplica efeito. |
+| Observabilidade e recuperação | 20% | Evidência: sinal e retorno; insuficiente: rollout sem monitoramento. |
+| Proteção de dados e ownership | 20% | Evidência: dono e minimização; insuficiente: dado circula sem necessidade. |

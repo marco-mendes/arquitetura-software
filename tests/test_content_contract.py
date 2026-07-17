@@ -479,6 +479,42 @@ class ContentContractTest(unittest.TestCase):
             )
             self.assertFalse(any("99.9" in error or "99,9" in error for error in errors))
 
+    def test_criteria_tables_require_evidence_and_insufficiency_per_row(self):
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            slug = next(iter(MODULES))
+            module = docs / slug
+            module.mkdir()
+            incomplete = (
+                "# Exercícios\n\n"
+                "## Aplicar\n\n"
+                "**Critérios de avaliação**\n\n"
+                "| Critério | Percentual | Evidência e insuficiência |\n"
+                "| --- | ---: | --- |\n"
+                "| Decisão | 100% | Evidência: contexto declarado. |\n"
+            )
+            for page_name in PAGES:
+                (module / page_name).write_text(
+                    incomplete if page_name == "exercicios.md" else "# Página\n",
+                    encoding="utf-8",
+                )
+
+            errors = validate_module(slug, docs)
+
+            self.assertTrue(
+                any("critério sem insuficiência explícita" in error for error in errors)
+            )
+
+            complete = incomplete.replace(
+                "Evidência: contexto declarado.",
+                "Evidência: contexto declarado. Insuficiente: falta de contexto.",
+            )
+            (module / "exercicios.md").write_text(complete, encoding="utf-8")
+            errors = validate_module(slug, docs)
+            self.assertFalse(
+                any("critério sem insuficiência explícita" in error for error in errors)
+            )
+
     def test_all_validation_skips_internal_superpowers_documents(self):
         with TemporaryDirectory() as temporary:
             docs = Path(temporary)

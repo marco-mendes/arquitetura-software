@@ -462,6 +462,40 @@ def _percentage_errors(text: str, location: str, context: str = "") -> list[str]
     return errors
 
 
+def _criteria_table_evidence_errors(text: str, location: str) -> list[str]:
+    """Exige evidência e insuficiência explícitas em cada linha de critérios."""
+
+    errors: list[str] = []
+    for instrument, block in enumerate(_criteria_blocks(text), start=1):
+        for table in _TABLE.finditer(block):
+            rows = [line for line in table.group(0).splitlines() if line.strip()]
+            if len(rows) < 3:
+                continue
+            header = [cell.strip().casefold() for cell in rows[0].strip().strip("|").split("|")]
+            if len(header) < 3 or not any(
+                "evid" in cell and "insufici" in cell for cell in header
+            ):
+                errors.append(
+                    f"{location}: instrumento {instrument}: tabela de critérios "
+                    "sem coluna de evidência e insuficiência"
+                )
+                continue
+            for row_number, row in enumerate(rows[2:], start=1):
+                cells = [cell.strip() for cell in row.strip().strip("|").split("|")]
+                description = " ".join(cells[2:]).casefold()
+                if "evid" not in description:
+                    errors.append(
+                        f"{location}: instrumento {instrument}, critério {row_number}: "
+                        "critério sem evidência explícita"
+                    )
+                if "insufici" not in description:
+                    errors.append(
+                        f"{location}: instrumento {instrument}, critério {row_number}: "
+                        "critério sem insuficiência explícita"
+                    )
+    return errors
+
+
 def _word_count(text: str) -> int:
     without_code = re.sub(r"```.*?```|~~~.*?~~~", " ", text, flags=re.DOTALL)
     without_links = re.sub(r"https?://\S+", " ", without_code)
@@ -499,6 +533,7 @@ def _validate_exercises(path: Path, docs_root: Path) -> list[str]:
                     f"{location}: {level}: marcador obrigatório ausente: {marker}"
                 )
         errors.extend(_percentage_errors(section, location, level))
+    errors.extend(_criteria_table_evidence_errors(text, location))
     return errors
 
 

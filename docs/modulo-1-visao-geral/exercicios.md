@@ -71,12 +71,12 @@ Um arquivo com cenário, saída do comparador, comando executado, interpretaçã
 
 **Critérios de avaliação**
 
-| Critério | Percentual |
-| --- | ---: |
-| Execução reproduzível e resultado registrado | 25% |
-| Cenário de qualidade observável | 25% |
-| Relação coerente entre força, alternativa e limite | 30% |
-| ADR com consequência e gatilho de revisão | 20% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Execução reproduzível e resultado registrado | 25% | Evidência: saída salva; insuficiente: comando ou saída ausente. |
+| Cenário de qualidade observável | 25% | Evidência: medida declarada; insuficiente: qualidade sem medida. |
+| Relação coerente entre força, alternativa e limite | 30% | Evidência: ligação explícita; insuficiente: escolha sem limite. |
+| ADR com consequência e gatilho de revisão | 20% | Evidência: consequência e gatilho; insuficiente: decisão isolada. |
 
 ## Analisar
 
@@ -108,12 +108,12 @@ Uma matriz comparativa, dois cenários de estrutura, um diagrama Mermaid com lei
 
 **Critérios de avaliação**
 
-| Critério | Percentual |
-| --- | ---: |
-| Decomposição correta de forças e etapas | 25% |
-| Comparação simétrica de estilos e limites | 30% |
-| Coerência entre diagrama, conectores e texto | 25% |
-| Hipóteses e evidências necessárias explícitas | 20% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Decomposição correta de forças e etapas | 25% | Evidência: forças por etapa; insuficiente: lista sem relação. |
+| Comparação simétrica de estilos e limites | 30% | Evidência: mesma força comparada; insuficiente: alternativa favorecida sem análise. |
+| Coerência entre diagrama, conectores e texto | 25% | Evidência: elementos concordam; insuficiente: seta sem explicação. |
+| Hipóteses e evidências necessárias explícitas | 20% | Evidência: hipótese testável; insuficiente: suposição apresentada como fato. |
 
 ## Avaliar
 
@@ -145,13 +145,13 @@ Um parecer arquitetural com tabela de critérios, recomendação condicionada, i
 
 **Critérios de avaliação**
 
-| Critério | Percentual |
-| --- | ---: |
-| Critérios definidos antes da recomendação | 20% |
-| Uso honesto de evidências e incertezas | 25% |
-| Consequências e restrições comparadas | 25% |
-| Recomendação coerente e revisável | 20% |
-| Experiências alinhadas às forças | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Critérios definidos antes da recomendação | 20% | Evidência: critérios antecedem escolha; insuficiente: critérios criados depois. |
+| Uso honesto de evidências e incertezas | 25% | Evidência: lacuna declarada; insuficiente: estimativa tratada como medida. |
+| Consequências e restrições comparadas | 25% | Evidência: ganhos e custos; insuficiente: somente benefícios. |
+| Recomendação coerente e revisável | 20% | Evidência: condição de revisão; insuficiente: recomendação absoluta. |
+| Experiências alinhadas às forças | 10% | Evidência: teste mede força; insuficiente: experimento sem pergunta. |
 
 ## Criar
 
@@ -184,11 +184,11 @@ Uma pasta versionável com cenários, matriz, `workspace.dsl`, diagrama de sequ�
 
 **Critérios de avaliação**
 
-| Critério | Percentual |
-| --- | ---: |
-| Delimitação e cenários mensuráveis | 20% |
-| Alternativas e consequências comparáveis | 20% |
-| Modelos consistentes e compreensíveis | 20% |
-| ADR rastreável às forças | 20% |
-| Evidências reproduzíveis e limites declarados | 15% |
-| Revisão cruzada e organização da entrega | 5% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Delimitação e cenários mensuráveis | 20% | Evidência: escopo e medida; insuficiente: cenário vago. |
+| Alternativas e consequências comparáveis | 20% | Evidência: consequências por alternativa; insuficiente: comparação desigual. |
+| Modelos consistentes e compreensíveis | 20% | Evidência: nomes concordam; insuficiente: modelos contraditórios. |
+| ADR rastreável às forças | 20% | Evidência: ADR cita forças; insuficiente: decisão desconectada. |
+| Evidências reproduzíveis e limites declarados | 15% | Evidência: comando e limite; insuficiente: resultado sem contexto. |
+| Revisão cruzada e organização da entrega | 5% | Evidência: índice revisado; insuficiente: arquivos sem vínculo. |

@@ -31,11 +31,11 @@ Um glossário de uma página com uma definição, um exemplo e uma evidência pa
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Definições precisas | 35% |
-| Relação com artefatos | 35% |
-| Distinção entre sinais | 30% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Definições precisas | 35% | Evidência: definição e exemplo; insuficiente: termo apenas repetido. |
+| Relação com artefatos | 35% | Evidência: artefato citado; insuficiente: conceito sem aplicação. |
+| Distinção entre sinais | 30% | Evidência: finalidade distinta; insuficiente: logs, métricas e traces confundidos. |
 
 ## Compreender
 
@@ -66,11 +66,11 @@ Uma nota para a equipe, com diagrama simples de responsabilidade e consequência
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Separação entre borda e domínio | 40% |
-| Justificativa contextual | 30% |
-| Uso correto de telemetria | 30% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Separação entre borda e domínio | 40% | Evidência: responsabilidade localizada; insuficiente: regra clínica no gateway. |
+| Justificativa contextual | 30% | Evidência: decisão ligada ao caso; insuficiente: regra genérica. |
+| Uso correto de telemetria | 30% | Evidência: sinal com pergunta; insuficiente: coleta sem finalidade. |
 
 ## Aplicar
 
@@ -103,13 +103,13 @@ Um arquivo de política, mapa de fluxo e roteiro de verificação com entradas e
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Catálogo e ownership explícitos | 20% |
-| Política de borda coerente | 25% |
-| Regra de domínio preservada | 25% |
-| Evidência de correlação e trace | 20% |
-| Condição de revisão | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Catálogo e ownership explícitos | 20% | Evidência: dono e consumidor; insuficiente: API sem responsável. |
+| Política de borda coerente | 25% | Evidência: regra declarada; insuficiente: política sem risco associado. |
+| Regra de domínio preservada | 25% | Evidência: serviço decide regra; insuficiente: gateway decide domínio. |
+| Evidência de correlação e trace | 20% | Evidência: identificador e trace; insuficiente: sinais não relacionados. |
+| Condição de revisão | 10% | Evidência: limiar de revisão; insuficiente: política permanente sem gatilho. |
 
 ## Analisar
 
@@ -142,13 +142,13 @@ Um diagnóstico com linha do tempo, mapa de evidências e plano de investigaçã
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Separação de fato e hipótese | 25% |
-| Leitura integrada dos sinais | 25% |
-| Hipóteses alternativas | 20% |
-| Mudança verificável proposta | 20% |
-| Limites da conclusão | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Separação de fato e hipótese | 25% | Evidência: hipótese rotulada; insuficiente: inferência como fato. |
+| Leitura integrada dos sinais | 25% | Evidência: sinais correlacionados; insuficiente: métrica isolada conclui causa. |
+| Hipóteses alternativas | 20% | Evidência: mais de uma causa; insuficiente: primeira hipótese tratada certa. |
+| Mudança verificável proposta | 20% | Evidência: efeito esperado; insuficiente: mudança sem prova. |
+| Limites da conclusão | 10% | Evidência: limite declarado; insuficiente: diagnóstico definitivo sem dados. |
 
 ## Avaliar
 
@@ -181,13 +181,13 @@ Um registro de decisão com alternativas, decisão, consequências, evidências 
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Comparação equilibrada | 25% |
-| Vínculo com capacidade e risco | 25% |
-| SLO e sinais operacionais | 20% |
-| Reversibilidade | 15% |
-| Comunicação a consumidores | 15% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Comparação equilibrada | 25% | Evidência: ganhos e custos; insuficiente: uma opção idealizada. |
+| Vínculo com capacidade e risco | 25% | Evidência: risco justifica decisão; insuficiente: mecanismo sem contexto. |
+| SLO e sinais operacionais | 20% | Evidência: meta e sinal; insuficiente: número sem ação. |
+| Reversibilidade | 15% | Evidência: plano de retorno; insuficiente: alteração irreversível sem avaliação. |
+| Comunicação a consumidores | 15% | Evidência: impacto comunicado; insuficiente: mudança sem destinatário. |
 
 ## Criar
 
@@ -221,11 +221,11 @@ Um pacote com ADR, diagrama, configuração declarativa ilustrativa, plano de si
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Coerência entre ownership e contrato | 20% |
-| Separação de políticas | 20% |
-| Observabilidade verificável | 20% |
-| SLO contextualizado | 15% |
-| Testes reproduzíveis | 15% |
-| Gatilhos de evolução | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Coerência entre ownership e contrato | 20% | Evidência: dono mantém contrato; insuficiente: responsabilidade dividida sem regra. |
+| Separação de políticas | 20% | Evidência: borda e domínio separados; insuficiente: política clínica no gateway. |
+| Observabilidade verificável | 20% | Evidência: consulta reproduzível; insuficiente: sinal sem como verificar. |
+| SLO contextualizado | 15% | Evidência: usuário e janela; insuficiente: meta sem contexto. |
+| Testes reproduzíveis | 15% | Evidência: comando e resultado; insuficiente: procedimento não repetível. |
+| Gatilhos de evolução | 10% | Evidência: sinal de mudança; insuficiente: evolução sem condição. |

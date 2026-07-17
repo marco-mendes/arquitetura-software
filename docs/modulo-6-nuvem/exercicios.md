@@ -28,11 +28,11 @@ Uma tabela de duas colunas: definição curta e exemplo/limite hospitalar.
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Definições precisas | 50% |
-| Relação com o caso | 30% |
-| Limites explicitados | 20% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Definições precisas | 50% | Evidência: definição e exemplo; insuficiente: termo apenas repetido. |
+| Relação com o caso | 30% | Evidência: exemplo hospitalar; insuficiente: exemplo sem contexto. |
+| Limites explicitados | 20% | Evidência: limite declarado; insuficiente: nuvem tratada como solução total. |
 
 ## Compreender
 
@@ -60,11 +60,11 @@ Uma sequência de no máximo 400 palavras e um diagrama de estado simples.
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Semântica correta de probes | 40% |
-| Cenário de falha coerente | 35% |
-| Limites reconhecidos | 25% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Semântica correta de probes | 40% | Evidência: readiness e liveness distintos; insuficiente: probes equivalentes. |
+| Cenário de falha coerente | 35% | Evidência: falha e reação; insuficiente: reinício sem causa. |
+| Limites reconhecidos | 25% | Evidência: dependência externa citada; insuficiente: probe promete recuperação total. |
 
 ## Aplicar
 
@@ -96,12 +96,12 @@ Um roteiro por plataforma, saída esperada e checklist de evidências.
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Reprodutibilidade e contexto seguro | 25% |
-| Sequência de imagem, cluster e apply | 25% |
-| Evidência observável | 25% |
-| Limpeza e contingência | 25% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Reprodutibilidade e contexto seguro | 25% | Evidência: versões e dados sintéticos; insuficiente: passo depende de máquina oculta. |
+| Sequência de imagem, cluster e apply | 25% | Evidência: ordem registrada; insuficiente: recursos aplicados sem namespace. |
+| Evidência observável | 25% | Evidência: saída ou status; insuficiente: implantação sem prova. |
+| Limpeza e contingência | 25% | Evidência: remoção limitada; insuficiente: comando global perigoso. |
 
 ## Analisar
 
@@ -133,12 +133,12 @@ Uma linha do tempo, tabela de hipóteses/evidências e plano de contenção.
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Separação entre fato e hipótese | 25% |
-| Diagnóstico diferencial | 25% |
-| Uso correto de rollout e rollback | 25% |
-| Prevenção verificável | 25% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Separação entre fato e hipótese | 25% | Evidência: hipótese rotulada; insuficiente: suposição como incidente confirmado. |
+| Diagnóstico diferencial | 25% | Evidência: causas comparadas; insuficiente: primeiro sintoma define causa. |
+| Uso correto de rollout e rollback | 25% | Evidência: estado e retorno; insuficiente: rollback usado sem falha observada. |
+| Prevenção verificável | 25% | Evidência: controle testável; insuficiente: recomendação sem teste. |
 
 ## Avaliar
 
@@ -166,13 +166,13 @@ Um ADR com alternativas, decisão, consequências, riscos, custo e sinais de rev
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Comparação contextual | 25% |
-| Responsabilidade e dados | 20% |
-| Custo e lock-in | 20% |
-| Resiliência e operação | 20% |
-| Gatilhos mensuráveis | 15% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Comparação contextual | 25% | Evidência: requisito por opção; insuficiente: provedor escolhido por fama. |
+| Responsabilidade e dados | 20% | Evidência: responsabilidade declarada; insuficiente: dado delegado sem controle. |
+| Custo e lock-in | 20% | Evidência: custo e saída; insuficiente: serviço assumido neutro. |
+| Resiliência e operação | 20% | Evidência: falha e operação; insuficiente: réplica tratada como garantia. |
+| Gatilhos mensuráveis | 15% | Evidência: limiar definido; insuficiente: revisão sem medida. |
 
 ## Criar
 
@@ -200,9 +200,9 @@ Um pacote com diagrama, ADR, manifests ou pseudomanifests, plano de evidências 
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Fronteiras e estado explícitos | 25% |
-| Resiliência e recuperação testáveis | 25% |
-| Operação, custo e segurança | 25% |
-| Clareza de evidências e limites | 25% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Fronteiras e estado explícitos | 25% | Evidência: recurso e responsabilidade; insuficiente: estado sem dono. |
+| Resiliência e recuperação testáveis | 25% | Evidência: falha e recuperação; insuficiente: resiliência só declarada. |
+| Operação, custo e segurança | 25% | Evidência: trade-off registrado; insuficiente: operação omitida. |
+| Clareza de evidências e limites | 25% | Evidência: limites e prova; insuficiente: conclusão sem contexto. |

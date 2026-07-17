@@ -1,7 +1,7 @@
 from pathlib import Path
-import re
 import unittest
 
+from scripts.validate_content import _word_count
 from tests.course_assertions import assert_module_contract, navigation_section_paths
 
 
@@ -61,9 +61,9 @@ class ModuleThreeTest(unittest.TestCase):
         corpus = "\n".join(
             path.read_text(encoding="utf-8") for path in MODULE.glob("*.md")
         )
-        words = re.findall(r"\b[^\W_]+(?:[-'][^\W_]+)*\b", corpus)
-        self.assertGreaterEqual(len(words), 5000)
-        self.assertLessEqual(len(words), 8500)
+        words = _word_count(corpus)
+        self.assertGreaterEqual(words, 5000)
+        self.assertLessEqual(words, 8500)
         self.assertGreaterEqual(corpus.count("```mermaid"), 3)
         # Diagramas Mermaid e infográficos gerados possuem leitura textual.
         # Os infográficos acrescentam equivalências além das exigidas pelos Mermaid.

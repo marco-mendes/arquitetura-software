@@ -72,12 +72,12 @@ Uma pasta `evidencias-aplicar` com saídas de Spectral e pytest, coleção Bruno
 
 **Critérios de avaliação**
 
-| Critério observado | Percentual |
-| --- | ---: |
-| Comandos, versões e resultados reproduzíveis | 25% |
-| Caminho `POST` e `GET` coerente com o contrato | 30% |
-| Erro `422` registrado com código e detalhe | 25% |
-| Limites da evidência declarados com precisão | 20% |
+| Critério observado | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Comandos, versões e resultados reproduzíveis | 25% | Evidência: comandos e versões; insuficiente: resultado sem caminho. |
+| Caminho `POST` e `GET` coerente com o contrato | 30% | Evidência: requisição e resposta; insuficiente: rota difere do contrato. |
+| Erro `422` registrado com código e detalhe | 25% | Evidência: corpo do erro; insuficiente: apenas status anotado. |
+| Limites da evidência declarados com precisão | 20% | Evidência: limite explicado; insuficiente: teste tratado como produção. |
 
 ## Analisar
 
@@ -109,13 +109,13 @@ Uma matriz de forças, dois fragmentos de contrato, tabela da simulação, diagr
 
 **Critérios de avaliação**
 
-| Critério observado | Percentual |
-| --- | ---: |
-| Forças e incertezas de contexto corretamente separadas | 20% |
-| Contratos completos e comparáveis | 25% |
-| Simulação evidencia efeitos de mudança concorrente | 20% |
-| Comparação simétrica de estilos e adaptações | 20% |
-| Diagrama, texto e experiência proposta são coerentes | 15% |
+| Critério observado | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Forças e incertezas de contexto corretamente separadas | 20% | Evidência: hipótese marcada; insuficiente: inferência vira fato. |
+| Contratos completos e comparáveis | 25% | Evidência: campos e semântica; insuficiente: fragmentos incompatíveis. |
+| Simulação evidencia efeitos de mudança concorrente | 20% | Evidência: respostas concorrentes; insuficiente: mudança sem efeito mostrado. |
+| Comparação simétrica de estilos e adaptações | 20% | Evidência: mesmos critérios; insuficiente: preferência sem contraste. |
+| Diagrama, texto e experiência proposta são coerentes | 15% | Evidência: fluxo corresponde; insuficiente: desenho contradiz contrato. |
 
 ## Avaliar
 
@@ -147,13 +147,13 @@ Um parecer com critérios, matriz de propostas, recomendação condicionada, dua
 
 **Critérios de avaliação**
 
-| Critério observado | Percentual |
-| --- | ---: |
-| Critérios definidos antes da recomendação | 20% |
-| Falhas e repetições analisadas pelo contrato | 25% |
-| Consequências comparadas sem preferência implícita | 25% |
-| Experiências têm amostra, medida e limiar | 15% |
-| Recomendação, objeção e gatilho são rastreáveis | 15% |
+| Critério observado | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Critérios definidos antes da recomendação | 20% | Evidência: critérios iniciais; insuficiente: critérios ajustados à escolha. |
+| Falhas e repetições analisadas pelo contrato | 25% | Evidência: status e repetição; insuficiente: falha descrita genericamente. |
+| Consequências comparadas sem preferência implícita | 25% | Evidência: ganhos e custos; insuficiente: alternativa tratada como padrão. |
+| Experiências têm amostra, medida e limiar | 15% | Evidência: amostra e limiar; insuficiente: teste sem medida. |
+| Recomendação, objeção e gatilho são rastreáveis | 15% | Evidência: objeção ligada ao gatilho; insuficiente: conclusão sem revisão. |
 
 ## Criar
 
@@ -187,11 +187,11 @@ Uma pasta versionável com índice, contratos OpenAPI, exemplos Bruno, mapa de e
 
 **Critérios de avaliação**
 
-| Critério observado | Percentual |
-| --- | ---: |
-| Fronteiras, consumidores e responsabilidades rastreáveis | 15% |
-| Contratos completos, coerentes e semanticamente claros | 25% |
-| Evolução, paginação e repetição tratadas conforme o contexto | 20% |
-| Diagramas e exemplos concordam com os contratos | 15% |
-| Evidências são reproduzíveis e limites são explícitos | 15% |
-| ADR preserva alternativas, consequências e revisão | 10% |
+| Critério observado | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Fronteiras, consumidores e responsabilidades rastreáveis | 15% | Evidência: consumidor e dono; insuficiente: responsabilidade implícita. |
+| Contratos completos, coerentes e semanticamente claros | 25% | Evidência: exemplos válidos; insuficiente: campos sem significado. |
+| Evolução, paginação e repetição tratadas conforme o contexto | 20% | Evidência: regra contextual; insuficiente: mecanismo citado sem necessidade. |
+| Diagramas e exemplos concordam com os contratos | 15% | Evidência: mesmas rotas; insuficiente: exemplo diverge do diagrama. |
+| Evidências são reproduzíveis e limites são explícitos | 15% | Evidência: comandos e limites; insuficiente: saída sem condição. |
+| ADR preserva alternativas, consequências e revisão | 10% | Evidência: alternativas registradas; insuficiente: decisão sem racional. |

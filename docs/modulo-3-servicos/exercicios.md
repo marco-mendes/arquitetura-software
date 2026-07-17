@@ -57,13 +57,13 @@ Uma página com mapa de contexto, direção das dependências, decisão de impla
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Limites alinhados às capacidades e invariantes | 30% |
-| Propriedade de dados explícita | 25% |
-| Dependências e contratos coerentes | 20% |
-| Decisão ligada aos insumos | 15% |
-| Riscos e sinais de revisão | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Limites alinhados às capacidades e invariantes | 30% | Evidência: capacidade e regra; insuficiente: limite técnico arbitrário. |
+| Propriedade de dados explícita | 25% | Evidência: dono do dado; insuficiente: banco compartilhado sem regra. |
+| Dependências e contratos coerentes | 20% | Evidência: direção e contrato; insuficiente: acesso direto oculto. |
+| Decisão ligada aos insumos | 15% | Evidência: insumo citado; insuficiente: decisão sem contexto. |
+| Riscos e sinais de revisão | 10% | Evidência: risco e sinal; insuficiente: revisão sem condição. |
 
 ## Analisar
 
@@ -96,13 +96,13 @@ Um diagnóstico de até duas páginas, acompanhado por diagrama atual e diagrama
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Classificação precisa dos acoplamentos | 25% |
-| Uso consistente dos dados do caso | 25% |
-| Comparação de alternativas | 20% |
-| Análise de falha parcial | 20% |
-| Separação entre fato e hipótese | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Classificação precisa dos acoplamentos | 25% | Evidência: tipo e causa; insuficiente: dependência nomeada genericamente. |
+| Uso consistente dos dados do caso | 25% | Evidência: fatos referenciados; insuficiente: dado inventado. |
+| Comparação de alternativas | 20% | Evidência: consequências contrastadas; insuficiente: opção apenas listada. |
+| Análise de falha parcial | 20% | Evidência: parte saudável e falha; insuficiente: sistema tratado como inteiro. |
+| Separação entre fato e hipótese | 10% | Evidência: hipótese rotulada; insuficiente: suposição como fato. |
 
 ## Avaliar
 
@@ -135,13 +135,13 @@ Um registro de decisão arquitetural com contexto, alternativas, decisão, conse
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Critérios ligados ao risco do domínio | 30% |
-| Comparação equilibrada das alternativas | 25% |
-| Tratamento de estados e falhas | 20% |
-| Uso criterioso de SAGA e CQRS | 15% |
-| Condições de revisão e observação | 10% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Critérios ligados ao risco do domínio | 30% | Evidência: risco orienta critério; insuficiente: critério técnico solto. |
+| Comparação equilibrada das alternativas | 25% | Evidência: custo e ganho; insuficiente: padrão escolhido sem contraste. |
+| Tratamento de estados e falhas | 20% | Evidência: transição e falha; insuficiente: fluxo só feliz. |
+| Uso criterioso de SAGA e CQRS | 15% | Evidência: necessidade justifica padrão; insuficiente: sigla sem problema. |
+| Condições de revisão e observação | 10% | Evidência: sinal e revisão; insuficiente: monitoramento sem decisão. |
 
 ## Criar
 
@@ -175,10 +175,10 @@ Um pacote autocontido com dois diagramas, registro de decisão, tabela de estado
 
 **Critérios de avaliação**
 
-| Critério | Peso |
-| --- | ---: |
-| Coerência entre domínio, dados e implantação | 25% |
-| Fluxos de falha e consistência explícitos | 25% |
-| Contratos e verificações executáveis | 20% |
-| Evolução orientada por sinais | 15% |
-| Viabilidade operacional dentro dos insumos | 15% |
+| Critério | Percentual | Evidência e insuficiência |
+| --- | ---: | --- |
+| Coerência entre domínio, dados e implantação | 25% | Evidência: mesmos limites; insuficiente: topologia contradiz domínio. |
+| Fluxos de falha e consistência explícitos | 25% | Evidência: falha e efeito; insuficiente: consistência presumida. |
+| Contratos e verificações executáveis | 20% | Evidência: teste ou comando; insuficiente: contrato sem verificação. |
+| Evolução orientada por sinais | 15% | Evidência: sinal aciona mudança; insuficiente: evolução sem gatilho. |
+| Viabilidade operacional dentro dos insumos | 15% | Evidência: recursos considerados; insuficiente: componente sem operação possível. |
