@@ -68,7 +68,15 @@ nav:
       - Oficina de ferramentas: modulo-4-governanca/oficina-de-ferramentas.md
       - Exercícios: modulo-4-governanca/exercicios.md
       - Síntese e referências: modulo-4-governanca/sintese-e-referencias.md
-  - "Módulo 5 — Eventos": modulo-5-eventos/index.md
+  - "Módulo 5 — Eventos":
+      - Visão geral: modulo-5-eventos/index.md
+      - Conceitos: modulo-5-eventos/conceitos.md
+      - Padrões e decisões: modulo-5-eventos/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-5-eventos/exemplo-arquitetural.md
+      - Estudo de caso: modulo-5-eventos/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-5-eventos/oficina-de-ferramentas.md
+      - Exercícios: modulo-5-eventos/exercicios.md
+      - Síntese e referências: modulo-5-eventos/sintese-e-referencias.md
   - "Módulo 6 — Nuvem": modulo-6-nuvem/index.md
   - Projeto integrador:
       - Visão geral: projeto-integrador/index.md
