@@ -58,3 +58,6 @@ Pipfile.lock
 # Isolated implementation worktrees
 .worktrees/
 .superpowers/sdd/
+
+# Private instructor notes and answer keys; never publish in the course site.
+/material-professor/
