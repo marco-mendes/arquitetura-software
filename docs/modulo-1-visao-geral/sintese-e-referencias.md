@@ -40,7 +40,14 @@ Mantenha os artefatos pequenos e conectados. Um cenário deve apontar para a dec
 - RICHARDS, Mark; FORD, Neal. *Fundamentals of Software Architecture*. O'Reilly, 2020. Compara características e compromissos de estilos contemporâneos.
 - ROZANSKI, Nick; WOODS, Eóin. *Software Systems Architecture*. 2. ed. Addison-Wesley, 2011. Relaciona interesses, perspectivas e decisões significativas.
 - SHAW, Mary; GARLAN, David. *Software Architecture: Perspectives on an Emerging Discipline*. Prentice Hall, 1996. Consolida componentes, conectores e estilos como tema próprio de projeto.
-- NYGARD, Michael. “Documenting Architecture Decisions”, 2011. Introduz o formato enxuto de Architecture Decision Record.
+- NYGARD, Michael. [“Documenting Architecture Decisions”](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions), 2011. Registro original da prática enxuta de Architecture Decision Record.
+
+## Documentação pública para a prática
+
+- O site oficial do [C4 Model — tipos de diagrama](https://c4model.com/diagrams) distingue contexto, containers, componentes e código.
+- A documentação oficial da [Structurizr DSL](https://docs.structurizr.com/dsl) apresenta modelos textuais baseados no C4; o guia de [execução local](https://docs.structurizr.com/local) explica a ferramenta usada na oficina.
+- O [tutorial oficial de Python](https://docs.python.org/3/tutorial/) apoia a leitura do código, e o guia [Get Started do pytest](https://docs.pytest.org/en/stable/getting-started.html) documenta instalação, descoberta e asserções.
+- O relatório público do Software Engineering Institute sobre [Quality Attributes](https://www.sei.cmu.edu/library/quality-attributes/) relaciona atributos, arquitetura e compromissos de projeto.
 
 A [bibliografia da disciplina](../referencia/bibliografia.md) reúne as referências dos demais encontros. Para consulta rápida, use também o [glossário](../referencia/glossario.md), os [atributos de qualidade](../referencia/atributos-de-qualidade.md), o [catálogo de padrões](../referencia/catalogo-de-padroes.md) e o [guia de ferramentas](../referencia/guia-de-ferramentas.md).
 

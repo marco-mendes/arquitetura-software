@@ -82,34 +82,35 @@ Um arquivo com cenário, saída do comparador, comando executado, interpretaçã
 
 **Situação**
 
-Agenda, triagem administrativa e faturamento fazem parte da mesma plataforma, mas apresentam concorrência, variação e processamento em lote. Uma proposta aplica microkernel a todas as capacidades para “padronizar a arquitetura”.
+Uma rede de laboratórios regionais precisa enviar resultados administrativos para uma central de vigilância. Dezoito parceiros produzem JSON, CSV ou XML, com convenções próprias. Juntos, enviam quatro milhões de registros por dia e chegam a seiscentos registros por segundo durante duas horas. Layouts mudam, em média, duas vezes por mês. Há registros repetidos ou fora de ordem, e uma auditoria deve reconstruir origem, versão do contrato, transformações e motivo de rejeição. O prazo para disponibilizar um lote aceito é vinte minutos.
 
 **Seu papel**
 
-Você atua como analista de arquitetura e precisa decompor a proposta, identificar onde as forças diferem e comparar alternativas pelas mesmas dimensões.
+Você atua como analista de arquitetura e precisa decompor ingestão, tradução, validação, deduplicação e auditoria antes de comparar organizações possíveis.
 
 **Insumos disponíveis**
 
-Use o [contexto hospitalar](../projeto-integrador/contexto-hospitalar.md), a matriz do estudo de caso, os quatro estilos e os cenários de qualidade compartilhados. Considere somente informações administrativas.
+Considere os fatos da situação, uma equipe de cinco pessoas, implantação inicial operada como uma unidade e estes dados sintéticos: três exemplos válidos por formato, dois registros repetidos, um registro atrasado e duas versões do layout de um parceiro. Segurança clínica não está em escopo; identifique os registros apenas por códigos fictícios. Use somente esses fatos e as definições compartilhadas de [atributos de qualidade](../referencia/atributos-de-qualidade.md).
 
 **Como conduzir**
 
-1. Identifique estímulo, resposta e medida para cada capacidade.
-2. Liste componentes, conectores e restrições sugeridos pela proposta global.
-3. Compare microkernel, camadas, pipes and filters e monólito modular para cada capacidade.
-4. Marque tensões entre consistência, modificabilidade, throughput e simplicidade operacional.
-5. Desenhe em Mermaid uma estrutura combinada ou uma alternativa única.
-6. Escreva duas hipóteses que ainda precisam de evidência.
+1. Separe forças de throughput, variação por parceiro, ordenação, deduplicação e rastreabilidade.
+2. Formule três cenários mensuráveis com ambiente, resposta e medida.
+3. Modele pelo menos duas decomposições alternativas, nomeando componentes, conectores e estado.
+4. Compare camadas, pipes and filters, microkernel e monólito modular pelas mesmas forças, sem exigir que um único estilo organize todas as escalas.
+5. Analise como cada alternativa identifica versão, repetição, atraso e rejeição.
+6. Desenhe em Mermaid uma alternativa e uma sequência de falha parcial.
+7. Registre três hipóteses e a evidência capaz de confirmá-las ou refutá-las.
 
 **Entrega esperada**
 
-Uma matriz comparativa, um diagrama Mermaid com leitura textual e uma análise de até mil palavras que explique diferenças entre as três capacidades.
+Uma matriz comparativa, dois cenários de estrutura, um diagrama Mermaid com leitura textual e uma análise de até mil palavras sobre forças, estado, falhas e incertezas.
 
 **Critérios de avaliação**
 
 | Critério | Percentual |
 | --- | ---: |
-| Decomposição correta de forças e capacidades | 25% |
+| Decomposição correta de forças e etapas | 25% |
 | Comparação simétrica de estilos e limites | 30% |
 | Coerência entre diagrama, conectores e texto | 25% |
 | Hipóteses e evidências necessárias explícitas | 20% |
@@ -118,28 +119,29 @@ Uma matriz comparativa, um diagrama Mermaid com leitura textual e uma análise d
 
 **Situação**
 
-Duas equipes apresentaram propostas para a baseline. A primeira usa um monólito modular com estilos internos por capacidade. A segunda cria unidades de implantação separadas desde o início. Ambas afirmam melhorar modificabilidade, mas ainda não demonstraram carga nem cadência independente.
+Uma secretaria estadual consolida disponibilidade de leitos administrativos enviada por quarenta e cinco hospitais. Vinte e oito parceiros publicam JSON a cada trinta segundos; dezessete enviam CSV a cada cinco minutos. O pico é novecentas atualizações por minuto. Mensagens podem repetir, atrasar ou contradizer a versão anterior. O painel deve refletir a atualização aceita mais recente em até sessenta segundos, e a auditoria precisa explicar fonte, versão, transformação e regra de desempate. Os formatos mudaram seis vezes no último trimestre.
 
 **Seu papel**
 
-Você integra uma revisão técnica e deve recomendar uma proposta, rejeitar ambas ou aprovar uma experiência limitada antes da decisão.
+Você integra uma revisão técnica e deve avaliar duas propostas, recomendar uma delas, rejeitar ambas ou autorizar uma experiência limitada. Não há alternativa previamente aprovada.
 
 **Insumos disponíveis**
 
-Considere equipe pequena, operação inicial local, necessidade de rastreabilidade, indisponibilidade eventual de parceiros, frequência de mudança desconhecida e os artefatos do módulo. Use o [modelo de entrega](../projeto-integrador/modelos-de-entrega.md) para conferir rastreabilidade.
+Considere uma equipe de seis pessoas e uma única equipe operacional. A proposta A mantém conectores por parceiro, um modelo canônico e uma sequência compartilhada de transformações na mesma implantação. A proposta B implanta um coletor por parceiro e envia atualizações canônicas a um processador comum. Nenhuma equipe mediu carga, custo de operação ou tempo de inclusão de parceiro. Use uma amostra sintética com mil atualizações, cinquenta repetições, vinte atrasos e cinco contradições.
 
 **Como conduzir**
 
-1. Defina cinco critérios antes de comparar as propostas.
+1. Transforme atualização, variação, repetição, atraso, auditoria e operação em critérios mensuráveis.
 2. Atribua evidência disponível, ausente ou contraditória para cada critério.
-3. Examine consequências favoráveis e desfavoráveis das duas propostas.
-4. Faça uma recomendação condicionada, sem apresentar preferência pessoal como força.
-5. Defina duas experiências reproduzíveis e um gatilho de revisão.
-6. Registre opiniões divergentes como alternativa, não como erro.
+3. Relacione cada proposta a estilos possíveis sem inferir adequação somente pelo nome.
+4. Examine consequências favoráveis e desfavoráveis, inclusive isolamento de falha e esforço operacional.
+5. Faça uma recomendação condicionada ou proponha adiar a decisão, sustentando-a pelos critérios.
+6. Defina duas experiências reproduzíveis com a amostra fornecida e um gatilho de revisão.
+7. Registre a principal objeção à sua conclusão e como nova evidência poderia alterá-la.
 
 **Entrega esperada**
 
-Um parecer arquitetural com tabela de critérios, recomendação argumentada, incertezas, experiências e relação com o ADR-001.
+Um parecer arquitetural com tabela de critérios, recomendação condicionada, incertezas, objeção principal, experiências e gatilho de revisão.
 
 **Critérios de avaliação**
 

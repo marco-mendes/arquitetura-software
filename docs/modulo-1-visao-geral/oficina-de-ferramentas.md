@@ -61,6 +61,15 @@ python -m pytest --version
 podman --version
 ```
 
+Se `Activate.ps1` for bloqueado pela política de execução, não altere a configuração do usuário nem da máquina. Aplique a contingência somente à janela atual e tente a ativação novamente:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.venv\Scripts\Activate.ps1
+```
+
+O escopo `Process` vale apenas nessa sessão; para desfazer, basta fechar a janela do PowerShell. Uma política organizacional pode ter precedência. Nesse caso, preserve-a e execute `.venv\Scripts\python.exe -m pytest` sem ativar o ambiente.
+
 ### macOS
 
 Abra Terminal. Com Homebrew disponível, instale Python e Podman, inicie a máquina e prepare o workspace:
@@ -168,18 +177,32 @@ workspace "Plataforma hospitalar" "Estrutura inicial do módulo 1" {
     model {
         equipe = person "Equipe administrativa"
         plataforma = softwareSystem "Plataforma hospitalar" {
-            agenda = container "Agenda" "Reservas consistentes" "Módulo em camadas"
-            triagem = container "Triagem" "Núcleo e extensões" "Microkernel"
-            faturamento = container "Faturamento" "Validação e transformação" "Pipes and filters"
-            auditoria = container "Auditoria" "Correlação administrativa" "Módulo"
+            aplicacao = container "Aplicação hospitalar" "Monólito modular implantado como uma unidade" "Python 3.12 e FastAPI" {
+                agenda = component "Agenda" "Módulo em camadas para reservas consistentes" "Python" {
+                    tags "Camadas"
+                }
+                triagem = component "Triagem" "Núcleo administrativo com extensões por plugin" "Python" {
+                    tags "Microkernel"
+                }
+                faturamento = component "Faturamento" "Módulo com fluxo de validação e transformação" "Python" {
+                    tags "Pipes and filters"
+                }
+                auditoria = component "Auditoria" "Módulo de correlação administrativa" "Python" {
+                    tags "Módulo"
+                }
+            }
         }
-        equipe -> agenda "Solicita e remarca horários"
+        equipe -> agenda "Solicita e remarca horários" "HTTPS/JSON"
         agenda -> auditoria "Registra alterações"
         triagem -> auditoria "Registra etapas"
         faturamento -> auditoria "Registra rejeições"
     }
     views {
-        container plataforma "Modulos" {
+        container plataforma "Aplicacao" {
+            include *
+            autolayout lr
+        }
+        component aplicacao "Modulos" {
             include *
             autolayout lr
         }
@@ -192,7 +215,7 @@ workspace "Plataforma hospitalar" "Estrutura inicial do módulo 1" {
 }
 ```
 
-O arquivo usa nomes e relações, não coordenadas fixas. Ele pode ser versionado e revisado como qualquer outro texto.
+O arquivo modela uma única aplicação implantável, coerente com o monólito modular decidido no estudo de caso. Agenda, Triagem, Faturamento e Auditoria são componentes internos, não unidades de implantação. O campo de tecnologia contém apenas mecanismos concretos (`Python 3.12 e FastAPI` ou `Python`); os estilos aparecem nas descrições e tags. O arquivo usa nomes e relações, não coordenadas fixas, e pode ser versionado como qualquer outro texto.
 
 ## Execução
 
@@ -200,43 +223,66 @@ O arquivo usa nomes e relações, não coordenadas fixas. Ele pode ser versionad
 
 **Execute**
 
-Rode primeiro toda a suíte do laboratório e depois somente o exercício de estilos:
+Rode primeiro toda a suíte do laboratório. Em seguida, capture a saída do exercício de estilos dentro de `evidencias`. No PowerShell:
+
+```powershell
+python -m pytest tests -q
+python -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt
+```
+
+Em macOS ou Linux:
 
 ```bash
 python -m pytest tests -q
-python -m pytest tests/test_estilos.py -q
+python -m pytest tests/test_estilos.py -q 2>&1 | tee evidencias/testes-estilos.txt
 ```
-
-No PowerShell, macOS e Linux, os comandos são iguais depois da ativação do ambiente.
 
 **Observe**
 
-O teste `test_alternativas_explicam_forcas_limites_e_evidencias` impede respostas vazias. O segundo teste compara modificabilidade e throughput. Leia o nome do teste e as asserções antes de concluir o que foi demonstrado.
+O teste `test_alternativas_explicam_forcas_limites_e_evidencias` impede respostas vazias. O terceiro teste compara duas prioridades distintivas: modificabilidade com extensibilidade, depois throughput com processamento incremental. Leia o nome do teste e as asserções antes de concluir o que foi demonstrado.
 
 ### Exploração em dupla
 
 **Execute**
 
-Execute o roteiro criado:
+Execute o roteiro criado e capture a primeira saída. No PowerShell:
 
-```bash
-python evidencias/comparacao.py
+```powershell
+python evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt
 ```
 
-Salve a saída no registro da dupla. Depois altere somente a prioridade:
+Em macOS ou Linux:
+
+```bash
+python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-modificabilidade.txt
+```
+
+Depois altere somente o domínio e as prioridades:
 
 ```python
 cenario = {
-    "dominio": "faturamento",
-    "prioridades": ["throughput"],
+    "dominio": "ingestão em fluxo",
+    "prioridades": ["throughput", "processamento incremental"],
 }
 ```
 
-Execute novamente. Não mude a tabela para forçar uma preferência. A alteração deve representar uma nova força do contexto.
+Execute novamente e capture um arquivo diferente. No PowerShell:
+
+```powershell
+python evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt
+```
+
+Em macOS ou Linux:
+
+```bash
+python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-fluxo.txt
+```
+
+Não mude a tabela para forçar uma preferência. A alteração deve representar novas forças do contexto.
 
 **Compare**
 
-Na primeira execução, microkernel combina modificabilidade e extensibilidade. Na segunda, pipes and filters corresponde a throughput. Compare também os limites e a evidência proposta; mudar apenas o nome vencedor produziria uma análise pobre.
+Na primeira execução, microkernel combina modificabilidade e extensibilidade, com duas evidências correspondentes. Na segunda, pipes and filters combina throughput e processamento incremental. Compare também os limites; mudar apenas o nome vencedor produziria uma análise pobre.
 
 ### Extensão
 
@@ -255,22 +301,39 @@ Em macOS ou Linux:
 podman run --rm --interactive --tty --publish 8080:8080 --volume "$PWD/structurizr:/usr/local/structurizr:Z" docker.io/structurizr/lite
 ```
 
-Abra `http://localhost:8080` no navegador. Localize os quatro módulos, os conectores com auditoria e a tecnologia arquitetural indicada em cada caixa.
+Abra `http://localhost:8080` no navegador. Na visão de containers, localize uma única Aplicação hospitalar. Na visão de componentes, localize os quatro módulos e os conectores com Auditoria. Confira que tecnologias e estilos ocupam campos diferentes.
 
 **Observe**
 
-Altere a descrição de `Triagem`, salve `workspace.dsl` e atualize o navegador. A mudança deve aparecer sem reconstruir uma imagem. Isso demonstra modelo como código, não adequação do estilo.
+Altere a descrição de `Triagem`, salve `workspace.dsl` e atualize o navegador. A mudança deve aparecer sem reconstruir uma imagem. Isso demonstra modelo como código, não adequação do estilo. Copie então a versão executada para as evidências. No PowerShell:
+
+```powershell
+Copy-Item .\structurizr\workspace.dsl .\evidencias\workspace.dsl
+```
+
+Em macOS ou Linux:
+
+```bash
+cp structurizr/workspace.dsl evidencias/workspace.dsl
+```
 
 ## Resultado esperado
 
-A suíte deve encerrar sem falhas. Uma execução típica do teste focado mostra:
+A suíte completa do laboratório possui quatro testes e deve encerrar sem falhas:
 
 ```text
-..                                                                       [100%]
-2 passed
+....                                                                     [100%]
+4 passed
 ```
 
-Para modificabilidade e extensibilidade, a primeira alternativa deve ser `microkernel`, acompanhada de forças, limites e evidências. Para throughput, `pipes and filters` deve ocupar a primeira posição e propor medição de itens processados por segundo. Structurizr Lite deve renderizar Agenda, Triagem, Faturamento e Auditoria com conectores nomeados.
+Uma execução típica do arquivo focado possui três testes:
+
+```text
+...                                                                      [100%]
+3 passed
+```
+
+Para modificabilidade e extensibilidade, a primeira alternativa deve ser `microkernel`, acompanhada das duas forças e evidências. Para throughput e processamento incremental, `pipes and filters` deve ocupar a primeira posição e propor as duas observações correspondentes. Structurizr Lite deve renderizar uma Aplicação hospitalar contendo Agenda, Triagem, Faturamento e Auditoria como componentes internos.
 
 O número exato de segundos do teste pode variar. A comparação importante é semântica: prioridade, justificativa e alternativa mudam de forma coerente.
 
@@ -337,7 +400,7 @@ Demonstrar uma cadeia curta entre força, comparação, estrutura e decisão.
 
 **Execute**
 
-Entregue a pasta `evidencias` com: saída das duas execuções de `comparacao.py`; resultado de `python -m pytest tests/test_estilos.py -q`; `workspace.dsl`; uma captura do diagrama local; e `ADR-001-estilo-inicial.md` preenchido.
+Entregue a pasta `evidencias` com exatamente os artefatos criados no roteiro: `comparacao.py`, `comparacao-modificabilidade.txt`, `comparacao-fluxo.txt`, `testes-estilos.txt`, `workspace.dsl` e `ADR-001-estilo-inicial.md`. Os arquivos de texto preservam os comandos observados; `workspace.dsl` preserva o modelo que foi renderizado.
 
 **Compare**
 

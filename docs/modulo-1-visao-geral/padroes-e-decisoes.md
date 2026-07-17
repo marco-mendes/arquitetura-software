@@ -4,7 +4,7 @@
 
 Discussões arquiteturais perdem precisão quando estilo, padrão e tecnologia são tratados como nomes intercambiáveis. As três categorias se relacionam, mas respondem a perguntas em escalas diferentes.
 
-Um **estilo arquitetural** impõe um vocabulário de elementos, conectores e restrições para organizar a solução. Camadas e microkernel são estilos. Um **padrão** descreve uma solução recorrente para um problema contextualizado, com consequências conhecidas. Repository, Adapter, Circuit Breaker e ADR são padrões em escalas diferentes. Uma **tecnologia** oferece mecanismos concretos: Python, Java, .NET, PostgreSQL, RabbitMQ e Structurizr Lite.
+Um **estilo arquitetural** impõe um vocabulário de elementos, conectores e restrições para organizar a solução. Camadas e microkernel são estilos. Um **padrão** descreve uma solução recorrente para um problema contextualizado, com consequências conhecidas; Repository, Adapter e Circuit Breaker são exemplos. Uma **tecnologia** oferece mecanismos concretos: Python, Java, .NET, PostgreSQL, RabbitMQ e Structurizr Lite. ADR pertence a outra categoria: é uma **prática de documentação de decisões**. Seu formato recorrente registra uma escolha específica, mas a decisão registrada não é, por isso, um padrão de solução.
 
 Escolher Spring Boot não escolhe automaticamente camadas. Um projeto Spring pode ser um monólito modular bem delimitado ou uma coleção sem fronteiras. Adotar FastAPI não define onde as regras residem. Usar ASP.NET Core não garante dependências voltadas ao domínio. A tecnologia habilita construções; a arquitetura declara responsabilidades e restrições.
 
@@ -13,7 +13,7 @@ Escolher Spring Boot não escolhe automaticamente camadas. Um projeto Spring pod
 | Como organizar o sistema completo? | Estilo | monólito modular |
 | Como adaptar uma interface externa? | Padrão | Adapter |
 | Com qual mecanismo executar a interface? | Tecnologia | FastAPI |
-| Como registrar a escolha e suas consequências? | Padrão de decisão | ADR |
+| Como registrar a escolha e suas consequências? | Prática de documentação | ADR |
 
 O [catálogo de padrões](../referencia/catalogo-de-padroes.md) conecta soluções recorrentes aos encontros em que serão aprofundadas. Neste primeiro encontro, o objetivo é reconhecer a escala da escolha e impedir que uma marca de ferramenta substitua o raciocínio.
 

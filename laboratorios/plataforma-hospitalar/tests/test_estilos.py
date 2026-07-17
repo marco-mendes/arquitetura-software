@@ -26,14 +26,30 @@ def test_alternativas_explicam_forcas_limites_e_evidencias():
         assert alternativa["evidencias"]
 
 
-def test_mudar_prioridade_altera_primeira_alternativa_e_justificativa():
+def test_prioridades_distintivas_selecionam_estilos_e_evidencias_exatos():
     por_modificabilidade = comparar_estilos(
-        {"prioridades": ["modificabilidade"]}
+        {"prioridades": ["modificabilidade", "extensibilidade"]}
     )
-    por_throughput = comparar_estilos({"prioridades": ["throughput"]})
+    por_fluxo = comparar_estilos(
+        {"prioridades": ["throughput", "processamento incremental"]}
+    )
 
-    assert por_modificabilidade[0]["estilo"] != por_throughput[0]["estilo"]
-    assert (
-        por_modificabilidade[0]["evidencias"]
-        != por_throughput[0]["evidencias"]
-    )
+    assert por_modificabilidade[0]["estilo"] == "microkernel"
+    assert por_modificabilidade[0]["forcas"][:2] == [
+        "modificabilidade",
+        "extensibilidade",
+    ]
+    assert por_modificabilidade[0]["evidencias"] == [
+        "medir se uma nova regra entra como plugin sem alterar o núcleo",
+        "contar quantas extensões são adicionadas pelo contrato existente",
+    ]
+    assert por_fluxo[0]["estilo"] == "pipes and filters"
+    assert por_fluxo[0]["forcas"] == [
+        "throughput",
+        "composição",
+        "processamento incremental",
+    ]
+    assert por_fluxo[0]["evidencias"] == [
+        "medir itens processados por segundo com lotes representativos",
+        "observar cada etapa produzir saída consumível",
+    ]
