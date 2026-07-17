@@ -6,6 +6,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SiteFoundationTest(unittest.TestCase):
+    def test_homepage_states_course_workload(self):
+        text = (ROOT / "docs/index.md").read_text(encoding="utf-8")
+        self.assertIn("24 horas", text)
+        self.assertIn("seis encontros de quatro horas", text)
+
     def test_required_foundation_files_exist(self):
         for relative in (
             "mkdocs.yml", "requirements.txt",

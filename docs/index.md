@@ -1,6 +1,6 @@
 # Arquitetura de Software
 
-Este site organiza a disciplina de pós-graduação em seis encontros, combinando fundamentos, decisões arquiteturais, estudos de caso e atividades práticas.
+Este site organiza a disciplina de pós-graduação de 24 horas em seis encontros de quatro horas, combinando fundamentos, decisões arquiteturais, estudos de caso e atividades práticas.
 
 ## Encontros
 
