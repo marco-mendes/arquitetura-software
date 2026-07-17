@@ -11,6 +11,26 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
+  attributes/redact_raw_request_path:
+    actions:
+      - key: http.url
+        action: delete
+      - key: http.target
+        action: delete
+      - key: url.full
+        action: delete
+      - key: url.path
+        action: delete
+      - key: http.path
+        action: delete
+      - key: http.request.path
+        action: delete
+      - key: http.request.uri
+        action: delete
+      - key: http.request.url
+        action: delete
+      - key: http.uri
+        action: delete
   batch:
 
 exporters:
@@ -26,5 +46,5 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
+      processors: [attributes/redact_raw_request_path, batch]
       exporters: [otlp/jaeger, debug]

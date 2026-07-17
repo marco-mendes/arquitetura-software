@@ -91,6 +91,7 @@ class ModuleFourTest(unittest.TestCase):
         telemetry = TELEMETRIA.read_text(encoding="utf-8")
         compose = COMPOSE.read_text(encoding="utf-8")
         kong = KONG.read_text(encoding="utf-8")
+        collector = COLLECTOR.read_text(encoding="utf-8")
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
 
         self.assertIn('"/elegibilidades/{beneficiario_id}"', telemetry)
@@ -98,6 +99,23 @@ class ModuleFourTest(unittest.TestCase):
         self.assertNotIn("paciente-001", telemetry)
         self.assertIn("KONG_PROXY_ACCESS_LOG: \"off\"", compose)
         self.assertIn("--no-access-log", compose)
+        self.assertIn("attributes/redact_raw_request_path:", collector)
+        self.assertIn("attributes/redact_raw_request_path", collector)
+        self.assertIn(
+            "processors: [attributes/redact_raw_request_path, batch]", collector
+        )
+        for raw_attribute in (
+            "http.url",
+            "http.target",
+            "url.full",
+            "url.path",
+            "http.path",
+            "http.request.path",
+            "http.request.uri",
+            "http.request.url",
+            "http.uri",
+        ):
+            self.assertIn(raw_attribute, collector)
         self.assertNotIn("paciente-001", kong)
         self.assertNotIn("paciente-001", workshop)
         self.assertIn("métricas são um sinal conceitual", workshop.casefold())

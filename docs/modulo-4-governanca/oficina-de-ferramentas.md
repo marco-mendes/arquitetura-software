@@ -368,7 +368,7 @@ Para registrar o log seguro, em qualquer sistema execute:
 docker compose -f infra/compose.governanca.yml logs --no-color elegibilidade > evidencias/modulo-4/log-elegibilidade.jsonl
 ```
 
-O arquivo deve conter o `correlation_id` gerado e a rota-modelo `/elegibilidades/{beneficiario_id}`; ele não pode conter o valor de `BENEFICIARIO_ID`. O serviço desativa o access log do Uvicorn e o Kong desativa o access log de proxy para que a URI concreta não vá para saída padrão.
+O arquivo deve conter o `correlation_id` gerado e a rota-modelo `/elegibilidades/{beneficiario_id}`; ele não pode conter o valor de `BENEFICIARIO_ID`. O serviço desativa o access log do Uvicorn e o Kong desativa o access log de proxy para que a URI concreta não vá para saída padrão. Antes de exportar spans para Jaeger, o Collector também remove atributos de URL e caminho que Kong possa emitir; a evidência de trace conserva a rota-modelo e nunca a URI concreta.
 
 **Questões exploratórias**
 

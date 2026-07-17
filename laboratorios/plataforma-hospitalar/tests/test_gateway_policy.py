@@ -4,8 +4,9 @@ O teste não cria dados em serviços externos nem depende de painel manual. Ele 
 API HTTP do Jaeger para observar o mesmo trace id que foi enviado ao gateway.
 """
 
-import os
+import json
 import math
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -117,6 +118,10 @@ def test_gateway_adds_correlation_limits_traffic_and_propagates_trace():
         any(tag.get("value") == correlation_id for tag in span["tags"])
         for span in spans
     )
+    serialized_trace = json.dumps(trace, sort_keys=True)
+    assert "paciente-001" not in serialized_trace
+    assert RESOURCE_PATH not in serialized_trace
+    assert "/elegibilidades/{beneficiario_id}" in serialized_trace
     logs = _service_logs()
     assert correlation_id in logs
     assert '"route": "/elegibilidades/{beneficiario_id}"' in logs
