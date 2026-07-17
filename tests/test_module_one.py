@@ -148,8 +148,50 @@ class ModuleOneTest(unittest.TestCase):
         )
         self.assertLess(
             windows.index(r".venv\Scripts\Activate.ps1"),
-            windows.index('python -m pip install -e ".[dev]"'),
+            windows.index(r'.venv\Scripts\python.exe -m pip install -e ".[dev]"'),
         )
+
+        powershell_blocks = re.findall(
+            r"```powershell\n(.*?)```", windows, re.DOTALL
+        )
+        activation_blocks = [
+            block.strip()
+            for block in powershell_blocks
+            if "Activate.ps1" in block
+        ]
+        self.assertEqual(
+            [r".venv\Scripts\Activate.ps1"],
+            activation_blocks,
+        )
+        activation_end = windows.index("```", windows.index("Activate.ps1")) + 3
+        checkpoint = windows.index("`(.venv)`", activation_end)
+        installation = windows.index(
+            r'.venv\Scripts\python.exe -m pip install -e ".[dev]"'
+        )
+        self.assertLess(activation_end, checkpoint)
+        self.assertLess(checkpoint, installation)
+
+        after_venv_creation = windows.split("py -m venv .venv", 1)[1]
+        later_commands = "\n".join(
+            re.findall(
+                r"```powershell\n(.*?)```", after_venv_creation, re.DOTALL
+            )
+        )
+        self.assertNotRegex(later_commands, r"(?m)^python(?:\.exe)?\s")
+        for line in later_commands.splitlines():
+            if any(
+                marker in line
+                for marker in (
+                    "-m pip",
+                    "-m pytest",
+                    "python.exe --version",
+                    "python.exe evidencias",
+                )
+            ):
+                self.assertTrue(
+                    line.startswith(r".venv\Scripts\python.exe"),
+                    line,
+                )
 
         no_activation = windows.split("#### Rota sem ativação", 1)[1]
         for command in (

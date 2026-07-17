@@ -63,24 +63,19 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 
 O escopo `Process` existe apenas nessa sessão; fechar a janela do PowerShell desfaz a alteração. Se uma política organizacional bloquear também esse comando, preserve a política e siga diretamente a rota sem ativação abaixo.
 
-#### Rota com ativação
+#### Ativação opcional
 
-Ative a venv e instale as dependências:
+Tente ativar a venv executando somente o script de ativação:
 
 ```powershell
 .venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-python --version
-python -m pytest --version
-podman --version
 ```
 
-Se `Activate.ps1` continuar bloqueado, não amplie o escopo da política. Use a rota seguinte.
+Como checkpoint, confirme que `(.venv)` aparece no início do prompt. Se aparecer, a ativação funcionou. Se `Activate.ps1` continuar bloqueado ou o marcador não aparecer, não amplie o escopo da política; siga a rota sem ativação.
 
-#### Rota sem ativação
+#### Rota sem ativação e continuação comum
 
-Nesta rota, não execute `Activate.ps1`. Use o interpretador dentro de `.venv` em toda instalação, verificação e execução Python:
+Com ou sem `(.venv)` no prompt, continue pelos mesmos comandos explícitos. Assim, a instalação e os testes não dependem da ativação nem do Python global:
 
 ```powershell
 .venv\Scripts\python.exe -m pip install --upgrade pip
