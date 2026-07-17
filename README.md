@@ -17,7 +17,7 @@ pip install -r requirements.txt
 mkdocs serve
 ```
 
-No Windows PowerShell, ative o ambiente com `.venv\\Scripts\\Activate.ps1`. Depois, abra o endereço informado pelo MkDocs — normalmente `http://127.0.0.1:8000`.
+No Windows PowerShell, ative o ambiente com `.venv\Scripts\Activate.ps1`. Depois, abra o endereço informado pelo MkDocs — normalmente `http://127.0.0.1:8000`.
 
 Antes de enviar alterações, valide o conteúdo e a construção estática:
 

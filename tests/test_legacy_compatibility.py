@@ -18,6 +18,25 @@ class LegacyCompatibilityTest(unittest.TestCase):
         for name in legacy:
             self.assertTrue((ROOT / name).is_file(), name)
 
+    def test_legacy_document_body_is_unchanged_after_transition_note(self):
+        names = subprocess.check_output(
+            ["git", "ls-tree", "-r", "--name-only", "e223a79"],
+            cwd=ROOT,
+            text=True,
+        ).splitlines()
+        legacy = [
+            name
+            for name in names
+            if "/" not in name and name.endswith(".md") and name != "README.md"
+        ]
+        for name in legacy:
+            baseline = subprocess.check_output(
+                ["git", "show", f"e223a79:{name}"],
+                cwd=ROOT,
+            )
+            current = (ROOT / name).read_bytes()
+            self.assertTrue(current.endswith(baseline), name)
+
     def test_readme_documents_preview_validation_and_pages(self):
         text = (ROOT / "README.md").read_text(encoding="utf-8")
         for marker in (
