@@ -32,7 +32,15 @@ nav:
       - Como usar: comecar/como-usar.md
       - Mapa de aprendizagem: comecar/mapa-de-aprendizagem.md
       - Taxonomia de Bloom: comecar/taxonomia-de-bloom.md
-  - "Módulo 1 — Estilos": modulo-1-visao-geral/index.md
+  - "Módulo 1 — Estilos":
+      - Visão geral: modulo-1-visao-geral/index.md
+      - Conceitos: modulo-1-visao-geral/conceitos.md
+      - Padrões e decisões: modulo-1-visao-geral/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-1-visao-geral/exemplo-arquitetural.md
+      - Estudo de caso: modulo-1-visao-geral/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-1-visao-geral/oficina-de-ferramentas.md
+      - Exercícios: modulo-1-visao-geral/exercicios.md
+      - Síntese e referências: modulo-1-visao-geral/sintese-e-referencias.md
   - "Módulo 2 — APIs": modulo-2-apis/index.md
   - "Módulo 3 — Serviços": modulo-3-servicos/index.md
   - "Módulo 4 — Governança": modulo-4-governanca/index.md
