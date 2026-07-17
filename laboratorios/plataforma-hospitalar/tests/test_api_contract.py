@@ -90,6 +90,13 @@ def test_unknown_protocol_returns_structured_404_error():
     }
 
 
+def test_health_endpoints_distinguish_process_liveness_from_traffic_readiness():
+    client = TestClient(app)
+
+    assert client.get("/health/live").json() == {"status": "live"}
+    assert client.get("/health/ready").json() == {"status": "ready"}
+
+
 def test_explicit_openapi_contract_defines_paths_schemas_and_valid_examples():
     contract = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
 

@@ -26,6 +26,20 @@ def limpar_elegibilidades() -> None:
     _elegibilidades.clear()
 
 
+@app.get("/health/live", include_in_schema=False)
+def live() -> dict[str, str]:
+    """Indica que o processo atende, sem consultar dependências externas."""
+
+    return {"status": "live"}
+
+
+@app.get("/health/ready", include_in_schema=False)
+def ready() -> dict[str, str]:
+    """Indica que esta instância pode receber tráfego do Service."""
+
+    return {"status": "ready"}
+
+
 @app.exception_handler(RequestValidationError)
 async def tratar_erro_de_validacao(
     _request, error: RequestValidationError

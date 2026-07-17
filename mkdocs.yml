@@ -77,7 +77,15 @@ nav:
       - Oficina de ferramentas: modulo-5-eventos/oficina-de-ferramentas.md
       - Exercícios: modulo-5-eventos/exercicios.md
       - Síntese e referências: modulo-5-eventos/sintese-e-referencias.md
-  - "Módulo 6 — Nuvem": modulo-6-nuvem/index.md
+  - "Módulo 6 — Nuvem":
+      - Visão geral: modulo-6-nuvem/index.md
+      - Conceitos: modulo-6-nuvem/conceitos.md
+      - Padrões e decisões: modulo-6-nuvem/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-6-nuvem/exemplo-arquitetural.md
+      - Estudo de caso: modulo-6-nuvem/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-6-nuvem/oficina-de-ferramentas.md
+      - Exercícios: modulo-6-nuvem/exercicios.md
+      - Síntese e referências: modulo-6-nuvem/sintese-e-referencias.md
   - Projeto integrador:
       - Visão geral: projeto-integrador/index.md
       - Contexto hospitalar: projeto-integrador/contexto-hospitalar.md
