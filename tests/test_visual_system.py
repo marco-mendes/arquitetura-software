@@ -37,3 +37,10 @@ class AcademiaVisualSystemTest(unittest.TestCase):
         html = on_page_content("<h1>Título</h1><table><tr><td>x</td></tr></table>")
         self.assertIn("module-opening", html)
         self.assertIn("comparison-table", html)
+
+    def test_semantic_hook_does_not_treat_data_class_as_class(self):
+        from course_semantics import on_page_content
+
+        html = on_page_content('<h1 data-class="legacy">Título</h1>')
+        self.assertIn('data-class="legacy"', html)
+        self.assertIn(' class="module-opening"', html)

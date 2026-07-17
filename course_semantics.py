@@ -5,7 +5,10 @@ from __future__ import annotations
 import re
 
 
-_CLASS_ATTRIBUTE = re.compile(r"\bclass=(?P<quote>['\"])(?P<classes>.*?)(?P=quote)", re.IGNORECASE)
+_CLASS_ATTRIBUTE = re.compile(
+    r"(?<=\s)class\s*=\s*(?P<quote>['\"])(?P<classes>.*?)(?P=quote)",
+    re.IGNORECASE,
+)
 
 
 def _add_class(tag: str, class_name: str) -> str:
