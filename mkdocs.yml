@@ -18,6 +18,12 @@ markdown_extensions:
 extra_javascript:
   - assets/javascripts/mermaid.mjs
 
+extra_css:
+  - assets/stylesheets/extra.css
+
+hooks:
+  - course_semantics.py
+
 nav:
   - Início: index.md
   - "Módulo 1 — Estilos": modulo-1-visao-geral/index.md
