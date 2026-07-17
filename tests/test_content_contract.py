@@ -2,6 +2,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+import markdown
+import yaml
+
 from scripts.validate_content import (
     BLOOM,
     MODULES,
@@ -19,14 +22,36 @@ DOCS = ROOT / "docs"
 
 class ContentContractTest(unittest.TestCase):
     def test_course_has_six_modules_and_eight_page_contract(self):
-        self.assertEqual(6, len(MODULES))
-        self.assertEqual(8, len(PAGES))
-        self.assertEqual("index.md", PAGES[0])
-        self.assertEqual("sintese-e-referencias.md", PAGES[-1])
+        expected_modules = (
+            ("modulo-1-visao-geral", "Visão geral de estilos"),
+            ("modulo-2-apis", "Arquitetura de APIs"),
+            ("modulo-3-servicos", "Arquitetura de Serviços"),
+            ("modulo-4-governanca", "Governança de Serviços"),
+            ("modulo-5-eventos", "Arquiteturas de Eventos"),
+            ("modulo-6-nuvem", "Arquiteturas de Nuvens"),
+        )
+        self.assertEqual(expected_modules, tuple(MODULES.items()))
+        self.assertEqual(
+            (
+                "index.md",
+                "conceitos.md",
+                "padroes-e-decisoes.md",
+                "exemplo-arquitetural.md",
+                "estudo-de-caso.md",
+                "oficina-de-ferramentas.md",
+                "exercicios.md",
+                "sintese-e-referencias.md",
+            ),
+            PAGES,
+        )
+        self.assertEqual(
+            ("Recordar", "Compreender", "Aplicar", "Analisar", "Avaliar", "Criar"),
+            BLOOM,
+        )
 
     def test_public_pages_use_assessment_criteria_vocabulary(self):
         for path in DOCS.rglob("*.md"):
-            if "superpowers" in path.parts:
+            if path.relative_to(DOCS).parts[0] == "superpowers":
                 continue
             text = path.read_text(encoding="utf-8").casefold()
             self.assertNotRegex(
@@ -45,6 +70,41 @@ class ContentContractTest(unittest.TestCase):
         self.assertEqual(set(BLOOM), set(sections))
         self.assertIn("### Apoio", sections["Aplicar"])
         self.assertNotIn("## Analisar", sections["Aplicar"])
+
+    def test_mkdocs_renders_explicit_anchors_accepted_by_validator(self):
+        config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
+        extension_names: list[str] = []
+        extension_configs: dict[str, dict] = {}
+        for extension in config["markdown_extensions"]:
+            if isinstance(extension, str):
+                extension_names.append(extension)
+            else:
+                name, settings = next(iter(extension.items()))
+                extension_names.append(name)
+                extension_configs[name] = settings or {}
+
+        self.assertIn("attr_list", extension_names)
+        rendered = markdown.markdown(
+            "## Seção explícita {#anchor-explicito}",
+            extensions=extension_names,
+            extension_configs=extension_configs,
+        )
+        self.assertIn('id="anchor-explicito"', rendered)
+
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            (docs / "destino.md").write_text(
+                "# Destino\n\n## Seção explícita {#anchor-explicito}\n",
+                encoding="utf-8",
+            )
+            source = docs / "origem.md"
+            source.write_text(
+                "# Origem\n\n[Seção](destino.md#anchor-explicito)\n",
+                encoding="utf-8",
+            )
+            self.assertFalse(
+                any("âncora local ausente" in e for e in validate_document(source, docs))
+            )
 
     def test_validator_rejects_placeholders_and_public_policy_vocabulary(self):
         samples = {
@@ -66,6 +126,39 @@ class ContentContractTest(unittest.TestCase):
                     self.assertTrue(
                         any(expected in error for error in validate_document(page, docs))
                     )
+
+    def test_access_classification_spans_sections_without_matching_hospital_domain(self):
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            page = docs / "pagina.md"
+            for heading in ("Acesso à ferramenta", "Instalação", "Pré-requisitos"):
+                with self.subTest(heading=heading):
+                    page.write_text(
+                        "# Ferramenta\n\n"
+                        f"## {heading}\n\n"
+                        "Antes da oficina, prepare o ambiente.\n\n"
+                        "Requer cartão.\n",
+                        encoding="utf-8",
+                    )
+                    self.assertTrue(
+                        any(
+                            "classificação de acesso" in error
+                            for error in validate_document(page, docs)
+                        )
+                    )
+
+            page.write_text(
+                "# Caso hospitalar\n\n"
+                "A cobrança hospitalar gera crédito no prontuário.\n\n"
+                "Use a ferramenta para simular a cobrança hospitalar.\n",
+                encoding="utf-8",
+            )
+            self.assertFalse(
+                any(
+                    "classificação de acesso" in error
+                    for error in validate_document(page, docs)
+                )
+            )
 
     def test_validator_checks_local_links_anchors_and_figure_accessibility(self):
         with TemporaryDirectory() as temporary:
@@ -95,6 +188,98 @@ class ContentContractTest(unittest.TestCase):
             ):
                 self.assertTrue(any(expected in error for error in errors), expected)
 
+    def test_resource_parser_supports_reference_html_and_ignores_fenced_examples(self):
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            (docs / "figura.png").write_bytes(b"png")
+            (docs / "destino.md").write_text(
+                "# Destino\n\n## Alvo\n", encoding="utf-8"
+            )
+            page = docs / "pagina.md"
+            page.write_text(
+                "# Recursos\n\n"
+                "[Inline](destino.md#alvo)\n\n"
+                "[Referência][destino]\n\n"
+                '<a href="destino.md#alvo">HTML</a>\n\n'
+                "![Mapa por referência][figura]\n\n"
+                "**Leitura textual da figura:** O mapa conecta origem e destino.\n\n"
+                '<img src="figura.png" alt="Mapa em HTML">\n\n'
+                "**Leitura textual da figura:** O mapa HTML repete a relação.\n\n"
+                "```markdown\n"
+                "[Exemplo não ativo](ausente.md)\n"
+                "![Imagem não ativa](ausente.png)\n"
+                '<a href="ausente-html.md">Exemplo</a>\n'
+                "```\n\n"
+                "[destino]: destino.md#alvo\n"
+                "[figura]: figura.png\n",
+                encoding="utf-8",
+            )
+
+            self.assertEqual([], validate_document(page, docs))
+
+    def test_reference_and_html_resources_are_actively_validated(self):
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            page = docs / "pagina.md"
+            page.write_text(
+                "# Recursos\n\n"
+                "[Referência ausente][destino]\n\n"
+                '<a href="ausente-html.md">HTML ausente</a>\n\n'
+                "![Figura ausente][figura]\n\n"
+                "**Leitura textual da figura:** Figura de teste.\n\n"
+                '<img src="ausente-html.png" alt="">\n\n'
+                "**Leitura textual da figura:** Figura HTML de teste.\n\n"
+                "[destino]: ausente-referencia.md\n"
+                "[figura]: ausente-referencia.png\n",
+                encoding="utf-8",
+            )
+
+            errors = validate_document(page, docs)
+
+            for target in (
+                "ausente-referencia.md",
+                "ausente-html.md",
+                "ausente-referencia.png",
+                "ausente-html.png",
+            ):
+                self.assertTrue(any(target in error for error in errors), target)
+            self.assertTrue(any("imagem sem texto alternativo" in e for e in errors))
+
+    def test_figure_equivalence_must_be_the_next_block_after_optional_caption(self):
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            (docs / "figura.png").write_bytes(b"png")
+            page = docs / "pagina.md"
+            page.write_text(
+                "# Figura\n\n"
+                "![Mapa](figura.png)\n\n"
+                "*Figura 1 — Mapa do fluxo.*\n\n"
+                "**Leitura textual da figura:** Origem leva ao destino.\n",
+                encoding="utf-8",
+            )
+            self.assertFalse(
+                any("figura sem leitura textual" in e for e in validate_document(page, docs))
+            )
+
+            invalid_followings = (
+                "Parágrafo interveniente.\n\n**Leitura textual da figura:** Tardia.",
+                "## Outra seção\n\n**Leitura textual da figura:** Tardia.",
+                "![Outra](figura.png)\n\n**Leitura textual da figura:** Só a segunda.",
+                "**Equivalente textual:** Marcador incorreto.",
+            )
+            for following in invalid_followings:
+                with self.subTest(following=following):
+                    page.write_text(
+                        f"# Figura\n\n![Mapa](figura.png)\n\n{following}\n",
+                        encoding="utf-8",
+                    )
+                    self.assertTrue(
+                        any(
+                            "figura sem leitura textual" in error
+                            for error in validate_document(page, docs)
+                        )
+                    )
+
     def test_procedural_bold_labels_are_isolated_as_paragraphs(self):
         with TemporaryDirectory() as temporary:
             docs = Path(temporary)
@@ -103,12 +288,17 @@ class ContentContractTest(unittest.TestCase):
                 "# Oficina\n\n"
                 "**Execute** rode o comando.\n\n"
                 "**Observe**\n"
-                "Leia a saída.\n",
+                "Leia a saída.\n\n"
+                "**Prepare** crie o diretório.\n\n"
+                "**Instale:** execute o instalador.\n\n"
+                "**Verifique** confira a versão.\n\n"
+                "**Interpretação** compare a saída.\n\n"
+                "**Limpeza** remova os recursos.\n",
                 encoding="utf-8",
             )
             errors = validate_document(page, docs)
             self.assertEqual(
-                2,
+                7,
                 sum("rótulo procedimental aglutinado" in error for error in errors),
             )
 
@@ -171,6 +361,36 @@ class ContentContractTest(unittest.TestCase):
             ):
                 self.assertTrue(any(expected in error for error in errors), expected)
 
+    def test_percentages_are_scoped_to_assessment_criteria_blocks(self):
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            page = docs / "avaliacao.md"
+            page.write_text(
+                "# Avaliação\n\n"
+                "| Entrada | SLA |\n| --- | ---: |\n| Agendamento | 99,9% |\n\n"
+                "## Instrumento com tabela\n\n"
+                "**Critérios de avaliação**\n\n"
+                "| Critério | Percentual |\n| --- | ---: |\n"
+                "| Evidência | 40% |\n| Decisão | 50% |\n\n"
+                "## Instrumento com lista\n\n"
+                "**Critérios de avaliação**\n\n"
+                "- Clareza — 60%\n- Consequências — 40%\n\n"
+                "## Instrumento sem valores\n\n"
+                "**Critérios de avaliação**\n\n"
+                "A entrega será observada pela coerência.\n",
+                encoding="utf-8",
+            )
+
+            errors = validate_document(page, docs)
+
+            self.assertEqual(
+                1, sum("percentuais do instrumento somam 90%" in e for e in errors)
+            )
+            self.assertEqual(
+                1, sum("instrumento sem percentuais" in e for e in errors)
+            )
+            self.assertFalse(any("99.9" in error or "99,9" in error for error in errors))
+
     def test_all_validation_skips_internal_superpowers_documents(self):
         with TemporaryDirectory() as temporary:
             docs = Path(temporary)
@@ -180,8 +400,16 @@ class ContentContractTest(unittest.TestCase):
                 "# Plano\n\nTODO: material interno.\n", encoding="utf-8"
             )
             (docs / "publica.md").write_text("# Página pública\n", encoding="utf-8")
+            nested_public = docs / "comecar" / "superpowers"
+            nested_public.mkdir(parents=True)
+            (nested_public / "pagina.md").write_text(
+                "# Página pública\n\nTODO: validar esta página.\n", encoding="utf-8"
+            )
 
             errors = validate_all(docs)
 
             self.assertFalse(any("superpowers/plano.md" in error for error in errors))
+            self.assertTrue(
+                any("comecar/superpowers/pagina.md" in error for error in errors)
+            )
             self.assertTrue(any("32.000–51.000 palavras" in error for error in errors))

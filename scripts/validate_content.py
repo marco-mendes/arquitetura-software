@@ -4,7 +4,9 @@
 import argparse
 import re
 import sys
+from dataclasses import dataclass
 from decimal import Decimal
+from html import unescape
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -44,22 +46,49 @@ _ACCESS_CLASSIFICATION = re.compile(
     r"\b(?:cart(?:ão|ao)|cr[eé]dito|cobran(?:ça|ca))\b"
 )
 _ACCESS_CONTEXT = re.compile(
-    r"\b(?:acesso|assinatura|cadastro|conta|ferramenta|pagamento|plano|uso|usar)\w*\b"
+    r"\b(?:acesso|assinatura|cadastro|conta|pagamento)\w*\b"
+)
+_TOOL_ACCESS_HEADING = re.compile(
+    r"\b(?:acesso|instala(?:ção|cao)|pr[eé]-?requisitos?|requisitos?)\b"
+)
+_TOOL_REQUIREMENT = re.compile(
+    r"\bferramenta\b.{0,80}\b(?:exige|requer|depende|necessita|solicita)\w*\b",
+    re.DOTALL,
+)
+_COMMERCIAL_REQUIREMENT = re.compile(
+    r"\b(?:cart(?:ão|ao)|cr[eé]dito|cobran(?:ça|ca))\b.{0,80}"
+    r"\b(?:para|ao)\s+(?:acessar|instalar|cadastrar|usar)\w*\b",
+    re.DOTALL,
 )
 _MARKDOWN_LINK = re.compile(
     r"(?P<image>!)?\[(?P<label>[^\]]*)\]"
     r"\((?P<target><[^>]+>|[^\s)]+)(?:\s+[\"'][^\"']*[\"'])?\)"
 )
+_REFERENCE_LINK = re.compile(
+    r"(?P<image>!)?\[(?P<label>[^\]]+)\]\[(?P<reference>[^\]]*)\]"
+)
+_REFERENCE_DEFINITION = re.compile(
+    r"^[ \t]{0,3}\[(?P<reference>[^\]]+)\]:[ \t]*"
+    r"(?P<target><[^>]+>|\S+)(?:[ \t]+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?[ \t]*$",
+    re.MULTILINE,
+)
+_HTML_RESOURCE = re.compile(r"<(?P<tag>a|img)\b[^>]*>", re.IGNORECASE)
+_HTML_ATTRIBUTE = re.compile(
+    r"\b(?P<name>href|src|alt)[ \t]*=[ \t]*"
+    r"(?:\"(?P<double>[^\"]*)\"|'(?P<single>[^']*)'|(?P<bare>[^\s>]+))",
+    re.IGNORECASE,
+)
 _HEADING = re.compile(r"^#{1,6}[ \t]+(?P<title>.+?)[ \t]*#*[ \t]*$", re.MULTILINE)
 _EXPLICIT_ANCHOR = re.compile(r"\{[ \t]*#(?P<anchor>[A-Za-z][\w:.-]*)[^}]*\}")
 _TEXTUAL_EQUIVALENT = "**Leitura textual da figura:**"
+_FIGURE_CAPTION = re.compile(
+    r"^(?:\*(?:Figura|Fonte)\b[^\n]*\*|_(?:Figura|Fonte)\b[^\n]*_|"
+    r"<figcaption\b[^>]*>.*?</figcaption>)",
+    re.IGNORECASE | re.DOTALL,
+)
 _PROCEDURAL_LABEL = re.compile(
-    r"^[ \t]*(?:[-*+]|\d+\.)?[ \t]*\*\*(?:"
-    r"Objetivo|Pré-requisitos?|Execute|Observe|Compare|Situação|Seu papel|"
-    r"Insumos disponíveis|Como conduzir|Entrega esperada|Critérios de avaliação|"
-    r"Resultado esperado|Evidência a entregar"
-    r"):?[ \t]*\*\*(?P<tail>.*)$",
-    re.IGNORECASE,
+    r"^[ \t]*(?:(?:[-*+]|\d+\.)[ \t]+)?"
+    r"\*\*(?P<label>[^*\n]+)\*\*(?P<tail>.*)$"
 )
 _ADVANCED_MARKERS = (
     "**Situação**",
@@ -76,8 +105,24 @@ _ANSWER_BLOCK = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 _TABLE = re.compile(r"(?:^[ \t]*\|.*\|[ \t]*(?:\n|$)){2,}", re.MULTILINE)
+_LIST_ITEM = re.compile(r"^[ \t]*(?:[-*+]|\d+\.)[ \t]+.*$", re.MULTILINE)
 _PERCENTAGE = re.compile(r"(?<!\w)(\d+(?:[.,]\d+)?)[ \t]*%")
+_CRITERIA_LABEL = re.compile(
+    r"^[ \t]*\*\*Critérios de avaliação:?\*\*[ \t]*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+_BOLD_LABEL = re.compile(r"^[ \t]*\*\*[^*\n]+\*\*[ \t]*$", re.MULTILINE)
 _WORD = re.compile(r"\b[^\W_]+(?:[-'][^\W_]+)*\b", re.UNICODE)
+
+
+@dataclass(frozen=True)
+class _Resource:
+    kind: str
+    target: str | None
+    label: str
+    start: int
+    end: int
+    reference: str | None = None
 
 
 def bloom_sections(text: str) -> dict[str, str]:
@@ -137,35 +182,125 @@ def _local_target(source: Path, docs_root: Path, target: str) -> tuple[Path, str
     return destination.resolve(), parsed.fragment
 
 
+def _mask_fenced_code(text: str) -> str:
+    """Substitui cercas e seu conteúdo por espaços, preservando offsets e linhas."""
+
+    masked: list[str] = []
+    fence_character: str | None = None
+    fence_length = 0
+    for line in text.splitlines(keepends=True):
+        content = line.lstrip(" ")
+        indent = len(line) - len(content)
+        opening = re.match(r"(?P<fence>`{3,}|~{3,})", content) if indent <= 3 else None
+        inside_fence = fence_character is not None
+        if inside_fence:
+            stripped = content.rstrip("\r\n")
+            if re.fullmatch(
+                rf"{re.escape(fence_character)}{{{fence_length},}}[ \t]*", stripped
+            ):
+                fence_character = None
+                fence_length = 0
+            masked.append("".join(char if char in "\r\n" else " " for char in line))
+            continue
+        if opening:
+            fence = opening.group("fence")
+            fence_character = fence[0]
+            fence_length = len(fence)
+            masked.append("".join(char if char in "\r\n" else " " for char in line))
+            continue
+        masked.append(line)
+    return "".join(masked)
+
+
+def _reference_key(value: str) -> str:
+    return " ".join(value.split()).casefold()
+
+
+def _html_attributes(tag: str) -> dict[str, str]:
+    attributes: dict[str, str] = {}
+    for match in _HTML_ATTRIBUTE.finditer(tag):
+        value = match.group("double") or match.group("single") or match.group("bare") or ""
+        attributes[match.group("name").casefold()] = unescape(value)
+    return attributes
+
+
+def _resources(text: str) -> tuple[str, list[_Resource]]:
+    masked = _mask_fenced_code(text)
+    definitions = {
+        _reference_key(match.group("reference")): match.group("target")
+        for match in _REFERENCE_DEFINITION.finditer(masked)
+    }
+    resources: list[_Resource] = []
+    for match in _MARKDOWN_LINK.finditer(masked):
+        resources.append(
+            _Resource(
+                "image" if match.group("image") else "link",
+                match.group("target"),
+                match.group("label"),
+                match.start(),
+                match.end(),
+            )
+        )
+    for match in _REFERENCE_LINK.finditer(masked):
+        reference = match.group("reference") or match.group("label")
+        resources.append(
+            _Resource(
+                "image" if match.group("image") else "link",
+                definitions.get(_reference_key(reference)),
+                match.group("label"),
+                match.start(),
+                match.end(),
+                reference,
+            )
+        )
+    for match in _HTML_RESOURCE.finditer(masked):
+        attributes = _html_attributes(match.group(0))
+        is_image = match.group("tag").casefold() == "img"
+        resources.append(
+            _Resource(
+                "image" if is_image else "link",
+                attributes.get("src" if is_image else "href"),
+                attributes.get("alt", ""),
+                match.start(),
+                match.end(),
+            )
+        )
+    return masked, sorted(resources, key=lambda resource: resource.start)
+
+
+def _has_proximal_textual_equivalent(masked: str, image: _Resource) -> bool:
+    following = masked[image.end :].lstrip()
+    caption = _FIGURE_CAPTION.match(following)
+    if caption:
+        following = following[caption.end() :].lstrip()
+    return following.startswith(_TEXTUAL_EQUIVALENT)
+
+
 def _validate_links_and_figures(path: Path, docs_root: Path, text: str) -> list[str]:
     location = _location(path, docs_root)
     errors: list[str] = []
-    matches = list(_MARKDOWN_LINK.finditer(text))
-    image_matches = [match for match in matches if match.group("image")]
-    for match in matches:
-        raw_target = match.group("target")
+    masked, resources = _resources(text)
+    for resource in resources:
+        raw_target = resource.target
+        if raw_target is None:
+            reference = resource.reference or resource.label
+            errors.append(f"{location}: referência Markdown ausente: {reference}")
+            continue
         target = raw_target[1:-1] if raw_target.startswith("<") else raw_target
         parsed = urlsplit(unquote(target))
-        if parsed.scheme or target.startswith("//"):
-            continue
-        destination, fragment = _local_target(path, docs_root, raw_target)
-        if not destination.is_file():
-            errors.append(f"{location}: arquivo local ausente: {target}")
-        elif fragment and destination.suffix.casefold() in {".md", ".markdown"}:
-            destination_text = destination.read_text(encoding="utf-8")
-            if fragment not in _anchors(destination_text):
-                errors.append(f"{location}: âncora local ausente: {target}")
-        if match.group("image") and not match.group("label").strip():
+        if not parsed.scheme and not target.startswith("//"):
+            destination, fragment = _local_target(path, docs_root, raw_target)
+            if not destination.is_file():
+                errors.append(f"{location}: arquivo local ausente: {target}")
+            elif fragment and destination.suffix.casefold() in {".md", ".markdown"}:
+                destination_text = destination.read_text(encoding="utf-8")
+                if fragment not in _anchors(destination_text):
+                    errors.append(f"{location}: âncora local ausente: {target}")
+        if resource.kind == "image" and not resource.label.strip():
             errors.append(f"{location}: imagem sem texto alternativo: {target}")
-
-    for index, match in enumerate(image_matches):
-        end = image_matches[index + 1].start() if index + 1 < len(image_matches) else len(text)
-        following = text[match.end() : end]
-        next_section = re.search(r"^##[ \t]", following, re.MULTILINE)
-        if next_section:
-            following = following[: next_section.start()]
-        if _TEXTUAL_EQUIVALENT not in following:
-            target = match.group("target")
+        if resource.kind == "image" and not _has_proximal_textual_equivalent(
+            masked, resource
+        ):
             errors.append(f"{location}: figura sem leitura textual: {target}")
     return errors
 
@@ -192,14 +327,69 @@ def _validate_procedural_labels(path: Path, docs_root: Path, text: str) -> list[
     return errors
 
 
+def _access_classification_errors(text: str, location: str) -> list[str]:
+    folded = text.casefold()
+    candidates = list(re.split(r"\n[ \t]*\n", folded))
+    scoped_sections: list[str] = []
+    headings = list(_HEADING.finditer(folded))
+    for index, heading in enumerate(headings):
+        title = heading.group("title")
+        if not _TOOL_ACCESS_HEADING.search(title):
+            continue
+        level = len(heading.group(0)) - len(heading.group(0).lstrip("#"))
+        end = len(folded)
+        for following in headings[index + 1 :]:
+            following_level = len(following.group(0)) - len(
+                following.group(0).lstrip("#")
+            )
+            if following_level <= level:
+                end = following.start()
+                break
+        scoped_sections.append(folded[heading.start() : end])
+
+    if any(_ACCESS_CLASSIFICATION.search(section) for section in scoped_sections):
+        return [f"{location}: classificação de acesso com linguagem comercial"]
+
+    for candidate in candidates:
+        has_commercial_language = _ACCESS_CLASSIFICATION.search(candidate)
+        has_access_classification = (
+            _ACCESS_CONTEXT.search(candidate)
+            or _TOOL_REQUIREMENT.search(candidate)
+            or _COMMERCIAL_REQUIREMENT.search(candidate)
+        )
+        if has_commercial_language and has_access_classification:
+            return [f"{location}: classificação de acesso com linguagem comercial"]
+    return []
+
+
+def _criteria_blocks(text: str) -> list[str]:
+    markers = list(_CRITERIA_LABEL.finditer(text))
+    blocks: list[str] = []
+    for index, marker in enumerate(markers):
+        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        for boundary in (_HEADING.search(text, marker.end()), _BOLD_LABEL.search(text, marker.end())):
+            if boundary and boundary.start() < end:
+                end = boundary.start()
+        blocks.append(text[marker.end() : end])
+    return blocks
+
+
 def _percentage_errors(text: str, location: str, context: str = "") -> list[str]:
     errors: list[str] = []
-    for instrument, table in enumerate(_TABLE.finditer(text), start=1):
+    for instrument, block in enumerate(_criteria_blocks(text), start=1):
+        assessment_rows = [match.group(0) for match in _TABLE.finditer(block)]
+        assessment_rows.extend(match.group(0) for match in _LIST_ITEM.finditer(block))
         values = [
             Decimal(value.replace(",", "."))
-            for value in _PERCENTAGE.findall(table.group(0))
+            for row in assessment_rows
+            for value in _PERCENTAGE.findall(row)
         ]
         if not values:
+            prefix = f"{context}: " if context else ""
+            errors.append(
+                f"{location}: {prefix}instrumento sem percentuais "
+                f"(instrumento {instrument}; esperado: 100%)"
+            )
             continue
         total = sum(values, Decimal(0))
         if total != Decimal(100):
@@ -248,8 +438,6 @@ def _validate_exercises(path: Path, docs_root: Path) -> list[str]:
                     f"{location}: {level}: marcador obrigatório ausente: {marker}"
                 )
         errors.extend(_percentage_errors(section, location, level))
-        if section and not _PERCENTAGE.search(section):
-            errors.append(f"{location}: {level}: critérios sem percentuais")
     return errors
 
 
@@ -263,12 +451,7 @@ def validate_document(path: Path, docs_root: Path) -> list[str]:
         errors.append(f"{location}: marcador provisório")
     if _ASSESSMENT_VOCABULARY.search(text):
         errors.append(f"{location}: vocabulário público proibido")
-    folded = text.casefold()
-    for block in re.split(r"\n[ \t]*\n", folded):
-        if _ACCESS_CLASSIFICATION.search(block) and _ACCESS_CONTEXT.search(block):
-            errors.append(
-                f"{location}: classificação de acesso com linguagem comercial"
-            )
+    errors.extend(_access_classification_errors(text, location))
     errors.extend(_validate_links_and_figures(path, docs_root, text))
     errors.extend(_validate_procedural_labels(path, docs_root, text))
     if path.name != "exercicios.md":
@@ -308,7 +491,7 @@ def validate_all(docs_root: Path) -> list[str]:
     errors: list[str] = []
     for path in sorted(docs_root.rglob("*.md")):
         relative_parts = path.relative_to(docs_root).parts
-        if "superpowers" in relative_parts:
+        if relative_parts and relative_parts[0] == "superpowers":
             continue
         if relative_parts and relative_parts[0] in MODULES:
             continue
