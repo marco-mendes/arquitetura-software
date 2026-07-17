@@ -20,7 +20,7 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-    command: ["python", "-m", "uvicorn", "hospital.servicos.elegibilidade:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["python", "-m", "uvicorn", "hospital.servicos.elegibilidade:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
     environment:
       DATABASE_URL: postgresql://elegibilidade:elegibilidade@db_elegibilidade:5432/elegibilidade
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
@@ -44,8 +44,8 @@ services:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /kong/kong.yml
       KONG_TRACING_INSTRUMENTATIONS: request
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ACCESS_LOG: "off"
+      KONG_ADMIN_ACCESS_LOG: "off"
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: "off"

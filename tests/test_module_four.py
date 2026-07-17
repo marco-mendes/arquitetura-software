@@ -13,6 +13,7 @@ KONG = LAB / "infra" / "kong" / "kong.yml"
 KONG_DOCKERFILE = LAB / "infra" / "kong" / "Dockerfile"
 COLLECTOR = LAB / "infra" / "observabilidade" / "otel-collector.yml"
 COLLECTOR_DOCKERFILE = LAB / "infra" / "observabilidade" / "Dockerfile"
+TELEMETRIA = LAB / "src" / "hospital" / "telemetria.py"
 
 
 class ModuleFourTest(unittest.TestCase):
@@ -74,8 +75,8 @@ class ModuleFourTest(unittest.TestCase):
         for fragment in (
             "compose.governanca.yml config --quiet",
             "compose.governanca.yml up -d --build --wait",
-            "http://localhost:${ELEGIBILIDADE_PORT}/elegibilidades/paciente-001",
-            "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/paciente-001",
+            "http://localhost:${ELEGIBILIDADE_PORT}/elegibilidades/${BENEFICIARIO_ID}",
+            "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/${BENEFICIARIO_ID}",
             "X-Correlation-ID",
             "api/traces/${TRACE_ID}",
             "429 Too Many Requests",
@@ -85,6 +86,22 @@ class ModuleFourTest(unittest.TestCase):
             "test_gateway_policy.py",
         ):
             self.assertIn(fragment, workshop)
+
+    def test_observability_redacts_identifiers_and_scopes_metrics_to_concepts(self):
+        telemetry = TELEMETRIA.read_text(encoding="utf-8")
+        compose = COMPOSE.read_text(encoding="utf-8")
+        kong = KONG.read_text(encoding="utf-8")
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+
+        self.assertIn('"/elegibilidades/{beneficiario_id}"', telemetry)
+        self.assertNotIn("request.url.path", telemetry)
+        self.assertNotIn("paciente-001", telemetry)
+        self.assertIn("KONG_PROXY_ACCESS_LOG: \"off\"", compose)
+        self.assertIn("--no-access-log", compose)
+        self.assertNotIn("paciente-001", kong)
+        self.assertNotIn("paciente-001", workshop)
+        self.assertIn("métricas são um sinal conceitual", workshop.casefold())
+        self.assertIn("não coleta nem consulta métricas", workshop.casefold())
 
     def test_declarative_stack_has_reproducible_runtime_policies(self):
         compose = COMPOSE.read_text(encoding="utf-8")

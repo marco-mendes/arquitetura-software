@@ -8,11 +8,11 @@ Esta oficina acrescenta governança à plataforma hospitalar sem alterar a front
 | --- | --- | --- |
 | Docker Engine e Compose v2 | criar rede e contêineres | `docker version` e `docker compose version` |
 | Kong Gateway 3.8 | rota e políticas declaradas | resposta com cabeçalho e `429` |
-| OpenTelemetry Collector 0.111 | receber e encaminhar OTLP | logs e trace no destino |
+| OpenTelemetry Collector 0.111 | receber e encaminhar OTLP | trace no destino |
 | Jaeger all-in-one 1.62 | consultar trace local | `GET /api/traces/{id}` |
 | Python 3.11 ou superior | executar integração | `test_gateway_policy.py` |
 
-O Docker Compose é uma reprodução de estudo, não uma topologia de produção. O limite de três chamadas por segundo usa armazenamento local do Kong; múltiplas réplicas exigiriam uma decisão de armazenamento compartilhado. O Jaeger local não é retenção de dados clínicos e não deve receber dados sensíveis.
+O Docker Compose é uma reprodução de estudo, não uma topologia de produção. O limite de três chamadas por segundo usa armazenamento local do Kong; múltiplas réplicas exigiriam uma decisão de armazenamento compartilhado. O Jaeger local não é retenção de dados clínicos e não deve receber dados sensíveis. Métricas são um sinal conceitual nesta oficina: ela não coleta nem consulta métricas. As evidências runtime deste roteiro são cabeçalhos, `429`, log JSON seguro e traces no Jaeger.
 
 ## Pré-requisitos
 
@@ -130,6 +130,7 @@ No macOS ou Linux:
 export ELEGIBILIDADE_PORT=18001
 export GATEWAY_PORT=18000
 export JAEGER_PORT=16686
+export BENEFICIARIO_ID="<identificador-sintetico-da-base-local>"
 docker compose -f infra/compose.governanca.yml config --quiet
 docker compose -f infra/compose.governanca.yml config --services
 ```
@@ -140,6 +141,7 @@ No PowerShell:
 $env:ELEGIBILIDADE_PORT = 18001
 $env:GATEWAY_PORT = 18000
 $env:JAEGER_PORT = 16686
+$env:BENEFICIARIO_ID = "<identificador-sintetico-da-base-local>"
 docker compose -f infra/compose.governanca.yml config --quiet
 docker compose -f infra/compose.governanca.yml config --services
 ```
@@ -147,6 +149,8 @@ docker compose -f infra/compose.governanca.yml config --services
 **Observe**
 
 O primeiro comando não imprime conteúdo e termina sem erro. O segundo lista banco, Elegibilidade, Kong, Collector e Jaeger. `kong.yml` declara rota, correlation ID, rate limiting e OTLP; `otel-collector.yml` encaminha ao Jaeger. PostgreSQL e API administrativa do Kong não publicam portas.
+
+Defina `BENEFICIARIO_ID` com o identificador sintético provisionado pela base local. Esse valor só entra na chamada HTTP: não o copie para nome de evidência, log, atributo de trace ou texto de entrega.
 
 **Compare**
 
@@ -232,7 +236,7 @@ docker compose -f infra/compose.governanca.yml ps
 
 **Resultado esperado**
 
-Os cinco serviços ficam saudáveis. O acesso direto usa `http://localhost:${ELEGIBILIDADE_PORT}/elegibilidades/paciente-001`; o caminho público usa `http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/paciente-001`.
+Os cinco serviços ficam saudáveis. O acesso direto usa `http://localhost:${ELEGIBILIDADE_PORT}/elegibilidades/${BENEFICIARIO_ID}`; o caminho público usa `http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/${BENEFICIARIO_ID}`.
 
 **Contingência**
 
@@ -241,17 +245,17 @@ Se a construção não baixar imagem, guarde o log e repita quando houver conect
 Em macOS ou Linux, consulte diretamente e depois pelo gateway:
 
 ```bash
-curl -i "http://localhost:${ELEGIBILIDADE_PORT}/elegibilidades/paciente-001"
+curl -i "http://localhost:${ELEGIBILIDADE_PORT}/elegibilidades/${BENEFICIARIO_ID}"
 export CORRELATION_ID="aula-$(uuidgen | tr '[:upper:]' '[:lower:]')"
-curl -i "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/paciente-001" -H "X-Correlation-ID: ${CORRELATION_ID}"
+curl -i "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/${BENEFICIARIO_ID}" -H "X-Correlation-ID: ${CORRELATION_ID}"
 ```
 
 No PowerShell:
 
 ```powershell
 $env:CORRELATION_ID = "aula-" + [guid]::NewGuid().ToString()
-curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/elegibilidades/paciente-001"
-curl.exe -i "http://localhost:$env:GATEWAY_PORT/hospital/elegibilidades/paciente-001" -H "X-Correlation-ID: $env:CORRELATION_ID"
+curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/elegibilidades/$env:BENEFICIARIO_ID"
+curl.exe -i "http://localhost:$env:GATEWAY_PORT/hospital/elegibilidades/$env:BENEFICIARIO_ID" -H "X-Correlation-ID: $env:CORRELATION_ID"
 ```
 
 **Observe**
@@ -275,25 +279,33 @@ Exceder deliberadamente o limite declarado e interpretar a recusa.
 
 **Pré-requisito**
 
-Espere dois segundos após a chamada anterior para iniciar janela nova.
+Entre em uma janela nova de um segundo. A preparação abaixo não toca o gateway; assim, as quatro chamadas seguintes são a única carga contada para esta prova.
 
 **Execute**
 
-No macOS ou Linux, envie quatro chamadas em sequência:
+No macOS ou Linux, espere até o começo da próxima janela e envie quatro chamadas imediatamente em sequência:
 
 ```bash
-for n in 1 2 3 4; do curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/paciente-001"; done
+python -c 'import time; time.sleep(max(0, int(time.time()) + 1.15 - time.time()))'
+for n in 1 2 3 4; do curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/${BENEFICIARIO_ID}"; done
+python -c 'import time; time.sleep(max(0, int(time.time()) + 1.15 - time.time()))'
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/${BENEFICIARIO_ID}"
 ```
 
 No PowerShell:
 
 ```powershell
-1..4 | ForEach-Object { curl.exe -s -o NUL -w "%{http_code}" "http://localhost:$env:GATEWAY_PORT/hospital/elegibilidades/paciente-001" }
+$ateProximaJanela = 1100 - ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() % 1000)
+Start-Sleep -Milliseconds $ateProximaJanela
+1..4 | ForEach-Object { curl.exe -s -o NUL -w "%{http_code}`n" "http://localhost:$env:GATEWAY_PORT/hospital/elegibilidades/$env:BENEFICIARIO_ID" }
+$ateProximaJanela = 1100 - ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() % 1000)
+Start-Sleep -Milliseconds $ateProximaJanela
+curl.exe -s -o NUL -w "%{http_code}`n" "http://localhost:$env:GATEWAY_PORT/hospital/elegibilidades/$env:BENEFICIARIO_ID"
 ```
 
 **Resultado esperado**
 
-Três chamadas na janela retornam `200`; uma posterior retorna `429 Too Many Requests`. Após mais de um segundo, nova chamada pode ser aceita. O `429` é proteção de tráfego, não indisponibilidade de Elegibilidade.
+As quatro primeiras linhas são exatamente `200`, `200`, `200` e `429 Too Many Requests`. A quinta linha, depois da janela nova, volta a `200`. O `429` é proteção de tráfego, não indisponibilidade de Elegibilidade.
 
 **Observe**
 
@@ -325,7 +337,7 @@ No macOS ou Linux:
 ```bash
 export TRACE_ID=$(python -c 'from uuid import uuid4; print(uuid4().hex)')
 export SPAN_ID=$(python -c 'from uuid import uuid4; print(uuid4().hex[:16])')
-curl -i "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/paciente-001" -H "X-Correlation-ID: ${CORRELATION_ID}" -H "traceparent: 00-${TRACE_ID}-${SPAN_ID}-01"
+curl -i "http://localhost:${GATEWAY_PORT}/hospital/elegibilidades/${BENEFICIARIO_ID}" -H "X-Correlation-ID: ${CORRELATION_ID}" -H "traceparent: 00-${TRACE_ID}-${SPAN_ID}-01"
 curl -s "http://localhost:${JAEGER_PORT}/api/traces/${TRACE_ID}"
 ```
 
@@ -334,7 +346,7 @@ No PowerShell:
 ```powershell
 $env:TRACE_ID = [guid]::NewGuid().ToString("N")
 $env:SPAN_ID = ([guid]::NewGuid().ToString("N")).Substring(0,16)
-curl.exe -i "http://localhost:$env:GATEWAY_PORT/hospital/elegibilidades/paciente-001" -H "X-Correlation-ID: $env:CORRELATION_ID" -H "traceparent: 00-$env:TRACE_ID-$env:SPAN_ID-01"
+curl.exe -i "http://localhost:$env:GATEWAY_PORT/hospital/elegibilidades/$env:BENEFICIARIO_ID" -H "X-Correlation-ID: $env:CORRELATION_ID" -H "traceparent: 00-$env:TRACE_ID-$env:SPAN_ID-01"
 curl.exe -s "http://localhost:$env:JAEGER_PORT/api/traces/$env:TRACE_ID"
 ```
 
@@ -348,7 +360,15 @@ O trace ID confirma propagação de contexto; dois processos confirmam que a ope
 
 **Compare**
 
-Compare resposta HTTP, `docker compose -f infra/compose.governanca.yml logs kong otel-collector` e JSON da API. Cada um responde pergunta operacional diferente.
+Compare resposta HTTP, log estruturado do serviço e JSON da API. Cada um responde pergunta operacional diferente.
+
+Para registrar o log seguro, em qualquer sistema execute:
+
+```bash
+docker compose -f infra/compose.governanca.yml logs --no-color elegibilidade > evidencias/modulo-4/log-elegibilidade.jsonl
+```
+
+O arquivo deve conter o `correlation_id` gerado e a rota-modelo `/elegibilidades/{beneficiario_id}`; ele não pode conter o valor de `BENEFICIARIO_ID`. O serviço desativa o access log do Uvicorn e o Kong desativa o access log de proxy para que a URI concreta não vá para saída padrão.
 
 **Questões exploratórias**
 
@@ -361,7 +381,7 @@ Há evidência de cinco serviços saudáveis, consulta direta `200`, consulta go
 
 ## Interpretação
 
-Kong governa borda pública; Elegibilidade governa modelo e dado. Collector transporta telemetria; Jaeger guarda evidência de estudo. A cadeia une design-time — arquivos versionados, dono e decisão — a runtime — cabeçalho, código HTTP, log e trace. Ela não demonstra alta disponibilidade, retenção, autorização corporativa ou limite distribuído.
+Kong governa borda pública; Elegibilidade governa modelo e dado. Collector transporta telemetria; Jaeger guarda evidência de estudo. A cadeia une design-time — arquivos versionados, dono e decisão — a runtime — cabeçalho, código HTTP, log e trace. Métricas permanecem apenas como conceito de desenho e SLO nesta oficina, sem coleta nem consulta. Ela não demonstra alta disponibilidade, retenção, autorização corporativa ou limite distribuído.
 
 ## Limpeza e contingência
 
@@ -396,6 +416,7 @@ Guarde em `evidencias/modulo-4`:
 - `direto.txt` e `gateway-correlacao.txt`;
 - `limite-429.txt` com sequência controlada;
 - `trace.json` com `api/traces/${TRACE_ID}`;
+- `log-elegibilidade.jsonl` com correlation ID e rota-modelo, sem identificador de beneficiário;
 - `testes-integracao.txt` com `python -m pytest tests/test_gateway_policy.py -q`;
 - `limpeza.txt` com remoção ou contingência explícita.
 
