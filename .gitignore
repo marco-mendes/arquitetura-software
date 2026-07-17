@@ -54,3 +54,6 @@ Pipfile.lock
 *.lib
 *.bin
 *.log
+
+# Isolated implementation worktrees
+.worktrees/
