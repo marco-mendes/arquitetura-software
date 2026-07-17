@@ -3,6 +3,8 @@ import os
 from fastapi import FastAPI, HTTPException, status
 import psycopg
 
+from hospital.telemetria import instrumentar_app
+
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -10,6 +12,7 @@ DATABASE_URL = os.getenv(
 )
 
 app = FastAPI(title="Serviço de elegibilidade", version="1.0.0")
+instrumentar_app(app, "elegibilidade")
 
 
 def abrir_conexao():

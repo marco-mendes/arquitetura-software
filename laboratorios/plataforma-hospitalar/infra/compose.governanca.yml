@@ -1,0 +1,95 @@
+services:
+  db_elegibilidade:
+    build:
+      context: ..
+      dockerfile: infra/postgres/Dockerfile
+    environment:
+      POSTGRES_DB: elegibilidade
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local-elegibilidade-admin
+    volumes:
+      - elegibilidade_governanca_data:/var/lib/postgresql/data
+    networks: [elegibilidade-db-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d elegibilidade"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  elegibilidade:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "hospital.servicos.elegibilidade:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://elegibilidade:elegibilidade@db_elegibilidade:5432/elegibilidade
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+    ports:
+      - "${ELEGIBILIDADE_PORT:-18001}:8000"
+    depends_on:
+      db_elegibilidade:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    networks: [application-net, elegibilidade-db-net]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  kong:
+    build: ./kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_TRACING_INSTRUMENTATIONS: request
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "off"
+    ports:
+      - "${GATEWAY_PORT:-18000}:8000"
+    depends_on:
+      elegibilidade:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    networks: [application-net]
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  otel-collector:
+    build: ./observabilidade
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    networks: [application-net]
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "${JAEGER_PORT:-16686}:16686"
+    networks: [application-net]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:16686/"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  elegibilidade_governanca_data:
+
+networks:
+  application-net:
+  elegibilidade-db-net:
+    internal: true

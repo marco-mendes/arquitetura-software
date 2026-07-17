@@ -121,6 +121,7 @@ class IntegrativeProjectTest(unittest.TestCase):
                 "psycopg[binary]",
                 "aio-pika",
                 "opentelemetry-sdk",
+                "opentelemetry-exporter-otlp-proto-http",
             },
             set(project["dependencies"]),
         )

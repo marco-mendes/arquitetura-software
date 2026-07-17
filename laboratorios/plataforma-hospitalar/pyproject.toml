@@ -16,6 +16,7 @@ dependencies = [
   "psycopg[binary]",
   "aio-pika",
   "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp-proto-http",
 ]
 
 [project.optional-dependencies]
