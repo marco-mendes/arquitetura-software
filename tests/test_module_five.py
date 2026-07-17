@@ -77,6 +77,7 @@ class ModuleFiveTest(unittest.TestCase):
             "billing.resultados.v1",
             "ResultadoLaboratorialDisponibilizado.v1",
             "test_event_idempotency.py",
+            "COMPOSE_LIVE=1",
             "dead-letter",
             "RABBITMQ_PORT",
             "RABBITMQ_MANAGEMENT_PORT",
@@ -84,6 +85,18 @@ class ModuleFiveTest(unittest.TestCase):
             self.assertIn(fragment, workshop)
         self.assertIn("Kafka", workshop)
         self.assertIn("Extensão", workshop)
+
+    def test_workshop_has_a_native_powershell_dlq_proof(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        for fragment in (
+            "**Verificação no PowerShell**",
+            "$env:RABBITMQ_MANAGEMENT_PORT = 15673",
+            "curl.exe --fail --silent --user guest:guest $dlqUrl",
+            "api/queues/%2F/billing.resultados.v1.dlq",
+            "$response.messages -lt 1",
+            "Remove-Item Env:RABBITMQ_MANAGEMENT_PORT",
+        ):
+            self.assertIn(fragment, workshop)
 
     def test_local_stack_declares_durable_exchange_queue_and_dlx(self):
         compose = COMPOSE.read_text(encoding="utf-8")

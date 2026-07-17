@@ -1,6 +1,6 @@
 # Oficina de ferramentas: RabbitMQ e consumidor idempotente
 
-Esta oficina executa uma trilha local e descartável. Ela sobe somente RabbitMQ, declara a topologia pelo consumidor, publica o evento `ResultadoLaboratorialDisponibilizado.v1` sintético duas vezes, observa um único efeito no SQLite e provoca uma rejeição de schema para a dead-letter queue. O trilho principal é RabbitMQ; Kafka aparece apenas como extensão comparativa, sem instalar um segundo ambiente. Não use identificadores, referências ou resultados reais.
+Oficina local e descartável: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponibilizado.v1`, um efeito SQLite e rejeição para dead-letter queue. Kafka é extensão comparativa. Use apenas dados sintéticos.
 
 ## Ferramenta
 
@@ -11,7 +11,7 @@ Esta oficina executa uma trilha local e descartável. Ela sobe somente RabbitMQ,
 | Python 3.11 ou superior | publicar e consumir modelo Pydantic | saída de tentativas |
 | `aio-pika` e SQLite | AMQP assíncrono e store durável local | uma linha de efeito |
 
-O Compose expõe AMQP em `RABBITMQ_PORT` e o management plugin em `RABBITMQ_MANAGEMENT_PORT`; os valores padrão são 15672 e 15673, respectivamente, para reduzir colisão com instalações locais usuais. A URL AMQP aponta para a primeira porta. O volume é local e removido na limpeza. A conta padrão pertence exclusivamente ao ambiente descartável do Compose; não reutilize essa configuração fora da oficina.
+O Compose expõe AMQP em `RABBITMQ_PORT` e management em `RABBITMQ_MANAGEMENT_PORT`; os padrões são 15672 e 15673. A URL AMQP usa a primeira porta e o volume local é removido na limpeza. A conta padrão pertence apenas a este Compose descartável.
 
 ## Pré-requisitos
 
@@ -302,6 +302,41 @@ python -m hospital.eventos.publicador --event-id 65e95d82-4f8c-4e93-9bb3-3e0e92d
 python -m hospital.eventos.consumidor --once --store evidencias/modulo-5/processed-events.sqlite3
 curl -u guest:guest "http://localhost:${RABBITMQ_MANAGEMENT_PORT}/api/queues/%2F/billing.resultados.v1.dlq"
 ```
+
+**Verificação no PowerShell**
+
+Use `curl.exe`: `curl` pode ser um alias. `%2F` codifica o vhost padrão.
+
+```powershell
+if (-not $env:RABBITMQ_MANAGEMENT_PORT) {
+  $env:RABBITMQ_MANAGEMENT_PORT = 15673
+}
+$dlqUrl = "http://localhost:$env:RABBITMQ_MANAGEMENT_PORT/api/queues/%2F/billing.resultados.v1.dlq"
+$response = curl.exe --fail --silent --user guest:guest $dlqUrl | ConvertFrom-Json
+if ($response.messages -lt 1) {
+  throw "A DLQ ainda não contém a mensagem; aguarde um instante e execute a consulta novamente."
+}
+$response.messages
+
+# Ao terminar este terminal, remova os overrides para voltar aos padrões do Compose.
+Remove-Item Env:RABBITMQ_PORT -ErrorAction SilentlyContinue
+Remove-Item Env:RABBITMQ_MANAGEMENT_PORT -ErrorAction SilentlyContinue
+Remove-Item Env:RABBITMQ_URL -ErrorAction SilentlyContinue
+```
+
+**Resultado esperado no PowerShell**
+
+O valor é `1` ou maior e o JSON contém `messages`. Os padrões são AMQP 15672 e management 15673; se ocupados, defina portas livres antes da subida. Os `Remove-Item` removem apenas overrides do terminal.
+
+**Evidência automatizada**
+
+Com Compose ativo, o teste opt-in percorre publicação, validação, rejeição, DLX e DLQ:
+
+```bash
+COMPOSE_LIVE=1 RABBITMQ_URL="amqp://guest:guest@localhost:${RABBITMQ_PORT}" RABBITMQ_MANAGEMENT_PORT="${RABBITMQ_MANAGEMENT_PORT}" python -m pytest tests/test_event_idempotency.py -q
+```
+
+`3 passed` confirma a mensagem inválida na `billing.resultados.v1.dlq`.
 
 **Observe**
 
