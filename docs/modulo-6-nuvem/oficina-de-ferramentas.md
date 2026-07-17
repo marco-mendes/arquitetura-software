@@ -96,7 +96,8 @@ Esteja em `laboratorios/plataforma-hospitalar`; Docker deve responder. Confirme 
 
 No macOS/Linux:
 
-    kubectl apply --dry-run=client -f infra/k8s
+    kubectl apply --dry-run=client -f infra/k8s/namespace.yaml
+    kubectl apply --dry-run=client -f infra/k8s/configmap.yaml -f infra/k8s/deployment.yaml -f infra/k8s/service.yaml -f infra/k8s/hpa.yaml
     docker build -t hospital-api:1.0.0 .
     kind create cluster --name hospital-local --config infra/kind/cluster.yaml
     kind load docker-image hospital-api:1.0.0 --name hospital-local
@@ -104,7 +105,8 @@ No macOS/Linux:
 
 No PowerShell, os mesmos comandos são seguros:
 
-    kubectl apply --dry-run=client -f infra/k8s
+    kubectl apply --dry-run=client -f infra/k8s/namespace.yaml
+    kubectl apply --dry-run=client -f infra/k8s/configmap.yaml -f infra/k8s/deployment.yaml -f infra/k8s/service.yaml -f infra/k8s/hpa.yaml
     docker build -t hospital-api:1.0.0 .
     kind create cluster --name hospital-local --config infra/kind/cluster.yaml
     kind load docker-image hospital-api:1.0.0 --name hospital-local
@@ -112,7 +114,7 @@ No PowerShell, os mesmos comandos são seguros:
 
 **Observe**
 
-O dry-run confirma sintaxe aceita pelo cliente; ele não executa Pods. O contexto final precisa ser `kind-hospital-local`. O carregamento explícito é necessário porque a imagem existe inicialmente apenas no Docker local.
+O dry-run confirma sintaxe aceita pelo cliente; ele não executa Pods. A sequência valida primeiro o namespace e, depois, os recursos que pertencem a `hospital`. O contexto final precisa ser `kind-hospital-local`. O carregamento explícito é necessário porque a imagem existe inicialmente apenas no Docker local.
 
 **Compare**
 
@@ -166,7 +168,8 @@ O contexto deve ser `kind-hospital-local` e a imagem `hospital-api:1.0.0` deve t
 
 No macOS/Linux:
 
-    kubectl apply -f infra/k8s
+    kubectl apply -f infra/k8s/namespace.yaml
+    kubectl apply -f infra/k8s/configmap.yaml -f infra/k8s/deployment.yaml -f infra/k8s/service.yaml -f infra/k8s/hpa.yaml
     kubectl rollout status deployment/hospital-api -n hospital
     kubectl get deployment,pods,service,hpa -n hospital -o wide
     curl --fail --silent http://127.0.0.1:18080/health/ready
@@ -174,7 +177,8 @@ No macOS/Linux:
 
 No PowerShell:
 
-    kubectl apply -f infra/k8s
+    kubectl apply -f infra/k8s/namespace.yaml
+    kubectl apply -f infra/k8s/configmap.yaml -f infra/k8s/deployment.yaml -f infra/k8s/service.yaml -f infra/k8s/hpa.yaml
     kubectl rollout status deployment/hospital-api -n hospital
     kubectl get deployment,pods,service,hpa -n hospital -o wide
     curl.exe --fail --silent http://127.0.0.1:18080/health/ready
@@ -267,7 +271,7 @@ Compare uma política declarada com uma evidência de aumento automático ocorri
 
 ## Resultado esperado
 
-Ao fim, existem namespace `hospital`, Deployment `hospital-api` com duas réplicas prontas, Service acessível somente em `127.0.0.1:18080`, ConfigMap e HPA. Há uma revisão saudável, uma tentativa bloqueada por imagem ausente, eventos descritos e rollback confirmado. O resultado não afirma tolerância a falha de zona, autoscaling ativo sem métrica ou prontidão de produção.
+Ao fim, o namespace `hospital` foi criado antes de ConfigMap, Deployment, Service e HPA; o Deployment `hospital-api` tem duas réplicas prontas e o Service é acessível somente em `127.0.0.1:18080`. Há uma revisão saudável, uma tentativa bloqueada por imagem ausente, eventos descritos e rollback confirmado. O resultado não afirma tolerância a falha de zona, autoscaling ativo sem métrica ou prontidão de produção.
 
 ## Interpretação
 
@@ -275,7 +279,7 @@ O Deployment demonstrou reconciliação e atualização gradual; o Service demon
 
 ## Limpeza e contingência
 
-Colete a evidência antes de apagar. Depois, no macOS/Linux ou PowerShell, execute `kind delete cluster --name hospital-local`. O comando remove somente o cluster criado pela oficina. A imagem `hospital-api:1.0.0` pode permanecer no Docker para próxima aula; remova-a apenas se você a construiu e não precisa dela: `docker image rm hospital-api:1.0.0`. Se kind não puder rodar nesta máquina, ainda execute `kubectl apply --dry-run=client -f infra/k8s`, `python -m pytest tests/test_k8s_manifests.py -q` dentro do laboratório e registre que a validação foi estática; não tente usar um cluster remoto como substituto.
+Colete a evidência antes de apagar. Depois, no macOS/Linux ou PowerShell, execute `kind delete cluster --name hospital-local`. O comando remove somente o cluster criado pela oficina. A imagem `hospital-api:1.0.0` pode permanecer no Docker para próxima aula; remova-a apenas se você a construiu e não precisa dela: `docker image rm hospital-api:1.0.0`. Se kind não puder rodar nesta máquina, valide primeiro `namespace.yaml` com `kubectl apply --dry-run=client -f infra/k8s/namespace.yaml`, depois os quatro manifests namespaced com os quatro `-f` explícitos acima, e execute `python -m pytest tests/test_k8s_manifests.py -q` dentro do laboratório. Registre que a validação foi estática; não tente usar um cluster remoto como substituto.
 
 ## Evidência a entregar
 

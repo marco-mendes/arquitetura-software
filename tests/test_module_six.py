@@ -70,6 +70,21 @@ class ModuleSixTest(unittest.TestCase):
         ):
             self.assertIn(fragment, workshop)
 
+    def test_workshop_applies_namespace_before_namespaced_resources(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        self.assertNotIn("kubectl apply -f infra/k8s\n", workshop)
+        namespace_apply = "kubectl apply -f infra/k8s/namespace.yaml"
+        namespaced_apply = (
+            "kubectl apply -f infra/k8s/configmap.yaml "
+            "-f infra/k8s/deployment.yaml -f infra/k8s/service.yaml "
+            "-f infra/k8s/hpa.yaml"
+        )
+        self.assertEqual(workshop.count(namespace_apply), 2)
+        self.assertEqual(workshop.count(namespaced_apply), 2)
+        self.assertLess(
+            workshop.index(namespace_apply), workshop.index(namespaced_apply)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
