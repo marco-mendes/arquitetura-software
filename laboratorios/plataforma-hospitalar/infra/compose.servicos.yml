@@ -1,0 +1,75 @@
+services:
+  db_elegibilidade:
+    build:
+      context: ..
+      dockerfile: infra/postgres/Dockerfile
+    environment:
+      POSTGRES_DB: elegibilidade
+      POSTGRES_USER: elegibilidade
+      POSTGRES_PASSWORD: elegibilidade
+    volumes:
+      - elegibilidade_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elegibilidade -d elegibilidade"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  db_exames:
+    build:
+      context: ..
+      dockerfile: infra/postgres/Dockerfile
+    environment:
+      POSTGRES_DB: exames
+      POSTGRES_USER: exames
+      POSTGRES_PASSWORD: exames
+    volumes:
+      - exames_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exames -d exames"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  elegibilidade:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "hospital.servicos.elegibilidade:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://elegibilidade:elegibilidade@db_elegibilidade:5432/elegibilidade
+    ports:
+      - "8001:8000"
+    depends_on:
+      db_elegibilidade:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  exames:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "hospital.servicos.exames:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://exames:exames@db_exames:5432/exames
+      ELIGIBILIDADE_URL: http://elegibilidade:8000
+    ports:
+      - "8002:8000"
+    depends_on:
+      db_exames:
+        condition: service_healthy
+      elegibilidade:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  elegibilidade_data:
+  exames_data:

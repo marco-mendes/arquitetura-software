@@ -50,7 +50,15 @@ nav:
       - Oficina de ferramentas: modulo-2-apis/oficina-de-ferramentas.md
       - Exercícios: modulo-2-apis/exercicios.md
       - Síntese e referências: modulo-2-apis/sintese-e-referencias.md
-  - "Módulo 3 — Serviços": modulo-3-servicos/index.md
+  - "Módulo 3 — Serviços":
+      - Visão geral: modulo-3-servicos/index.md
+      - Conceitos: modulo-3-servicos/conceitos.md
+      - Padrões e decisões: modulo-3-servicos/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-3-servicos/exemplo-arquitetural.md
+      - Estudo de caso: modulo-3-servicos/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-3-servicos/oficina-de-ferramentas.md
+      - Exercícios: modulo-3-servicos/exercicios.md
+      - Síntese e referências: modulo-3-servicos/sintese-e-referencias.md
   - "Módulo 4 — Governança": modulo-4-governanca/index.md
   - "Módulo 5 — Eventos": modulo-5-eventos/index.md
   - "Módulo 6 — Nuvem": modulo-6-nuvem/index.md
