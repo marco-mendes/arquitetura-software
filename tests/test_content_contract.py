@@ -49,6 +49,11 @@ class ContentContractTest(unittest.TestCase):
             BLOOM,
         )
 
+    def test_mkdocs_excludes_internal_planning_documents(self):
+        config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
+
+        self.assertIn("superpowers/**", config.get("exclude_docs", ()))
+
     def test_public_pages_use_assessment_criteria_vocabulary(self):
         for path in DOCS.rglob("*.md"):
             if path.relative_to(DOCS).parts[0] == "superpowers":
@@ -70,6 +75,21 @@ class ContentContractTest(unittest.TestCase):
         self.assertEqual(set(BLOOM), set(sections))
         self.assertIn("### Apoio", sections["Aplicar"])
         self.assertNotIn("## Analisar", sections["Aplicar"])
+
+    def test_bloom_sections_ignore_headings_in_fenced_examples(self):
+        text = (
+            "## Recordar\n\nDefina o conceito.\n\n"
+            "```markdown\n"
+            "## Aplicar\n\n"
+            "**Resposta:** este é apenas um exemplo de sintaxe.\n"
+            "```\n\n"
+            "## Compreender\n\nExplique a diferença.\n"
+        )
+
+        sections = bloom_sections(text)
+
+        self.assertEqual({"Recordar", "Compreender"}, set(sections))
+        self.assertNotIn("Resposta", sections["Recordar"])
 
     def test_mkdocs_renders_explicit_anchors_accepted_by_validator(self):
         config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
@@ -358,6 +378,20 @@ class ContentContractTest(unittest.TestCase):
 
             page.write_text(
                 "# Oficina\n\n**Execute**\n\nRode o comando.\n",
+                encoding="utf-8",
+            )
+            self.assertFalse(
+                any(
+                    "rótulo procedimental aglutinado" in error
+                    for error in validate_document(page, docs)
+                )
+            )
+
+            page.write_text(
+                "# Oficina\n\n"
+                "```markdown\n"
+                "**Execute** rode o comando apenas como exemplo.\n"
+                "```\n",
                 encoding="utf-8",
             )
             self.assertFalse(

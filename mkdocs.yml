@@ -1,5 +1,7 @@
 site_name: Arquitetura de Software
 use_directory_urls: true
+exclude_docs: |
+  superpowers/**
 
 theme:
   name: material
@@ -101,3 +103,4 @@ nav:
       - Bibliografia: referencia/bibliografia.md
   - Sobre:
       - Plano da disciplina: sobre/plano-da-disciplina.md
+      - Qualidade do material: sobre/qualidade-do-material.md

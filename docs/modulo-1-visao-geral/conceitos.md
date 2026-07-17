@@ -28,6 +28,8 @@ flowchart LR
     R --> D[("Dados")]
 ```
 
+**Leitura textual da figura:** o Operador envia um comando à Entrada. A Entrada encaminha o objeto validado à Aplicação, que consulta ou grava pelo Repositório, emite um evento para Notificação e mantém os Dados atrás desse conector. A figura separa os componentes e nomeia o tipo de interação entre eles.
+
 O desenho apresenta componentes e conectores, mas ainda não basta. É necessário declarar se `Entrada` pode acessar `Dados` diretamente, qual elemento possui a regra e como erros atravessam as fronteiras. Arquitetura inclui essas restrições. Um desenho sem semântica permite interpretações incompatíveis.
 
 Também é preciso nomear a visão. Na visão de módulos, uma caixa pode ser um pacote de código e uma seta pode significar dependência. Na visão de execução, uma caixa pode ser um processo e uma seta, comunicação em tempo de execução. Na visão de implantação, nós representam ambientes computacionais. Misturar tudo em um único desenho costuma esconder decisões.
@@ -50,6 +52,8 @@ sequenceDiagram
     Aplicacao-->>Entrada: informa resultado
     Entrada-->>Operador: apresenta confirmação
 ```
+
+**Leitura textual da figura:** o Operador envia um comando à Entrada, que valida o formato e solicita a operação à Aplicação. A Aplicação salva o estado no Repositório, recebe a confirmação de versão e devolve o resultado no caminho inverso até o Operador. A ordem explícita mostra onde uma indisponibilidade de persistência pode alterar o cenário.
 
 Se a persistência ficar indisponível, a sequência deve explicitar se a operação falha, espera ou tenta novamente. Essa escolha influencia confiabilidade, latência e consistência. Portanto, comportamento não é detalhe posterior: ajuda a testar se a estrutura sustenta os cenários relevantes.
 

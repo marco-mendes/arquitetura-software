@@ -31,6 +31,15 @@ class ModuleOneTest(unittest.TestCase):
             ),
         )
 
+    def test_diagrams_have_textual_readings(self):
+        corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
+
+        self.assertGreaterEqual(corpus.count("```mermaid"), 3)
+        self.assertGreaterEqual(
+            corpus.count("**Leitura textual da figura:**"),
+            corpus.count("```mermaid"),
+        )
+
     def test_structurizr_models_one_application_with_internal_modules(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
             encoding="utf-8"

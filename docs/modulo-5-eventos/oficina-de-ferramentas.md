@@ -1,6 +1,6 @@
 # Oficina de ferramentas: RabbitMQ e consumidor idempotente
 
-Oficina local e descartável: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponibilizado.v1`, um efeito SQLite e rejeição para dead-letter queue. Kafka é extensão comparativa. Use apenas dados sintéticos.
+Oficina local: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponibilizado.v1`, efeito SQLite e dead-letter queue. Kafka é extensão comparativa. Use dados sintéticos.
 
 ## Ferramenta
 
@@ -11,7 +11,7 @@ Oficina local e descartável: RabbitMQ, publicação repetida de `ResultadoLabor
 | Python 3.11 ou superior | publicar e consumir modelo Pydantic | saída de tentativas |
 | `aio-pika` e SQLite | AMQP assíncrono e store durável local | uma linha de efeito |
 
-O Compose expõe AMQP em `RABBITMQ_PORT` e management em `RABBITMQ_MANAGEMENT_PORT`; os padrões são 15672 e 15673. A URL AMQP usa a primeira porta e o volume local é removido na limpeza. A conta padrão pertence apenas a este Compose descartável.
+AMQP usa `RABBITMQ_PORT` e management usa `RABBITMQ_MANAGEMENT_PORT`; os padrões são 15672 e 15673. A conta e o volume pertencem apenas a este ambiente descartável.
 
 ## Pré-requisitos
 
@@ -353,11 +353,11 @@ Compare uma mensagem inválida em DLQ com uma mensagem temporariamente indispon�
 
 ## Resultado esperado
 
-O ambiente termina com RabbitMQ saudável, a exchange `hospital.events`, a fila `billing.resultados.v1`, a DLQ associada e um SQLite que demonstra duas tentativas para um único efeito. A mensagem propositalmente inválida é encaminhada para dead-letter. A oficina não demonstra retenção, offsets, particionamento ou transações Kafka; esses temas pertencem à extensão conceitual.
+O ambiente termina com RabbitMQ saudável, `hospital.events`, `billing.resultados.v1`, DLQ e SQLite com duas tentativas e um efeito. A mensagem inválida segue para dead-letter. A extensão conceitual trata retenção, offsets, particionamento e transações Kafka.
 
 ## Interpretação
 
-O experimento prova um recorte local, não uma promessa universal de exactly-once. O SQLite torna a deduplicação durável entre execuções locais; em um sistema distribuído, a mesma propriedade deve ser tratada junto do banco e dos efeitos externos do consumidor. O Compose também não é uma topologia de produção: não configura cluster, TLS, credenciais de operação, backup ou política de retenção. Use a evidência para argumentar sobre semântica, não para extrapolar capacidade.
+O experimento demonstra entrega pelo menos uma vez, não exactly-once. SQLite evita duplicação entre execuções; em sistemas distribuídos, trate-a com banco e efeitos externos. O Compose não é produção: não inclui cluster, TLS, credenciais, backup ou retenção. Use evidência para discutir semântica.
 
 ## Limpeza e contingência
 
@@ -395,4 +395,4 @@ Compare esta limpeza limitada com comandos globais do Docker: somente a primeira
 
 ## Evidência a entregar
 
-Entregue uma nota curta com: a configuração validada, a saída que mostra `processed=True attempts=1` e `processed=False attempts=2`, a consulta que indica um efeito, a observação de uma mensagem na DLQ e uma frase explicando por que isso é entrega pelo menos uma vez com idempotência, e não exactly-once. Use somente IDs e referências sintéticas. Inclua uma decisão sobre quando avaliar Kafka como extensão e não como substituição automática.
+Entregue uma nota com: configuração validada; saídas `processed=True attempts=1` e `processed=False attempts=2`; consulta de um efeito; mensagem na DLQ; e a explicação de por que há entrega pelo menos uma vez com idempotência, não exactly-once. Use IDs sintéticos. Indique quando Kafka seria extensão, não substituição automática.

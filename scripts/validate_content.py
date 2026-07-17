@@ -130,8 +130,9 @@ class _Resource:
 
 
 def bloom_sections(text: str) -> dict[str, str]:
-    """Retorna o conteúdo delimitado pelos títulos de segundo nível de Bloom."""
+    """Retorna seções Bloom, ignorando títulos presentes em exemplos cercados."""
 
+    text = _mask_fenced_code(text)
     levels = "|".join(map(re.escape, BLOOM))
     heading = re.compile(
         rf"^##[ \t]+(?P<level>{levels})[ \t]*#*[ \t]*$", re.MULTILINE
@@ -363,7 +364,7 @@ def _validate_procedural_labels(path: Path, docs_root: Path, text: str) -> list[
     ):
         return []
     location = _location(path, docs_root)
-    lines = text.splitlines()
+    lines = _mask_fenced_code(text).splitlines()
     errors: list[str] = []
     for index, line in enumerate(lines):
         match = _PROCEDURAL_LABEL.match(line)
@@ -470,13 +471,14 @@ def _word_count(text: str) -> int:
 def _validate_exercises(path: Path, docs_root: Path) -> list[str]:
     location = _location(path, docs_root)
     text = path.read_text(encoding="utf-8")
-    sections = bloom_sections(text)
+    masked = _mask_fenced_code(text)
+    sections = bloom_sections(masked)
     errors: list[str] = []
     for level in BLOOM:
         occurrences = len(
             re.findall(
                 rf"^##[ \t]+{re.escape(level)}[ \t]*#*[ \t]*$",
-                text,
+                masked,
                 re.MULTILINE,
             )
         )

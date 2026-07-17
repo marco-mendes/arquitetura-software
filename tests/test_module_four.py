@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 import unittest
 
-from tests.course_assertions import assert_module_contract
+from tests.course_assertions import assert_module_contract, navigation_section_paths
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,20 +54,22 @@ class ModuleFourTest(unittest.TestCase):
                 )
             ),
         )
-        navigation = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
-        section = navigation.split('  - "Módulo 4 — Governança":', 1)[1].split(
-            '  - "Módulo 5 — Eventos":', 1
-        )[0]
-        self.assertEqual(8, section.count("modulo-4-governanca/"))
+        section = navigation_section_paths("Módulo 4 — Governança")
+        self.assertEqual(
+            {f"modulo-4-governanca/{page}" for page in pages},
+            set(section),
+        )
 
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
         words = re.findall(r"\b[^\W_]+(?:[-'][^\W_]+)*\b", corpus)
         self.assertGreaterEqual(len(words), 5000)
         self.assertLessEqual(len(words), 8500)
         self.assertGreaterEqual(corpus.count("```mermaid"), 3)
-        self.assertEqual(
-            corpus.count("```mermaid"),
+        # Diagramas Mermaid e infográficos gerados possuem leitura textual.
+        # Os infográficos acrescentam equivalências além das exigidas pelos Mermaid.
+        self.assertGreaterEqual(
             corpus.count("**Leitura textual da figura:**"),
+            corpus.count("```mermaid"),
         )
 
     def test_workshop_covers_safe_reproducible_governance_evidence(self):

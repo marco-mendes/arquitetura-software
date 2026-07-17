@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 import unittest
 
-from tests.course_assertions import assert_module_contract
+from tests.course_assertions import assert_module_contract, navigation_section_paths
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,11 +51,11 @@ class ModuleThreeTest(unittest.TestCase):
                 )
             ),
         )
-        navigation = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
-        section = navigation.split('  - "Módulo 3 — Serviços":', 1)[1].split(
-            '  - "Módulo 4 — Governança":', 1
-        )[0]
-        self.assertEqual(8, section.count("modulo-3-servicos/"))
+        section = navigation_section_paths("Módulo 3 — Serviços")
+        self.assertEqual(
+            {f"modulo-3-servicos/{page}" for page in pages},
+            set(section),
+        )
 
     def test_module_is_substantial_and_uses_accessible_mermaid(self):
         corpus = "\n".join(
@@ -65,9 +65,11 @@ class ModuleThreeTest(unittest.TestCase):
         self.assertGreaterEqual(len(words), 5000)
         self.assertLessEqual(len(words), 8500)
         self.assertGreaterEqual(corpus.count("```mermaid"), 3)
-        self.assertEqual(
-            corpus.count("```mermaid"),
+        # Diagramas Mermaid e infográficos gerados possuem leitura textual.
+        # Os infográficos acrescentam equivalências além das exigidas pelos Mermaid.
+        self.assertGreaterEqual(
             corpus.count("**Leitura textual da figura:**"),
+            corpus.count("```mermaid"),
         )
 
     def test_workshop_documents_partial_failure_and_reproducible_cleanup(self):
