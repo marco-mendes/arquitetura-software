@@ -52,7 +52,23 @@ async def tratar_erro_de_validacao(
     "/elegibilidades",
     response_model=ElegibilidadeAceita,
     status_code=status.HTTP_202_ACCEPTED,
-    responses={422: {"model": ErroAPI}},
+    response_description="Pedido aceito para processamento.",
+    responses={
+        202: {
+            "headers": {
+                "Location": {
+                    "description": "Caminho do recurso aceito.",
+                    "required": True,
+                    "schema": {"type": "string"},
+                    "example": (
+                        "/elegibilidades/"
+                        "550e8400-e29b-41d4-a716-446655440000"
+                    ),
+                }
+            }
+        },
+        422: {"model": ErroAPI},
+    },
     operation_id="criarElegibilidade",
     summary="Aceita uma consulta de elegibilidade",
 )

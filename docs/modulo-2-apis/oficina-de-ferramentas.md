@@ -11,7 +11,7 @@ Esta oficina usa dados sintéticos e dura aproximadamente noventa minutos na tri
 | OpenAPI 3.1 | declarar contrato explícito | `openapi.yaml` |
 | Bruno | atuar como consumidor manual | requisições e respostas salvas |
 | Node.js e npx | executar Spectral localmente | relatório de lint |
-| Spectral | verificar regras do documento | contrato válido e falha deliberada |
+| Spectral CLI 6.16.1 | verificar regras do documento | contrato válido e falha deliberada |
 
 Bruno ajuda a executar exemplos, mas uma execução manual não substitui regressão. Spectral encontra problemas estruturais e de estilo, mas não prova que o servidor obedece ao documento. `TestClient` verifica o comportamento da implementação, mas não substitui a revisão semântica. Use as três perspectivas.
 
@@ -19,7 +19,7 @@ Bruno ajuda a executar exemplos, mas uma execução manual não substitui regres
 
 **Objetivo**
 
-Preparar um ambiente local descartável com Python, Bruno e Node.js. Reserve uma janela com acesso à internet para instalar dependências e para a primeira execução do `npx`.
+Preparar um ambiente local descartável com Python, Bruno e Node.js. Reserve uma janela com acesso à internet para instalar dependências e para a primeira execução do `npx`. A oficina fixa Spectral CLI em `6.16.1` para tornar regras e diagnósticos reproduzíveis.
 
 **Pré-requisito**
 
@@ -43,7 +43,7 @@ Cada instalador termina com confirmação. Feche e reabra o PowerShell para atua
 
 **Contingência**
 
-Se `winget` não existir, use os instaladores oficiais indicados nas [referências](sintese-e-referencias.md#ferramentas). Se um pacote já estiver instalado, o gerenciador informa isso e você pode continuar.
+Se `winget` não existir, siga as [instruções oficiais de instalação do Python](https://docs.python.org/3/using/index.html) e os instaladores indicados nas [referências](sintese-e-referencias.md#ferramentas). Se um pacote já estiver instalado, continue.
 
 Crie o ambiente e instale o laboratório. A ativação é opcional; os passos seguintes usam o interpretador explícito da `.venv`:
 
@@ -69,7 +69,7 @@ Se `py` não encontrar Python, reabra o terminal e tente o caminho fornecido pel
 
 ### macOS
 
-Com Homebrew disponível:
+Instale primeiro o [Homebrew pelo site oficial](https://brew.sh/) quando ele ainda não existir. Depois execute:
 
 ```bash
 brew install python@3.12 node
@@ -99,7 +99,9 @@ Os comandos usam Debian ou Ubuntu. Instale equivalentes na sua distribuição qu
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip nodejs npm flatpak
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 flatpak install flathub com.usebruno.Bruno
+flatpak info com.usebruno.Bruno
 cd laboratorios/plataforma-hospitalar
 python3 -m venv .venv
 source .venv/bin/activate
@@ -112,11 +114,11 @@ npx --version
 
 **Resultado esperado**
 
-As versões aparecem e o Flatpak confirma a instalação do Bruno.
+As versões aparecem; `flatpak info` mostra nome, versão e origem do Bruno.
 
 **Contingência**
 
-Se o repositório da distribuição fornecer Node antigo incompatível com Spectral, instale uma versão LTS pelas instruções oficiais do Node.js. Se Flatpak não estiver configurado, use o pacote oficial do Bruno adequado à distribuição.
+Se `remote-add` falhar, execute `flatpak remotes` e confirme se `flathub` já existe; uma origem existente permite continuar. Se a distribuição fornecer Node antigo, instale uma versão LTS pelas instruções oficiais do Node.js. Como alternativa ao Flatpak, use os [pacotes oficiais do Bruno](https://www.usebruno.com/downloads).
 
 ## Preparação do laboratório
 
@@ -245,18 +247,21 @@ Se receber `202`, confirme que o campo foi removido do corpo efetivamente enviad
 Valide o contrato. No PowerShell:
 
 ```powershell
-npx @stoplight/spectral-cli lint contratos/openapi.yaml 2>&1 | Tee-Object -FilePath evidencias\spectral-valido.txt
+npx @stoplight/spectral-cli@6.16.1 lint contratos/openapi.yaml 2>&1 | Tee-Object -FilePath evidencias\spectral-valido.txt
+$spectralExit = $LASTEXITCODE
+if ($spectralExit -ne 0) { exit $spectralExit }
 ```
 
 Em macOS ou Linux:
 
 ```bash
-npx @stoplight/spectral-cli lint contratos/openapi.yaml 2>&1 | tee evidencias/spectral-valido.txt
+set -o pipefail
+npx @stoplight/spectral-cli@6.16.1 lint contratos/openapi.yaml 2>&1 | tee evidencias/spectral-valido.txt
 ```
 
 **Resultado esperado**
 
-Spectral termina com `No results with a severity of 'error' found!` e código de saída zero. Na primeira execução, `npx` pode solicitar confirmação para obter o pacote.
+Spectral termina com `No results with a severity of 'error' found!` e código zero. Na primeira execução, `npx` pode obter exatamente a versão `6.16.1`.
 
 **Contingência**
 
@@ -266,11 +271,14 @@ Execute somente os testes de contrato e capture o resultado. No PowerShell:
 
 ```powershell
 .venv\Scripts\python.exe -m pytest tests/test_api_contract.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-contrato.txt
+$pytestExit = $LASTEXITCODE
+if ($pytestExit -ne 0) { exit $pytestExit }
 ```
 
 Em macOS ou Linux:
 
 ```bash
+set -o pipefail
 python -m pytest tests/test_api_contract.py -q 2>&1 | tee evidencias/testes-contrato.txt
 ```
 
@@ -306,21 +314,35 @@ O arquivo de experimento aparece em `evidencias`.
 
 Se o destino não existir, volte à preparação e crie a pasta `evidencias`.
 
-No arquivo copiado, altere apenas o exemplo de `cpf` de `12345678901` para `123`. Valide a cópia:
+No arquivo copiado, altere somente `cpf` de `12345678901` para `123` no exemplo de mídia da requisição. O caminho YAML completo é `paths./elegibilidades.post.requestBody.content.application/json.examples.pedidoValido.value.cpf`. Não altere a anotação `examples` do schema em `components`.
 
-```bash
-npx @stoplight/spectral-cli lint evidencias/openapi-experimento.yaml
+Valide a cópia no PowerShell e confirme que a falha realmente ocorreu:
+
+```powershell
+npx @stoplight/spectral-cli@6.16.1 lint evidencias\openapi-experimento.yaml
+$spectralExit = $LASTEXITCODE
+if ($spectralExit -eq 0) { throw "O exemplo inválido não foi detectado." }
+$spectralExit
 ```
 
-O mesmo comando funciona no PowerShell.
+Em macOS ou Linux:
+
+```bash
+set +e
+npx @stoplight/spectral-cli@6.16.1 lint evidencias/openapi-experimento.yaml
+spectral_exit=$?
+set -e
+test "$spectral_exit" -ne 0
+printf 'Código esperado: %s\n' "$spectral_exit"
+```
 
 **Resultado esperado**
 
-Spectral aponta que o exemplo não corresponde ao pattern de onze dígitos e termina com código diferente de zero. Essa falha é evidência desejada do experimento.
+Spectral mostra `oas3-valid-media-example`, a mensagem `"cpf" property must match pattern "^\d{11}$"` e código `1`. Essa falha é a evidência desejada.
 
 **Contingência**
 
-Se não houver falha, confirme que alterou o valor em `components.schemas.PedidoElegibilidade.examples` e que `.spectral.yaml` continua acessível. Compare também com o servidor: enviar `cpf` igual a `123` deve produzir `422`.
+Se não houver falha, confirme o caminho `paths./elegibilidades.post.requestBody.content.application/json.examples.pedidoValido.value.cpf`, preserve aspas em `'123'` e verifique se `.spectral.yaml` está na raiz do laboratório. Alterar `components.schemas.PedidoElegibilidade.examples` não exercita a regra de exemplo de mídia. No servidor, `cpf` igual a `123` também deve produzir `422`.
 
 **Compare**
 

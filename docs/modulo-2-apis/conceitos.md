@@ -62,6 +62,16 @@ Pedidos repetidos também acontecem: o usuário tenta novamente, um proxy repete
 
 O consumidor antigo precisa ler respostas novas, e o servidor novo precisa compreender requisições antigas dentro do compromisso. Além de testes, mantenha inventário de consumidores, transição e telemetria de uso.
 
+## Restrições REST de Fielding
+
+REST é um estilo definido por um conjunto de restrições, não um sinônimo de JSON sobre HTTP. **Cliente-servidor** separa responsabilidades de interface e dados. **Sem estado (stateless)** exige que cada requisição leve o contexto necessário; o servidor pode preservar recursos, mas não depende de uma sessão conversacional oculta. **Cache** permite marcar respostas reutilizáveis ou não reutilizáveis para reduzir interações.
+
+A **interface uniforme** inclui quatro partes. A identificação de recursos usa identificadores estáveis; a manipulação acontece por representações, sem expor a estrutura interna; mensagens autodescritivas carregam semântica suficiente para serem interpretadas; e hipermídia orienta transições possíveis em tempo de execução. Em outras palavras, o cliente não deveria conhecer cada próxima ação apenas por documentação externa fixa.
+
+O **sistema em camadas** permite intermediários sem exigir que o cliente conheça toda a topologia. **Código sob demanda** é opcional: o servidor pode enviar código executável para ampliar o cliente, mas um sistema continua avaliável como REST sem essa restrição.
+
+Uma rota com substantivo pode continuar sendo **RPC com aparência de recurso** quando funciona como chamada de procedimento, ignora a semântica dos métodos e obriga o cliente a montar todas as transições fora das respostas. No sentido inverso, um comando explícito não se torna defeituoso apenas por ser RPC. Classifique o sistema pelo conjunto de restrições e consequências, não pela estética da URL. **Uma API HTTP não é automaticamente REST**. O laboratório aplica identificação de recurso, representações e mensagens HTTP, mas não usa sua pequena escala para afirmar conformidade completa com todas as restrições.
+
 ## REST não é a única alternativa
 
 REST favorece recursos, interface uniforme e uso explícito da semântica HTTP. **RPC** modela operações como chamadas nomeadas e pode representar ações complexas diretamente. **GraphQL** oferece um schema tipado e permite ao cliente selecionar campos e percorrer relações em uma consulta. **gRPC** define serviços e mensagens, normalmente com Protocol Buffers, e oferece geração de código e comunicação eficiente entre processos.

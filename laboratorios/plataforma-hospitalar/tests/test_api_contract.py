@@ -144,3 +144,14 @@ def test_application_and_explicit_contract_agree_on_operations_and_models():
         generated["components"]["schemas"]["PedidoElegibilidade"]["required"]
     )
     assert generated_required == explicit_required
+
+    explicit_accepted = explicit["paths"]["/elegibilidades"]["post"][
+        "responses"
+    ]["202"]
+    generated_accepted = generated["paths"]["/elegibilidades"]["post"][
+        "responses"
+    ]["202"]
+    assert generated_accepted["description"] == explicit_accepted["description"]
+    assert generated_accepted["headers"]["Location"] == explicit_accepted["headers"][
+        "Location"
+    ]

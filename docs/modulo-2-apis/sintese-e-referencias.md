@@ -51,7 +51,9 @@ Antes de publicar um contrato, verifique:
 ## Ferramentas
 
 - [Documentação do Bruno](https://docs.usebruno.com/): importação e execução de coleções locais.
-- [Documentação do Spectral](https://docs.stoplight.io/docs/spectral/): lint de contratos e regras personalizadas.
+- [Repositório oficial do Spectral](https://github.com/stoplightio/spectral): instalação, uso, rulesets e documentação mantida pelo projeto.
+- [Instalação oficial do Python](https://docs.python.org/3/using/index.html): preparação do interpretador por sistema operacional.
+- [Site oficial do Homebrew](https://brew.sh/): instalação do gerenciador usado nos comandos de macOS.
 - [Node.js](https://nodejs.org/en/download): instalação do runtime que fornece npm e npx.
 - [TestClient do FastAPI](https://fastapi.tiangolo.com/tutorial/testing/): testes HTTP em processo.
 - [Documentação do Uvicorn](https://www.uvicorn.org/): servidor ASGI usado na oficina.
