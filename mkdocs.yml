@@ -41,7 +41,15 @@ nav:
       - Oficina de ferramentas: modulo-1-visao-geral/oficina-de-ferramentas.md
       - Exercícios: modulo-1-visao-geral/exercicios.md
       - Síntese e referências: modulo-1-visao-geral/sintese-e-referencias.md
-  - "Módulo 2 — APIs": modulo-2-apis/index.md
+  - "Módulo 2 — APIs":
+      - Visão geral: modulo-2-apis/index.md
+      - Conceitos: modulo-2-apis/conceitos.md
+      - Padrões e decisões: modulo-2-apis/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-2-apis/exemplo-arquitetural.md
+      - Estudo de caso: modulo-2-apis/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-2-apis/oficina-de-ferramentas.md
+      - Exercícios: modulo-2-apis/exercicios.md
+      - Síntese e referências: modulo-2-apis/sintese-e-referencias.md
   - "Módulo 3 — Serviços": modulo-3-servicos/index.md
   - "Módulo 4 — Governança": modulo-4-governanca/index.md
   - "Módulo 5 — Eventos": modulo-5-eventos/index.md

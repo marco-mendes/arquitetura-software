@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: API de elegibilidades da plataforma hospitalar
+  version: 1.0.0
+  contact:
+    name: Disciplina de Arquitetura de Software
+  description: >-
+    Contrato didático para aceitar e recuperar consultas administrativas de
+    elegibilidade. O laboratório mantém dados somente em memória.
+tags:
+  - name: Elegibilidades
+    description: Operações administrativas de elegibilidade.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Servidor local da oficina.
+paths:
+  /elegibilidades:
+    post:
+      tags: [Elegibilidades]
+      operationId: criarElegibilidade
+      summary: Aceita uma consulta de elegibilidade
+      description: >-
+        Valida o pedido, cria um protocolo efêmero e informa onde consultar o
+        recurso aceito.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoElegibilidade'
+            examples:
+              pedidoValido:
+                summary: Pedido sintético válido
+                value:
+                  cpf: '12345678901'
+                  codigo_operadora: OPS-001
+                  matricula_plano: MAT-2026-001
+      responses:
+        '202':
+          description: Pedido aceito para processamento.
+          headers:
+            Location:
+              description: Caminho do recurso aceito.
+              required: true
+              schema:
+                type: string
+              example: /elegibilidades/550e8400-e29b-41d4-a716-446655440000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElegibilidadeAceita'
+              examples:
+                aceita:
+                  summary: Protocolo criado
+                  value:
+                    protocolo: 550e8400-e29b-41d4-a716-446655440000
+                    situacao: recebida
+                    criado_em: '2026-07-17T13:30:00Z'
+        '422':
+          description: Corpo ausente ou incompatível com o contrato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroAPI'
+              examples:
+                cpfAusente:
+                  summary: CPF obrigatório ausente
+                  value:
+                    codigo: dados_invalidos
+                    mensagem: A requisição não atende ao contrato.
+                    detalhes:
+                      - campo: body.cpf
+                        mensagem: Field required
+                        tipo: missing
+  /elegibilidades/{protocolo}:
+    get:
+      tags: [Elegibilidades]
+      operationId: consultarElegibilidade
+      summary: Consulta uma elegibilidade aceita
+      description: Recupera o estado efêmero associado ao protocolo informado.
+      parameters:
+        - name: protocolo
+          in: path
+          required: true
+          description: Identificador retornado na aceitação do pedido.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Elegibilidade localizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElegibilidadeAceita'
+              examples:
+                localizada:
+                  summary: Estado atual
+                  value:
+                    protocolo: 550e8400-e29b-41d4-a716-446655440000
+                    situacao: recebida
+                    criado_em: '2026-07-17T13:30:00Z'
+        '404':
+          description: Protocolo não localizado no processo atual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroAPI'
+              examples:
+                ausente:
+                  summary: Protocolo desconhecido
+                  value:
+                    codigo: elegibilidade_nao_encontrada
+                    mensagem: Protocolo de elegibilidade não encontrado.
+                    detalhes: []
+components:
+  schemas:
+    PedidoElegibilidade:
+      type: object
+      additionalProperties: false
+      required: [cpf, codigo_operadora, matricula_plano]
+      properties:
+        cpf:
+          type: string
+          pattern: '^\d{11}$'
+          description: Identificador sintético com onze dígitos usado no laboratório.
+        codigo_operadora:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: Código da operadora no contexto da plataforma.
+        matricula_plano:
+          type: string
+          minLength: 1
+          maxLength: 60
+          description: Matrícula administrativa no plano.
+      examples:
+        - cpf: '12345678901'
+          codigo_operadora: OPS-001
+          matricula_plano: MAT-2026-001
+    ElegibilidadeAceita:
+      type: object
+      additionalProperties: false
+      required: [protocolo, situacao, criado_em]
+      properties:
+        protocolo:
+          type: string
+          description: Identificador da consulta aceita.
+        situacao:
+          type: string
+          const: recebida
+          description: Estado inicial do pedido.
+        criado_em:
+          type: string
+          format: date-time
+          description: Instante UTC em que o pedido foi aceito.
+    DetalheErro:
+      type: object
+      additionalProperties: false
+      required: [campo, mensagem, tipo]
+      properties:
+        campo:
+          type: string
+        mensagem:
+          type: string
+        tipo:
+          type: string
+    ErroAPI:
+      type: object
+      additionalProperties: false
+      required: [codigo, mensagem, detalhes]
+      properties:
+        codigo:
+          type: string
+          description: Código estável para tratamento pelo consumidor.
+        mensagem:
+          type: string
+          description: Explicação legível do problema.
+        detalhes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetalheErro'
