@@ -26,9 +26,24 @@ hooks:
 
 nav:
   - Início: index.md
+  - Começar:
+      - Sobre a disciplina: comecar/sobre-a-disciplina.md
+      - Como usar: comecar/como-usar.md
+      - Mapa de aprendizagem: comecar/mapa-de-aprendizagem.md
+      - Taxonomia de Bloom: comecar/taxonomia-de-bloom.md
   - "Módulo 1 — Estilos": modulo-1-visao-geral/index.md
   - "Módulo 2 — APIs": modulo-2-apis/index.md
   - "Módulo 3 — Serviços": modulo-3-servicos/index.md
   - "Módulo 4 — Governança": modulo-4-governanca/index.md
   - "Módulo 5 — Eventos": modulo-5-eventos/index.md
   - "Módulo 6 — Nuvem": modulo-6-nuvem/index.md
+  - Projeto integrador:
+      - Template de ADR: referencia/template-adr.md
+  - Referência:
+      - Glossário: referencia/glossario.md
+      - Atributos de qualidade: referencia/atributos-de-qualidade.md
+      - Catálogo de padrões: referencia/catalogo-de-padroes.md
+      - Guia de ferramentas: referencia/guia-de-ferramentas.md
+      - Bibliografia: referencia/bibliografia.md
+  - Sobre:
+      - Plano da disciplina: sobre/plano-da-disciplina.md
