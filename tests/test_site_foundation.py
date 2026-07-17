@@ -33,3 +33,14 @@ class SiteFoundationTest(unittest.TestCase):
             "mkdocs build --strict",
         )
         self.assertEqual(sorted(map(text.index, commands)), list(map(text.index, commands)))
+
+    def test_publication_checkout_keeps_history_for_legacy_contract(self):
+        workflow = yaml.safe_load(
+            (ROOT / ".github/workflows/publicar-site.yml").read_text(encoding="utf-8")
+        )
+        checkout = next(
+            step
+            for step in workflow["jobs"]["build"]["steps"]
+            if step.get("uses") == "actions/checkout@v4"
+        )
+        self.assertEqual(0, checkout.get("with", {}).get("fetch-depth"))
