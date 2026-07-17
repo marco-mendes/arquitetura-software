@@ -131,7 +131,7 @@ class ContentContractTest(unittest.TestCase):
         with TemporaryDirectory() as temporary:
             docs = Path(temporary)
             page = docs / "pagina.md"
-            for heading in ("Acesso à ferramenta", "Instalação", "Pré-requisitos"):
+            for heading in ("Acesso à ferramenta", "Instalação"):
                 with self.subTest(heading=heading):
                     page.write_text(
                         "# Ferramenta\n\n"
@@ -147,8 +147,21 @@ class ContentContractTest(unittest.TestCase):
                         )
                     )
 
+            workshop = docs / "oficina-de-ferramentas.md"
+            workshop.write_text(
+                "# Oficina\n\n## Pré-requisitos\n\nRequer cartão.\n",
+                encoding="utf-8",
+            )
+            self.assertTrue(
+                any(
+                    "classificação de acesso" in error
+                    for error in validate_document(workshop, docs)
+                )
+            )
+
             page.write_text(
                 "# Caso hospitalar\n\n"
+                "## Requisitos do caso hospitalar\n\n"
                 "A cobrança hospitalar gera crédito no prontuário.\n\n"
                 "Use a ferramenta para simular a cobrança hospitalar.\n",
                 encoding="utf-8",
@@ -200,9 +213,12 @@ class ContentContractTest(unittest.TestCase):
                 "# Recursos\n\n"
                 "[Inline](destino.md#alvo)\n\n"
                 "[Referência][destino]\n\n"
+                "[Guia]\n\n"
                 '<a href="destino.md#alvo">HTML</a>\n\n'
                 "![Mapa por referência][figura]\n\n"
                 "**Leitura textual da figura:** O mapa conecta origem e destino.\n\n"
+                "![Mapa]\n\n"
+                "**Leitura textual da figura:** O atalho mostra o mesmo mapa.\n\n"
                 '<img src="figura.png" alt="Mapa em HTML">\n\n'
                 "**Leitura textual da figura:** O mapa HTML repete a relação.\n\n"
                 "```markdown\n"
@@ -210,8 +226,14 @@ class ContentContractTest(unittest.TestCase):
                 "![Imagem não ativa](ausente.png)\n"
                 '<a href="ausente-html.md">Exemplo</a>\n'
                 "```\n\n"
+                "    ```markdown\n"
+                "    [Exemplo aninhado](ausente-aninhado.md)\n"
+                "    ![Imagem aninhada](ausente-aninhado.png)\n"
+                "    ```\n\n"
                 "[destino]: destino.md#alvo\n"
-                "[figura]: figura.png\n",
+                "[figura]: figura.png\n"
+                "[Guia]: destino.md#alvo\n"
+                "[Mapa]: figura.png\n",
                 encoding="utf-8",
             )
 
@@ -224,13 +246,18 @@ class ContentContractTest(unittest.TestCase):
             page.write_text(
                 "# Recursos\n\n"
                 "[Referência ausente][destino]\n\n"
+                "[Guia ausente]\n\n"
                 '<a href="ausente-html.md">HTML ausente</a>\n\n'
                 "![Figura ausente][figura]\n\n"
                 "**Leitura textual da figura:** Figura de teste.\n\n"
+                "![Mapa ausente]\n\n"
+                "**Leitura textual da figura:** Atalho de imagem.\n\n"
                 '<img src="ausente-html.png" alt="">\n\n'
                 "**Leitura textual da figura:** Figura HTML de teste.\n\n"
                 "[destino]: ausente-referencia.md\n"
-                "[figura]: ausente-referencia.png\n",
+                "[figura]: ausente-referencia.png\n"
+                "[Guia ausente]: ausente-atalho.md\n"
+                "[Mapa ausente]: ausente-atalho.png\n",
                 encoding="utf-8",
             )
 
@@ -241,8 +268,12 @@ class ContentContractTest(unittest.TestCase):
                 "ausente-html.md",
                 "ausente-referencia.png",
                 "ausente-html.png",
+                "ausente-atalho.md",
+                "ausente-atalho.png",
             ):
                 self.assertTrue(any(target in error for error in errors), target)
+                if "atalho" in target:
+                    self.assertEqual(1, sum(target in error for error in errors), target)
             self.assertTrue(any("imagem sem texto alternativo" in e for e in errors))
 
     def test_figure_equivalence_must_be_the_next_block_after_optional_caption(self):
@@ -250,22 +281,30 @@ class ContentContractTest(unittest.TestCase):
             docs = Path(temporary)
             (docs / "figura.png").write_bytes(b"png")
             page = docs / "pagina.md"
-            page.write_text(
-                "# Figura\n\n"
-                "![Mapa](figura.png)\n\n"
+            valid_followings = (
+                "**Leitura textual da figura:** Origem leva ao destino.",
                 "*Figura 1 — Mapa do fluxo.*\n\n"
-                "**Leitura textual da figura:** Origem leva ao destino.\n",
-                encoding="utf-8",
+                "**Leitura textual da figura:** Origem leva ao destino.",
             )
-            self.assertFalse(
-                any("figura sem leitura textual" in e for e in validate_document(page, docs))
-            )
+            for following in valid_followings:
+                with self.subTest(valid=following):
+                    page.write_text(
+                        f"# Figura\n\n![Mapa](figura.png)\n\n{following}\n",
+                        encoding="utf-8",
+                    )
+                    self.assertFalse(
+                        any(
+                            "figura sem leitura textual" in error
+                            for error in validate_document(page, docs)
+                        )
+                    )
 
             invalid_followings = (
                 "Parágrafo interveniente.\n\n**Leitura textual da figura:** Tardia.",
                 "## Outra seção\n\n**Leitura textual da figura:** Tardia.",
                 "![Outra](figura.png)\n\n**Leitura textual da figura:** Só a segunda.",
                 "**Equivalente textual:** Marcador incorreto.",
+                "**Leitura textual da figura:**",
             )
             for following in invalid_followings:
                 with self.subTest(following=following):
@@ -273,6 +312,21 @@ class ContentContractTest(unittest.TestCase):
                         f"# Figura\n\n![Mapa](figura.png)\n\n{following}\n",
                         encoding="utf-8",
                     )
+                    self.assertTrue(
+                        any(
+                            "figura sem leitura textual" in error
+                            for error in validate_document(page, docs)
+                        )
+                    )
+
+            for source in (
+                "# Figura\n\n![Mapa](figura.png) "
+                "**Leitura textual da figura:** Mesma linha.\n",
+                "# Figura\n\n![Mapa](figura.png)\n"
+                "**Leitura textual da figura:** Mesmo bloco.\n",
+            ):
+                with self.subTest(source=source):
+                    page.write_text(source, encoding="utf-8")
                     self.assertTrue(
                         any(
                             "figura sem leitura textual" in error

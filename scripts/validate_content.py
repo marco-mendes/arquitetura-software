@@ -49,8 +49,9 @@ _ACCESS_CONTEXT = re.compile(
     r"\b(?:acesso|assinatura|cadastro|conta|pagamento)\w*\b"
 )
 _TOOL_ACCESS_HEADING = re.compile(
-    r"\b(?:acesso|instala(?:ção|cao)|pr[eé]-?requisitos?|requisitos?)\b"
+    r"\b(?:acesso|ferramentas?|instala(?:ção|cao))\b"
 )
+_PREREQUISITE_HEADING = re.compile(r"\bpr[eé]-?requisitos?\b")
 _TOOL_REQUIREMENT = re.compile(
     r"\bferramenta\b.{0,80}\b(?:exige|requer|depende|necessita|solicita)\w*\b",
     re.DOTALL,
@@ -66,6 +67,9 @@ _MARKDOWN_LINK = re.compile(
 )
 _REFERENCE_LINK = re.compile(
     r"(?P<image>!)?\[(?P<label>[^\]]+)\]\[(?P<reference>[^\]]*)\]"
+)
+_SHORTCUT_REFERENCE = re.compile(
+    r"(?P<image>!)?\[(?P<label>[^\]\n]+)\](?![\[(])"
 )
 _REFERENCE_DEFINITION = re.compile(
     r"^[ \t]{0,3}\[(?P<reference>[^\]]+)\]:[ \t]*"
@@ -190,8 +194,7 @@ def _mask_fenced_code(text: str) -> str:
     fence_length = 0
     for line in text.splitlines(keepends=True):
         content = line.lstrip(" ")
-        indent = len(line) - len(content)
-        opening = re.match(r"(?P<fence>`{3,}|~{3,})", content) if indent <= 3 else None
+        opening = re.match(r"(?P<fence>`{3,}|~{3,})", content)
         inside_fence = fence_character is not None
         if inside_fence:
             stripped = content.rstrip("\r\n")
@@ -226,9 +229,10 @@ def _html_attributes(tag: str) -> dict[str, str]:
 
 def _resources(text: str) -> tuple[str, list[_Resource]]:
     masked = _mask_fenced_code(text)
+    definition_matches = list(_REFERENCE_DEFINITION.finditer(masked))
     definitions = {
         _reference_key(match.group("reference")): match.group("target")
-        for match in _REFERENCE_DEFINITION.finditer(masked)
+        for match in definition_matches
     }
     resources: list[_Resource] = []
     for match in _MARKDOWN_LINK.finditer(masked):
@@ -253,6 +257,25 @@ def _resources(text: str) -> tuple[str, list[_Resource]]:
                 reference,
             )
         )
+    for match in _SHORTCUT_REFERENCE.finditer(masked):
+        if any(
+            definition.start() <= match.start() < definition.end()
+            for definition in definition_matches
+        ):
+            continue
+        target = definitions.get(_reference_key(match.group("label")))
+        if target is None:
+            continue
+        resources.append(
+            _Resource(
+                "image" if match.group("image") else "link",
+                target,
+                match.group("label"),
+                match.start(),
+                match.end(),
+                match.group("label"),
+            )
+        )
     for match in _HTML_RESOURCE.finditer(masked):
         attributes = _html_attributes(match.group(0))
         is_image = match.group("tag").casefold() == "img"
@@ -269,11 +292,39 @@ def _resources(text: str) -> tuple[str, list[_Resource]]:
 
 
 def _has_proximal_textual_equivalent(masked: str, image: _Resource) -> bool:
-    following = masked[image.end :].lstrip()
+    line_start = masked.rfind("\n", 0, image.start) + 1
+    line_end = masked.find("\n", image.end)
+    if line_end == -1:
+        line_end = len(masked)
+    if (
+        masked[line_start : image.start].strip()
+        or masked[image.end : line_end].strip()
+        or line_end == len(masked)
+    ):
+        return False
+
+    following_lines = masked[line_end + 1 :]
+    separator = re.match(r"(?:[ \t]*\r?\n)+", following_lines)
+    if not separator:
+        return False
+    following = following_lines[separator.end() :]
+
     caption = _FIGURE_CAPTION.match(following)
     if caption:
-        following = following[caption.end() :].lstrip()
-    return following.startswith(_TEXTUAL_EQUIVALENT)
+        after_caption = following[caption.end() :]
+        caption_separator = re.match(
+            r"[ \t]*\r?\n(?:[ \t]*\r?\n)+", after_caption
+        )
+        if not caption_separator:
+            return False
+        following = after_caption[caption_separator.end() :]
+
+    if not following.startswith(_TEXTUAL_EQUIVALENT):
+        return False
+    paragraph_end = re.search(r"\r?\n[ \t]*\r?\n|\Z", following)
+    paragraph = following[: paragraph_end.start()] if paragraph_end else following
+    description = paragraph[len(_TEXTUAL_EQUIVALENT) :].strip()
+    return bool(description)
 
 
 def _validate_links_and_figures(path: Path, docs_root: Path, text: str) -> list[str]:
@@ -327,14 +378,22 @@ def _validate_procedural_labels(path: Path, docs_root: Path, text: str) -> list[
     return errors
 
 
-def _access_classification_errors(text: str, location: str) -> list[str]:
+def _access_classification_errors(
+    text: str, location: str, path: Path
+) -> list[str]:
     folded = text.casefold()
     candidates = list(re.split(r"\n[ \t]*\n", folded))
     scoped_sections: list[str] = []
+    is_tool_page = path.name in {
+        "oficina-de-ferramentas.md",
+        "guia-de-ferramentas.md",
+    }
     headings = list(_HEADING.finditer(folded))
     for index, heading in enumerate(headings):
         title = heading.group("title")
-        if not _TOOL_ACCESS_HEADING.search(title):
+        if not _TOOL_ACCESS_HEADING.search(title) and not (
+            is_tool_page and _PREREQUISITE_HEADING.search(title)
+        ):
             continue
         level = len(heading.group(0)) - len(heading.group(0).lstrip("#"))
         end = len(folded)
@@ -451,7 +510,7 @@ def validate_document(path: Path, docs_root: Path) -> list[str]:
         errors.append(f"{location}: marcador provisório")
     if _ASSESSMENT_VOCABULARY.search(text):
         errors.append(f"{location}: vocabulário público proibido")
-    errors.extend(_access_classification_errors(text, location))
+    errors.extend(_access_classification_errors(text, location, path))
     errors.extend(_validate_links_and_figures(path, docs_root, text))
     errors.extend(_validate_procedural_labels(path, docs_root, text))
     if path.name != "exercicios.md":
