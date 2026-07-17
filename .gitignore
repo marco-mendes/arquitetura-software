@@ -57,3 +57,4 @@ Pipfile.lock
 
 # Isolated implementation worktrees
 .worktrees/
+.superpowers/sdd/
