@@ -1,4 +1,46 @@
-# Livro de Fundamentos de Arquitetura de Software Modernas  
+# Arquitetura de Software — disciplina de pós-graduação
+
+Este repositório reúne o site didático da disciplina **Arquitetura de Software** e preserva o acervo que o antecede. O curso tem 24 horas, organizadas em seis encontros de quatro horas, e é voltado a desenvolvedores, analistas e especialistas em .NET, Java ou Python que desejam começar a tomar decisões arquiteturais de forma explícita e verificável.
+
+## Site da disciplina
+
+Depois da publicação, o material navegável estará em [marco-mendes.github.io/arquitetura-software](https://marco-mendes.github.io/arquitetura-software/). No site, a sequência proposta é: estilos arquiteturais, APIs, serviços, governança, eventos e nuvem. Cada módulo combina conceito, exemplo hospitalar, oficina executável, exercícios graduados e um incremento do projeto integrador.
+
+## Prévia local e validação
+
+Use Python 3 para montar uma cópia local do site:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+mkdocs serve
+```
+
+No Windows PowerShell, ative o ambiente com `.venv\\Scripts\\Activate.ps1`. Depois, abra o endereço informado pelo MkDocs — normalmente `http://127.0.0.1:8000`.
+
+Antes de enviar alterações, valide o conteúdo e a construção estática:
+
+```bash
+python scripts/validate_content.py --all
+mkdocs build --strict
+```
+
+O GitHub Actions executa essas verificações e publica o site no GitHub Pages quando o fluxo de publicação é acionado na branch principal.
+
+## Laboratórios e material do professor
+
+Os laboratórios reproduzíveis ficam em [`laboratorios/plataforma-hospitalar`](laboratorios/plataforma-hospitalar/). Cada oficina descreve instalação para Windows, macOS e Linux e indica uma evidência a guardar. O material de condução da aula fica em `material-professor/`; ele é deliberadamente privado e não faz parte da publicação do site.
+
+## Acervo legado
+
+Os arquivos Markdown na raiz permanecem nos mesmos caminhos para preservar links e referências já compartilhados. Cada arquivo começa agora com uma nota que aponta para a página canônica da disciplina. Consulte o [mapa do acervo legado](docs/referencia/mapa-do-acervo-legado.md) para saber onde cada tema foi integrado ao novo percurso.
+
+O índice original, mantido abaixo, conserva os links usados anteriormente.
+
+## Índice original do acervo
+
+## Livro de Fundamentos de Arquitetura de Software Modernas
 ## Estilos Arquiteturais de Backend  
 - [1.1 Mapa e Estilos de Backend](https://github.com/marco-mendes/arquitetura-software/blob/main/1.1%20Mapa%20e%20Estilos%20de%20Backend.md) – Visão geral das quatro famílias arquiteturais (Monolítica, Distribuída, Comunicação, Infraestrutura) com mapa visual e trade-offs de cada estilo.  
 - [1.2 Estilo em Camadas](https://github.com/marco-mendes/arquitetura-software/blob/main/1.2%20Estilo%20em%20Camadas.md) – Aprofundamento do estilo em camadas com exemplos de código, variações MVC e DDD, e topologias de implantação.  
