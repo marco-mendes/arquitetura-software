@@ -70,7 +70,7 @@ Essa resposta não afirma que o processo de Exames parou. Ela comunica que a cap
 
 ## Fronteira de dados executável
 
-O arquivo Compose cria dois servidores PostgreSQL. No primeiro existe somente o schema `elegibilidade`; no segundo, somente `exames`. As URLs de conexão são entregues ao processo proprietário. Não há porta de banco publicada para a máquina durante a oficina, reduzindo caminhos acidentais.
+O arquivo Compose cria dois servidores PostgreSQL. No primeiro existe somente o schema `elegibilidade`; no segundo, somente `exames`. Cada banco usa rede interna e alias próprio; cada aplicação recebe apenas sua URL e só participa da rede do banco que possui. A rede de aplicação é separada e serve ao HTTP entre serviços. Não há porta de banco publicada para a máquina durante a oficina, reduzindo caminhos acidentais.
 
 O teste `test_exames_source_cannot_access_eligibility_table_directly` funciona como uma guarda simples. Ele rejeita referências SQL conhecidas à tabela alheia e ao host do banco vizinho. Guardas textuais não substituem permissões: a separação física e as credenciais oferecem a proteção efetiva. O teste documenta a intenção e detecta regressões óbvias.
 

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MODULE = ROOT / "docs" / "modulo-3-servicos"
 LAB = ROOT / "laboratorios" / "plataforma-hospitalar"
 COMPOSE = LAB / "infra" / "compose.servicos.yml"
+POSTGRES_INIT = LAB / "infra" / "postgres" / "init.sql"
 
 
 class ModuleThreeTest(unittest.TestCase):
@@ -76,13 +77,31 @@ class ModuleThreeTest(unittest.TestCase):
         for fragment in (
             "compose.servicos.yml up -d --build --wait",
             "docker compose ps",
-            "localhost:8001/health",
-            "localhost:8002/health",
+            "localhost:${ELEGIBILIDADE_PORT}/health",
+            "localhost:${EXAMES_PORT}/health",
             "docker compose -f infra/compose.servicos.yml stop elegibilidade",
             "503 Service Unavailable",
             "dependencia_indisponivel",
             "test_service_boundaries.py",
             "docker compose -f infra/compose.servicos.yml down -v",
+        ):
+            self.assertIn(fragment, workshop)
+
+    def test_workshop_uses_a_running_health_wait_and_overrideable_ports(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("wait elegibilidade", workshop)
+        for fragment in (
+            "docker compose -f infra/compose.servicos.yml up -d --wait",
+            "ELEGIBILIDADE_PORT=18001",
+            "EXAMES_PORT=18002",
+            "$env:ELEGIBILIDADE_PORT = 18001",
+            "$env:EXAMES_PORT = 18002",
+            "localhost:${ELEGIBILIDADE_PORT}",
+            "localhost:${EXAMES_PORT}",
+            "4 passed",
+            "test_exames_makes_its_own_database_failure_observable",
         ):
             self.assertIn(fragment, workshop)
 
@@ -110,6 +129,38 @@ class ModuleThreeTest(unittest.TestCase):
             self.assertIn(service, compose)
         self.assertGreaterEqual(compose.count("healthcheck:"), 4)
         self.assertNotIn("container_name:", compose)
+
+    def test_compose_enforces_database_network_boundaries_and_port_overrides(self):
+        compose = COMPOSE.read_text(encoding="utf-8")
+        for fragment in (
+            "elegibilidade-db-net:",
+            "exames-db-net:",
+            "application-net:",
+            "${ELEGIBILIDADE_PORT:-8001}:8000",
+            "${EXAMES_PORT:-8002}:8000",
+            "elegibilidade-db",
+            "POSTGRES_USER: postgres",
+            "POSTGRES_PASSWORD: local-elegibilidade-admin",
+            "POSTGRES_PASSWORD: local-exames-admin",
+        ):
+            self.assertIn(fragment, compose)
+
+        eligibility = compose.split("  elegibilidade:", 1)[1].split(
+            "  exames:", 1
+        )[0]
+        exams = compose.split("  exames:", 1)[1].split("volumes:", 1)[0]
+        self.assertIn("application-net", eligibility)
+        self.assertIn("elegibilidade-db-net", eligibility)
+        self.assertNotIn("exames-db-net", eligibility)
+        self.assertIn("application-net", exams)
+        self.assertIn("exames-db-net", exams)
+        self.assertNotIn("elegibilidade-db-net", exams)
+
+    def test_database_application_roles_are_explicitly_least_privilege(self):
+        initialization = POSTGRES_INIT.read_text(encoding="utf-8")
+        for role in ("elegibilidade", "exames"):
+            self.assertIn(f"CREATE ROLE {role} LOGIN NOSUPERUSER", initialization)
+            self.assertIn("NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS", initialization)
 
 
 if __name__ == "__main__":

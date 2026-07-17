@@ -9,7 +9,7 @@ Nesta oficina você sobe quatro contêineres, confirma a propriedade dos dados, 
 | Docker Engine | executar contêineres e redes | `docker version` |
 | Docker Compose v2 | coordenar processos e health checks | `docker compose version` |
 | Python 3.11 ou superior | executar testes de contrato | `python --version` |
-| FastAPI e httpx | oferecer e consumir HTTP | respostas em 8001 e 8002 |
+| FastAPI e httpx | oferecer e consumir HTTP | respostas nas portas configuradas |
 | PostgreSQL 16 | persistir estados com propriedade separada | dois bancos saudáveis |
 
 O Docker Compose fornece reprodução local, mas não representa orquestração de produção. O health check informa prontidão limitada ao processo e seu banco; não prova toda capacidade ponta a ponta.
@@ -22,7 +22,7 @@ Confirmar as ferramentas antes de criar qualquer recurso e trabalhar apenas na p
 
 **Pré-requisito**
 
-Tenha o repositório disponível, Python 3.11 ou superior e Docker com Compose v2. Reserve as portas `8001` e `8002`. Os comandos assumem que o terminal começa na raiz do repositório.
+Tenha o repositório disponível, Python 3.11 ou superior e Docker com Compose v2. Por padrão, Compose usa as portas `8001` e `8002`; os comandos assumem que o terminal começa na raiz do repositório.
 
 **Execute**
 
@@ -123,10 +123,20 @@ Se houver erro de permissão no socket Docker, use o procedimento pós-instalaç
 Dentro de `laboratorios/plataforma-hospitalar`, valide o arquivo antes de subir o ambiente:
 
 ```bash
+export ELEGIBILIDADE_PORT=18001
+export EXAMES_PORT=18002
 docker compose -f infra/compose.servicos.yml config --quiet
 ```
 
-No PowerShell, o comando é igual. Em seguida, leia os nomes dos serviços:
+Em PowerShell, escolha as mesmas portas livres:
+
+```powershell
+$env:ELEGIBILIDADE_PORT = 18001
+$env:EXAMES_PORT = 18002
+docker compose -f infra/compose.servicos.yml config --quiet
+```
+
+Em seguida, leia os nomes dos serviços:
 
 ```bash
 docker compose -f infra/compose.servicos.yml config --services
@@ -134,11 +144,11 @@ docker compose -f infra/compose.servicos.yml config --services
 
 **Resultado esperado**
 
-O primeiro comando não imprime conteúdo e termina com código zero. O segundo lista `db_elegibilidade`, `db_exames`, `elegibilidade` e `exames`.
+O primeiro comando não imprime conteúdo e termina com código zero. O segundo lista `db_elegibilidade`, `db_exames`, `elegibilidade` e `exames`. As variáveis valem apenas para o terminal atual; para voltar às portas padrão, use `unset ELEGIBILIDADE_PORT EXAMES_PORT` em POSIX ou `Remove-Item Env:ELEGIBILIDADE_PORT,Env:EXAMES_PORT` em PowerShell antes do próximo `up`.
 
 **Observe**
 
-Cada aplicação recebe somente sua `DATABASE_URL`. Exames também recebe `ELIGIBILIDADE_URL`, que aponta para o contrato HTTP. Os bancos não publicam portas na máquina. As credenciais legíveis são didáticas e limitadas ao ambiente local.
+Cada aplicação recebe somente sua `DATABASE_URL`. Exames também recebe `ELIGIBILIDADE_URL`, que aponta para o contrato HTTP. Há uma rede de aplicação e uma rede interna para cada banco: Exames não está na rede de Elegibilidade, e o inverso também vale. Os bancos não publicam portas na máquina; as credenciais de aplicação são papéis PostgreSQL distintos, sem a senha administrativa.
 
 **Compare**
 
@@ -202,7 +212,7 @@ docker compose ps
 
 **Resultado esperado**
 
-O `up` termina com quatro serviços iniciados. `docker compose ps` mostra `db_elegibilidade`, `db_exames`, `elegibilidade` e `exames` como `healthy`. As aplicações publicam `0.0.0.0:8001->8000` e `0.0.0.0:8002->8000`.
+O `up` termina com quatro serviços iniciados. `docker compose ps` mostra `db_elegibilidade`, `db_exames`, `elegibilidade` e `exames` como `healthy`. Com as variáveis acima, as aplicações publicam `0.0.0.0:18001->8000` e `0.0.0.0:18002->8000`.
 
 **Contingência**
 
@@ -211,15 +221,15 @@ Se o build falhar por indisponibilidade de rede ao baixar imagens ou dependênci
 Consulte saúde. Em macOS ou Linux:
 
 ```bash
-curl -i http://localhost:8001/health
-curl -i http://localhost:8002/health
+curl -i "http://localhost:${ELEGIBILIDADE_PORT}/health"
+curl -i "http://localhost:${EXAMES_PORT}/health"
 ```
 
 No PowerShell:
 
 ```powershell
-curl.exe -i http://localhost:8001/health
-curl.exe -i http://localhost:8002/health
+curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/health"
+curl.exe -i "http://localhost:$env:EXAMES_PORT/health"
 ```
 
 **Resultado esperado**
@@ -229,7 +239,7 @@ Ambas respondem `HTTP/1.1 200 OK`. Os corpos são `{"status":"ok","servico":"ele
 Solicite um exame. Em macOS ou Linux:
 
 ```bash
-curl -i -X POST http://localhost:8002/exames \
+curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
   -H 'Content-Type: application/json' \
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
@@ -237,14 +247,14 @@ curl -i -X POST http://localhost:8002/exames \
 No PowerShell:
 
 ```powershell
-curl.exe -i -X POST http://localhost:8002/exames `
+curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
   -H "Content-Type: application/json" `
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
 **Resultado esperado**
 
-A resposta é `201 Created`, `solicitacao_id` é `1`, o beneficiário e o exame são repetidos e `situacao` é `solicitado`.
+A resposta é `201 Created`; após um `down -v` novo, o identificador normalmente começa em `1`, mas a verificação deve aceitar o identificador retornado. O beneficiário e o exame são repetidos e `situacao` é `solicitado`.
 
 Interrompa somente Elegibilidade:
 
@@ -253,7 +263,13 @@ docker compose -f infra/compose.servicos.yml stop elegibilidade
 docker compose -f infra/compose.servicos.yml ps
 ```
 
-Repita o mesmo `POST /exames`.
+Repita o `POST` pela URL configurada. Em POSIX:
+
+```bash
+curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
+  -H 'Content-Type: application/json' \
+  -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
+```
 
 **Resultado esperado**
 
@@ -272,14 +288,13 @@ Compare esse resultado com um processo único. A chamada local evitaria indispon
 - Por que não assumir `elegivel: true` como fallback?
 - Que métrica diferenciaria erro do consumidor de falha da dependência?
 
-Reinicie a dependência e aguarde:
+Reinicie a dependência e aguarde sua saúde:
 
 ```bash
-docker compose -f infra/compose.servicos.yml start elegibilidade
-docker compose -f infra/compose.servicos.yml wait elegibilidade || docker compose -f infra/compose.servicos.yml up -d --wait
+docker compose -f infra/compose.servicos.yml up -d --wait
 ```
 
-Se sua versão de Compose interpretar `wait` como espera pelo encerramento, use diretamente o segundo comando. Confirme novamente os dois `/health` antes de continuar.
+Esse comando espera health checks de serviços em execução; ele não espera um contêiner saudável terminar. Confirme novamente os dois `/health` nas URLs configuradas antes de continuar.
 
 Execute o contrato de fronteira:
 
@@ -295,11 +310,11 @@ py -m pytest tests/test_service_boundaries.py -q
 
 **Resultado esperado**
 
-O pytest informa `3 passed`. Um teste consome o contrato HTTP sem importar internals de Elegibilidade, outro observa `503` e o terceiro proíbe acesso direto à tabela alheia.
+O pytest informa `4 passed`: `test_exames_consumes_eligibility_only_through_http_contract`, `test_exames_makes_partial_failure_observable_when_dependency_is_down`, `test_exames_makes_its_own_database_failure_observable` e a guarda de SQL alheio. O teste de banco próprio torna a falha de sua própria fronteira observável; a guarda de fonte é secundária à separação de rede e credenciais.
 
 ## Resultado esperado
 
-Ao final da execução nominal, há evidência de quatro componentes saudáveis, duas respostas de saúde, um `201`, um `503` deliberado e três testes aprovados. Resultados diferentes devem ser registrados com comando, horário e saída; não substitua evidência ausente por uma descrição presumida.
+Ao final da execução nominal, há evidência de quatro componentes saudáveis, duas respostas de saúde, um `201`, um `503` deliberado e quatro testes aprovados. Resultados diferentes devem ser registrados com comando, horário e saída; não substitua evidência ausente por uma descrição presumida.
 
 ## Interpretação
 
@@ -332,12 +347,22 @@ Se a oficina for interrompida depois do `up`, retorne à pasta do laboratório e
 
 Organize em `evidencias/modulo-3`:
 
+Em POSIX, capture as chamadas nas portas que você configurou; repita o último comando depois de parar Elegibilidade para obter a falha parcial:
+
+```bash
+curl -i "http://localhost:${ELEGIBILIDADE_PORT}/health" | tee evidencias/modulo-3/health-elegibilidade.txt
+curl -i "http://localhost:${EXAMES_PORT}/health" | tee evidencias/modulo-3/health-exames.txt
+curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" -H 'Content-Type: application/json' -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}' | tee evidencias/modulo-3/exame-criado.txt
+# depois de `stop elegibilidade`, repita o POST e grave em falha-parcial.txt
+curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" -H 'Content-Type: application/json' -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}' | tee evidencias/modulo-3/falha-parcial.txt
+```
+
 - `versoes.txt` com versões e resposta do servidor Docker;
 - `compose-ps.txt` com quatro estados saudáveis;
 - `health-elegibilidade.txt` e `health-exames.txt`;
 - `exame-criado.txt` com `201`;
 - `falha-parcial.txt` com `503`;
-- `testes-fronteira.txt` com `3 passed`;
+- `testes-fronteira.txt` com `4 passed`;
 - `limpeza.txt` com remoção ou a contingência precisa.
 
 ### Exploração em dupla
