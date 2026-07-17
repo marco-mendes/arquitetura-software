@@ -39,6 +39,11 @@ nav:
   - "Módulo 5 — Eventos": modulo-5-eventos/index.md
   - "Módulo 6 — Nuvem": modulo-6-nuvem/index.md
   - Projeto integrador:
+      - Visão geral: projeto-integrador/index.md
+      - Contexto hospitalar: projeto-integrador/contexto-hospitalar.md
+      - Seis incrementos: projeto-integrador/incrementos.md
+      - Modelos de entrega: projeto-integrador/modelos-de-entrega.md
+      - Critérios de avaliação: projeto-integrador/criterios-de-avaliacao.md
       - Template de ADR: referencia/template-adr.md
   - Referência:
       - Glossário: referencia/glossario.md
