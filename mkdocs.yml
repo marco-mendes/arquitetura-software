@@ -1,0 +1,106 @@
+site_name: Arquitetura de Software
+use_directory_urls: true
+exclude_docs: |
+  superpowers/**
+
+theme:
+  name: material
+  language: pt-BR
+  palette:
+    primary: custom
+  features:
+    - navigation.instant
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+
+extra_javascript:
+  - assets/javascripts/mermaid.mjs
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+hooks:
+  - course_semantics.py
+
+nav:
+  - Início: index.md
+  - Começar:
+      - Sobre a disciplina: comecar/sobre-a-disciplina.md
+      - Como usar: comecar/como-usar.md
+      - Mapa de aprendizagem: comecar/mapa-de-aprendizagem.md
+      - Taxonomia de Bloom: comecar/taxonomia-de-bloom.md
+  - "Módulo 1 — Estilos":
+      - Visão geral: modulo-1-visao-geral/index.md
+      - Conceitos: modulo-1-visao-geral/conceitos.md
+      - Padrões e decisões: modulo-1-visao-geral/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-1-visao-geral/exemplo-arquitetural.md
+      - Estudo de caso: modulo-1-visao-geral/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-1-visao-geral/oficina-de-ferramentas.md
+      - Exercícios: modulo-1-visao-geral/exercicios.md
+      - Síntese e referências: modulo-1-visao-geral/sintese-e-referencias.md
+  - "Módulo 2 — APIs":
+      - Visão geral: modulo-2-apis/index.md
+      - Conceitos: modulo-2-apis/conceitos.md
+      - Padrões e decisões: modulo-2-apis/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-2-apis/exemplo-arquitetural.md
+      - Estudo de caso: modulo-2-apis/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-2-apis/oficina-de-ferramentas.md
+      - Exercícios: modulo-2-apis/exercicios.md
+      - Síntese e referências: modulo-2-apis/sintese-e-referencias.md
+  - "Módulo 3 — Serviços":
+      - Visão geral: modulo-3-servicos/index.md
+      - Conceitos: modulo-3-servicos/conceitos.md
+      - Padrões e decisões: modulo-3-servicos/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-3-servicos/exemplo-arquitetural.md
+      - Estudo de caso: modulo-3-servicos/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-3-servicos/oficina-de-ferramentas.md
+      - Exercícios: modulo-3-servicos/exercicios.md
+      - Síntese e referências: modulo-3-servicos/sintese-e-referencias.md
+  - "Módulo 4 — Governança":
+      - Visão geral: modulo-4-governanca/index.md
+      - Conceitos: modulo-4-governanca/conceitos.md
+      - Padrões e decisões: modulo-4-governanca/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-4-governanca/exemplo-arquitetural.md
+      - Estudo de caso: modulo-4-governanca/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-4-governanca/oficina-de-ferramentas.md
+      - Exercícios: modulo-4-governanca/exercicios.md
+      - Síntese e referências: modulo-4-governanca/sintese-e-referencias.md
+  - "Módulo 5 — Eventos":
+      - Visão geral: modulo-5-eventos/index.md
+      - Conceitos: modulo-5-eventos/conceitos.md
+      - Padrões e decisões: modulo-5-eventos/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-5-eventos/exemplo-arquitetural.md
+      - Estudo de caso: modulo-5-eventos/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-5-eventos/oficina-de-ferramentas.md
+      - Exercícios: modulo-5-eventos/exercicios.md
+      - Síntese e referências: modulo-5-eventos/sintese-e-referencias.md
+  - "Módulo 6 — Nuvem":
+      - Visão geral: modulo-6-nuvem/index.md
+      - Conceitos: modulo-6-nuvem/conceitos.md
+      - Padrões e decisões: modulo-6-nuvem/padroes-e-decisoes.md
+      - Exemplo arquitetural: modulo-6-nuvem/exemplo-arquitetural.md
+      - Estudo de caso: modulo-6-nuvem/estudo-de-caso.md
+      - Oficina de ferramentas: modulo-6-nuvem/oficina-de-ferramentas.md
+      - Exercícios: modulo-6-nuvem/exercicios.md
+      - Síntese e referências: modulo-6-nuvem/sintese-e-referencias.md
+  - Projeto integrador:
+      - Visão geral: projeto-integrador/index.md
+      - Contexto hospitalar: projeto-integrador/contexto-hospitalar.md
+      - Seis incrementos: projeto-integrador/incrementos.md
+      - Modelos de entrega: projeto-integrador/modelos-de-entrega.md
+      - Critérios de avaliação: projeto-integrador/criterios-de-avaliacao.md
+      - Template de ADR: referencia/template-adr.md
+  - Referência:
+      - Glossário: referencia/glossario.md
+      - Atributos de qualidade: referencia/atributos-de-qualidade.md
+      - Catálogo de padrões: referencia/catalogo-de-padroes.md
+      - Guia de ferramentas: referencia/guia-de-ferramentas.md
+      - Bibliografia: referencia/bibliografia.md
+  - Sobre:
+      - Plano da disciplina: sobre/plano-da-disciplina.md
+      - Qualidade do material: sobre/qualidade-do-material.md

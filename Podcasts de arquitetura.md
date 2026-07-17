@@ -1,3 +1,5 @@
+> **Acervo legado preservado.** Para o percurso atual da disciplina, consulte a [Bibliografia](docs/referencia/bibliografia.md).
+
 # Lista curada de podcasts sobre casos reais de arquitetura
 
 ## Introdução a Microsserviços - Artigo de James Lewis e Martin Fowler 

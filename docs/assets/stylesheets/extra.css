@@ -1,0 +1,194 @@
+:root {
+  --academia-navy: #16243A;
+  --academia-cobalt: #254DB8;
+  --academia-cyan: #5FC0D1;
+  --academia-surface: #F2F6FB;
+  --academia-white: #FFFFFF;
+  --academia-amber: #F2B84B;
+  --academia-space-1: 0.25rem;
+  --academia-space-2: 0.5rem;
+  --academia-space-3: 0.75rem;
+  --academia-space-4: 1rem;
+  --academia-space-6: 1.5rem;
+  --academia-space-8: 2rem;
+  --academia-reading-width: 72ch;
+  --academia-radius: 0.5rem;
+  --academia-shadow: 0 0.5rem 1.5rem rgb(22 36 58 / 12%);
+  --academia-font-display: Charter, Georgia, serif;
+  --academia-font-body: Inter, "Segoe UI", sans-serif;
+  --academia-font-code: "IBM Plex Mono", Consolas, monospace;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  color: var(--academia-navy);
+  font-family: var(--academia-font-body);
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+  color: var(--academia-navy);
+  font-family: var(--academia-font-display);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.md-typeset code,
+.md-typeset kbd,
+.md-typeset pre {
+  font-family: var(--academia-font-code);
+}
+
+.md-typeset p,
+.md-typeset li {
+  max-width: var(--academia-reading-width);
+}
+
+.module-opening {
+  border-bottom: 0.25rem solid var(--academia-cyan);
+  margin-bottom: var(--academia-space-8);
+  padding-bottom: var(--academia-space-3);
+}
+
+.objective-card,
+.adr-block {
+  background: var(--academia-surface);
+  border: 1px solid rgb(37 77 184 / 18%);
+  border-radius: var(--academia-radius);
+  box-shadow: var(--academia-shadow);
+  margin-block: var(--academia-space-6);
+  padding: var(--academia-space-6);
+}
+
+.decision-callout,
+.risk-callout {
+  border-inline-start: 0.3rem solid var(--academia-cobalt);
+  margin-block: var(--academia-space-6);
+  padding: var(--academia-space-4) var(--academia-space-6);
+}
+
+.risk-callout {
+  background: rgb(242 184 75 / 18%);
+  border-inline-start-color: var(--academia-amber);
+}
+
+.decision-callout::before,
+.risk-callout::before,
+.criteria::before {
+  display: block;
+  font-family: var(--academia-font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--academia-space-2);
+}
+
+.decision-callout::before {
+  color: var(--academia-cobalt);
+  content: "DECISÃO";
+}
+
+.risk-callout::before {
+  color: var(--academia-navy);
+  content: "RISCO";
+}
+
+.bloom-label {
+  align-items: center;
+  display: flex;
+  gap: var(--academia-space-3);
+}
+
+.bloom-label::before {
+  background: var(--academia-cobalt);
+  border-radius: 999px;
+  color: var(--academia-white);
+  content: "BLOOM";
+  flex: 0 0 auto;
+  font-family: var(--academia-font-body);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  padding: var(--academia-space-1) var(--academia-space-2);
+}
+
+.architecture-figure {
+  background: var(--academia-white);
+  border: 1px solid rgb(22 36 58 / 15%);
+  border-radius: var(--academia-radius);
+  box-shadow: var(--academia-shadow);
+  margin-block: var(--academia-space-8);
+  max-width: 100%;
+  padding: var(--academia-space-4);
+}
+
+.architecture-figure img,
+.architecture-figure svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.comparison-table {
+  border-collapse: collapse;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  width: max-content;
+}
+
+.comparison-table th {
+  background: var(--academia-navy);
+  color: var(--academia-white);
+}
+
+.comparison-table th,
+.comparison-table td {
+  border: 1px solid rgb(22 36 58 / 16%);
+  padding: var(--academia-space-3) var(--academia-space-4);
+  text-align: start;
+}
+
+.criteria {
+  background: var(--academia-surface);
+  border-inline-start: 0.3rem solid var(--academia-cyan);
+  padding: var(--academia-space-4) var(--academia-space-6);
+}
+
+.criteria::before {
+  color: var(--academia-navy);
+  content: "CRITÉRIOS";
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--academia-cobalt);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767.98px) {
+  .objective-card,
+  .adr-block,
+  .decision-callout,
+  .risk-callout,
+  .criteria {
+    padding: var(--academia-space-4);
+  }
+
+  .bloom-label {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

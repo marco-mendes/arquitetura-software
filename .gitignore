@@ -9,6 +9,7 @@ __pycache__/
 # Ignore distribution/build directories
 dist/
 build/
+site/
 .eggs/
 *.egg-info/
 
@@ -44,6 +45,7 @@ Pipfile.lock
 .pytest_cache/
 
 # Ignore other common binary/intermediate files
+.DS_Store
 *.pyo
 *.pyd
 *.dll
@@ -57,3 +59,7 @@ Pipfile.lock
 
 # Isolated implementation worktrees
 .worktrees/
+.superpowers/sdd/
+
+# Private instructor notes and answer keys; never publish in the course site.
+/material-professor/

@@ -1,0 +1,46 @@
+from pathlib import Path
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class AcademiaVisualSystemTest(unittest.TestCase):
+    def test_tokens_typography_and_components(self):
+        css = (ROOT / "docs/assets/stylesheets/extra.css").read_text(encoding="utf-8")
+        for value in ("#16243A", "#254DB8", "#5FC0D1", "#F2F6FB", "#FFFFFF", "#F2B84B"):
+            self.assertIn(value, css)
+        for value in ("Charter", "Georgia", "Inter", "Segoe UI", "IBM Plex Mono", "Consolas"):
+            self.assertIn(value, css)
+        for selector in (
+            ".module-opening",
+            ".objective-card",
+            ".decision-callout",
+            ".risk-callout",
+            ".bloom-label",
+            ".architecture-figure",
+            ".comparison-table",
+            ".adr-block",
+            ".criteria",
+        ):
+            self.assertIn(selector, css)
+
+    def test_accessibility_rules(self):
+        css = (ROOT / "docs/assets/stylesheets/extra.css").read_text(encoding="utf-8")
+        for marker in (":focus-visible", "prefers-reduced-motion", "overflow-x: auto", "max-width: 100%"):
+            self.assertIn(marker, css)
+        self.assertNotIn("outline: none", css)
+
+    def test_semantic_hook_exposes_expected_interface(self):
+        from course_semantics import on_page_content
+
+        html = on_page_content("<h1>Título</h1><table><tr><td>x</td></tr></table>")
+        self.assertIn("module-opening", html)
+        self.assertIn("comparison-table", html)
+
+    def test_semantic_hook_does_not_treat_data_class_as_class(self):
+        from course_semantics import on_page_content
+
+        html = on_page_content('<h1 data-class="legacy">Título</h1>')
+        self.assertIn('data-class="legacy"', html)
+        self.assertIn(' class="module-opening"', html)
