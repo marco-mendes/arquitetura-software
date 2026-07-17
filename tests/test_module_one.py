@@ -65,9 +65,9 @@ class ModuleOneTest(unittest.TestCase):
             "python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-fluxo.txt",
             "New-Item -ItemType Directory -Force evidencias",
             r"Copy-Item .\structurizr\workspace.dsl .\evidencias\workspace.dsl",
-            r"python -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt",
-            r"python evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt",
-            r"python evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt",
+            r".venv\Scripts\python.exe -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt",
+            r".venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt",
+            r".venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt",
         ):
             self.assertIn(command, workshop)
         for filename in (
@@ -124,15 +124,48 @@ class ModuleOneTest(unittest.TestCase):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
             encoding="utf-8"
         )
+        windows = workshop.split("### Windows", 1)[1].split("### macOS", 1)[0]
 
         self.assertIn(
             "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned",
-            workshop,
+            windows,
         )
         self.assertRegex(
-            workshop,
+            windows,
             r"(?is)escopo `Process`.*(?:feche|fechar).*PowerShell",
         )
+        self.assertLess(
+            windows.index("py -m venv .venv"),
+            windows.index(
+                "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned"
+            ),
+        )
+        self.assertLess(
+            windows.index(
+                "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned"
+            ),
+            windows.index(r".venv\Scripts\Activate.ps1"),
+        )
+        self.assertLess(
+            windows.index(r".venv\Scripts\Activate.ps1"),
+            windows.index('python -m pip install -e ".[dev]"'),
+        )
+
+        no_activation = windows.split("#### Rota sem ativação", 1)[1]
+        for command in (
+            r".venv\Scripts\python.exe -m pip install --upgrade pip",
+            r'.venv\Scripts\python.exe -m pip install -e ".[dev]"',
+            r".venv\Scripts\python.exe --version",
+            r".venv\Scripts\python.exe -m pytest --version",
+            r".venv\Scripts\python.exe -m pytest tests -q",
+            r".venv\Scripts\python.exe -m pytest tests/test_estilos.py -q",
+        ):
+            self.assertIn(command, no_activation)
+        commands = "\n".join(
+            re.findall(r"```powershell\n(.*?)```", no_activation, re.DOTALL)
+        )
+        self.assertNotRegex(commands, r"(?m)^python(?:\.exe)?\s")
+        self.assertNotIn("Activate.ps1", commands)
 
     def test_synthesis_links_primary_and_official_public_sources(self):
         text = (MODULE / "sintese-e-referencias.md").read_text(encoding="utf-8")

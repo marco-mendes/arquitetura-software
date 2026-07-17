@@ -48,11 +48,26 @@ podman machine init
 podman machine start
 ```
 
-Se a máquina já existir, ignore apenas a mensagem de existência e execute `podman machine start`. Entre no laboratório e crie o ambiente:
+Se a máquina já existir, ignore apenas a mensagem de existência e execute `podman machine start`. Entre no laboratório e crie o ambiente, sem ativá-lo ainda:
 
 ```powershell
 Set-Location laboratorios\plataforma-hospitalar
 py -m venv .venv
+```
+
+Se a execução de scripts for bloqueada nesse computador, aplique agora a contingência somente à sessão atual, antes de qualquer ativação ou instalação:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+```
+
+O escopo `Process` existe apenas nessa sessão; fechar a janela do PowerShell desfaz a alteração. Se uma política organizacional bloquear também esse comando, preserve a política e siga diretamente a rota sem ativação abaixo.
+
+#### Rota com ativação
+
+Ative a venv e instale as dependências:
+
+```powershell
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
@@ -61,14 +76,23 @@ python -m pytest --version
 podman --version
 ```
 
-Se `Activate.ps1` for bloqueado pela política de execução, não altere a configuração do usuário nem da máquina. Aplique a contingência somente à janela atual e tente a ativação novamente:
+Se `Activate.ps1` continuar bloqueado, não amplie o escopo da política. Use a rota seguinte.
+
+#### Rota sem ativação
+
+Nesta rota, não execute `Activate.ps1`. Use o interpretador dentro de `.venv` em toda instalação, verificação e execução Python:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.venv\Scripts\Activate.ps1
+.venv\Scripts\python.exe -m pip install --upgrade pip
+.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.venv\Scripts\python.exe --version
+.venv\Scripts\python.exe -m pytest --version
+.venv\Scripts\python.exe -m pytest tests -q
+.venv\Scripts\python.exe -m pytest tests/test_estilos.py -q
+podman --version
 ```
 
-O escopo `Process` vale apenas nessa sessão; para desfazer, basta fechar a janela do PowerShell. Uma política organizacional pode ter precedência. Nesse caso, preserve-a e execute `.venv\Scripts\python.exe -m pytest` sem ativar o ambiente.
+Nos demais blocos PowerShell desta oficina, os comandos usam `.venv\Scripts\python.exe` explicitamente; portanto, a rota continua segura sem depender do Python global.
 
 ### macOS
 
@@ -226,8 +250,8 @@ O arquivo modela uma única aplicação implantável, coerente com o monólito m
 Rode primeiro toda a suíte do laboratório. Em seguida, capture a saída do exercício de estilos dentro de `evidencias`. No PowerShell:
 
 ```powershell
-python -m pytest tests -q
-python -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt
+.venv\Scripts\python.exe -m pytest tests -q
+.venv\Scripts\python.exe -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt
 ```
 
 Em macOS ou Linux:
@@ -248,7 +272,7 @@ O teste `test_alternativas_explicam_forcas_limites_e_evidencias` impede resposta
 Execute o roteiro criado e capture a primeira saída. No PowerShell:
 
 ```powershell
-python evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt
+.venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt
 ```
 
 Em macOS ou Linux:
@@ -269,7 +293,7 @@ cenario = {
 Execute novamente e capture um arquivo diferente. No PowerShell:
 
 ```powershell
-python evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt
+.venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt
 ```
 
 Em macOS ou Linux:
