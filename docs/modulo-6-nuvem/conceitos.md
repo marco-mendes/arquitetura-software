@@ -35,6 +35,12 @@ flowchart TB
 
 ## Contêiner, imagem e orquestração
 
+![Resiliência na nuvem: um cluster local executa duas réplicas da API hospitalar, aplica readiness e liveness, atualiza gradualmente e pode fazer rollback.](../assets/images/m06-resiliencia-nuvem.png)
+
+*Figura 7 — Estado desejado e recuperação de uma API em cluster.*
+
+**Leitura textual da figura:** o cluster local mantém duas réplicas da API hospitalar. A verificação de readiness decide quando uma réplica pode receber tráfego; a de liveness permite reiniciar um processo travado. Durante uma atualização gradual, uma nova versão substitui réplicas progressivamente; se a evidência indicar falha, o rollback retorna à versão anterior. Configuração e imagem versionada dão contexto a esse estado desejado.
+
 Uma **imagem** de contêiner empacota filesystem, dependências e metadados imutáveis identificados por tag ou digest. Um **contêiner** é uma execução dessa imagem, isolada em processos e recursos do host; ele não é uma máquina virtual completa e compartilha o kernel do host. Docker é uma ferramenta comum para construir e executar imagens. Portabilidade significa que a imagem reduz diferenças de empacotamento, não que elimina diferença de CPU, política de rede, permissões ou serviço externo.
 
 **Orquestração** coordena muitas execuções: agenda Pods, mantém número desejado de réplicas, expõe rede, faz atualizações e tenta recuperar processos. Kubernetes declara o estado desejado; seus controladores trabalham para aproximar o estado atual. Um Deployment cria ReplicaSets e permite atualização gradual; um Service oferece um nome estável e seleciona Pods por rótulo. O orquestrador pode reiniciar um processo, mas não corrige uma regra de negócio nem descobre por conta própria uma imagem inadequada.

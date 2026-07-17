@@ -50,6 +50,12 @@ Dados do recurso pertencem normalmente à representação; transporte, negociaç
 
 OpenAPI é uma especificação para descrever APIs HTTP. Paths, operações, parâmetros, corpos, respostas e schemas podem ser escritos em YAML ou JSON. Ferramentas usam essa descrição para documentação, clientes, mocks, testes e análise estática. No laboratório, `contratos/openapi.yaml` é um contrato explícito versionado.
 
+![Anatomia de um contrato de API: cliente consome um contrato OpenAPI, a API processa a solicitação e responde 202 Accepted com Location para acompanhamento pela operadora de plano.](../assets/images/m02-anatomia-api.png)
+
+*Figura 3 — Anatomia de um contrato de API.*
+
+**Leitura textual da figura:** o cliente não depende da implementação interna: ele consulta o contrato OpenAPI e faz uma requisição à API. A API devolve `202 Accepted` para informar que aceitou o processamento e inclui `Location` para indicar onde acompanhar o resultado. A operadora ou outro consumidor usa a mesma promessa de interface, e não detalhes do servidor.
+
 Um arquivo válido sintaticamente ainda pode ser pobre. `type: string` não explica significado; ausência de erro documentado não elimina o erro real; um exemplo incompatível engana o leitor. Spectral aplica regras automáticas ao documento. Bruno importa o contrato e permite executá-lo como consumidor. `TestClient` chama a aplicação FastAPI sem iniciar uma porta de rede. São três perspectivas complementares: forma, uso e comportamento.
 
 ## Paginação, idempotência e evolução

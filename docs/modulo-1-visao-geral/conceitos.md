@@ -73,6 +73,12 @@ Atributos entram em tensão. Mais isolamento pode acrescentar comunicação e op
 
 Um **estilo arquitetural** nomeia uma família de organizações que compartilham tipos de elementos, conectores e restrições. Ele oferece vocabulário e propriedades esperadas, não uma receita completa. Duas soluções em camadas podem ter tecnologias e fronteiras distintas; ainda assim, ambas restringem dependências por níveis de responsabilidade.
 
+![Mapa comparativo de quatro estilos arquiteturais: camadas, pipes e filtros, microkernel e monólito modular, com as forças de mudabilidade, vazão e extensibilidade.](../assets/images/m01-mapa-estilos.png)
+
+*Figura 2 — Mapa comparativo de estilos arquiteturais.*
+
+**Leitura textual da figura:** o mapa coloca quatro organizações lado a lado. Camadas separam responsabilidades por nível; pipes e filtros encadeiam transformações; microkernel mantém um núcleo e extensões; e monólito modular isola capacidades dentro de uma implantação. As forças na base lembram que a escolha compara modificabilidade, vazão e extensibilidade, em vez de eleger um estilo universalmente superior.
+
 ### Camadas
 
 O estilo em camadas agrupa responsabilidades por nível de abstração. Uma divisão frequente contém apresentação, aplicação, domínio e infraestrutura. A regra essencial é a direção de dependência declarada. Se a apresentação acessa o banco por atalhos, o desenho mantém caixas, mas a propriedade arquitetural desaparece.

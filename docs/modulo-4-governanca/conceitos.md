@@ -28,6 +28,12 @@ flowchart TB
 
 ## Quatro sinais, quatro perguntas
 
+![Governança observável: uma requisição atravessa gateway com política, recebe identificador de correlação, chega ao serviço e produz logs estruturados, traces e uma medida de limite.](../assets/images/m04-governanca-observavel.png)
+
+*Figura 5 — Política aplicada e evidência observável em execução.*
+
+**Leitura textual da figura:** a requisição entra pelo gateway, onde uma política de rota ou limite é aplicada. O gateway acrescenta um identificador de correlação antes de encaminhar ao serviço. A execução produz logs estruturados e traces relacionados; a métrica de limite revela quantas requisições foram recusadas ou aceitas. Nenhum desses sinais deve conter nome de paciente ou outro dado clínico identificável.
+
 **Logs** respondem “o que aconteceu neste evento?”. Eles precisam de tempo, severidade, serviço, operação, correlation ID e campos seguros. Um log estruturado permite filtrar falhas sem depender da frase humana. Não registre credenciais, documentos clínicos ou corpo integral por conveniência.
 
 **Métricas** respondem “com que frequência e em que distribuição?”. Contadores de `429`, taxa de `5xx`, duração e saturação permitem ver tendência e calcular indicadores. Métrica com rótulos de cardinalidade ilimitada, como identificador de paciente, pode custar mais e dificultar consulta; use categorias estáveis.

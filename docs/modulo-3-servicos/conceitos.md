@@ -71,6 +71,12 @@ Independência é uma propriedade exigente. Se toda alteração requer publicaç
 
 Propriedade responde quem é autoridade para interpretar e alterar uma informação. **Banco por serviço** significa que somente o serviço proprietário acessa diretamente seu armazenamento. Consumidores usam contratos, eventos ou réplicas explicitamente projetadas. Não significa obrigatoriamente um servidor físico para cada processo. Bancos, schemas ou credenciais podem oferecer graus diferentes de isolamento.
 
+![Fronteiras de serviços na plataforma hospitalar: Elegibilidade e Exames possuem contratos de API e bancos próprios; uma tentativa de acesso direto ao banco de outro serviço é proibida.](../assets/images/m03-fronteiras-servicos.png)
+
+*Figura 4 — Fronteiras lógicas, contratos e dados de serviços.*
+
+**Leitura textual da figura:** Elegibilidade e Exames são capacidades distintas da plataforma hospitalar. Cada uma oferece um contrato de API e mantém seu próprio armazenamento. A interação permitida passa pelo contrato; a seta de acesso direto de um serviço ao banco do outro aparece bloqueada porque violaria a propriedade dos dados e criaria acoplamento oculto.
+
 No laboratório, dois PostgreSQL deixam a regra visível: a credencial de Exames conhece apenas o banco `exames`; Elegibilidade conhece apenas `elegibilidade`. Cada banco fica em uma rede interna própria; ambos os processos compartilham somente a rede de aplicação necessária ao HTTP. Portanto, mesmo que Exames descubra o alias `elegibilidade-db`, ele não consegue resolvê-lo pela sua rede. Em ambientes maiores, isolamento lógico no mesmo cluster pode equilibrar custo e proteção, desde que permissões e responsabilidade sejam reais.
 
 Compartilhar uma tabela parece conveniente para relatórios e transações, porém cria contrato implícito. Uma alteração de coluna pode quebrar consumidores desconhecidos; uma escrita externa pode violar invariantes; o proprietário deixa de controlar evolução. Para leitura integrada, avalie composição por API, eventos, réplica analítica ou modelo de leitura, sempre deixando defasagem e origem explícitas.
