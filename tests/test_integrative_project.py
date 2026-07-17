@@ -138,6 +138,13 @@ class IntegrativeProjectTest(unittest.TestCase):
         self.assertEqual(2, text.count('pip install -e ".[dev]"'))
         self.assertEqual(2, text.count("python -m pytest tests"))
 
+    def test_workspace_readme_maps_python_reference_to_java_and_dotnet(self):
+        text = (LAB / "README.md").read_text(encoding="utf-8")
+        self.assertIn("## Equivalências em Java e .NET", text)
+        self.assertIn("Python é a referência executável", text)
+        for ecosystem in ("Spring Boot", "JUnit", "ASP.NET Core", "xUnit"):
+            self.assertIn(ecosystem, text)
+
 
 if __name__ == "__main__":
     unittest.main()

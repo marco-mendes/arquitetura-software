@@ -26,6 +26,19 @@ python -m pip install -e ".[dev]"
 python -m pytest tests
 ```
 
+## Equivalências em Java e .NET
+
+Python é a referência executável deste workspace. As correspondências abaixo ajudam a transportar os exemplos sem criar arquiteturas diferentes por ecossistema.
+
+| Python | Java | .NET |
+| --- | --- | --- |
+| FastAPI | Spring Boot | ASP.NET Core |
+| pytest | JUnit | xUnit |
+| Pydantic | Bean Validation (Jakarta) em records ou DTOs | DataAnnotations em records ou DTOs |
+| uvicorn | Servidor embarcado do Spring | Kestrel |
+
+Os mesmos contratos arquiteturais e as mesmas evidências se aplicam às três implementações.
+
 ## Resultado esperado
 
 O teste confirma que o pacote `hospital` pode ser importado a partir do ambiente editável. O modo editável faz com que alterações futuras em `src/hospital/` sejam usadas sem reinstalar o projeto.
