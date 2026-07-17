@@ -1,0 +1,28 @@
+site_name: Arquitetura de Software
+use_directory_urls: true
+
+theme:
+  name: material
+  language: pt-BR
+  palette:
+    primary: custom
+  features:
+    - navigation.instant
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+
+extra_javascript:
+  - assets/javascripts/mermaid.mjs
+
+nav:
+  - Início: index.md
+  - "Módulo 1 — Estilos": modulo-1-visao-geral/index.md
+  - "Módulo 2 — APIs": modulo-2-apis/index.md
+  - "Módulo 3 — Serviços": modulo-3-servicos/index.md
+  - "Módulo 4 — Governança": modulo-4-governanca/index.md
+  - "Módulo 5 — Eventos": modulo-5-eventos/index.md
+  - "Módulo 6 — Nuvem": modulo-6-nuvem/index.md
