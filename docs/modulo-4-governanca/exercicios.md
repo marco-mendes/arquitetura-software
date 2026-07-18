@@ -1,6 +1,6 @@
 # Exercícios: tornar políticas governáveis
 
-Tente responder antes de abrir cada feedback. Nas atividades avançadas, os nove campos tornam explícitos contexto, artefato e avaliação de uma decisão justificável. Cada entrega parte da raiz do clone e deve distinguir política, arquivo declarativo, serviço que a recebe e saída que comprova o comportamento.
+Tente responder antes de abrir cada feedback. Nas atividades avançadas, os nove campos tornam explícitos contexto, artefato e avaliação de uma decisão justificável. Cada entrega distingue política, arquivo declarativo, serviço que a recebe e saída que comprova o comportamento.
 
 ## Recordar
 
@@ -104,7 +104,7 @@ Você prepara a proposta de owner do serviço.
 
 **Artefato que você irá usar**
 
-Crie `entregas/modulo-4/aplicar-resultados.md`, a partir da raiz do clone, usando `docs/modulo-4-governanca/padroes-e-decisoes.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` como referência, sem alterar o laboratório.
+Crie `<raiz-do-clone>/entregas/modulo-4/aplicar-resultados.md`, usando `docs/modulo-4-governanca/padroes-e-decisoes.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` como referência, sem alterar o laboratório.
 
 **Antes de executar**
 
@@ -123,7 +123,7 @@ Contrato de Resultados, catálogo em Markdown e políticas da oficina.
 
 **Evidência esperada**
 
-Política observada: limite de entrada; arquivo: `entregas/modulo-4/aplicar-resultados.md`; serviço que a recebe: Resultados via gateway; saída: uma chamada automatizável com `429`, `X-Correlation-ID` e trace consultável.
+Política observada: limite de entrada; arquivo: `<raiz-do-clone>/entregas/modulo-4/aplicar-resultados.md`; serviço que a recebe: Resultados via gateway; saída: uma chamada automatizável com `429`, `X-Correlation-ID` e trace consultável.
 
 **Entrega esperada**
 
@@ -157,7 +157,7 @@ Você conduz a análise do incidente sem afirmar causalidade além da evidência
 
 **Artefato que você irá usar**
 
-Crie `entregas/modulo-4/analisar-correlacao.md`, a partir da raiz do clone, usando `docs/modulo-4-governanca/conceitos.md` e `laboratorios/plataforma-hospitalar/infra/observabilidade/otel-collector.yml`.
+Crie `<raiz-do-clone>/entregas/modulo-4/analisar-correlacao.md`, usando `docs/modulo-4-governanca/conceitos.md`, `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`.
 
 **Antes de executar**
 
@@ -176,7 +176,7 @@ As amostras do caso e os arquivos declarativos indicados.
 
 **Evidência esperada**
 
-Política observada: propagação de contexto; arquivo: `infra/observabilidade/otel-collector.yml`; serviço que a recebe: Elegibilidade e Collector; saída: trace com nomes de serviço consistentes e log correlacionado, ou a lacuna registrada como falha.
+Política observada: propagação de contexto; artefatos: `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`; serviço que a recebe: Kong e Elegibilidade. O gateway extrai e injeta o `traceparent` W3C; o middleware de Elegibilidade extrai o contexto recebido e cria o span filho. Saída: trace com nomes de serviço consistentes e log correlacionado, ou a lacuna registrada como falha.
 
 **Entrega esperada**
 
@@ -210,7 +210,7 @@ Você recomenda a decisão e suas condições de evolução.
 
 **Artefato que você irá usar**
 
-Crie `entregas/modulo-4/avaliar-limite.md`, a partir da raiz do clone, usando `docs/modulo-4-governanca/exemplo-arquitetural.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml`.
+Crie `<raiz-do-clone>/entregas/modulo-4/avaliar-limite.md`, usando `docs/modulo-4-governanca/exemplo-arquitetural.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml`.
 
 **Antes de executar**
 
@@ -228,7 +228,7 @@ Pico, capacidade, risco de atraso e alternativas IP, credencial e fila.
 
 **Evidência esperada**
 
-Política observada: rate limiting; arquivo: `infra/kong/kong.yml`; serviço que a recebe: Kong diante de Elegibilidade; saída: série controlada de chamadas com `429` e decisão registrada sobre o impacto.
+Política observada: rate limiting; arquivo: `infra/kong/kong.yml`; serviço que a recebe: Kong diante de Elegibilidade; entrega: `<raiz-do-clone>/entregas/modulo-4/avaliar-limite.md`; saída: série controlada de chamadas com `429` e decisão registrada sobre o impacto.
 
 **Entrega esperada**
 
@@ -262,7 +262,7 @@ Você cria a proposta que começa localmente sem depender de memória informal.
 
 **Artefato que você irá usar**
 
-Crie `entregas/modulo-4/criar-agenda/` a partir da raiz do clone e entregue `adr.md`, `politica.yml`, `sinais.md` e `teste.md`, usando `laboratorios/plataforma-hospitalar/infra/compose.governanca.yml` apenas como referência.
+Crie `<raiz-do-clone>/entregas/modulo-4/criar-agenda/` e entregue nele `adr.md`, `politica.yml`, `sinais.md` e `teste.md`, usando `laboratorios/plataforma-hospitalar/infra/compose.governanca.yml` apenas como referência.
 
 **Antes de executar**
 
@@ -281,7 +281,7 @@ Contrato de Elegibilidade, Compose da oficina e as restrições declaradas.
 
 **Evidência esperada**
 
-Política observada: rota, correlação e limite; arquivo: `entregas/modulo-4/criar-agenda/politica.yml`; serviço que a recebe: Agenda através do gateway; saída: roteiro reproduzível com resposta de rota, `429`, `X-Correlation-ID` e consulta de trace.
+Política observada: rota, correlação e limite; arquivo: `<raiz-do-clone>/entregas/modulo-4/criar-agenda/politica.yml`; serviço que a recebe: Agenda através do gateway; saída: roteiro reproduzível com resposta de rota, `429`, `X-Correlation-ID` e consulta de trace.
 
 **Entrega esperada**
 

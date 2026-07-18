@@ -33,3 +33,16 @@
 - O rate limiting local do Kong é demonstrativo para uma instância e não representa limite distribuído entre réplicas.
 - Jaeger local não deve receber dados clínicos nem representar retenção, auditoria ou conformidade de produção.
 - A unidade permanece na faixa editorial de 5.000 a 8.500 palavras validada pelos testes.
+
+## Correção da revisão editorial
+
+- Em **Analisar**, substituí a atribuição incorreta ao Collector: `infra/kong/kong.yml` extrai e injeta o `traceparent` W3C no gateway, enquanto `src/hospital/telemetria.py` extrai o contexto recebido em Elegibilidade e cria o span filho. O Collector continua apenas recebendo, processando em lote e exportando a telemetria.
+- Os quatro exercícios avançados agora indicam a entrega desde `<raiz-do-clone>/entregas/...`.
+- O resumo inicial da oficina passou a antecipar observação por `ps`, HTTP, logs e API Jaeger, além do encerramento com `docker compose -f infra/compose.governanca.yml down -v`.
+- Restaurei a numeração única das figuras: o Mermaid do estudo de caso passou a ser **Figura 6**; não havia referências cruzadas a atualizar.
+- Para manter o teto editorial, removi redundâncias locais sem retirar instruções, critérios ou evidências da oficina. A contagem final é de 8.499 palavras.
+
+| Comando | Resultado |
+| --- | --- |
+| `python -m unittest tests.test_module_four tests.test_editorial_recovery -v` | 10 testes aprovados |
+| `git diff --check` | sem erros de espaço em branco |

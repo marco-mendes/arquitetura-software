@@ -26,7 +26,7 @@ flowchart TB
 
 **Texto alternativo:** comparação entre gateway que copia regras clínicas e cenário com política de borda, owner de domínio e telemetria correlacionada.
 
-*Figura 5 — Da centralização improdutiva à governança com fronteiras.*
+*Figura 6 — Da centralização improdutiva à governança com fronteiras.*
 
 **Leitura textual:** políticas comuns ficam no gateway, regra clínica fica no serviço dono do domínio e a telemetria é correlacionada.
 
