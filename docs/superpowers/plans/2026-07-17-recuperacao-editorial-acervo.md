@@ -112,19 +112,27 @@ git commit -m "docs: map editorial recovery sources"
 
 ```python
 def test_record_and_understand_questions_have_individual_expandable_feedback(self):
-    text = (ROOT / "docs/modulo-1-visao-geral/exercicios.md").read_text(encoding="utf-8")
-    for question in range(1, 7):
-        self.assertRegex(text, rf"(?s){question}\\..*?<details>\\s*<summary>Ver resposta</summary>")
+    text = "## Recordar\\n1. Defina conector.\\n<details>\\n<summary>Ver resposta</summary>\\nUm mecanismo de colaboração.\\n</details>"
+    self.assertEqual([], expandable_feedback_errors(text, "exemplo.md"))
 
 def test_advanced_exercise_declares_context_before_execution(self):
-    text = (ROOT / "docs/modulo-2-apis/exercicios.md").read_text(encoding="utf-8")
-    for label in ("Objetivo", "Situação", "Seu papel", "Artefato que você irá usar", "Antes de executar", "O que fazer", "Evidência esperada", "Entrega esperada", "Critérios de avaliação"):
-        self.assertIn(f"**{label}**", text)
+    text = """## Aplicar
+**Objetivo**
+**Situação**
+**Seu papel**
+**Artefato que você irá usar**
+**Antes de executar**
+**O que fazer**
+**Evidência esperada**
+**Entrega esperada**
+**Critérios de avaliação**
+"""
+    self.assertEqual([], self_contained_activity_errors(text, "exemplo.md"))
 ```
 
 Run: `python -m unittest tests.test_editorial_recovery -v`
 
-Expected: FAIL porque exercícios atuais usam respostas agrupadas e não trazem todos os rótulos.
+Expected: FAIL porque `expandable_feedback_errors` e `self_contained_activity_errors` ainda não existem.
 
 - [ ] **Step 2: Implementar parsing mínimo no validador, sem ativá-lo globalmente ainda**
 
