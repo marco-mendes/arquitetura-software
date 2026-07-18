@@ -20,9 +20,15 @@ class ModuleSixTest(unittest.TestCase):
             "As probes deixam a condição observável",
         )
         commands = (
+            "kubectl apply",
             "docker build -t hospital-api:1.0.0 .",
             "docker image inspect hospital-api:1.0.0",
             "kind get clusters",
+            "kind create cluster --name hospital-local",
+            "kind load docker-image hospital-api:1.0.0 --name hospital-local",
+            "kubectl config current-context",
+            "curl --fail --silent http://127.0.0.1:18080/health/ready",
+            "python -m pytest tests/test_k8s_manifests.py -q",
         )
 
         presentation_positions = [workshop.index(item) for item in presentation]
