@@ -3,7 +3,7 @@ import re
 import unittest
 
 from tests.course_assertions import assert_module_contract
-from scripts.validate_content import bloom_sections
+from scripts.validate_content import bloom_sections, expandable_feedback_errors
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +30,50 @@ class ModuleOneTest(unittest.TestCase):
                 "Java",
             ),
         )
+
+    def test_unit_one_introduces_the_complete_style_map(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+
+        for term in (
+            "Camadas",
+            "MVC",
+            "Hexagonal",
+            "Microkernel",
+            "Pipes and Filters",
+            "DDD",
+            "microsserviços",
+            "APIs",
+            "eventos",
+            "nuvem",
+            "contêineres",
+        ):
+            self.assertIn(term, text)
+
+    def test_unit_one_recall_and_understand_use_individual_expandable_answers(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+
+        self.assertGreaterEqual(exercises.count("<summary>Ver resposta</summary>"), 12)
+        self.assertEqual(
+            [], expandable_feedback_errors(exercises, "exercicios.md")
+        )
+
+    def test_advanced_activities_explain_the_lab_before_commands(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+
+        for level in ("Aplicar", "Analisar", "Avaliar", "Criar"):
+            section = bloom_sections(exercises)[level]
+            for label in (
+                "**Objetivo**",
+                "**Situação**",
+                "**Seu papel**",
+                "**Artefato que você irá usar**",
+                "**Antes de executar**",
+                "**O que fazer**",
+                "**Evidência esperada**",
+                "**Entrega esperada**",
+                "**Critérios de avaliação**",
+            ):
+                self.assertIn(label, section, f"{level}: {label}")
 
     def test_diagrams_have_textual_readings(self):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))

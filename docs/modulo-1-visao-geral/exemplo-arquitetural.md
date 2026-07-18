@@ -12,6 +12,31 @@ Camadas separariam entrada, aplicação, regra e infraestrutura. Isso ajuda a te
 
 A escolha inicial combina um monólito modular como limite de implantação, pipes and filters na capacidade de processamento e pequenos adapters para os formatos. Combinar estilos é aceitável quando cada um resolve uma escala declarada. O risco seria usar muitos nomes sem restrições verificáveis.
 
+## A mesma plataforma, três estruturas deliberadas
+
+O exemplo a seguir usa quatro capacidades administrativas fictícias. **Agenda** recebe pedidos de horário; **Triagem** aplica etapas administrativas que variam por unidade; **Faturamento** transforma registros para envio a parceiros; **Auditoria** recebe fatos mínimos para rastreabilidade. Não há dado de paciente nem integração real: os nomes permitem enxergar a responsabilidade de cada fronteira.
+
+### Agenda em camadas: uma reserva não pula a regra
+
+```mermaid
+flowchart TB
+    C["Equipe administrativa"] --> H["Interface HTTP\nrecebe o pedido"]
+    H --> U["Caso de uso\nreservar horário"]
+    U --> R["Regra de Agenda\nverifica conflito"]
+    U --> P["Repositório de Agenda\ngrava a reserva"]
+    P --> D[("Dados da agenda")]
+    H -. "não consulta" .-> D
+    U --> A["Auditoria\nregistra fato mínimo"]
+```
+
+*Figura 1 — Uma reserva atravessa fronteiras de camadas antes de ser persistida.*
+
+**Leitura textual da figura:** a Equipe administrativa envia o pedido à Interface HTTP. A interface chama o Caso de uso, que consulta a Regra de Agenda antes de pedir ao Repositório que grave os Dados da agenda. O Caso de uso também registra um fato mínimo em Auditoria. A ligação pontilhada mostra que a interface não consulta os dados diretamente; a regra de conflito não pode ser ignorada por uma tela.
+
+Esse arranjo favorece consistência local e teste da regra de conflito sem banco. Se quase toda leitura apenas atravessar todas as camadas sem validação ou decisão, a equipe mede o custo e registra um caminho de leitura justificado; não cria atalhos silenciosos.
+
+### Faturamento como fluxo: cada transformação deixa uma pista
+
 ```mermaid
 flowchart LR
     I["Adaptador de entrada"] -->|"Documento bruto"| V["Filtro: validar"]
@@ -46,6 +71,27 @@ sequenceDiagram
 **Leitura textual da figura:** a Entrada envia um documento com correlação a Validar, que passa um valor válido para Normalizar e depois para Enriquecer. A falha de enriquecimento retorna à Entrada com etapa e causa; a Entrada registra duração e rejeição. A sequência evidencia que a correlação acompanha o fluxo, inclusive na falha.
 
 A sequência mostra uma falha no enriquecimento. A correlação atravessa os pipes, permitindo relacionar o documento à etapa. Uma versão que apenas lança uma mensagem genérica atenderia à transformação, mas não à rastreabilidade.
+
+### Triagem como núcleo e plugins: variar sem reescrever o comum
+
+```mermaid
+flowchart LR
+    I["Entrada de triagem"] --> N["Núcleo\nidentidade, estados e autorização"]
+    N --> C["Contrato de extensão"]
+    C --> P1["Plugin\ncoleta da unidade A"]
+    C --> P2["Plugin\nvalidação de parceiro"]
+    P1 --> N
+    P2 --> N
+    N --> AU["Auditoria\nfato e correlação"]
+    P1 -. "não acessa" .-> DB[("Dados internos do núcleo")]
+    P2 -. "não acessa" .-> DB
+```
+
+*Figura 2 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos.*
+
+**Leitura textual da figura:** a Entrada de triagem entrega a solicitação ao Núcleo, que controla identidade, estados e autorização. O Núcleo expõe um Contrato de extensão usado por dois plugins: uma coleta específica da unidade A e uma validação de parceiro. Os plugins devolvem resultados ao Núcleo, que produz fato com correlação para Auditoria. As ligações pontilhadas indicam que plugins não leem os dados internos do núcleo diretamente.
+
+Para essa estrutura ser honesta, o contrato deve especificar entrada, resultado, erros e versão. Se um plugin precisa editar tabelas internas ou se o núcleo conhece regras particulares de todos os plugins, a equipe encontrou core creep e deve revisar a fronteira em vez de chamar o acoplamento de extensibilidade.
 
 ## Do cenário à evidência
 

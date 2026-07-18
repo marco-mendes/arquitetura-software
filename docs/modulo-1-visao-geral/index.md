@@ -4,9 +4,9 @@
 
 **Resultado principal:** comparar formas de organizar um sistema e justificar uma estrutura inicial com forças, limites e evidências verificáveis.
 
-Arquitetura de software não começa com a escolha de um framework. Começa quando uma equipe identifica decisões estruturais que serão caras de corrigir, explicita as necessidades que disputam prioridade e cria meios de verificar as consequências. Este módulo fornece o vocabulário para fazer isso sem tratar um desenho como decoração nem uma preferência técnica como verdade universal.
+Arquitetura começa quando uma equipe identifica decisões estruturais, explicita prioridades e verifica consequências. Este módulo evita tratar desenho como decoração ou preferência técnica como verdade universal.
 
-Ao final do percurso, você será capaz de reconhecer componente, conector e fronteira; formular um atributo de qualidade como cenário observável; distinguir estilo, padrão e tecnologia; comparar camadas, pipes and filters, microkernel e monólito modular; e registrar uma decisão em um ADR. A oficina transforma essas ideias em uma comparação executável, um teste e um diagrama como código.
+Ao final do percurso, você será capaz de reconhecer componente, conector e fronteira; formular um atributo de qualidade como cenário observável; localizar Camadas, MVC, Hexagonal, Microkernel, DDD, microsserviços, APIs, eventos, nuvem e contêineres em um mesmo mapa sem tratá-los como sinônimos; comparar camadas, Pipes and Filters, microkernel e monólito modular; e registrar uma decisão em um ADR. A oficina transforma essas ideias em uma comparação executável, um teste e um diagrama como código.
 
 ## Questão orientadora
 
@@ -20,20 +20,17 @@ Consulte o [glossário compartilhado](../referencia/glossario.md) sempre que um 
 
 ## Percurso em oito páginas
 
-1. **Visão geral:** situa o problema, o resultado e a sequência do encontro.
-2. **Conceitos:** apresenta arquitetura, estruturas, decisões, atributos e quatro estilos.
-3. **Padrões e decisões:** separa estilo, padrão, tecnologia e racional arquitetural.
-4. **Exemplo arquitetural:** acompanha uma solução neutra do contexto até a evidência.
-5. **Estudo de caso:** aplica a comparação à triagem, ao faturamento e à agenda hospitalar.
-6. **Oficina de ferramentas:** instala o ambiente local, executa testes, altera uma força e registra um mini-ADR.
-7. **Exercícios:** percorre os seis níveis da Taxonomia de Bloom.
-8. **Síntese e referências:** consolida o método e indica leituras para continuidade.
+Visão geral, conceitos e decisões formam a base; exemplo e estudo de caso aplicam a comparação; oficina e exercícios produzem evidências; síntese encerra o encontro.
 
 ## Como estudar
 
 Leia as três primeiras páginas em ordem. Elas constroem conceitos antes de introduzir o caso hospitalar. No exemplo, pergunte a cada elemento “qual responsabilidade está aqui?” e “como ele se comunica?”. Na oficina, não se limite a obter uma saída verde: compare o resultado antes e depois de mudar a prioridade. Nos exercícios avançados, preserve hipóteses e declare o que ainda precisaria ser medido.
 
 O módulo oferece três profundidades. **Essencial em aula** cobre vocabulário, comparação básica, teste e ADR. **Exploração em dupla** acrescenta discussão de alternativas e alteração de forças. **Extensão** conecta ferramentas de verificação arquitetural e cenários mais exigentes. As três trilhas usam a mesma baseline; aprofundar não significa criar uma solução paralela.
+
+## Antes da oficina: o que você fará de fato
+
+A [oficina](oficina-de-ferramentas.md) apresenta a aplicação didática existente, seu local, a preparação e o que cada comando observa. Você executará `tests/test_estilos.py`, guardará a saída, alterará um cenário e registrará um mini-ADR. Isso evidencia o comparador, não uma solução em produção.
 
 ## Entregas do encontro
 

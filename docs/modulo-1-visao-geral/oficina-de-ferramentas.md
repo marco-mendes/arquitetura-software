@@ -4,6 +4,20 @@ Esta oficina é local e usa ferramentas de código aberto. Python executa a comp
 
 Use somente dados sintéticos. O laboratório trata decisões administrativas e não precisa de informações reais de pacientes, profissionais ou parceiros.
 
+## O que existe antes de você abrir o terminal
+
+Você trabalhará no repositório desta disciplina, dentro da pasta `laboratorios/plataforma-hospitalar`. Ela contém uma aplicação didática local, e não uma integração com hospital, plano de saúde ou banco de dados real. Nesta unidade, o artefato principal é `src/hospital/estilos.py`: uma tabela legível que relaciona quatro estilos a forças, limites e evidências possíveis. A função `comparar_estilos` recebe prioridades declaradas, ordena alternativas compatíveis e devolve a explicação usada nessa ordenação.
+
+O arquivo `tests/test_estilos.py` não mede a qualidade de uma arquitetura em produção. Ele verifica o **contrato do comparador**: se alternativas retornam força, limite e evidência, e se prioridades distintas produzem comparações diferentes. Você vai executar o teste, alterar um cenário local e interpretar o que mudou. A condição inicial verificável é simples: a pasta do repositório existe no seu computador e você consegue abrir um terminal nela. Antes de instalar qualquer coisa, localize a raiz do repositório e entre na pasta do laboratório:
+
+```text
+arquitetura-software/
+└── laboratorios/
+    └── plataforma-hospitalar/   ← execute os comandos desta oficina aqui
+```
+
+Ao final da preparação, a condição de início da prática será: existe uma pasta `.venv`, `python --version` mostra o interpretador do ambiente virtual e `python -m pytest tests/test_estilos.py -q` termina com `3 passed`.
+
 ## Ferramenta
 
 | Ferramenta | Papel na oficina | Evidência produzida |
@@ -14,21 +28,21 @@ Use somente dados sintéticos. O laboratório trata decisões administrativas e 
 | Podman | executar o contêiner local do Structurizr Lite | processo reproduzível |
 | Editor de texto | alterar cenário e redigir ADR | script e registro de decisão |
 
-Essas ferramentas apoiam perguntas diferentes. O teste demonstra que uma mudança de força altera a justificativa. O modelo demonstra componentes, conectores e fronteiras. O ADR conecta a evidência ao racional. Um resultado verde não substitui a interpretação.
+Teste, modelo e ADR respondem perguntas diferentes; resultado verde não substitui interpretação.
 
 ## Pré-requisitos
 
 **Objetivo**
 
-Preparar um ambiente descartável capaz de executar os testes do workspace hospitalar e o modelo de arquitetura.
+Preparar um ambiente descartável capaz de executar o comparador de estilos, seus testes e, na extensão, um modelo de arquitetura.
 
 **Pré-requisito**
 
-Tenha o repositório da disciplina em uma pasta local, um terminal, um editor e permissão para instalar pacotes no computador de estudo. Os comandos devem ser executados a partir de `laboratorios/plataforma-hospitalar`, salvo indicação contrária.
+Tenha o repositório local, terminal, editor e permissão para instalar pacotes. Execute em `laboratorios/plataforma-hospitalar`.
 
-**Observe**
+**O que cada verificação significa**
 
-Ao final da preparação, `python --version`, `python -m pytest --version` e `podman --version` devem informar versões. Em macOS ou Linux, o executável pode ser `python3` antes de ativar o ambiente virtual; depois da ativação, use `python` em todas as plataformas.
+Ao final, `python --version`, `python -m pytest --version` e `podman --version` mostram versões. Em macOS/Linux, use `python3` antes da ativação; Podman é só para extensão.
 
 ## Instalação
 
@@ -61,7 +75,7 @@ Se a execução de scripts for bloqueada nesse computador, aplique agora a conti
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 ```
 
-O escopo `Process` existe apenas nessa sessão; fechar a janela do PowerShell desfaz a alteração. Se uma política organizacional bloquear também esse comando, preserve a política e siga diretamente a rota sem ativação abaixo.
+O escopo `Process` termina ao fechar PowerShell; se bloqueado, use a rota sem ativação.
 
 #### Ativação opcional
 
@@ -71,7 +85,7 @@ Tente ativar a venv executando somente o script de ativação:
 .venv\Scripts\Activate.ps1
 ```
 
-Como checkpoint, confirme que `(.venv)` aparece no início do prompt. Se aparecer, a ativação funcionou. Se `Activate.ps1` continuar bloqueado ou o marcador não aparecer, não amplie o escopo da política; siga a rota sem ativação.
+Confirme `(.venv)` no prompt; se não aparecer, use a rota sem ativação.
 
 #### Rota sem ativação e continuação comum
 
@@ -87,7 +101,7 @@ Com ou sem `(.venv)` no prompt, continue pelos mesmos comandos explícitos. Assi
 podman --version
 ```
 
-Nos demais blocos PowerShell desta oficina, os comandos usam `.venv\Scripts\python.exe` explicitamente; portanto, a rota continua segura sem depender do Python global.
+Os demais comandos PowerShell usam `.venv\Scripts\python.exe`, sem Python global.
 
 ### macOS
 
@@ -107,7 +121,7 @@ python -m pytest --version
 podman --version
 ```
 
-Se a máquina já tiver sido criada, execute somente `podman machine start`. Se o Homebrew expuser `python3` em vez de `python3.12`, use `python3 -m venv .venv`.
+Se a máquina já existir, execute só `podman machine start`; se necessário, use `python3`.
 
 ### Linux
 
@@ -126,7 +140,7 @@ python -m pytest --version
 podman --version
 ```
 
-Em Linux, o Podman executa sem máquina virtual quando o sistema oferece os recursos necessários. Não execute `podman machine init` nesse caso.
+Em Linux, não execute `podman machine init`.
 
 ## Preparação do laboratório
 
@@ -134,7 +148,7 @@ Em Linux, o Podman executa sem máquina virtual quando o sistema oferece os recu
 
 **Execute**
 
-Confirme que está em `laboratorios/plataforma-hospitalar` e que `(.venv)` aparece no terminal. Inspecione os arquivos relevantes:
+Confirme a pasta e `(.venv)`. O primeiro arquivo contém a tabela; o segundo, as verificações:
 
 ```text
 src/hospital/estilos.py
@@ -153,11 +167,11 @@ Em macOS ou Linux:
 mkdir -p evidencias
 ```
 
-Abra `src/hospital/estilos.py`. Observe a tabela `_ESTILOS`: cada entrada declara estilo, forças, limites e formas de evidência. A função somente normaliza prioridades, filtra alternativas sem força correspondente e ordena as restantes. Ela não substitui a decisão humana.
+Em `src/hospital/estilos.py`, `_ESTILOS` declara estilo, força, limite e evidência; a função apenas filtra e ordena prioridades.
 
 **Observe**
 
-O cenário é um dicionário pequeno. A saída é uma lista de dicionários com os campos `estilo`, `forcas`, `limites` e `evidencias`. Essa forma mantém hipóteses visíveis para discussão.
+Saída é uma lista com `estilo`, `forcas`, `limites` e `evidencias`. `evidencias` guarda suas saídas, sem alterar código.
 
 ### Exploração em dupla
 
@@ -179,11 +193,11 @@ cenario = {
 pprint(comparar_estilos(cenario))
 ```
 
-Uma pessoa descreve a força em linguagem de cenário; a outra confere se a tabela oferece limite e evidência para a alternativa. Troquem os papéis após a primeira execução.
+Uma pessoa descreve a força; outra confere limite e evidência. Troquem papéis.
 
 **Compare**
 
-Antes de editar, prevejam qual estilo ficará em primeiro lugar. Registrem a previsão em uma linha no arquivo de evidência, sem alterar o teste oficial.
+Antes de editar, prevejam o primeiro estilo e registrem sem alterar o teste.
 
 ### Extensão
 
@@ -242,7 +256,7 @@ O arquivo modela uma única aplicação implantável, coerente com o monólito m
 
 **Execute**
 
-Rode primeiro toda a suíte do laboratório. Em seguida, capture a saída do exercício de estilos dentro de `evidencias`. No PowerShell:
+Rode primeiro toda a suíte do laboratório para verificar que seu ambiente está íntegro. Em seguida, execute apenas `test_estilos.py` e capture a saída em `evidencias/testes-estilos.txt`. O arquivo focado verifica a tabela de estilos, e não a API ou a infraestrutura adicionadas em módulos posteriores. No PowerShell:
 
 ```powershell
 .venv\Scripts\python.exe -m pytest tests -q

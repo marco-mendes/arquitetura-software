@@ -77,38 +77,52 @@ Atributos entram em tensão. Mais isolamento pode acrescentar comunicação e op
 
 Um **estilo arquitetural** nomeia uma família de organizações que compartilham tipos de elementos, conectores e restrições. Ele oferece vocabulário e propriedades esperadas, não uma receita completa. Duas soluções em camadas podem ter tecnologias e fronteiras distintas; ainda assim, ambas restringem dependências por níveis de responsabilidade.
 
+## Um mapa antes da escolha
+
+Antes de comparar implementações, localize o problema arquitetural. O mapa abaixo não é uma sequência obrigatória de evolução nem uma lista de tecnologias a adotar. Ele evita, por exemplo, usar microsserviços para resolver uma regra que muda por unidade, ou chamar Kubernetes para resolver uma fronteira de domínio ainda desconhecida.
+
+```mermaid
+mindmap
+  root((Arquiteturas de backend))
+    Organização interna
+      Camadas
+      MVC
+      Hexagonal
+      Microkernel
+      Monólito modular
+    Decomposição por domínio
+      DDD
+      microsserviços
+    Integração e comunicação
+      Pipes and Filters
+      APIs
+      eventos
+    Execução e operação
+      nuvem
+      contêineres
+```
+
+**Leitura textual da figura:** o mapa organiza onze termos em quatro perguntas. Organização interna reúne Camadas, MVC, Hexagonal, Microkernel e Monólito modular; decomposição por domínio reúne DDD e microsserviços; integração e comunicação reúne Pipes and Filters, APIs e eventos; execução e operação reúne nuvem e contêineres. Um termo pode influenciar outro, mas cada família responde primeiro a uma pergunta distinta.
+
+| Família | Pergunta que vem antes da tecnologia | Termos do mapa | Quando aprofundaremos |
+| --- | --- | --- | --- |
+| Organização interna | Como responsabilidades colaboram dentro de uma aplicação? | Camadas, MVC, Hexagonal, Microkernel, Monólito modular | Nesta unidade |
+| Decomposição por domínio | Onde termina um modelo de negócio e começa outro? | DDD, microsserviços | Unidade 3 |
+| Integração e comunicação | Qual contrato transporta uma intenção ou um fato entre fronteiras? | Pipes and Filters, APIs, eventos | Unidades 2 e 5 |
+| Execução e operação | Onde a solução roda e como é recuperada ou escalada? | nuvem, contêineres | Unidade 6 |
+
+**Camadas** distribui responsabilidades por níveis; **MVC** é uma organização voltada ao ciclo HTTP, em que controller coordena a requisição, model concentra regras e view forma a resposta. **Hexagonal** protege o núcleo de regras por portas (interfaces definidas pelo núcleo) e adaptadores para banco, fila ou interface. **Microkernel** organiza um núcleo estável e extensões. **Monólito modular** conserva uma unidade de implantação, mas exige fronteiras explícitas entre capacidades.
+
+**DDD** (*Domain-Driven Design*) é uma abordagem para modelar regras com a linguagem do negócio e delimitar contextos onde um modelo faz sentido; não é sinônimo de microsserviços. **Microsserviços** são unidades de implantação e operação independentes, com custos de comunicação, observabilidade e consistência distribuída. **APIs** são contratos explícitos para chamadas entre fronteiras. **Eventos** comunicam fatos ocorridos para consumidores que podem reagir em ritmos próprios. **Nuvem** fornece capacidade computacional e serviços sob demanda; **contêineres** empacotam processos e dependências de forma portável. Estes últimos termos serão retomados quando os problemas que resolvem estiverem concretos.
+
+O cuidado central para quem começa é não transformar o mapa em uma escada de maturidade. Um sistema pode continuar como monólito modular e usar APIs externas; uma capacidade de faturamento pode conter Pipes and Filters; e uma arquitetura em nuvem pode ter um único processo. A decisão precisa partir de forças e evidências, não do prestígio do nome.
+
 ![Mapa comparativo de quatro estilos arquiteturais: camadas, pipes e filtros, microkernel e monólito modular, com as forças de mudabilidade, vazão e extensibilidade.](../assets/images/m01-mapa-estilos.png)
 
 *Figura 2 — Mapa comparativo de estilos arquiteturais.*
 
 **Leitura textual da figura:** o mapa coloca quatro organizações lado a lado. Camadas separam responsabilidades por nível; pipes e filtros encadeiam transformações; microkernel mantém um núcleo e extensões; e monólito modular isola capacidades dentro de uma implantação. As forças na base lembram que a escolha compara modificabilidade, vazão e extensibilidade, em vez de eleger um estilo universalmente superior.
 
-### Camadas
-
-O estilo em camadas agrupa responsabilidades por nível de abstração. Uma divisão frequente contém apresentação, aplicação, domínio e infraestrutura. A regra essencial é a direção de dependência declarada. Se a apresentação acessa o banco por atalhos, o desenho mantém caixas, mas a propriedade arquitetural desaparece.
-
-Forças favorecidas incluem separação de responsabilidades, testabilidade e modificabilidade localizada. Limites incluem travessias desnecessárias, objetos que atravessam todos os níveis sem significado e dependências indiretas difíceis de perceber. Evidências possíveis são testes do domínio sem infraestrutura e verificações automatizadas entre pacotes.
-
-### Pipes and filters
-
-Em **pipes and filters**, filtros transformam entradas em saídas e pipes transportam os resultados entre etapas. Compiladores, processamento de mídia, importação de dados e pipelines analíticos são exemplos. Filtros independentes permitem composição, paralelismo e processamento incremental.
-
-O estilo exige contratos claros para o dado que flui. Estado compartilhado e dependências entre etapas reduzem a capacidade de recompor o pipeline. As falhas precisam carregar identidade e contexto para diagnóstico. Throughput pode ser observado por itens processados por unidade de tempo; correção, por exemplos conhecidos que atravessam cada filtro.
-
-### Microkernel
-
-O **microkernel**, também chamado arquitetura de plugins, mantém capacidades essenciais em um núcleo e adiciona variações por extensões conectadas a contratos estáveis. Editores, plataformas de desenvolvimento e mecanismos de regras extensíveis usam essa organização.
-
-Ele favorece modificabilidade e extensibilidade quando muitas variações podem ser isoladas. Seu custo aparece no desenho do contrato, no ciclo de vida dos plugins, na compatibilidade e na depuração. Um núcleo que conhece detalhes de toda extensão não é realmente mínimo. Uma evidência forte é incluir um plugin sem alterar o núcleo e executar a solução com outra extensão desabilitada.
-
-### Monólito modular
-
-Um **monólito modular** é implantado como uma unidade, mas dividido internamente por capacidades com interfaces explícitas. Monólito descreve a unidade de implantação; modular descreve a organização interna. O estilo pode combinar simplicidade operacional, transações locais e limites compreensíveis.
-
-O principal risco é a erosão: consultas diretas às tabelas de outro módulo, imports indiscriminados e um modelo compartilhado crescente. Fronteiras precisam ser observadas por revisão e testes de arquitetura. Escala independente e isolamento de falhas são mais limitados porque os módulos vivem no mesmo processo.
-
 ## Comparar, não eleger um vencedor universal
 
-Camadas organizam níveis de responsabilidade. Pipes and filters organizam transformações. Microkernel organiza um núcleo estável e extensões. Monólito modular organiza capacidades dentro de uma implantação. Eles respondem a problemas diferentes e podem aparecer combinados: um monólito modular pode usar camadas dentro de cada módulo e um pipeline em uma capacidade específica.
-
-A comparação responsável mantém as mesmas forças para todas as alternativas. Pergunte o que o estilo facilita, o que dificulta, qual premissa sustenta a avaliação e que evidência reduziria a incerteza. A próxima página separa esses estilos de padrões menores e das tecnologias que os implementam.
+Camadas organizam níveis; Pipes and Filters, transformações; Microkernel, extensões; Monólito modular, capacidades numa implantação. Eles podem ser combinados. Compare forças, limites, premissas e evidências antes de escolher.
