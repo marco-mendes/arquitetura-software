@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
   <title id="title">Quatro famílias de decisões para arquiteturas de backend</title>
-  <desc id="desc">Quatro cartões organizam estilos de backend por organização interna, decomposição por domínio, integração e comunicação, e execução e operação.</desc>
+  <desc id="desc">Quatro cartões organizam estilos de backend por organização interna, decomposição por domínio com DDD, microsserviços e macrosserviços, integração e comunicação, e execução e operação com nuvem, contêineres, orquestração e serverless.</desc>
   <defs>
     <style>
       .title { fill: #16243A; font: 700 35px Arial, sans-serif; }
@@ -32,8 +32,8 @@
     <text x="32" y="58" class="card-title">Decomposição por domínio</text>
     <text x="32" y="94" class="question">Onde termina um modelo de negócio?</text>
     <text x="32" y="130" class="label">ESTILOS PRINCIPAIS</text>
-    <text x="32" y="164" class="content">DDD · Microsserviços</text>
-    <text x="32" y="196" class="content">Contextos delimitados e autonomia</text>
+    <text x="32" y="164" class="content">DDD · microsserviços</text>
+    <text x="32" y="196" class="content">macrosserviços</text>
     <text x="32" y="228" class="subtitle">Foco: capacidades e times que as sustentam.</text>
   </g>
 
@@ -54,8 +54,8 @@
     <text x="32" y="58" class="card-title">Execução e operação</text>
     <text x="32" y="94" class="question">Onde a solução roda e se recupera?</text>
     <text x="32" y="130" class="label">ESTILOS PRINCIPAIS</text>
-    <text x="32" y="164" class="content">Nuvem · Contêineres</text>
-    <text x="32" y="196" class="content">Escala, entrega e recuperação</text>
+    <text x="32" y="164" class="content">nuvem · contêineres</text>
+    <text x="32" y="196" class="content">orquestração · serverless</text>
     <text x="32" y="228" class="subtitle">Foco: capacidade e confiabilidade operacional.</text>
   </g>
 </svg>

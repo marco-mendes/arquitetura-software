@@ -72,6 +72,47 @@ class ModuleOneTest(unittest.TestCase):
         ):
             self.assertIn(term, text)
 
+    def test_family_map_includes_operational_and_service_alternatives(self):
+        concepts = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+        decisions = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+        svg = (ROOT / "docs/assets/images/m01-familias-arquiteturais.svg").read_text(
+            encoding="utf-8"
+        )
+        alt = re.search(
+            r"!\[(.*?)\]\(\.\./assets/images/m01-familias-arquiteturais\.svg\)",
+            concepts,
+        ).group(1)
+        reading = concepts.split("**Leitura textual da figura:**", 1)[1].split(
+            "\n\n", 1
+        )[0]
+        table = concepts.split("| Família", 1)[1].split("\n\n", 1)[0]
+        decomposition = concepts.split("### Decomposição por domínio", 1)[1].split(
+            "###", 1
+        )[0]
+        operation = concepts.split("### Execução e operação", 1)[1].split(
+            "## Comparar", 1
+        )[0]
+        integration = concepts.split("### Integração e comunicação", 1)[1].split(
+            "###", 1
+        )[0]
+
+        for term, narrative in (
+            ("macrosserviços", decomposition),
+            ("orquestração", operation),
+            ("serverless", operation),
+        ):
+            self.assertIn(term, alt)
+            self.assertIn(term, reading)
+            self.assertIn(term, table)
+            self.assertIn(term, narrative)
+            self.assertIn(term, svg)
+        self.assertIn(
+            "[Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters)",
+            integration,
+        )
+        self.assertTrue((MODULE / "padroes-e-decisoes.md").is_file())
+        self.assertIn("{#pipes-and-filters}", decisions)
+
     def test_module_one_uses_accessible_static_family_map_not_mermaid_mindmap(self):
         text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
 

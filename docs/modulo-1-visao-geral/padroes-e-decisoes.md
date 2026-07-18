@@ -38,7 +38,7 @@ flowchart TB
 
 Camada **fechada** obriga passagem pela adjacente; camada **aberta** permite atalho declarado e testado. **Sumidouro** é travessia repetida sem decisão, validação ou transformação. Na Agenda, fechar aplicação protege a regra de conflito; a escolha depende de cenário, não de slogan.
 
-### Pipes and Filters: o dado que circula é um contrato
+### Pipes and Filters: o dado que circula é um contrato {#pipes-and-filters}
 
 Filtro produz saída ou rejeição; pipe a transporta. Filtro **sem estado** é mais simples de repetir; filtro **com estado** exige declarar armazenamento, recuperação e concorrência. Rejeição leva correlação, etapa e motivo ao **sumidouro de falhas**; meça throughput por lote e ambiente.
 
