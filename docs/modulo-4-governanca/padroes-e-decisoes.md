@@ -12,7 +12,7 @@ No laboratório, `kong.yml` é a fonte de verdade. Kong inicia em modo DB-less c
 
 Correlation ID é um identificador estável da operação para pessoas e sistemas de log. O consumidor pode enviá-lo; se não enviar, a borda gera um UUID. A resposta o ecoa e o gateway o propaga a montante. Não use identificador de paciente como correlation ID: ele revela dado e gera cardinalidade inadequada. Um UUID sem semântica é suficiente.
 
-O `traceparent` não substitui essa correlação. Ele descreve a árvore de execução: versão, trace ID, span pai e sinalizadores. Kong extrai esse contexto, cria um span de gateway e encaminha o cabeçalho. A aplicação cria um span filho e envia ambos por OTLP HTTP ao OpenTelemetry Collector. O Collector recebe, processa em lote e exporta ao Jaeger. A consulta `GET /api/traces/{traceId}` é uma evidência automatizável, preferível a afirmar que “apareceu na tela”. A interface do Jaeger serve para explorar; a API documentada sustenta teste. Essa cadeia produz rastreabilidade: alguém consegue relacionar uma decisão publicada, a configuração que a media e os sinais de uma execução sem inferir que qualquer ferramenta é a decisão em si.
+O `traceparent` descreve a árvore de execução — trace ID, span pai e sinalizadores — mas não substitui o correlation ID. Kong propaga contexto e a aplicação cria um span filho; ambos enviam spans ao Collector, que os exporta ao Jaeger. A API `GET /api/traces/{traceId}` oferece evidência automatizável da cadeia entre decisão, configuração e execução.
 
 ```mermaid
 sequenceDiagram
