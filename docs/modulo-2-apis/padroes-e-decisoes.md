@@ -19,9 +19,11 @@ flowchart LR
     G -. evidência de uso .-> C
 ```
 
+**Texto alternativo:** o fluxo vai de identificar consumidor a evoluir a API; evidência de uso retorna à comparação de interação.
+
 *Figura 6 — Ciclo de decisão de uma API, da necessidade do consumidor à evolução observada.*
 
-**Leitura textual da figura:** a equipe identifica consumidor e resultado, delimita a capacidade e compara formas de interação antes de desenhar o contrato. Depois implementa, testa, publica e observa uso. Evidências de uso retornam à comparação de alternativas quando a API precisa evoluir ou ser retirada.
+**Leitura textual:** a equipe identifica consumidor, delimita capacidade, compara interações e desenha contrato; depois implementa, testa, publica e observa uso. Evidências de uso revisam a comparação de alternativas.
 
 Para cada etapa, guarde cenário, responsabilidade, contrato, teste, referência de consumo e telemetria. FastAPI, Spring Boot e ASP.NET Core implementam; OpenAPI, Spectral e Bruno tornam a promessa analisável. Nenhuma ferramenta decide se a operação pertence à API ou se uma integração deve ser assíncrona.
 
@@ -54,9 +56,11 @@ flowchart TB
     R --> D
 ```
 
+**Texto alternativo:** desenvolvimento publica a API; execução aplica políticas técnicas e engajamento oferece documentação e suporte; ambos retornam informações ao desenvolvimento.
+
 *Figura 7 — Três capacidades conectadas de uma plataforma de APIs.*
 
-**Leitura textual da figura:** desenvolvimento prepara contratos, exemplos, análise e testes; execução atende o tráfego com políticas técnicas; engajamento permite que consumidores encontrem, entendam e obtenham suporte. As setas de retorno mostram que telemetria e dúvidas de consumo devem alimentar o próximo ciclo de desenvolvimento.
+**Leitura textual:** desenvolvimento prepara contratos e testes; execução atende o tráfego; engajamento permite descoberta e suporte. Telemetria e dúvidas retornam ao desenvolvimento.
 
 Desenvolvimento responde por contrato, exemplos e testes; execução por tráfego, TLS, limites e telemetria; engajamento por descoberta e suporte. O laboratório usa uma versão mínima desse ciclo: repositório, OpenAPI, FastAPI, Bruno, Spectral e testes; não declara gateway ou catálogo empresarial.
 
@@ -73,9 +77,11 @@ flowchart LR
     L --> X[Laboratório parceiro]
 ```
 
+**Texto alternativo:** o portal acessa um gateway, que encaminha às APIs de elegibilidade e agenda; a primeira usa adaptador para chamar o laboratório.
+
 *Figura 8 — Gateway na borda e adaptador junto à diferença semântica.*
 
-**Leitura textual da figura:** o gateway concentra políticas técnicas e encaminha a chamada a APIs da plataforma. A tradução entre a linguagem interna e o SOAP/TISS do laboratório fica no adaptador, próximo da dependência externa. Assim, roteamento não é confundido com entendimento do domínio.
+**Leitura textual:** o gateway concentra políticas técnicas; o adaptador traduz linguagem interna e SOAP/TISS perto da dependência externa. Roteamento não se confunde com domínio.
 
 Agregação pede uma tela composta e medição de latência, falha e cache. Gateway sem necessidade de fronteira adiciona salto, configuração e operação. O módulo 4 aprofunda suas políticas.
 

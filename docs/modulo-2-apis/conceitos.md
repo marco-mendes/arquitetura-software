@@ -62,9 +62,11 @@ flowchart LR
     S --> N
 ```
 
+**Texto alternativo:** um consumidor alcança a mesma capacidade por REST/HTTP, GraphQL, gRPC/RPC, WebSocket ou SOAP/XML.
+
 *Figura 4 — Formas de interação entre um consumidor e a mesma capacidade de negócio.*
 
-**Leitura textual da figura:** formas de interação diferentes convergem na mesma capacidade: REST usa recursos, GraphQL seleciona campos, gRPC/RPC expõe operações, WebSocket mantém canal e SOAP/XML apoia contrato existente.
+**Leitura textual:** as formas convergem na mesma capacidade: REST usa recursos, GraphQL seleciona campos, gRPC/RPC expõe operações, WebSocket mantém canal e SOAP/XML apoia contrato existente.
 
 | Alternativa | Quando ajuda | Cuidado arquitetural |
 | --- | --- | --- |

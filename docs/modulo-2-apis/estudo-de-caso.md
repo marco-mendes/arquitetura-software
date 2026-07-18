@@ -14,9 +14,11 @@ flowchart LR
     L --> P
 ```
 
+**Texto alternativo:** canais administrativos acessam a plataforma, que troca solicitações e respostas com operadora e laboratório e produz acompanhamento.
+
 *Figura 10 — A plataforma hospitalar como fronteira entre canais internos e parceiros com contratos próprios.*
 
-**Leitura textual da figura:** canais usam a plataforma, que conversa com operadora e laboratório por contratos próprios. As setas indicam solicitações e respostas em momentos distintos.
+**Leitura textual:** canais usam a plataforma, que conversa com parceiros por contratos próprios; as setas indicam solicitações e respostas em momentos distintos.
 
 ## Mapa de interações antes da escolha técnica
 
@@ -73,7 +75,11 @@ sequenceDiagram
     API-->>Administrativo: estado explícito, sem fingir decisão final
 ```
 
-**Leitura textual da figura:** a plataforma cria protocolo antes da chamada externa; o adaptador encontra timeout; consulta posterior devolve estado conhecido, não decisão da operadora.
+**Texto alternativo:** o sistema envia elegibilidade; a API cria protocolo e responde `202` com `Location`. O adaptador recebe timeout da operadora e registra falha temporária; consulta posterior devolve estado conhecido.
+
+*Figura 11 — A plataforma registra o pedido antes de consultar a operadora e preserva o estado conhecido após um timeout.*
+
+**Leitura textual:** a plataforma cria protocolo antes da chamada externa; o adaptador encontra timeout; consulta posterior devolve estado conhecido, não decisão da operadora.
 
 ## Decisão 3: gateway é política de fronteira, ACL é proteção do domínio
 

@@ -52,7 +52,11 @@ sequenceDiagram
     API-->>Consumidor: 200 + ElegibilidadeAceita
 ```
 
-**Leitura textual da figura:** o consumidor envia um pedido, a API valida e guarda um estado efêmero, responde com `202` e o endereço de consulta; em seguida, o consumidor usa esse endereço e recebe `200` com a representação aceita.
+**Texto alternativo:** o consumidor envia `POST`; a API valida, guarda protocolo `recebida` em memória e responde `202` com `Location`. Um `GET` devolve `200` com a representação aceita.
+
+*Figura 12 — Sequência de aceitação e consulta de uma elegibilidade armazenada em memória.*
+
+**Leitura textual:** o consumidor envia pedido; a API valida, guarda estado efêmero e responde `202` com endereço de consulta. O uso do endereço devolve `200` e a representação aceita.
 
 Trocar o dicionário por persistência não deveria mudar as mensagens públicas. Decisão da operadora exigirá novos estados, regras e testes.
 
@@ -69,9 +73,11 @@ flowchart LR
     E --> M[(estado do pedido)]
 ```
 
+**Texto alternativo:** o sistema administrativo chama o gateway, que encaminha à API; ela mantém o estado e usa adaptador para chamar a operadora.
+
 *Figura 9 — Uma evolução possível: políticas técnicas na borda, tradução no adaptador e estado na plataforma.*
 
-**Leitura textual da figura:** gateway aplica políticas e encaminha à API; adaptador traduz vocabulário e protocolo da operadora; o estado pertence à API. A figura é hipótese de evolução, não componente do laboratório.
+**Leitura textual:** gateway aplica políticas; adaptador traduz vocabulário e protocolo da operadora; o estado pertence à API. É hipótese de evolução, não componente do laboratório.
 
 O gateway pode autenticar, limitar e rotear. Ele não deve converter `beneficiaryKey` da operadora para `matricula_plano` nem decidir que um estado desconhecido significa `negada`; isso é responsabilidade do adaptador, onde a diferença semântica pode ser testada e observada. Essa separação evita espalhar SOAP/XML ou regras externas pelos consumidores internos.
 
