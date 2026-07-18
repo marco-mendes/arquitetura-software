@@ -115,7 +115,19 @@ cd entregas/unidade-1/camadas
 python3 main.py | tee saida-antes.txt
 ```
 
-Altere uma condição já existente no cenário ou em uma regra, execute de novo e guarde `saida-depois.txt`. Descreva o que mudou na saída e qual responsabilidade foi afetada. Não há uma alteração canônica: escolha uma hipótese que você consiga explicar. Para reverter, exclua a cópia em `entregas/unidade-1/camadas` e faça a cópia novamente; o exemplo original não deve ser modificado.
+Altere uma condição já existente no cenário ou em uma regra. Ainda no diretório da cópia local `entregas/unidade-1/camadas`, capture a execução posterior. No Windows PowerShell:
+
+```powershell
+py main.py | Tee-Object -FilePath saida-depois.txt
+```
+
+No macOS/Linux:
+
+```bash
+python3 main.py | tee saida-depois.txt
+```
+
+Descreva o que mudou na saída e qual responsabilidade foi afetada. Não há uma alteração canônica: escolha uma hipótese que você consiga explicar. Para reverter, exclua a cópia em `entregas/unidade-1/camadas` e faça a cópia novamente; o exemplo original não deve ser modificado.
 
 ## Experimento 2 — Pipes and Filters: triagem de currículos (35 minutos)
 
@@ -159,7 +171,19 @@ cd entregas/unidade-1/pipes-and-filters
 python3 main.py | tee saida-antes.txt
 ```
 
-Altere uma condição observável da cópia — dados de entrada, um critério ou a composição do fluxo — e gere `saida-depois.txt`. Registre o efeito sobre descarte, transformação ou ranking. Evite buscar uma saída “certa”: a entrega deve explicar sua hipótese e a evidência. Para desfazer, exclua a cópia e repita a cópia a partir do código original.
+Altere uma condição observável da cópia — dados de entrada, um critério ou a composição do fluxo. Ainda no diretório da cópia local `entregas/unidade-1/pipes-and-filters`, capture a execução posterior. No Windows PowerShell:
+
+```powershell
+py main.py | Tee-Object -FilePath saida-depois.txt
+```
+
+No macOS/Linux:
+
+```bash
+python3 main.py | tee saida-depois.txt
+```
+
+Registre o efeito sobre descarte, transformação ou ranking. Evite buscar uma saída “certa”: a entrega deve explicar sua hipótese e a evidência. Para desfazer, exclua a cópia e repita a cópia a partir do código original.
 
 ## Experimento 3 — Microkernel: faturamento por plugins (35 minutos)
 
@@ -204,7 +228,19 @@ cd entregas/unidade-1/microkernel
 python3 main.py | tee saida-antes.txt
 ```
 
-Na cópia, modifique uma condição de uma regra, do registro ou de uma fatura e capture `saida-depois.txt`. Explique como a ordem de categorias e a contribuição das regras tornaram a mudança visível. Não existe uma modificação prescrita. Para retornar ao estado inicial, apague a cópia em `entregas/unidade-1/microkernel` e copie novamente o diretório original.
+Na cópia, modifique uma condição de uma regra, do registro ou de uma fatura. Ainda no diretório da cópia local `entregas/unidade-1/microkernel`, capture a execução posterior. No Windows PowerShell:
+
+```powershell
+py main.py | Tee-Object -FilePath saida-depois.txt
+```
+
+No macOS/Linux:
+
+```bash
+python3 main.py | tee saida-depois.txt
+```
+
+Explique como a ordem de categorias e a contribuição das regras tornaram a mudança visível. Não existe uma modificação prescrita. Para retornar ao estado inicial, apague a cópia em `entregas/unidade-1/microkernel` e copie novamente o diretório original.
 
 ## Resultado esperado
 

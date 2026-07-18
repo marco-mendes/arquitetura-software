@@ -276,6 +276,17 @@ class ModuleOneTest(unittest.TestCase):
         self.assertNotIn("Structurizr", workshop)
         self.assertNotIn("Podman", workshop)
 
+    def test_workshop_captures_before_and_after_evidence_for_all_experiments(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+
+        for command in (
+            "py main.py | Tee-Object -FilePath saida-antes.txt",
+            "py main.py | Tee-Object -FilePath saida-depois.txt",
+            "python3 main.py | tee saida-antes.txt",
+            "python3 main.py | tee saida-depois.txt",
+        ):
+            self.assertEqual(3, workshop.count(command), command)
+
     def test_workshop_links_each_style_to_real_chapter_one_source_files(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
         for filename in (
