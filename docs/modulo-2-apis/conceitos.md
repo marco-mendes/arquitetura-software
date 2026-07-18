@@ -64,7 +64,7 @@ flowchart LR
 
 **Texto alternativo:** um consumidor alcança a mesma capacidade por REST/HTTP, GraphQL, gRPC/RPC, WebSocket ou SOAP/XML.
 
-*Figura 4 — Formas de interação entre um consumidor e a mesma capacidade de negócio. Fonte: curso.*
+*Figura 3 — Formas de interação entre um consumidor e a mesma capacidade de negócio. Fonte: curso.*
 
 **Leitura textual:** as formas convergem na mesma capacidade: REST usa recursos, GraphQL seleciona campos, gRPC/RPC expõe operações, WebSocket mantém canal e SOAP/XML apoia contrato existente.
 
@@ -86,7 +86,7 @@ OpenAPI descreve caminhos, operações, parâmetros, corpos, respostas e schemas
 
 ![Anatomia de um contrato de API: cliente consome um contrato OpenAPI, a API processa a solicitação e responde 202 Accepted com Location para acompanhamento pela operadora de plano.](../assets/images/m02-anatomia-api.png)
 
-*Figura 3 — Anatomia de um contrato de API. Fonte: curso.*
+*Figura 4 — Anatomia de um contrato de API. Fonte: curso.*
 
 **Leitura textual da figura:** um cliente consulta o contrato OpenAPI e envia uma requisição à API. A API responde `202 Accepted` e `Location` para informar aceitação e o caminho de acompanhamento. Outro consumidor, como uma operadora, pode usar a mesma promessa sem conhecer a implementação do servidor.
 

@@ -168,6 +168,48 @@ class ModuleOneTest(unittest.TestCase):
             corpus.count("```mermaid"),
         )
 
+    def test_editorial_mermaid_figures_have_complete_accessible_context(self):
+        pages = (
+            MODULE / "conceitos.md",
+            MODULE / "padroes-e-decisoes.md",
+            MODULE / "estudo-de-caso.md",
+        )
+        contexts = []
+        for page in pages:
+            text = page.read_text(encoding="utf-8")
+            contexts.extend(
+                re.findall(
+                    r"```mermaid\n.*?```\n\n"
+                    r"\*\*Texto alternativo:\*\*.+?\n\n"
+                    r"\*Figura (\d+) — .+? Fonte: .+?\*\n\n"
+                    r"\*\*Leitura textual(?: da figura)?:\*\*.+?"
+                    r"(?=\n\n|\Z)",
+                    text,
+                    re.DOTALL,
+                )
+            )
+
+        self.assertEqual(6, len(contexts))
+
+    def test_module_one_figure_numbers_follow_reading_order(self):
+        pages = (
+            MODULE / "conceitos.md",
+            MODULE / "padroes-e-decisoes.md",
+            MODULE / "exemplo-arquitetural.md",
+            MODULE / "estudo-de-caso.md",
+        )
+        figures = []
+        for page in pages:
+            figures.extend(
+                int(number)
+                for number in re.findall(
+                    r"\*Figura (\d+) — .+? Fonte: .+?\*",
+                    page.read_text(encoding="utf-8"),
+                )
+            )
+
+        self.assertEqual(list(range(1, len(figures) + 1)), figures)
+
     def test_structurizr_models_one_application_with_internal_modules(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
             encoding="utf-8"

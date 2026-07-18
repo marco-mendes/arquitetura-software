@@ -2,9 +2,9 @@
 
 ## O que torna uma decisão arquitetural
 
-Arquitetura de software é o conjunto de estruturas necessárias para compreender e evoluir um sistema, acompanhado das decisões e do racional que explicam essas estruturas. Uma decisão é arquitetural quando afeta interesses importantes, restringe muitas decisões posteriores ou tem alto custo de reversão. A escolha da fronteira entre módulos costuma ser arquitetural; o nome de uma variável, em geral, não é.
+Arquitetura de software reúne estruturas, decisões e racional para compreender e evoluir um sistema. Uma decisão é arquitetural quando afeta interesses importantes, restringe escolhas posteriores ou custa caro reverter. A fronteira entre módulos costuma ser arquitetural; o nome de uma variável, não.
 
-Essa definição evita dois extremos. Arquitetura não é somente um diagrama feito no início, pois estruturas existem no código, na implantação, nos dados e nas relações de trabalho. Também não é toda decisão técnica: se tudo for arquitetura, deixa de existir foco sobre escolhas significativas. O [glossário](../referencia/glossario.md) mantém as definições comuns usadas ao longo da disciplina.
+Arquitetura não é só um diagrama inicial: está no código, na implantação, nos dados e nas relações de trabalho. Também não é toda decisão técnica. O [glossário](../referencia/glossario.md) mantém definições comuns.
 
 Uma descrição arquitetural responde ao menos a quatro perguntas:
 
@@ -15,7 +15,7 @@ Uma descrição arquitetural responde ao menos a quatro perguntas:
 
 ## Componente, conector e configuração
 
-Um **componente** é uma unidade relevante de computação ou armazenamento com responsabilidade identificável: módulo, serviço, processo, banco ou fila podem exercer esse papel conforme a visão adotada. Um **conector** representa a interação: chamada de função, requisição HTTP, mensagem, acesso a dados ou fluxo por arquivo. A **configuração** é o arranjo formado pelos componentes e conectores, inclusive restrições sobre quem pode depender de quem.
+Um **componente** é uma unidade com responsabilidade identificável: módulo, serviço, processo, banco ou fila. Um **conector** representa uma interação, como chamada, HTTP, mensagem ou acesso a dados. A **configuração** reúne componentes, conectores e restrições de dependência.
 
 Observe um exemplo genérico de processamento de pedidos, ainda sem escolher tecnologia:
 
@@ -28,11 +28,15 @@ flowchart LR
     R --> D[("Dados")]
 ```
 
+**Texto alternativo:** fluxo de processamento em que o Operador envia um comando à Entrada, que o encaminha à Aplicação; a Aplicação usa o Repositório e Notificação, e o Repositório mantém os Dados.
+
+*Figura 1 — Componentes e conectores de um processamento de pedidos. Fonte: curso.*
+
 **Leitura textual da figura:** o Operador envia um comando à Entrada. A Entrada encaminha o objeto validado à Aplicação, que consulta ou grava pelo Repositório, emite um evento para Notificação e mantém os Dados atrás desse conector. A figura separa os componentes e nomeia o tipo de interação entre eles.
 
-O desenho apresenta componentes e conectores, mas ainda não basta. É necessário declarar se `Entrada` pode acessar `Dados` diretamente, qual elemento possui a regra e como erros atravessam as fronteiras. Arquitetura inclui essas restrições. Um desenho sem semântica permite interpretações incompatíveis.
+O desenho ainda exige restrições: quem pode acessar `Dados`, onde está a regra e como erros atravessam fronteiras. Sem essa semântica, permite interpretações incompatíveis.
 
-Também é preciso nomear a visão. Na visão de módulos, uma caixa pode ser um pacote de código e uma seta pode significar dependência. Na visão de execução, uma caixa pode ser um processo e uma seta, comunicação em tempo de execução. Na visão de implantação, nós representam ambientes computacionais. Misturar tudo em um único desenho costuma esconder decisões.
+Também nomeie a visão: módulos mostram dependências de código; execução, comunicação entre processos; implantação, ambientes computacionais. Misturá-las esconde decisões.
 
 ## Estrutura e comportamento se complementam
 
@@ -53,33 +57,37 @@ sequenceDiagram
     Entrada-->>Operador: apresenta confirmação
 ```
 
+**Texto alternativo:** sequência em que o Operador envia um comando, a Entrada valida e chama a Aplicação, que persiste pelo Repositório e devolve a confirmação pelo caminho inverso.
+
+*Figura 2 — Sequência de uma operação com validação e persistência. Fonte: curso.*
+
 **Leitura textual da figura:** o Operador envia um comando à Entrada, que valida o formato e solicita a operação à Aplicação. A Aplicação salva o estado no Repositório, recebe a confirmação de versão e devolve o resultado no caminho inverso até o Operador. A ordem explícita mostra onde uma indisponibilidade de persistência pode alterar o cenário.
 
-Se a persistência ficar indisponível, a sequência deve explicitar se a operação falha, espera ou tenta novamente. Essa escolha influencia confiabilidade, latência e consistência. Portanto, comportamento não é detalhe posterior: ajuda a testar se a estrutura sustenta os cenários relevantes.
+Se a persistência falhar, a sequência deve declarar falha, espera ou repetição. Essa escolha afeta confiabilidade, latência e consistência; comportamento testa se a estrutura sustenta o cenário.
 
 ## Decisões, restrições e premissas
 
-Uma decisão escolhe uma alternativa e aceita consequências. Uma **restrição** limita o espaço de opções, como executar localmente ou integrar um sistema que só oferece arquivo. Uma **premissa** é uma condição considerada verdadeira, mas que precisa ser revista, como esperar até cinquenta operações por segundo. Confundir premissa com fato torna a arquitetura frágil.
+Uma decisão escolhe uma alternativa e aceita consequências. **Restrição** limita opções, como executar localmente; **premissa** é condição a revisar, como esperar cinquenta operações por segundo. Confundi-las fragiliza a arquitetura.
 
-Decisões arquiteturais úteis registram contexto, forças, alternativas, escolha, consequências e evidências. “Usar Python” não contém racional suficiente. “Adotar um monólito modular para preservar uma implantação simples, mantendo módulos verificáveis por testes de dependência; revisar se a necessidade de escala independente for demonstrada” é uma decisão discutível e revisável.
+Decisões úteis registram contexto, forças, alternativas, escolha, consequências e evidências. “Usar Python” não basta; um monólito modular pode justificar implantação simples e revisão quando houver escala independente demonstrada.
 
-O código materializa parte da decisão, mas não explica todas as alternativas rejeitadas. Por isso o ADR complementa o repositório. Ferramentas como Structurizr Lite tornam modelos versionáveis; pytest verifica comportamento; ArchUnit em Java e NetArchTest em .NET verificam regras de dependência. Nenhuma ferramenta decide pelo grupo: elas produzem evidência sobre hipóteses explícitas.
+O código não explica alternativas rejeitadas; por isso o ADR o complementa. Structurizr Lite versiona modelos; pytest verifica comportamento; ArchUnit e NetArchTest verificam dependências. Ferramentas produzem evidência, não decidem pelo grupo.
 
 ## Atributos de qualidade como cenários
 
-Um **atributo de qualidade** descreve como o sistema deve se comportar diante de uma condição, para além da função principal. Modificabilidade, desempenho, disponibilidade, segurança, testabilidade e observabilidade são exemplos. O nome isolado é ambíguo. “O sistema deve ter desempenho” não informa carga, operação, ambiente nem medida.
+Um **atributo de qualidade** descreve comportamento além da função principal. Modificabilidade, desempenho, disponibilidade, segurança, testabilidade e observabilidade são exemplos. “Ter desempenho” sem carga, ambiente e medida é ambíguo.
 
-Use a forma apresentada em [atributos de qualidade](../referencia/atributos-de-qualidade.md): fonte do estímulo, estímulo, ambiente, artefato afetado, resposta e medida. Um cenário de modificabilidade pode dizer: “quando uma equipe inclui uma nova regra em horário de desenvolvimento, somente o módulo de regras deve ser alterado, com a suíte concluída em até cinco minutos”. Um cenário de throughput pode definir lote, volume e itens processados por segundo.
+Use [fonte, estímulo, ambiente, artefato, resposta e medida](../referencia/atributos-de-qualidade.md). Um cenário de modificabilidade pode limitar a alteração ao módulo de regras e a suíte a cinco minutos; throughput define lote, volume e itens por segundo.
 
 Atributos entram em tensão. Mais isolamento pode acrescentar comunicação e operação. Uma otimização de throughput pode reduzir a clareza. Consistência imediata pode diminuir disponibilidade durante uma partição. Arquitetar é explicitar esses compromissos, não prometer maximizar tudo.
 
 ## Estilo arquitetural
 
-Um **estilo arquitetural** nomeia uma família de organizações que compartilham tipos de elementos, conectores e restrições. Ele oferece vocabulário e propriedades esperadas, não uma receita completa. Duas soluções em camadas podem ter tecnologias e fronteiras distintas; ainda assim, ambas restringem dependências por níveis de responsabilidade.
+Um **estilo arquitetural** nomeia organizações com elementos, conectores e restrições comuns. Oferece vocabulário, não receita: duas soluções em camadas podem ter tecnologias distintas e ainda restringir dependências por responsabilidade.
 
 ## Um mapa antes da escolha
 
-Antes de comparar implementações, localize o problema arquitetural. O mapa abaixo não é uma sequência obrigatória de evolução nem uma lista de tecnologias a adotar. Ele evita, por exemplo, usar microsserviços para resolver uma regra que muda por unidade, ou chamar Kubernetes para resolver uma fronteira de domínio ainda desconhecida.
+Antes de comparar implementações, localize o problema. O mapa não é sequência de evolução nem lista de tecnologias; evita usar microsserviços para uma regra local ou Kubernetes para uma fronteira ainda desconhecida.
 
 ```mermaid
 mindmap
@@ -102,6 +110,10 @@ mindmap
       contêineres
 ```
 
+**Texto alternativo:** mapa mental que agrupa arquiteturas de backend em organização interna, decomposição por domínio, integração e comunicação, e execução e operação.
+
+*Figura 3 — Quatro famílias de decisões para arquiteturas de backend. Fonte: curso.*
+
 **Leitura textual da figura:** o mapa organiza onze termos em quatro perguntas. Organização interna reúne Camadas, MVC, Hexagonal, Microkernel e Monólito modular; decomposição por domínio reúne DDD e microsserviços; integração e comunicação reúne Pipes and Filters, APIs e eventos; execução e operação reúne nuvem e contêineres. Um termo pode influenciar outro, mas cada família responde primeiro a uma pergunta distinta.
 
 | Família | Pergunta que vem antes da tecnologia | Termos do mapa | Quando aprofundaremos |
@@ -111,15 +123,15 @@ mindmap
 | Integração e comunicação | Qual contrato transporta uma intenção ou um fato entre fronteiras? | Pipes and Filters, APIs, eventos | Unidades 2 e 5 |
 | Execução e operação | Onde a solução roda e como é recuperada ou escalada? | nuvem, contêineres | Unidade 6 |
 
-**Camadas** distribui responsabilidades por níveis; **MVC** é uma organização voltada ao ciclo HTTP, em que controller coordena a requisição, model concentra regras e view forma a resposta. **Hexagonal** protege o núcleo de regras por portas (interfaces definidas pelo núcleo) e adaptadores para banco, fila ou interface. **Microkernel** organiza um núcleo estável e extensões. **Monólito modular** conserva uma unidade de implantação, mas exige fronteiras explícitas entre capacidades.
+**Camadas** distribui responsabilidades; **MVC** organiza controller, model e view no ciclo HTTP. **Hexagonal** protege regras por portas e adaptadores. **Microkernel** combina núcleo estável e extensões. **Monólito modular** mantém uma implantação com fronteiras explícitas.
 
-**DDD** (*Domain-Driven Design*) é uma abordagem para modelar regras com a linguagem do negócio e delimitar contextos onde um modelo faz sentido; não é sinônimo de microsserviços. **Microsserviços** são unidades de implantação e operação independentes, com custos de comunicação, observabilidade e consistência distribuída. **APIs** são contratos explícitos para chamadas entre fronteiras. **Eventos** comunicam fatos ocorridos para consumidores que podem reagir em ritmos próprios. **Nuvem** fornece capacidade computacional e serviços sob demanda; **contêineres** empacotam processos e dependências de forma portável. Estes últimos termos serão retomados quando os problemas que resolvem estiverem concretos.
+**DDD** (*Domain-Driven Design*) modela regras na linguagem do negócio e delimita contextos; não é microsserviços. **Microsserviços** têm implantação independente e custos distribuídos. **APIs** são contratos de chamada; **eventos**, fatos para reações independentes. **Nuvem** oferece capacidade sob demanda; **contêineres** empacotam processos portáveis.
 
-O cuidado central para quem começa é não transformar o mapa em uma escada de maturidade. Um sistema pode continuar como monólito modular e usar APIs externas; uma capacidade de faturamento pode conter Pipes and Filters; e uma arquitetura em nuvem pode ter um único processo. A decisão precisa partir de forças e evidências, não do prestígio do nome.
+O mapa não é escada de maturidade: um monólito modular pode usar APIs, faturamento pode usar Pipes and Filters e nuvem pode ter um processo. Decida por forças e evidências, não pelo nome.
 
 ![Mapa comparativo de quatro estilos arquiteturais: camadas, pipes e filtros, microkernel e monólito modular, com as forças de mudabilidade, vazão e extensibilidade.](../assets/images/m01-mapa-estilos.png)
 
-*Figura 2 — Mapa comparativo de estilos arquiteturais. Fonte: curso.*
+*Figura 4 — Mapa comparativo de estilos arquiteturais. Fonte: curso.*
 
 **Leitura textual da figura:** o mapa coloca quatro organizações lado a lado. Camadas separam responsabilidades por nível; pipes e filtros encadeiam transformações; microkernel mantém um núcleo e extensões; e monólito modular isola capacidades dentro de uma implantação. As forças na base lembram que a escolha compara modificabilidade, vazão e extensibilidade, em vez de eleger um estilo universalmente superior.
 

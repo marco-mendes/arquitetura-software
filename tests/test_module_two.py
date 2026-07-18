@@ -30,6 +30,11 @@ class ModuleTwoTest(unittest.TestCase):
         ):
             self.assertIn(term, text)
 
+    def test_concept_figure_numbers_follow_their_reading_order(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+
+        self.assertLess(text.index("*Figura 3 — Formas de interação"), text.index("*Figura 4 — Anatomia"))
+
     def test_api_workshop_names_the_local_application_before_commands(self):
         text = (MODULE / "oficina-de-ferramentas.md").read_text(
             encoding="utf-8"

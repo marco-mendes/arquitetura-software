@@ -31,7 +31,7 @@ flowchart TB
 
 **Texto alternativo:** fluxo de reserva em camadas: a interface chama o caso de uso, que aplica a regra de conflito antes de persistir; a interface não acessa os dados diretamente.
 
-*Figura 1 — Uma reserva atravessa fronteiras de camadas antes de ser persistida. Fonte: curso.*
+*Figura 6 — Uma reserva atravessa fronteiras de camadas antes de ser persistida. Fonte: curso.*
 
 **Leitura textual da figura:** a Equipe administrativa envia o pedido à Interface HTTP. A interface chama o Caso de uso, que consulta a Regra de Agenda antes de pedir ao Repositório que grave os Dados da agenda. O Caso de uso também registra um fato mínimo em Auditoria. A ligação pontilhada mostra que a interface não consulta os dados diretamente; a regra de conflito não pode ser ignorada por uma tela.
 
@@ -52,7 +52,7 @@ flowchart LR
 
 **Texto alternativo:** pipeline de faturamento no qual validar, normalizar, enriquecer e publicar recebem documentos em sequência; rejeições seguem para um registro com etapa identificada.
 
-*Figura 2 — Transformações independentes conservam o contexto de uma rejeição. Fonte: curso.*
+*Figura 7 — Transformações independentes conservam o contexto de uma rejeição. Fonte: curso.*
 
 **Leitura textual da figura:** o Adaptador de entrada entrega um documento bruto ao filtro de validação. Documentos válidos atravessam normalização, enriquecimento e publicação; uma rejeição em validação, normalização ou enriquecimento é registrada com sua etapa. Nenhum filtro consulta o estado interno de outro filtro.
 
@@ -76,7 +76,7 @@ sequenceDiagram
 
 **Texto alternativo:** sequência de processamento em que a correlação acompanha o documento e uma falha no enriquecimento retorna com etapa e causa.
 
-*Figura 3 — Uma falha parcial preserva correlação, etapa e causa. Fonte: curso.*
+*Figura 8 — Uma falha parcial preserva correlação, etapa e causa. Fonte: curso.*
 
 **Leitura textual da figura:** a Entrada envia um documento com correlação a Validar, que passa um valor válido para Normalizar e depois para Enriquecer. A falha de enriquecimento retorna à Entrada com etapa e causa; a Entrada registra duração e rejeição. A sequência evidencia que a correlação acompanha o fluxo, inclusive na falha.
 
@@ -99,7 +99,7 @@ flowchart LR
 
 **Texto alternativo:** núcleo de triagem mantém estados, autorização e contrato; plugins devolvem resultados pelo contrato sem acessar dados internos.
 
-*Figura 4 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos. Fonte: curso.*
+*Figura 9 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos. Fonte: curso.*
 
 **Leitura textual da figura:** a Entrada de triagem entrega a solicitação ao Núcleo, que controla identidade, estados e autorização. O Núcleo expõe um Contrato de extensão usado por dois plugins: uma coleta específica da unidade A e uma validação de parceiro. Os plugins devolvem resultados ao Núcleo, que produz fato com correlação para Auditoria. As ligações pontilhadas indicam que plugins não leem os dados internos do núcleo diretamente.
 
