@@ -72,6 +72,33 @@ class ModuleOneTest(unittest.TestCase):
         ):
             self.assertIn(term, text)
 
+    def test_module_one_uses_accessible_static_family_map_not_mermaid_mindmap(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+
+        self.assertIn("m01-familias-arquiteturais.svg", text)
+        self.assertNotIn("mindmap", text)
+        for family in (
+            "Organização interna",
+            "Decomposição por domínio",
+            "Integração e comunicação",
+            "Execução e operação",
+        ):
+            self.assertIn(family, text)
+
+        asset = ROOT / "docs" / "assets" / "images" / "m01-familias-arquiteturais.svg"
+        self.assertTrue(asset.is_file())
+        svg = asset.read_text(encoding="utf-8")
+        self.assertIn('viewBox="0 0 1200 760"', svg)
+        self.assertNotRegex(svg, r"<script\\b|(?:href|src)=[\"']https?://")
+        self.assertIn("<title", svg)
+        self.assertIn("<desc", svg)
+        self.assertIn(
+            "![Diagrama em quatro cartões:",
+            text,
+        )
+        self.assertIn("*Figura 1 — Quatro famílias de decisões", text)
+        self.assertIn("**Leitura textual da figura:**", text)
+
     def test_unit_one_recall_and_understand_use_individual_expandable_answers(self):
         exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
 
@@ -212,7 +239,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(4, len(contexts))
+        self.assertEqual(3, len(contexts))
 
     def test_module_one_figure_numbers_follow_reading_order(self):
         pages = (
@@ -231,7 +258,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(list(range(1, len(figures) + 1)), figures)
+        self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9], figures)
 
     def test_structurizr_models_one_application_with_internal_modules(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
