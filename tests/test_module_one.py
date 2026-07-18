@@ -352,7 +352,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(13, len(contexts))
+        self.assertEqual(18, len(contexts))
 
     def test_module_one_figure_numbers_follow_reading_order(self):
         pages = (
@@ -371,7 +371,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(list(range(1, 20)), figures)
+        self.assertEqual(list(range(1, 25)), figures)
 
     def test_advanced_scenarios_do_not_leak_the_resolved_case(self):
         exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
