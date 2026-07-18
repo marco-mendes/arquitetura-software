@@ -10,6 +10,16 @@ MODULE = ROOT / "docs" / "modulo-6-nuvem"
 
 
 class ModuleSixTest(unittest.TestCase):
+    def test_workshop_explains_runtime_before_tool_evidence_commands(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        explanation = workshop.index("## Leia antes de executar comandos")
+
+        for command in (
+            "docker image inspect hospital-api:1.0.0",
+            "kind get clusters",
+        ):
+            self.assertGreater(workshop.index(command), explanation)
+
     def test_unit_six_distinguishes_service_models_and_runtime_mechanisms(self):
         text = (
             (MODULE / "conceitos.md").read_text(encoding="utf-8")
