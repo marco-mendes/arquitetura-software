@@ -276,6 +276,31 @@ class ModuleOneTest(unittest.TestCase):
         self.assertNotIn("Structurizr", workshop)
         self.assertNotIn("Podman", workshop)
 
+    def test_workshop_experiments_declare_setup_and_keep_shell_commands_copyable(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        expected_artifacts = (
+            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas",
+            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters",
+            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel",
+        )
+
+        experiments = re.split(r"(?m)^## Experimento [1-3] — ", workshop)[1:]
+        self.assertEqual(3, len(experiments))
+        for experiment, artifact in zip(experiments, expected_artifacts):
+            before_table_or_command = re.split(r"(?m)^\||^```", experiment, maxsplit=1)[0]
+            self.assertIn("**Objetivo:**", before_table_or_command)
+            self.assertRegex(
+                before_table_or_command,
+                rf"\*\*Artefato:\*\*\n\n`{re.escape(artifact)}`",
+            )
+            self.assertIn("**Pré-condição:**", before_table_or_command)
+            self.assertIn("terminal aberto na raiz do clone", before_table_or_command.casefold())
+            self.assertIn("Python 3.10+ confirmado", before_table_or_command)
+
+        shell_blocks = re.findall(r"```(?:powershell|bash)\n(.*?)```", workshop, re.DOTALL)
+        self.assertGreaterEqual(len(shell_blocks), 6)
+        self.assertTrue(all("<raiz-do-clone>" not in block for block in shell_blocks))
+
     def test_workshop_captures_before_and_after_evidence_for_all_experiments(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
 

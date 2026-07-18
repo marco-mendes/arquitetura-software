@@ -62,7 +62,17 @@ Se `py` (Windows) ou `python3` (macOS/Linux) não for reconhecido, instale Pytho
 
 ## Experimento 1 — Camadas: agenda clínica (30 minutos)
 
-Diretório local: `<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`
+**Objetivo:**
+
+Observar como apresentação, serviço, domínio e repositório colaboram para criar, conflitar, realizar e cancelar agendamentos.
+
+**Artefato:**
+
+`<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`
+
+**Pré-condição:**
+
+Terminal aberto na raiz do clone e Python 3.10+ confirmado com `py --version` (Windows) ou `python3 --version` (macOS/Linux).
 
 Leia os arquivos na ordem que fizer mais sentido para você; os links permitem comparar o clone com a fonte do capítulo:
 
@@ -73,7 +83,7 @@ Leia os arquivos na ordem que fizer mais sentido para você; os links permitem c
 
 | O que abrir | O que executar | O que observar | Se algo sair diferente |
 | --- | --- | --- | --- |
-| `main.py` e os quatro arquivos acima | Windows: `py main.py`<br>macOS/Linux: `python3 main.py` | Os agendamentos válidos retornam HTTP 201; a sobreposição de horário retorna HTTP 409; a agenda muda após realizar e cancelar consultas. | Confirme que o terminal está no diretório deste exemplo e que executou `main.py`, não um arquivo isolado. Releia a mensagem exibida e compare o cenário em `main.py` com a regra em `servicos.py`. |
+| `main.py` e os quatro arquivos acima | Windows: `Set-Location .; Set-Location ".\codigos\cap01-estilos-fundamentais\1.2-estilo-em-camadas"; py main.py`<br>macOS/Linux: `cd . && cd "./codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas" && python3 main.py` | Os agendamentos válidos retornam HTTP 201; a sobreposição de horário retorna HTTP 409; a agenda muda após realizar e cancelar consultas. | Confirme que o terminal está no diretório deste exemplo e que executou `main.py`, não um arquivo isolado. Releia a mensagem exibida e compare o cenário em `main.py` com a regra em `servicos.py`. |
 
 **Execute**
 
@@ -100,6 +110,7 @@ Questões exploratórias:
 Antes de alterar qualquer condição, copie o exemplo para sua entrega. No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
+Set-Location .
 New-Item -ItemType Directory -Force entregas\unidade-1 | Out-Null
 Copy-Item -Recurse codigos\cap01-estilos-fundamentais\1.2-estilo-em-camadas entregas\unidade-1\camadas
 Set-Location entregas\unidade-1\camadas
@@ -109,6 +120,7 @@ py main.py | Tee-Object -FilePath saida-antes.txt
 No macOS/Linux:
 
 ```bash
+cd .
 mkdir -p entregas/unidade-1
 cp -R codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas entregas/unidade-1/camadas
 cd entregas/unidade-1/camadas
@@ -131,7 +143,17 @@ Descreva o que mudou na saída e qual responsabilidade foi afetada. Não há uma
 
 ## Experimento 2 — Pipes and Filters: triagem de currículos (35 minutos)
 
-Diretório local: `<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters`
+**Objetivo:**
+
+Rastrear como dados percorrem filtros de produção, validação, transformação e consumo até formar o ranking.
+
+**Artefato:**
+
+`<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters`
+
+**Pré-condição:**
+
+Terminal aberto na raiz do clone e Python 3.10+ confirmado com `py --version` (Windows) ou `python3 --version` (macOS/Linux).
 
 Abra o orquestrador e os quatro tipos de filtro:
 
@@ -143,7 +165,7 @@ Abra o orquestrador e os quatro tipos de filtro:
 
 | O que abrir | O que executar | O que observar | Se algo sair diferente |
 | --- | --- | --- | --- |
-| `main.py`, `framework.py` e os filtros producer, tester, transformer e consumer | No Windows: `Set-Location <raiz-do-clone>\codigos\cap01-estilos-fundamentais\1.3-pipes-and-filters; py main.py`<br>macOS/Linux: `cd <raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters && python3 main.py` | Mensagens de descarte ou reprovação surgem antes do relatório; campos são normalizados e os aprovados aparecem ranqueados por score. | Confirme o diretório e revise a sequência de `.adicionar(...)` em `main.py`. Um resultado diferente pode decorrer de ordem, critérios ou dados de entrada: localize qual filtro produz a linha inesperada. |
+| `main.py`, `framework.py` e os filtros producer, tester, transformer e consumer | Windows: `Set-Location .; Set-Location ".\codigos\cap01-estilos-fundamentais\1.3-pipes-and-filters"; py main.py`<br>macOS/Linux: `cd . && cd "./codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters" && python3 main.py` | Mensagens de descarte ou reprovação surgem antes do relatório; campos são normalizados e os aprovados aparecem ranqueados por score. | Confirme o diretório e revise a sequência de `.adicionar(...)` em `main.py`. Um resultado diferente pode decorrer de ordem, critérios ou dados de entrada: localize qual filtro produz a linha inesperada. |
 
 Questões exploratórias:
 
@@ -156,6 +178,7 @@ Questões exploratórias:
 Copie antes de experimentar. No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
+Set-Location .
 New-Item -ItemType Directory -Force entregas\unidade-1 | Out-Null
 Copy-Item -Recurse codigos\cap01-estilos-fundamentais\1.3-pipes-and-filters entregas\unidade-1\pipes-and-filters
 Set-Location entregas\unidade-1\pipes-and-filters
@@ -165,6 +188,7 @@ py main.py | Tee-Object -FilePath saida-antes.txt
 No macOS/Linux:
 
 ```bash
+cd .
 mkdir -p entregas/unidade-1
 cp -R codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters entregas/unidade-1/pipes-and-filters
 cd entregas/unidade-1/pipes-and-filters
@@ -187,7 +211,17 @@ Registre o efeito sobre descarte, transformação ou ranking. Evite buscar uma s
 
 ## Experimento 3 — Microkernel: faturamento por plugins (35 minutos)
 
-Diretório local: `<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel`
+**Objetivo:**
+
+Identificar o contrato estável do núcleo, o registro de plugins e a contribuição de cada extensão ao faturamento.
+
+**Artefato:**
+
+`<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel`
+
+**Pré-condição:**
+
+Terminal aberto na raiz do clone e Python 3.10+ confirmado com `py --version` (Windows) ou `python3 --version` (macOS/Linux).
 
 Observe o núcleo e extensões concretas:
 
@@ -200,7 +234,7 @@ Observe o núcleo e extensões concretas:
 
 | O que abrir | O que executar | O que observar | Se algo sair diferente |
 | --- | --- | --- | --- |
-| `main.py`, `nucleo.py` e os plugins listados | No Windows: `Set-Location <raiz-do-clone>\codigos\cap01-estilos-fundamentais\1.4-microkernel; py main.py`<br>macOS/Linux: `cd <raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel && python3 main.py` | O registro mostra plugins por categoria; o núcleo executa impostos, frete e notificação nessa ordem; cada regra só contribui quando seu contexto se aplica. | Verifique se está usando o `main.py` do microkernel. Compare `ORDEM_CATEGORIAS` em `nucleo.py`, os plugins registrados e os dados da fatura que ativam cada regra. |
+| `main.py`, `nucleo.py` e os plugins listados | Windows: `Set-Location .; Set-Location ".\codigos\cap01-estilos-fundamentais\1.4-microkernel"; py main.py`<br>macOS/Linux: `cd . && cd "./codigos/cap01-estilos-fundamentais/1.4-microkernel" && python3 main.py` | O registro mostra plugins por categoria; o núcleo executa impostos, frete e notificação nessa ordem; cada regra só contribui quando seu contexto se aplica. | Verifique se está usando o `main.py` do microkernel. Compare `ORDEM_CATEGORIAS` em `nucleo.py`, os plugins registrados e os dados da fatura que ativam cada regra. |
 
 Questões exploratórias:
 
@@ -213,6 +247,7 @@ Questões exploratórias:
 Crie uma cópia antes de investigar. No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
+Set-Location .
 New-Item -ItemType Directory -Force entregas\unidade-1 | Out-Null
 Copy-Item -Recurse codigos\cap01-estilos-fundamentais\1.4-microkernel entregas\unidade-1\microkernel
 Set-Location entregas\unidade-1\microkernel
@@ -222,6 +257,7 @@ py main.py | Tee-Object -FilePath saida-antes.txt
 No macOS/Linux:
 
 ```bash
+cd .
 mkdir -p entregas/unidade-1
 cp -R codigos/cap01-estilos-fundamentais/1.4-microkernel entregas/unidade-1/microkernel
 cd entregas/unidade-1/microkernel
