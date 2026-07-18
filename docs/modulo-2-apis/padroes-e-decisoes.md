@@ -1,90 +1,248 @@
 # Padrões e decisões para APIs
 
-## Começar pelo problema do consumidor
+## Tipos de APIs
 
-Antes dos endpoints, identifique consumidor, resultado, tempo, dados e falhas. API é decisão de colaboração, não rotas derivadas de tabelas. Na elegibilidade, `202` com `Location` promete aceitação e acompanhamento, não aprovação nem mecanismo de processamento.
+![tipos de apis](https://github.com/user-attachments/assets/8d90f8d0-aafd-41c4-9c82-0252819ce133)
 
-## Um processo arquitetural para construir APIs
+---
 
-O processo evita interface correta e inútil ao consumidor.
+### API para Soluções Web
 
-```mermaid
-flowchart LR
-    A[Identificar consumidor\ne resultado] --> B[Delimitar capacidade\ne responsabilidade]
-    B --> C[Comparar forma\nde interação]
-    C --> D[Desenhar contrato\ne exemplos]
-    D --> E[Implementar\ne testar]
-    E --> F[Publicar, descobrir\ne observar uso]
-    F --> G[Evoluir ou retirar\ncom transição]
-    G -. evidência de uso .-> C
-```
+Aplicativos da Web exibem páginas da Web dinâmicas. Com base nas solicitações dos usuários, as páginas da Web são criadas dinamicamente com os dados disponíveis no back-end. Os dados exibidos nas páginas da web podem ser exibidos por APIs. O aplicativo da Web extrai os dados brutos das APIs, processa os dados e os exibe em páginas HTML.
 
-**Texto alternativo:** o fluxo vai de identificar consumidor a evoluir a API; evidência de uso retorna à comparação de interação.
+Um aplicativo da Web de comércio eletrônico, por exemplo, exibe produtos em um site com base nos critérios de pesquisa do cliente. Os dados do produto são atendidos pela API do produto, que busca os dados do produto de um banco de dados e retorna campos relevantes na forma de uma estrutura JSON. O aplicativo da Web interpreta a estrutura JSON e a transforma em uma página HTML.
 
-*Figura 5 — Ciclo de decisão de uma API, da necessidade do consumidor à evolução observada. Fonte: curso.*
+**Exemplo Real:**
 
-**Leitura textual:** a equipe identifica consumidor, delimita capacidade, compara interações e desenha contrato; depois implementa, testa, publica e observa uso. Evidências de uso revisam a comparação de alternativas.
+- **API de Busca de Produtos da Amazon:** Permite que desenvolvedores integrem funções de busca e apresentação de produtos em seus aplicativos personalizados, como sistemas de afiliados.
+- **Protocolos de Transporte e Dados:** HTTP/HTTPS para transporte e formatos como JSON ou XML para dados.
 
-Para cada etapa, guarde cenário, responsabilidade, contrato, teste, referência de consumo e telemetria. FastAPI, Spring Boot e ASP.NET Core implementam; OpenAPI, Spectral e Bruno tornam a promessa analisável. Nenhuma ferramenta decide se a operação pertence à API ou se uma integração deve ser assíncrona.
+---
 
-## Comparar formas de interação pelas mesmas forças
+### API para Soluções Móveis
 
-Uma solução pode combinar estilos por critério explícito: REST/HTTP para recursos acessíveis a múltiplos clientes, GraphQL para leituras com seleção muito variável, gRPC para colaboração interna tipada e streaming, WebSocket para canal bidirecional e SOAP/XML para o contrato de um parceiro. A escolha não é um ranking.
+O número de dispositivos móveis e tablets superou o número de computadores. Os aplicativos para celular são diferentes dos aplicativos de desktop tradicionais, já que a maioria dos aplicativos móveis não é autônoma nem autossuficiente.
 
-Compare unidade de colaboração, descoberta, evolução, cache, operação e risco. Para tela móvel variável, GraphQL é hipótese a testar por número de chamadas, autorização e cache. Para processos internos, gRPC só ajuda se a medida incluir dependências lentas. SOAP/TISS é restrição de fronteira, não ordem para a plataforma inteira falar XML.
+Os aplicativos precisam se conectar aos servidores na Internet para serem utilizáveis ou, pelo menos, serem utilizáveis em todo o seu potencial.
 
-## Contract-first, code-first e compatibilidade
+Os dados entregues pelas APIs precisam ser leves e particionados. Isso garante que a API possa ser consumida por dispositivos com capacidade de processamento limitada e largura de banda limitada de conexão à Internet.
 
-**Contract-first** revisa contrato e exemplos antes do servidor; **code-first** gera documentação de rotas e tipos. Escolha fonte principal e sentinelas contra deriva. Aqui, `contratos/openapi.yaml`, `src/hospital/api/main.py` e `tests/test_api_contract.py` são perspectivas diferentes, não prova de equivalência total.
+**Exemplo Real:**
 
-Classifique mudanças como aditiva, restritiva, semântica ou remoção. Campo opcional tende a ser aditivo; trocar o significado de `recebida` quebra mesmo mantendo a forma. Versão no caminho é visível, cabeçalho preserva URI e negociação de mídia é mais precisa; nenhuma opção substitui inventário de consumidores e observação de uso.
+- **API da Uber:** Fornece acesso aos motoristas e passageiros. Se iniciou em protocolo HTTP e JSON. Com o crescimento da Uber, foi modificada para protocolos de alta escalabilidade como o gRPC e o ProtoBuffer.
+- **API do Instagram:** Fornece acesso a dados como posts, comentários e publicações recentes, permitindo a criação de experiências otimizadas para dispositivos móveis.
+- **GraphQL no Spotify:** Usado para permitir que aplicativos móveis busquem exatamente os dados de álbuns, artistas e playlists em uma única consulta, otimizando a experiência do usuário.
+- **Protocolos de Transporte e Dados:** HTTP/HTTPS com JSON para APIs REST e consultas estruturadas no caso de GraphQL.
 
-## Paginação e idempotência são políticas, não adornos
+---
 
-Lista precisa declarar ordenação: `offset/limit` pode mover itens; cursor opaco pede expiração, filtro e erro válido. Para `POST`, chave de idempotência precisa declarar retenção, concorrência e corpo divergente. A API local não demonstra idempotência distribuída.
+### APIs para Soluções de Nuvens
 
-## Plataforma de APIs: capacidades, não catálogo de produtos
+As soluções em nuvem SaaS normalmente consistem em um aplicativo da Web e APIs. O aplicativo da web é visível para os consumidores.
 
-Uma plataforma de APIs reúne capacidades que tornam contratos construíveis, executáveis e encontráveis. Ela não precisa começar como uma compra corporativa, e a presença de um produto não substitui uma política de arquitetura.
+Embaixo do capô, as soluções em nuvem geralmente oferecem uma API também, no entanto, a API normalmente permanece sob a superfície. Essa API pode ser usada para conectar o aplicativo de nuvem a outros aplicativos de nuvem para realizar a automação ou para conectar a solução de nuvem a aplicativos móveis e software de desktop.
 
-```mermaid
-flowchart TB
-    D[Desenvolvimento\ncontrato, exemplos, lint, testes] --> X[API publicada]
-    X --> R[Execução\nroteamento, TLS, limites, telemetria]
-    X --> E[Engajamento\ndocumentação, catálogo, suporte]
-    E --> D
-    R --> D
-```
+**Exemplo Real:**
 
-**Texto alternativo:** desenvolvimento publica a API; execução aplica políticas técnicas e engajamento oferece documentação e suporte; ambos retornam informações ao desenvolvimento.
+- **API do Dropbox:** Permite a sincronização de arquivos com aplicativos de terceiros, como Google Workspace e Microsoft Office.
+- **Protocolos de Transporte e Dados:** HTTPS é usado para transporte seguro; os dados são geralmente enviados em JSON para simplicidade.
 
-*Figura 6 — Três capacidades conectadas de uma plataforma de APIs. Fonte: curso.*
+---
 
-**Leitura textual:** desenvolvimento prepara contratos e testes; execução atende o tráfego; engajamento permite descoberta e suporte. Telemetria e dúvidas retornam ao desenvolvimento.
+### APIs para Soluções de Integração
 
-Desenvolvimento responde por contrato, exemplos e testes; execução por tráfego, TLS, limites e telemetria; engajamento por descoberta e suporte. O laboratório usa uma versão mínima desse ciclo: repositório, OpenAPI, FastAPI, Bruno, Spectral e testes; não declara gateway ou catálogo empresarial.
+APIs fornecem os recursos, que são essenciais para conectar, estender e integrar software. Ao integrar software, as APIs conectam empresas a outras empresas. Eles são usados em soluções de integração de negócios para empresas.
 
-## API gateway: borda pública, não centro do domínio
+O negócio de uma empresa pode ser expandido conectando-se os negócios aos parceiros para cima e para baixo na cadeia de valor.
 
-Um **API gateway** pode aplicar roteamento, TLS, autenticação técnica, limites, correlação e observabilidade. Não deve ser depósito de regras de negócio ou tradutor universal de conceitos externos.
+Como os negócios são executados pela TI, os negócios podem ser mais bem vinculados, integrando os sistemas de TI de um negócio em toda a cadeia de valor aos sistemas de TI de outras empresas, parceiros, funcionários e, é claro, aos clientes.
 
-```mermaid
-flowchart LR
-    C[Portal administrativo] --> G[Gateway\nrota, TLS, limite, correlação]
-    G --> A[API de elegibilidade]
-    G --> H[API de agenda]
-    A --> L[Adaptador do laboratório\ntradução REST ↔ SOAP/TISS]
-    L --> X[Laboratório parceiro]
-```
+**Exemplo Real:**
 
-**Texto alternativo:** o portal acessa um gateway, que encaminha às APIs de elegibilidade e agenda; a primeira usa adaptador para chamar o laboratório.
+- **gRPC no Uber:** Usado para comunicação de alta performance entre microserviços e sistemas internos de integração, garantindo baixa latência e maior eficiência.
+- **API do SAP:** Integra ERPs corporativos com outros sistemas de TI, permitindo transações entre parceiros de negócios, como fornecedores e clientes.
+- **API do Governo Brasileirao (NF-e, e-Social, TISS):** Faz uso extensivo de XML como protocolo de dados devido aos mecansimos avançados da pilha XML para a validacão de dados e segurança da informação.
+- **Protocolos de Transporte e Dados:** gRPC (Protocol Buffers) para comunicações de alta eficiência e SOAP ou REST para integrações mais tradicionais.
 
-*Figura 7 — Gateway na borda e adaptador junto à diferença semântica. Fonte: curso.*
+---
 
-**Leitura textual:** o gateway concentra políticas técnicas; o adaptador traduz linguagem interna e SOAP/TISS perto da dependência externa. Roteamento não se confunde com domínio.
+### APIs para Soluções Multicanal
 
-Agregação pede uma tela composta e medição de latência, falha e cache. Gateway sem fronteira adiciona salto, configuração e operação.
+Essas APIs são projetadas para conectar sistemas diferentes, geralmente entre organizações ou dentro de cadeias de valor, possibilitando a automação de processos e troca de dados.
 
-## ADR-002: uma decisão que pode ser revisada
+Para melhorar a experiência de compra, os mesmos dados e ações do usuário precisam estar disponíveis em todos os dispositivos do usuário, mesmo que sejam construídos em hardware diferente, executem sistemas operacionais diferentes e aplicativos diferentes.
 
-O ADR registra contexto, alternativas, decisão, consequências, evidência e gatilho. Na baseline, explique REST/HTTP, `202`, `Location`, OpenAPI, limites e sinais de revisão, como streaming, paginação ou idempotência forte.
+Soluções Omni-Canal ou soluções multicanais fornecem exatamente isso. Independentemente do canal usado pelos clientes, eles obtêm uma experiência consistente em todos os dispositivos e podem alternar facilmente entre os dispositivos.
+
+**Exemplo Real:**
+
+- **API da Shopify:** Permite a integração de lojas virtuais para oferecer experiências consistentes em dispositivos móveis, desktops e quiosques.
+- **Protocolos de Transporte e Dados:** HTTP/HTTPS para transporte, JSON para dados e WebSockets para atualizações em tempo real.
+
+---
+
+### APIs para Soluções IoT
+
+A internet das coisas é composta de dispositivos físicos com uma conexão à internet. Os dispositivos são controlados por software por meio de seus atores ou os dispositivos podem coletar dados por meio de seus sensores. Assim, o dispositivo em si não precisa ser "inteligente", no entanto, ele pode se comportar como um dispositivo inteligente.
+
+O dispositivo se conecta a funções inteligentes, que são expostas na internet por meio de APIs.
+
+Exemplos de tais soluções API incluem wearables inteligentes, carros inteligentes, casas inteligentes ou cidades inteligentes.
+
+**Exemplo Real:**
+
+- **API do Google Nest:** Gerencia dispositivos inteligentes como termostatos e câmeras de segurança remotamente.
+- **Protocolos de Transporte e Dados:** MQTT (protocolo leve para dispositivos IoT) ou HTTP/HTTPS para transporte; dados em JSON ou Protocol Buffers para comunicações otimizadas.
+
+## Como pensar em APIs a partir da lente de uma plataforma
+
+![Plataformas de APIs](https://github.com/user-attachments/assets/1cad9c6b-da09-4bf6-91e4-0620428e4809)
+
+### Ferramentas para Cada Parte da Plataforma de APIs
+
+#### **API Development Platform (Desenvolvimento de APIs)**
+
+1. **Swagger Editor** - Ferramenta para criar especificações de APIs: [Swagger Editor](https://swagger.io/tools/swagger-editor/)
+2. **Postman** - Ideal para desenvolvimento e simulação de APIs: [Postman](https://www.postman.com/)
+3. **Insomnia** - Cliente HTTP para testar e organizar APIs: [Insomnia](https://insomnia.rest/)
+4. **Visual Studio Code (com extensões)** - Oferece suporte para desenvolvimento de APIs: [VS Code](https://code.visualstudio.com/)
+5. **OpenAPI Generator** - Gera SDKs a partir de especificações de APIs: [OpenAPI Generator](https://openapi-generator.tech/)
+
+---
+
+#### **API Runtime Platform (Execução de APIs)**
+
+1. **AWS API Gateway** - Para execução e escalabilidade de APIs: [AWS API Gateway](https://aws.amazon.com/api-gateway/)
+2. **Apigee** - Gerenciamento e execução em tempo real: [Apigee](https://cloud.google.com/apigee)
+3. **Kong** - Plataforma para execução e monitoramento de APIs: [Kong](https://konghq.com/)
+4. **Nginx** - Proxy reverso amplamente usado para APIs: [Nginx](https://www.nginx.com/)
+5. **Ocelot** - Gateway leve para APIs baseadas em .NET: [Ocelot](https://ocelot.readthedocs.io/)
+
+---
+
+#### **API Engagement Platform (Engajamento com APIs)**
+
+1. **RapidAPI** - Marketplace para descoberta e integração: [RapidAPI](https://rapidapi.com/)
+2. **API Landscape** - Mapeamento de APIs globais: [API Landscape](https://apilandscape.apiscene.io)
+3. **ReadMe** - Ferramenta de engajamento e documentação: [ReadMe](https://readme.com/)
+4. **Docusaurus** - Criação de portais para desenvolvedores: [Docusaurus](https://docusaurus.io/)
+5. **Redocly** - Solução de documentação e portais: [Redocly](https://redoc.ly/)
+
+---
+
+Estas ferramentas abrangem o desenvolvimento, execução e engajamento de APIs, oferecendo soluções robustas para cada etapa do ciclo de vida de uma API.
+
+## Resumo - A Agenda do Arquiteto para APIs
+
+![agenda do arquiteto](https://github.com/user-attachments/assets/cf10adc2-d2a1-4a37-b95f-57d59151afaf)
+
+### Como identificar, escolher e desenhar APIs?
+
+**Detalhes:**  
+
+O processo de identificar e desenhar uma API começa com o entendimento dos requisitos de negócios e das necessidades dos consumidores da API. As etapas incluem:
+
+1. **Entender os requisitos:** Identifique os dados e funcionalidades que a API deve fornecer. Use técnicas como entrevistas com stakeholders e levantamento de casos de uso.
+2. **Definir escopo e objetivo:** Determine o que a API deve resolver e quais consumidores ela atenderá.
+3. **Escolher o estilo arquitetural:** Decida entre REST, GraphQL, gRPC, SOAP ou WebSocket com base no contexto do uso.
+4. **Criar um protótipo:** Utilize ferramentas como Swagger ou Postman para modelar e simular a API antes de sua implementação.
+
+**Ferramentas de ajuda:**
+
+- Swagger Editor: [https://swagger.io/tools/swagger-editor/](https://swagger.io/tools/swagger-editor/)
+- Postman: [https://www.postman.com/](https://www.postman.com/)
+
+---
+
+### Como implementar e testar APIs?
+
+**Detalhes:**  
+
+A implementação de APIs segue a definição do design e seu desenvolvimento em linguagens e frameworks compatíveis. O ciclo de desenvolvimento inclui:
+
+1. **Escolher uma plataforma ou framework:** Frameworks como Express.js (Node.js), Flask (Python) ou Spring Boot (Java) podem ser usados.
+2. **Implementar endpoints:** Desenvolva cada endpoint conforme especificado no protótipo da API.
+3. **Testar a API:** Realize testes unitários, de integração e de carga usando ferramentas automatizadas.
+4. **Iterar e corrigir:** Ajuste o código conforme resultados de testes.
+
+**Ferramentas de ajuda:**
+
+- Postman para testes manuais: [https://www.postman.com/](https://www.postman.com/)
+- Newman (CLI para testes com Postman): [https://github.com/postmanlabs/newman](https://github.com/postmanlabs/newman)
+- JMeter para testes de carga: [https://jmeter.apache.org/](https://jmeter.apache.org/)
+
+---
+
+### Como documentar e comunicar APIs?
+
+**Detalhes:**  
+
+Uma boa documentação é essencial para que os consumidores possam usar a API de forma eficiente. Os passos incluem:
+
+1. **Gerar documentação automática:** Use ferramentas como Swagger ou API Blueprint para gerar documentação a partir do código.
+2. **Adicionar exemplos:** Inclua exemplos de uso de cada endpoint e possíveis respostas.
+3. **Publicar a documentação:** Disponibilize um portal para desenvolvedores com acesso à documentação e exemplos.
+
+**Ferramentas de ajuda:**
+
+- SwaggerHub: [https://swagger.io/tools/swaggerhub/](https://swagger.io/tools/swaggerhub/)
+- Redocly: [https://redoc.ly/](https://redoc.ly/)
+- Docusaurus para criar portais de documentação: [https://docusaurus.io/](https://docusaurus.io/)
+
+---
+
+### Como definir tecnologias de APIs?
+
+**Detalhes:**  
+
+A definição de tecnologias para APIs depende de fatores como desempenho, escalabilidade e interoperabilidade. As etapas incluem:
+
+1. **Avaliar requisitos:** Considere aspectos como latência, segurança e compatibilidade com sistemas existentes.
+2. **Escolher linguagens e frameworks:** Para APIs leves e rápidas, escolha Node.js. Para APIs robustas e corporativas, opte por Java ou .NET.
+3. **Selecionar protocolos:** REST para simplicidade, gRPC para alto desempenho ou WebSocket para comunicação em tempo real.
+
+**Ferramentas de ajuda:**
+
+- Comparador de frameworks: [https://www.thoughtworks.com/radar/](https://www.thoughtworks.com/radar/)
+- Guias sobre WebSocket e gRPC: [https://grpc.io/](https://grpc.io/)
+- Referência de RESTful APIs: [https://restfulapi.net/](https://restfulapi.net/)
+
+---
+
+### Como gerenciar APIs?
+
+**Detalhes:**  
+
+Gerenciar APIs inclui publicação, monitoramento, controle de versão e segurança. As etapas incluem:
+
+1. **Publicar APIs:** Use plataformas como AWS API Gateway ou Apigee para hospedar APIs.
+2. **Monitorar desempenho:** Utilize ferramentas para rastrear latência, erros e uso.
+3. **Controlar versões:** Defina versões claras e mantenha compatibilidade com consumidores.
+4. **Proteger APIs:** Implemente autenticação (OAuth, API keys) e crie limites de taxa para evitar abuso.
+
+**Ferramentas de ajuda:**
+
+- AWS API Gateway: [https://aws.amazon.com/api-gateway/](https://aws.amazon.com/api-gateway/)
+- Apigee: [https://cloud.google.com/apigee](https://cloud.google.com/apigee)
+- Prometheus e Grafana para monitoramento: [https://prometheus.io/](https://prometheus.io/)
+- Ocelot para gerenciamento: [https://ocelot.readthedocs.io/](https://ocelot.readthedocs.io/)
+
+---
+
+### Como descobrir e reusar APIs?
+
+**Detalhes:**  
+
+Reutilizar APIs existentes acelera o desenvolvimento e promove padronização. As etapas incluem:
+
+1. **Mapear APIs internas e externas:** Identifique APIs existentes em catálogos internos ou em marketplaces como API Landscape.
+2. **Avaliar compatibilidade:** Certifique-se de que a API atende às necessidades do projeto.
+3. **Reutilizar APIs:** Use SDKs ou ferramentas para integração fácil.
+
+**Ferramentas de ajuda:**
+
+- API Landscape: [https://apilandscape.apiscene.io](https://apilandscape.apiscene.io)
+- RapidAPI: [https://rapidapi.com/](https://rapidapi.com/)
+- Postman para exploração de APIs: [https://www.postman.com/explore](https://www.postman.com/explore)
+
+##
