@@ -1,44 +1,15 @@
 # Arquitetura de Software — disciplina de pós-graduação
 
-Este repositório reúne o site didático da disciplina **Arquitetura de Software** e preserva o acervo que o antecede. O curso tem 24 horas, organizadas em seis encontros de quatro horas, e é voltado a desenvolvedores, analistas e especialistas em .NET, Java ou Python que desejam começar a tomar decisões arquiteturais de forma explícita e verificável.
+Este repositório reúne o site didático da disciplina **Arquitetura de Software**. O curso tem 24 horas, organizadas em seis encontros de quatro horas, e é voltado a desenvolvedores, analistas e especialistas em .NET, Java ou Python que desejam começar a tomar decisões arquiteturais de forma explícita e verificável.
 
-## Site da disciplina
+Esse site pode ser consumido de duas formas
 
-Depois da publicação, o material navegável estará em [marco-mendes.github.io/arquitetura-software](https://marco-mendes.github.io/arquitetura-software/). No site, a sequência proposta é: estilos arquiteturais, APIs, serviços, governança, eventos e nuvem. Cada módulo combina conceito, exemplo hospitalar, oficina executável, exercícios graduados e um incremento do projeto integrador.
 
-## Prévia local e validação
+# 1. Portal GitHub Docs com Suporte MKDocs
 
-Use Python 3 para montar uma cópia local do site:
+Disponível em [marco-mendes.github.io/arquitetura-software](https://marco-mendes.github.io/arquitetura-software/). Usabilidade aperfeiçoada e melhor experiência para os praticantes de arquitetura.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-mkdocs serve
-```
-
-No Windows PowerShell, ative o ambiente com `.venv\Scripts\Activate.ps1`. Depois, abra o endereço informado pelo MkDocs — normalmente `http://127.0.0.1:8000`.
-
-Antes de enviar alterações, valide o conteúdo e a construção estática:
-
-```bash
-python scripts/validate_content.py --all
-mkdocs build --strict
-```
-
-O GitHub Actions executa essas verificações e publica o site no GitHub Pages quando o fluxo de publicação é acionado na branch principal.
-
-## Laboratórios e material do professor
-
-Os laboratórios reproduzíveis ficam em [`laboratorios/plataforma-hospitalar`](laboratorios/plataforma-hospitalar/). Cada oficina descreve instalação para Windows, macOS e Linux e indica uma evidência a guardar. O material de condução da aula fica em `material-professor/`; ele é deliberadamente privado e não faz parte da publicação do site.
-
-## Acervo legado
-
-Os arquivos Markdown na raiz permanecem nos mesmos caminhos para preservar links e referências já compartilhados. Cada arquivo começa agora com uma nota que aponta para a página canônica da disciplina.
-
-O índice original, mantido abaixo, conserva os links usados anteriormente.
-
-## Índice original do acervo
+# 2. Coleção de materiais em Markdown do livro original
 
 ## Livro de Fundamentos de Arquitetura de Software Modernas
 ## Estilos Arquiteturais de Backend  
@@ -105,4 +76,37 @@ O índice original, mantido abaixo, conserva os links usados anteriormente.
 - [5.6 Estudo de Caso TacoBell](https://github.com/marco-mendes/arquitetura-software/blob/main/5.6%20Estudo%20de%20Caso%20TacoBell.md) – Estudo de caso sobre arquitetura cloud e conteinerização no TacoBell.  
   
 ## Recursos adicionais  
+
+### Laboratórios e material do professor
+
+Os laboratórios reproduzíveis ficam em [`laboratorios/plataforma-hospitalar`](laboratorios/plataforma-hospitalar/). Cada oficina descreve instalação para Windows, macOS e Linux e indica uma evidência a guardar. O material de condução da aula fica em `material-professor/`; ele é deliberadamente privado e não faz parte da publicação do site.
+
+### Podcasts
 - [Podcasts de arquitetura](https://github.com/marco-mendes/arquitetura-software/blob/main/Podcasts%20de%20arquitetura.md) – Lista de podcasts recomendados sobre arquitetura de software.
+
+# Como clonar e rodar  o portal MkDocs localmente
+
+Use Python 3 para montar uma cópia local do site:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+mkdocs serve
+```
+
+No Windows PowerShell, ative o ambiente com `.venv\Scripts\Activate.ps1`. Depois, abra o endereço informado pelo MkDocs — normalmente `http://127.0.0.1:8000`.
+
+Antes de enviar alterações, valide o conteúdo e a construção estática:
+
+```bash
+python scripts/validate_content.py --all
+mkdocs build --strict
+```
+
+O GitHub Actions executa essas verificações e publica o site no GitHub Pages quando o fluxo de publicação é acionado na branch principal.
+
+
+
+
+
