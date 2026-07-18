@@ -183,6 +183,10 @@ O enunciado fornece volume, formatos, mudança e prazo; Mermaid registra compone
 
 Crie `analise-integracao` com `forcas.md`, `alternativas.md` e `fluxo.md`. Leia [conceitos](conceitos.md). Aqui, executar é elaborar e revisar arquivos, não iniciar uma API.
 
+**Condição inicial verificável**
+
+A pasta `analise-integracao` existe e contém os três arquivos vazios. Você consegue abrir `fluxo.md` em um editor que renderize Mermaid ou em um visualizador Markdown.
+
 **Como conduzir**
 
 Comece pelas forças; o diagrama é consequência da decomposição.
@@ -202,7 +206,7 @@ Os arquivos tratam repetição, atraso e rejeição; o diagrama identifica produ
 
 **Entrega esperada**
 
-Entregue os três arquivos, com até mil palavras e uma lacuna de medição.
+Entregue a pasta `analise-integracao/` com os três arquivos, até mil palavras e uma lacuna de medição.
 
 **Critérios de avaliação**
 
@@ -237,7 +241,11 @@ Use propostas, amostra, equipe e [padrões e decisões](padroes-e-decisoes.md). 
 
 **Antes de executar**
 
-Crie `parecer.md` com “critério”, “medida”, “evidência”, “lacuna” e “impacto”. Não escolha antes dos critérios.
+Crie `avaliacao-leitos/parecer.md` com “critério”, “medida”, “evidência”, “lacuna” e “impacto”. Não escolha antes dos critérios.
+
+**Condição inicial verificável**
+
+A pasta `avaliacao-leitos` existe e `parecer.md` contém a tabela vazia. Você tem a amostra sintética do enunciado disponível para registrar as experiências, sem precisar iniciar software adicional.
 
 **Como conduzir**
 
@@ -257,7 +265,7 @@ O parecer distingue desconhecido de medido.
 
 **Entrega esperada**
 
-Entregue `parecer.md` com tabela, recomendação, incertezas, objeção e experiências.
+Entregue `avaliacao-leitos/parecer.md` com tabela, recomendação, incertezas, objeção e experiências.
 
 **Critérios de avaliação**
 
@@ -294,6 +302,10 @@ O projeto fornece domínio; referências estruturam cenários e ADR; Mermaid reg
 **Antes de executar**
 
 Crie `baseline-inicial` com `cenarios`, `modelos`, `decisoes` e `evidencias`. Prepare a [oficina](oficina-de-ferramentas.md) e confirme `3 passed` no teste de estilos.
+
+**Condição inicial verificável**
+
+As quatro subpastas existem dentro de `baseline-inicial`, e, no terminal aberto na raiz do repositório, `cd laboratorios/plataforma-hospitalar` seguido do teste indicado na oficina termina com `3 passed`.
 
 **Como conduzir**
 

@@ -29,6 +29,8 @@ flowchart TB
     U --> A["Auditoria\nregistra fato mínimo"]
 ```
 
+**Texto alternativo:** fluxo de reserva em camadas: a interface chama o caso de uso, que aplica a regra de conflito antes de persistir; a interface não acessa os dados diretamente.
+
 *Figura 1 — Uma reserva atravessa fronteiras de camadas antes de ser persistida.*
 
 **Leitura textual da figura:** a Equipe administrativa envia o pedido à Interface HTTP. A interface chama o Caso de uso, que consulta a Regra de Agenda antes de pedir ao Repositório que grave os Dados da agenda. O Caso de uso também registra um fato mínimo em Auditoria. A ligação pontilhada mostra que a interface não consulta os dados diretamente; a regra de conflito não pode ser ignorada por uma tela.
@@ -47,6 +49,10 @@ flowchart LR
     N -->|"Rejeição identificada"| Q
     E -->|"Rejeição identificada"| Q
 ```
+
+**Texto alternativo:** pipeline de faturamento no qual validar, normalizar, enriquecer e publicar recebem documentos em sequência; rejeições seguem para um registro com etapa identificada.
+
+*Figura 2 — Transformações independentes conservam o contexto de uma rejeição.*
 
 **Leitura textual da figura:** o Adaptador de entrada entrega um documento bruto ao filtro de validação. Documentos válidos atravessam normalização, enriquecimento e publicação; uma rejeição em validação, normalização ou enriquecimento é registrada com sua etapa. Nenhum filtro consulta o estado interno de outro filtro.
 
@@ -68,6 +74,10 @@ sequenceDiagram
     Entrada-->>Entrada: registra duração e rejeição
 ```
 
+**Texto alternativo:** sequência de processamento em que a correlação acompanha o documento e uma falha no enriquecimento retorna com etapa e causa.
+
+*Figura 3 — Uma falha parcial preserva correlação, etapa e causa.*
+
 **Leitura textual da figura:** a Entrada envia um documento com correlação a Validar, que passa um valor válido para Normalizar e depois para Enriquecer. A falha de enriquecimento retorna à Entrada com etapa e causa; a Entrada registra duração e rejeição. A sequência evidencia que a correlação acompanha o fluxo, inclusive na falha.
 
 A sequência mostra uma falha no enriquecimento. A correlação atravessa os pipes, permitindo relacionar o documento à etapa. Uma versão que apenas lança uma mensagem genérica atenderia à transformação, mas não à rastreabilidade.
@@ -87,7 +97,9 @@ flowchart LR
     P2 -. "não acessa" .-> DB
 ```
 
-*Figura 2 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos.*
+**Texto alternativo:** núcleo de triagem mantém estados, autorização e contrato; plugins devolvem resultados pelo contrato sem acessar dados internos.
+
+*Figura 4 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos.*
 
 **Leitura textual da figura:** a Entrada de triagem entrega a solicitação ao Núcleo, que controla identidade, estados e autorização. O Núcleo expõe um Contrato de extensão usado por dois plugins: uma coleta específica da unidade A e uma validação de parceiro. Os plugins devolvem resultados ao Núcleo, que produz fato com correlação para Auditoria. As ligações pontilhadas indicam que plugins não leem os dados internos do núcleo diretamente.
 
@@ -99,42 +111,9 @@ Um teste funcional usa exemplos pequenos para verificar ordem e transformação.
 
 Também há limites não resolvidos. Se o enriquecimento depender de um serviço remoto lento, o filtro pode dominar toda a vazão. Paralelizar exige decidir ordenação e concorrência. Persistir resultados intermediários melhora recuperação, mas acrescenta estado. Esses aspectos viram forças de um ADR posterior, em vez de serem ocultados pelo desenho inicial.
 
-## Estrutura de código possível
-
-Uma implementação pequena pode manter `Filtro` como protocolo, filtros puros em módulos separados e `Pipeline` como coordenador. O coordenador conhece a ordem, mas não o conteúdo interno das etapas. Adaptadores convertem formatos externos para o documento canônico.
-
-```text
-processamento/
-├── aplicacao/
-│   └── pipeline.py
-├── dominio/
-│   ├── documento.py
-│   └── resultado.py
-├── filtros/
-│   ├── validar.py
-│   ├── normalizar.py
-│   └── enriquecer.py
-└── adaptadores/
-    ├── json.py
-    ├── csv.py
-    └── xml.py
-```
-
-Essa árvore não prova modularidade. Imports e chamadas reais precisam respeitar a direção declarada. Um teste pode impedir `dominio` de importar `adaptadores`. Outro pode construir o pipeline com um filtro substituto, demonstrando composição.
-
 ## Equivalências em Java e .NET
 
-O raciocínio não depende da linguagem. Em Python, um `Protocol` representa o contrato de filtro e pytest executa exemplos parametrizados. Em Java, uma `interface Filtro` e JUnit cumprem papéis equivalentes; ArchUnit verifica dependências entre pacotes. Em .NET, uma interface `IFiltro`, xUnit e NetArchTest permitem a mesma estrutura e a mesma verificação.
-
-| Intenção | Python | Java | .NET |
-| --- | --- | --- | --- |
-| contrato do filtro | `typing.Protocol` | `interface` | `interface` |
-| resultado explícito | `dataclass` | `record` | `record` |
-| teste parametrizado | pytest | JUnit 5 | xUnit |
-| regra de dependência | import-linter | ArchUnit | NetArchTest |
-| modelo como código | Structurizr DSL | Structurizr DSL | Structurizr DSL |
-
-Ferramentas equivalentes não significam código idêntico. Preserve responsabilidades, conectores, restrições e evidências. Esse é o conteúdo arquitetural que deve sobreviver à troca do ecossistema.
+Python, Java e .NET usam contratos de filtro e testes equivalentes; preserve responsabilidades, conectores, restrições e evidências.
 
 ## Decisão provisória
 

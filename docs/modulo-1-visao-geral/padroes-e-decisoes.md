@@ -2,13 +2,20 @@
 
 ## Três categorias que não são sinônimas
 
-Estilo organiza elementos, conectores e restrições; padrão resolve um problema recorrente; tecnologia oferece mecanismo; ADR é **prática de documentação de decisões**. Camadas e Microkernel são estilos; Adapter é padrão; Python, Java, .NET e FastAPI são tecnologias. Usar Spring, FastAPI ou ASP.NET não declara automaticamente fronteiras. O [catálogo de padrões](../referencia/catalogo-de-padroes.md) será aprofundado depois.
+Estilo organiza elementos; padrão resolve problema recorrente; tecnologia oferece mecanismo; ADR é **prática de documentação de decisões**. Framework não declara fronteira. O [catálogo](../referencia/catalogo-de-padroes.md) será aprofundado depois.
 
 ## Forças orientam alternativas
 
-Uma força é uma pressão que diferencia alternativas: frequência de mudança, throughput, experiência da equipe, simplicidade operacional ou integração legada. Antes de atribuir valor a um estilo, transforme expressões como “fácil de manter” em cenário e medida. Compare cada alternativa pelas mesmas forças, limites e evidências; uma matriz não escolhe por você, mas revela o que ainda não foi medido.
+Força diferencia alternativas. Transforme “fácil de manter” em cenário e medida; compare forças, limites e evidências iguais.
 
 ## Quatro organizações, quatro tipos de fronteira
+
+| Estilo | Responsabilidade e Conectores | Forças | Anti-padrão | Quando usar | Evite quando |
+| --- | --- | --- | --- | --- | --- |
+| Camadas | Separar interface, casos de uso, regras e infraestrutura por chamadas permitidas | testabilidade e mudança localizada | sumidouro ou atalho oculto | regras precisam ser isoladas da infraestrutura | a passagem obrigatória não agrega trabalho |
+| Pipes and Filters | Transformar dados por pipes com contratos de entrada, saída e rejeição | composição e throughput | estado compartilhado invisível | etapas de transformação são explícitas | o fluxo é interativo e exige consistência imediata |
+| Microkernel | Manter invariantes no núcleo e variações por contrato de plugin | extensibilidade e modificabilidade | core creep | variações podem entrar e sair isoladamente | plugins precisam controlar detalhes do núcleo |
+| Monólito modular | Organizar capacidades por interfaces internas numa implantação | simplicidade operacional e consistência local | módulos que leem dados internos alheios | equipe e operação ainda são uma unidade | escala ou implantação independente já foi medida |
 
 ### Camadas: regras de dependência, não somente caixas empilhadas
 
@@ -41,8 +48,8 @@ Há uma implantação, mas Agenda, Triagem, Faturamento e Auditoria mantêm mode
 
 ## ADR: uma decisão por registro
 
-Um **Architecture Decision Record (ADR)** é um documento curto, versionado com a solução, que registra uma decisão significativa sem congelá-la. O [template de ADR](../referencia/template-adr.md) contém contexto, forças, alternativas, decisão, consequências, evidências e gatilho de revisão. “Microkernel é flexível” não é racional; “as variações mensais entram por contrato, aceitamos testar compatibilidade e revisaremos se extensões compartilharem estado” é uma hipótese que pode ser contestada.
+Um **ADR** é documento versionado com contexto, forças, alternativas, decisão, consequências, evidências e revisão. O [template](../referencia/template-adr.md) torna a hipótese contestável.
 
 ## Decisões são hipóteses testáveis
 
-O ADR declara a hipótese; código, testes, modelos e medições oferecem sinais para confirmá-la, enfraquecê-la ou refutá-la. Quando o contexto muda, crie um novo registro ligado ao anterior: decidir, materializar, observar e aprender.
+Código, testes, modelos e medições confirmam ou refutam a hipótese; novo contexto pede novo ADR ligado ao anterior.

@@ -20,15 +20,7 @@ Ao final da preparação, a condição de início da prática será: existe uma 
 
 ## Ferramenta
 
-| Ferramenta | Papel na oficina | Evidência produzida |
-| --- | --- | --- |
-| Python 3.11 ou superior | executar `comparar_estilos` | alternativas ordenadas por força |
-| pytest | verificar o contrato do comparador | relatório de testes |
-| Structurizr Lite | renderizar Structurizr DSL localmente | diagrama editável |
-| Podman | executar o contêiner local do Structurizr Lite | processo reproduzível |
-| Editor de texto | alterar cenário e redigir ADR | script e registro de decisão |
-
-Teste, modelo e ADR respondem perguntas diferentes; resultado verde não substitui interpretação.
+Python executa `comparar_estilos`; pytest verifica seu contrato; Structurizr Lite e Podman renderizam o modelo; o editor registra o ADR. Resultado verde não substitui interpretação.
 
 ## Pré-requisitos
 
@@ -252,18 +244,22 @@ O arquivo modela uma única aplicação implantável, coerente com o monólito m
 
 ## Execução
 
+Contexto de terminal: abra na raiz `arquitetura-software`, entre em `laboratorios/plataforma-hospitalar` e mantenha essa pasta nos blocos seguintes.
+
 ### Essencial em aula
 
 **Execute**
 
-Rode primeiro toda a suíte do laboratório para verificar que seu ambiente está íntegro. Em seguida, execute apenas `test_estilos.py` e capture a saída em `evidencias/testes-estilos.txt`. O arquivo focado verifica a tabela de estilos, e não a API ou a infraestrutura adicionadas em módulos posteriores. No PowerShell:
+Rode primeiro toda a suíte. Em seguida, execute `test_estilos.py` e capture em `evidencias/testes-estilos.txt`.
+
+#### Windows / PowerShell — captura
 
 ```powershell
 .venv\Scripts\python.exe -m pytest tests -q
 .venv\Scripts\python.exe -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt
 ```
 
-Em macOS ou Linux:
+#### macOS ou Linux — captura
 
 ```bash
 python -m pytest tests -q
@@ -278,13 +274,15 @@ O teste `test_alternativas_explicam_forcas_limites_e_evidencias` impede resposta
 
 **Execute**
 
-Execute o roteiro criado e capture a primeira saída. No PowerShell:
+No mesmo terminal aberto na raiz e posicionado no laboratório, execute o roteiro e capture a primeira saída.
+
+#### Windows / PowerShell — captura
 
 ```powershell
 .venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt
 ```
 
-Em macOS ou Linux:
+#### macOS ou Linux — captura
 
 ```bash
 python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-modificabilidade.txt
@@ -299,13 +297,15 @@ cenario = {
 }
 ```
 
-Execute novamente e capture um arquivo diferente. No PowerShell:
+No mesmo diretório, execute novamente e capture outro arquivo.
+
+#### Windows / PowerShell — captura
 
 ```powershell
 .venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt
 ```
 
-Em macOS ou Linux:
+#### macOS ou Linux — captura
 
 ```bash
 python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-fluxo.txt
@@ -366,19 +366,17 @@ Uma execução típica do arquivo focado possui três testes:
 3 passed
 ```
 
-Para modificabilidade e extensibilidade, a primeira alternativa deve ser `microkernel`, acompanhada das duas forças e evidências. Para throughput e processamento incremental, `pipes and filters` deve ocupar a primeira posição e propor as duas observações correspondentes. Structurizr Lite deve renderizar uma Aplicação hospitalar contendo Agenda, Triagem, Faturamento e Auditoria como componentes internos.
-
-O número exato de segundos do teste pode variar. A comparação importante é semântica: prioridade, justificativa e alternativa mudam de forma coerente.
+Para modificabilidade e extensibilidade, a primeira alternativa é `microkernel`; para throughput e processamento incremental, `pipes and filters`. Structurizr Lite renderiza uma aplicação com quatro componentes internos.
 
 ## Interpretação
 
 **Observe**
 
-O comparador usa conhecimento declarado, não descoberta automática. A tabela é deliberadamente pequena para que a turma possa contestar cada linha. Se uma força importante não estiver representada, a saída revela o limite do instrumento.
+O comparador usa conhecimento declarado; força ausente revela limite do instrumento.
 
 **Compare**
 
-Associe os três artefatos. O teste afirma propriedades mínimas do comparador. A execução mostra a consequência de alterar uma força. O diagrama mostra onde os estilos aparecem na estrutura. Nenhum artefato mede carga real ou prova segurança.
+Teste, execução e diagrama são complementares; nenhum mede carga real ou prova segurança.
 
 ### Questões exploratórias
 

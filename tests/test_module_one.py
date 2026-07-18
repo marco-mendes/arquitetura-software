@@ -75,6 +75,49 @@ class ModuleOneTest(unittest.TestCase):
             ):
                 self.assertIn(label, section, f"{level}: {label}")
 
+    def test_style_decision_frames_make_use_and_avoidance_explicit(self):
+        text = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+
+        for style in (
+            "Camadas",
+            "Pipes and Filters",
+            "Microkernel",
+            "Monólito modular",
+        ):
+            self.assertIn(f"### {style}", text)
+        for label in (
+            "Responsabilidade",
+            "Conectores",
+            "Forças",
+            "Anti-padrão",
+            "Quando usar",
+            "Evite quando",
+        ):
+            self.assertIn(label, text)
+
+    def test_every_example_mermaid_has_alt_caption_and_textual_reading(self):
+        text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")
+        diagrams = text.count("```mermaid")
+
+        self.assertGreaterEqual(diagrams, 3)
+        self.assertGreaterEqual(text.count("**Texto alternativo:**"), diagrams)
+        self.assertGreaterEqual(text.count("*Figura "), diagrams)
+        self.assertGreaterEqual(text.count("**Leitura textual da figura:**"), diagrams)
+
+    def test_advanced_activities_name_a_concrete_workspace_and_start_condition(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+        sections = bloom_sections(exercises)
+
+        for level, workspace in (
+            ("Analisar", "analise-integracao"),
+            ("Avaliar", "parecer.md"),
+            ("Criar", "baseline-inicial"),
+        ):
+            section = sections[level]
+            self.assertIn(workspace, section)
+            self.assertIn("Condição inicial verificável", section)
+            self.assertIn("**Entrega esperada**", section)
+
     def test_diagrams_have_textual_readings(self):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
 
