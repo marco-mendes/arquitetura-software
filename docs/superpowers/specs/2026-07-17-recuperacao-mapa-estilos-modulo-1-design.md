@@ -2,7 +2,9 @@
 
 ## Objetivo
 
-Restaurar a função de orientação conceitual dos materiais `1.1` a `1.4` no site da disciplina sem recriar um acervo legado literal nem acrescentar páginas à navegação. O resultado deve permitir que um profissional sem formação prévia em arquitetura compreenda as quatro famílias de decisões e aprofunde, na mesma página, Camadas, Pipes and Filters e Microkernel.
+Restaurar a função de orientação conceitual dos materiais `1.1` a `1.4` no site da disciplina sem recriar um acervo legado literal nem acrescentar páginas ao Módulo 1. O resultado deve permitir que um profissional sem formação prévia em arquitetura compreenda as quatro famílias de decisões e aprofunde, na mesma página, Camadas, Pipes and Filters e Microkernel.
+
+Também separar do fluxo principal do Módulo 1 o vocabulário preparatório que hoje antecede os estilos. Esse conteúdo continua público e acessível como referência, mas não deve adiar o mapa de estilos.
 
 ## Decisões aprovadas
 
@@ -11,6 +13,25 @@ Restaurar a função de orientação conceitual dos materiais `1.1` a `1.4` no s
 - `padroes-e-decisoes.md` continua uma única página, mas ganha três seções com âncoras próprias: `#camadas`, `#pipes-and-filters` e `#microkernel`.
 - As três seções recuperam conteúdo conceitual e decisório dos documentos de origem, reescrito para o caso e a linguagem do curso. Elas não reproduzem literalmente o acervo nem expõem o rótulo “legado”.
 - Caso arquitetural e exercícios existentes permanecem. Eles passam a ligar, quando fizer sentido, para as âncoras restauradas.
+- `conceitos.md` do Módulo 1 começa por estilos arquiteturais e pelo mapa das famílias.
+- Definições curtas e transversais passam para o glossário; explicações com figuras sobre leitura de representações passam para um apêndice público de referência.
+
+## Vocabulário preparatório fora do fluxo do módulo
+
+### Glossário
+
+`docs/referencia/glossario.md` absorve verbetes concisos para decisão arquitetural, restrição, premissa, configuração e visão arquitetural. Os verbetes de componente, conector, fronteira, contrato e atributo de qualidade permanecem e são refinados apenas se precisarem de coerência terminológica.
+
+### Apêndice: Como ler uma arquitetura
+
+Uma página pública em `docs/referencia/como-ler-uma-arquitetura.md` reúne o conteúdo explicativo que não cabe em verbetes:
+
+- componente, conector e configuração aplicados a um exemplo simples;
+- diferença entre estrutura e comportamento;
+- leitura de uma visão estrutural e de uma sequência;
+- ligação entre restrições, decisões e atributos de qualidade.
+
+As duas figuras hoje no início de `conceitos.md` migram para esse apêndice, com seus textos alternativos, legendas, fontes e leituras textuais. A nova página entra em **Referências** na navegação, não no Módulo 1.
 
 ## Conteúdo por seção
 
@@ -55,12 +76,15 @@ O Mermaid mindmap correspondente será removido do documento e dos testes de con
 
 - Toda referência interna usa âncoras reais ou links relativos válidos.
 - Os números das figuras do Módulo 1 permanecem crescentes na ordem de navegação.
+- O Glossário e o apêndice ficam disponíveis em Referências; o Módulo 1 não começa por vocabulário preparatório.
 - Os testes verificam a presença do SVG, das quatro famílias e dos conteúdos decisórios mínimos de Camadas, Pipes and Filters e Microkernel.
 - Os testes verificam que o antigo `mindmap` não está mais em `conceitos.md`.
+- Os testes verificam que o apêndice contém as duas representações e que os novos verbetes do glossário existem.
 - `python -m unittest tests.test_module_one tests.test_content_contract -v`, `python scripts/validate_content.py --module modulo-1-visao-geral` e `python -m mkdocs build --strict` devem passar.
 
 ## Fora de escopo
 
 - Criar novas páginas na navegação.
+- Criar novas páginas no Módulo 1; o apêndice pertence exclusivamente à seção Referências.
 - Alterar a sequência de aulas, o caso hospitalar ou os exercícios Bloom sem uma necessidade direta de ligação.
 - Recuperar literalmente o material legado ou publicar a matriz editorial interna.
