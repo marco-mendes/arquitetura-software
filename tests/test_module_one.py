@@ -11,6 +11,29 @@ MODULE = ROOT / "docs" / "modulo-1-visao-geral"
 
 
 class ModuleOneTest(unittest.TestCase):
+    def test_module_one_begins_with_architectural_styles(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+
+        self.assertEqual("# Conceitos: estilos arquiteturais", text.splitlines()[0])
+        self.assertNotIn("## O que torna uma decisão arquitetural", text)
+
+    def test_reference_appendix_preserves_how_to_read_architecture(self):
+        appendix = ROOT / "docs/referencia/como-ler-uma-arquitetura.md"
+        text = appendix.read_text(encoding="utf-8")
+
+        for term in (
+            "Componente",
+            "Conector",
+            "Configuração",
+            "Estrutura",
+            "comportamento",
+        ):
+            self.assertIn(term, text)
+        self.assertEqual(2, text.count("```mermaid"))
+        self.assertEqual(2, text.count("**Texto alternativo:**"))
+        self.assertEqual(2, text.count("*Figura "))
+        self.assertEqual(2, text.count("**Leitura textual da figura:**"))
+
     def test_content(self):
         assert_module_contract(
             self,
@@ -189,7 +212,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(6, len(contexts))
+        self.assertEqual(4, len(contexts))
 
     def test_module_one_figure_numbers_follow_reading_order(self):
         pages = (

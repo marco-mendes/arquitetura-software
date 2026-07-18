@@ -32,7 +32,7 @@ flowchart TB
 
 **Texto alternativo:** diagrama de camadas em que Apresentação chama Aplicação, que usa Domínio e Infraestrutura; a Infraestrutura acessa o Banco, e o atalho direto da Apresentação ao Banco é proibido.
 
-*Figura 5 — Dependências permitidas e proibidas em uma arquitetura em camadas. Fonte: curso.*
+*Figura 3 — Dependências permitidas e proibidas em uma arquitetura em camadas. Fonte: curso.*
 
 **Leitura textual da figura:** Apresentação chama Aplicação. Aplicação usa regras do Domínio e solicita mecanismos da Infraestrutura, que acessa o Banco ou sistema externo. A seta pontilhada indica que a apresentação não deve consultar o banco diretamente. A figura mostra uma dependência permitida e uma dependência proibida, em vez de apenas listar camadas.
 
