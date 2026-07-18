@@ -44,7 +44,11 @@ sequenceDiagram
     F-->>B: confirmação
 ```
 
-**Leitura textual da figura:** Resultados publica a ocorrência A. Faturamento registra o efeito e confirma. A mesma ocorrência chega outra vez; o store aumenta a contagem de tentativas, reconhece a identidade já processada e impede novo efeito antes da segunda confirmação.
+**Texto alternativo:** Sequência de duas entregas do mesmo evento A: a primeira cria efeito e a segunda apenas registra nova tentativa no store idempotente antes da confirmação.
+
+*Figura 9 — Reentrega com efeito de negócio idempotente.*
+
+**Leitura textual:** Resultados publica a ocorrência A. Faturamento registra o efeito e confirma. A mesma ocorrência chega outra vez; o store aumenta a contagem de tentativas, reconhece a identidade já processada e impede novo efeito antes da segunda confirmação.
 
 ## Outbox, inbox e fronteiras de escrita
 

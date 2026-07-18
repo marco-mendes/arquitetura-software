@@ -41,7 +41,11 @@ flowchart TB
     L --> G2[Grupo B: offsets]
 ```
 
-**Leitura textual da figura:** um produtor publica no canal. Um tópico pode encaminhar cópias para filas com responsabilidades distintas. Em um log distribuído, grupos independentes mantêm posições próprias de leitura sobre o registro retido.
+**Texto alternativo:** Comparação entre um produtor que publica em exchange ou tópico para filas independentes e grupos que leem posições próprias em um log particionado.
+
+*Figura 8 — Topologias de distribuição por fila, tópico e log.*
+
+**Leitura textual:** Um produtor publica no canal. Um tópico pode encaminhar cópias para filas com responsabilidades distintas. Em um log distribuído, grupos independentes mantêm posições próprias de leitura sobre o registro retido.
 
 ## RabbitMQ e Kafka sem atalhos
 

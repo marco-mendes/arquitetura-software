@@ -2,34 +2,32 @@
 
 ## Situação
 
-A plataforma hospitalar fictícia começou com uma chamada síncrona: quando o laboratório marcava um resultado como disponível, chamava Faturamento; depois Faturamento chamava Notificação. Em horário de pico, uma lentidão na cobrança fazia Resultados aguardar. Uma indisponibilidade transitória devolvia erro ao fluxo clínico apesar de o resultado estar pronto. Para evitar perda, uma pessoa passou a repetir manualmente chamadas e apareceu cobrança duplicada. O problema não era apenas a tecnologia da chamada: as responsabilidades e falhas estavam misturadas.
+Inicialmente, ao disponibilizar um resultado, Laboratório chamava Faturamento, que chamava Notificação. Lentidão na cobrança atrasava o fluxo clínico; falha transitória fazia parecer que o resultado não existia; repetição manual produziu cobrança duplicada. Responsabilidades e falhas estavam na mesma cadeia.
 
-A primeira proposta foi “usar Kafka para tudo”. Ela trazia palavras atraentes — escala, replay, log — mas não respondia sobre dados, consumidores, ordem e operação. A segunda proposta foi um broker RabbitMQ local com uma única fila de Faturamento. Ela não resolveu o hospital inteiro, mas permitiu perguntar o necessário: o que ocorreu, quem reage, que atraso é aceitável e como uma repetição não cria duas cobranças? A escolha inicial foi RabbitMQ porque a necessidade imediata era roteamento de trabalho para um consumidor, demonstração de confirmações e DLQ, sem um requisito de replay de muitos fluxos.
+“Kafka para tudo” não respondia sobre contrato, ordem, dados ou operação. A primeira decisão foi RabbitMQ com uma fila de Faturamento: a necessidade comprovada era rotear uma unidade de trabalho, observar confirmações e DLQ; replay para muitos consumidores ainda era hipótese. Não é ranking: ActiveMQ, RabbitMQ ou Kafka só fazem sentido contra necessidades, topologia e capacidade operacional medidas.
 
 ## Decisão e consequências
 
-Resultados publicou o fato `ResultadoLaboratorialDisponibilizado.v1` no tópico `hospital.events`. O fato levava referência, não laudo. Faturamento criou a fila `billing.resultados.v1` e assumiu ownership de sua política de retry, store idempotente e DLQ. Notificação não foi conectada no primeiro incremento, mas o tópico permitia adicionar uma fila própria sem editar Resultados. A disponibilidade do resultado passou a não depender da resposta de Faturamento; a cobrança passou a poder ficar pendente por um intervalo explícito.
+Resultados publicou `ResultadoLaboratorialDisponibilizado.v1` em `hospital.events`, contendo referência, não laudo. Faturamento assumiu `billing.resultados.v1`, retry, store idempotente e DLQ; nova capacidade poderá criar sua própria fila. A disponibilidade do resultado deixou de depender da cobrança.
 
-Essa é consistência eventual. A interface que mostra o exame não pode afirmar “cobrado” imediatamente apenas porque o fato foi publicado. Ela pode informar que o resultado está disponível e que a atualização administrativa está em processamento, se essa informação for útil e autorizada. Operação acompanha idade da mensagem mais antiga, tamanho da fila, taxa de rejeição e quantidade na DLQ. Uma fila vazia não demonstra que todos os efeitos foram corretos; uma fila crescente é sinal para investigar capacidade, dependência ou contrato.
+Essa é consistência eventual: a interface pode informar resultado disponível e atualização administrativa pendente. Operação acompanha idade da mensagem, tamanho da fila, rejeição e DLQ. Fila vazia não prova efeito correto; fila crescente pede investigação de capacidade, dependência ou contrato.
 
 ## Incidente: duplicidade de entrega
 
-Em um teste de falha, Faturamento escreveu sua cobrança, mas caiu antes de confirmar a mensagem. RabbitMQ a entregou de novo após o consumidor retornar. Um handler que executava `INSERT` sem chave única faria duas cobranças. A correção não foi tentar desativar redelivery: isso aumentaria risco de perda. O consumidor passou a usar `event_id` como chave de deduplicação e a gravar, na mesma transação local, uma tentativa e o efeito.
+Faturamento gravou cobrança e caiu antes do ack. RabbitMQ redeliverou; `INSERT` sem chave única duplicaria o efeito. A correção foi registrar tentativa e efeito na mesma transação, deduplicando por `event_id`, não desabilitar redelivery.
 
-Na repetição, a linha já existia. O handler registrou tentativa dois e confirmou a mensagem sem inserir novo efeito. A equipe passou a diferenciar “tentativas” de “cobranças”: duas tentativas podem ser evidência de disponibilidade parcial; uma cobrança é o efeito que não deve duplicar. Essa nomenclatura melhora a conversa com negócio e operação, porque não transforma uma propriedade de transporte em promessa de faturamento.
+Na segunda entrega, o handler aumenta tentativas, confirma a mensagem e não cria nova cobrança. Duas tentativas demonstram disponibilidade parcial; uma cobrança é o efeito que deve permanecer único.
 
 ## Incidente: evolução incompatível
 
-Mais tarde, uma integração enviou evento sem `result_reference`. O schema Pydantic recusou o corpo, o consumidor não deu ack e a mensagem chegou à DLQ. Uma resposta apressada seria mudar o consumidor para inventar uma referência. Isso ocultaria o contrato rompido e poderia associar cobrança ao recurso errado. A equipe identificou o producer, corrigiu a versão que gerava o evento e decidiu o destino das mensagens já paradas. As mensagens sintéticas foram removidas após registrar a causa; uma ocorrência real exigiria procedimento de reconciliação e proteção de dados.
+Um evento sem `result_reference` falhou na validação Pydantic, não recebeu ack e chegou à DLQ. Inventar a referência ocultaria contrato quebrado. A equipe identifica o produtor, corrige a versão e decide a recuperação das mensagens com proteção de dados.
 
-Em seguida surgiu a necessidade de acrescentar uma referência administrativa. Antes de mudar, a equipe verificou consumidores e definiu campo opcional em uma evolução compatível, exemplo de payload e prazo para tornar a informação obrigatória. Se a semântica de referência mudasse, criaria `v2` e manteria publicação dupla por prazo curto e medido. Versionamento é um acordo social apoiado por ferramentas, não apenas um sufixo.
+Para acrescentar referência administrativa, a equipe escolhe campo opcional ou `v2` conforme a semântica, verifica consumidores e mede uma convivência temporária. A identidade usada para deduplicação não muda durante a transição.
 
 ## Quando Kafka vira extensão plausível
 
-Se o hospital precisar manter um fluxo de eventos por período definido para que Analytics, qualidade e um novo consumidor façam replay independente, Kafka pode se tornar uma alternativa a avaliar. O design começaria por tópicos, chaves de partição, retenção, grupos de consumidores e classificação de dados. Faturamento ainda precisaria deduplicar efeitos externos e escolher uma chave de ordenação por exame ou conta. A existência de replay não dá autorização para reter dados sem política, nem corrige payload mal versionado.
-
-Uma alternativa híbrida também pode ser razoável: um log para eventos de integração e uma fila para unidades de trabalho internas. Mas cada ponte precisa de owner, observabilidade e recuperação. Não é uma evolução obrigatória do RabbitMQ; é uma decisão nova, motivada por requisitos de leitura e retenção que o caso demonstra ou mede.
+Se Analytics, Qualidade e novos consumidores precisarem de replay independente por retenção definida, Kafka passa a ser alternativa: tópicos, chave de partição, grupos, retenção e classificação de dados entram na decisão. Faturamento ainda deduplica efeito externo e escolhe ordem por exame ou conta. Um desenho híbrido de log para integração e fila para trabalho também exige owner, observabilidade e recuperação em cada ponte.
 
 ## Perguntas para a decisão
 
-Que diferença o usuário percebe entre “resultado disponível” e “cobrança concluída”? Qual atraso administrativo é aceitável e como ele aparece? Quais campos são estritamente necessários no evento? Qual efeito deve ser único e por qual identidade? O que fazer quando a mesma mensagem chega depois de uma atualização mais nova? Quem acompanha a DLQ e em quanto tempo? Ao responder, a equipe transforma uma escolha de broker em uma arquitetura com consequência verificável.
+Que atraso o usuário vê? Qual payload mínimo e qual efeito é único? O que acontece fora de ordem? Quem acompanha a DLQ e em quanto tempo? Responder transforma escolha de broker em arquitetura verificável.
