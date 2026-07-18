@@ -34,6 +34,22 @@ class ModuleThreeTest(unittest.TestCase):
             ),
         )
 
+    def test_unit_three_covers_distributed_service_consequences(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8") + (
+            MODULE / "padroes-e-decisoes.md"
+        ).read_text(encoding="utf-8")
+        for term in (
+            "persistência",
+            "consistência eventual",
+            "CAP",
+            "SAGA",
+            "CQRS",
+            "event sourcing",
+            "estrangulador",
+            "chassi",
+        ):
+            self.assertIn(term, text)
+
     def test_module_has_exactly_eight_pages_and_expected_navigation(self):
         pages = sorted(path.name for path in MODULE.glob("*.md"))
         self.assertEqual(
@@ -106,6 +122,23 @@ class ModuleThreeTest(unittest.TestCase):
             "test_exames_makes_its_own_database_failure_observable",
         ):
             self.assertIn(fragment, workshop)
+
+    def test_workshop_has_powershell_http_calls_with_overrideable_ports(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("`curl.exe`", workshop)
+        for fragment in (
+            'curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/health"',
+            'curl.exe -i "http://localhost:$env:EXAMES_PORT/health"',
+        ):
+            self.assertIn(fragment, workshop)
+        self.assertEqual(
+            2,
+            workshop.count(
+                'curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames"'
+            ),
+        )
 
     def test_patterns_are_introduced_without_claiming_they_are_default_choices(self):
         patterns = (MODULE / "padroes-e-decisoes.md").read_text(

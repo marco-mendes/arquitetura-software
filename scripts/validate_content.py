@@ -94,13 +94,39 @@ _PROCEDURAL_LABEL = re.compile(
     r"^[ \t]*(?:(?:[-*+]|\d+\.)[ \t]+)?"
     r"\*\*(?P<label>[^*\n]+)\*\*(?P<tail>.*)$"
 )
-_ADVANCED_MARKERS = (
+_SELF_CONTAINED_LABELS = (
+    "**Objetivo**",
     "**Situação**",
     "**Seu papel**",
-    "**Insumos disponíveis**",
-    "**Como conduzir**",
+    "**Artefato que você irá usar**",
+    "**Antes de executar**",
+    "**O que fazer**",
+    "**Evidência esperada**",
     "**Entrega esperada**",
     "**Critérios de avaliação**",
+)
+_ACTIVITY_PATH = re.compile(
+    r"(?:<raiz-do-clone>/|(?:\.\.?/|[A-Za-z0-9_.-]+/)[A-Za-z0-9_./-]+)"
+)
+_ACTIVITY_ROOT_PATH = re.compile(r"<raiz-do-clone>/[A-Za-z0-9_./-]+")
+_AMBIGUOUS_LABORATORY_PATH = re.compile(
+    r"(?<![A-Za-z0-9_.-])(?:src|tests|infra)/[A-Za-z0-9_./-]+"
+)
+_ACTIVITY_INITIAL_STATE = re.compile(
+    r"\b(?:estado|inicial|existe|parad[oa]s?|confirm\w*|verifi\w*|"
+    r"instalad[oa]s?)\b",
+    re.IGNORECASE,
+)
+_ACTIVITY_EVIDENCE = re.compile(
+    r"\b(?:sa[ií]da|resposta|status|registro|arquivo|resultado|observ\w*|"
+    r"mensagem|teste|log|m[eé]trica|tabela|diagrama|parecer|cadeia|pol[ií]tica|"
+    r"artefato|linha)\b",
+    re.IGNORECASE,
+)
+_ACTIVITY_CONTINGENCY = re.compile(
+    r"\b(?:se|caso|conting[êe]ncia|falha|erro|indispon\w*|"
+    r"n[aã]o\s+funcion\w*|retorn\w*)\b",
+    re.IGNORECASE,
 )
 _ANSWER_BLOCK = re.compile(
     r"^(?:#{1,6}[ \t]+|\*\*|!!![ \t]+\w+[ \t]+[\"']?|"
@@ -117,6 +143,48 @@ _CRITERIA_LABEL = re.compile(
 )
 _BOLD_LABEL = re.compile(r"^[ \t]*\*\*[^*\n]+\*\*[ \t]*$", re.MULTILINE)
 _WORD = re.compile(r"\b[^\W_]+(?:[-'][^\W_]+)*\b", re.UNICODE)
+
+
+def _has_minimum_context(content: str, minimum_words: int) -> bool:
+    """Evita que um marcador isolado seja aceito como roteiro operacional."""
+
+    return len(_WORD.findall(content)) >= minimum_words
+
+
+def _has_concrete_action(content: str) -> bool:
+    """Exige ao menos um passo enumerado que descreva ação e alvo."""
+
+    return any(
+        _has_minimum_context(match.group("action"), 4)
+        for match in re.finditer(
+            r"(?m)^\s*(?:\d+\.|[-*+])\s+(?P<action>[^\n]+)", content
+        )
+    )
+
+
+def _has_described_contingency(content: str) -> bool:
+    """Exige condição e encaminhamento, não apenas 'Se necessário'."""
+
+    clauses = re.split(r"(?<=[.!?])\s+|\n", content)
+    return any(
+        _ACTIVITY_CONTINGENCY.search(clause)
+        and _has_minimum_context(clause, 4)
+        for clause in clauses
+    )
+
+
+def _ambiguous_laboratory_paths(content: str) -> list[str]:
+    """Retorna caminhos de laboratório que perderam a raiz do clone."""
+
+    without_rooted_paths = _ACTIVITY_ROOT_PATH.sub("", content)
+    return [
+        match.group(0)
+        for match in _AMBIGUOUS_LABORATORY_PATH.finditer(without_rooted_paths)
+    ]
+
+
+def _requires_rooted_laboratory_paths(location: str) -> bool:
+    return location.startswith(("modulo-5-eventos/", "modulo-6-nuvem/"))
 
 
 @dataclass(frozen=True)
@@ -146,6 +214,108 @@ def bloom_sections(text: str) -> dict[str, str]:
         ].strip()
         for index, match in enumerate(matches)
     }
+
+
+def expandable_feedback_errors(text: str, location: str) -> list[str]:
+    """Exige uma resposta expansível para cada pergunta inicial de Bloom."""
+
+    errors: list[str] = []
+    for level in ("Recordar", "Compreender"):
+        section = bloom_sections(text).get(level, "")
+        items = re.split(r"(?m)(?=^\d+\.\s)", section)
+        for item in (item for item in items if re.match(r"^\d+\.\s", item)):
+            if not re.search(
+                r"<details>\s*<summary>Ver resposta</summary>.*?</details>",
+                item,
+                re.DOTALL,
+            ):
+                errors.append(
+                    f"{location}: {level}: pergunta sem resposta expansível"
+                )
+    return errors
+
+
+def self_contained_activity_errors(text: str, location: str) -> list[str]:
+    """Exige o roteiro contextual completo nas atividades avançadas de Bloom."""
+
+    errors: list[str] = []
+    for level in ("Aplicar", "Analisar", "Avaliar", "Criar"):
+        section = bloom_sections(text).get(level, "")
+        if not section:
+            continue
+        previous = -1
+        positions: dict[str, int] = {}
+        for label in _SELF_CONTAINED_LABELS:
+            current = section.find(label)
+            if current == -1:
+                errors.append(
+                    f"{location}: {level}: marcador obrigatório ausente: {label}"
+                )
+            elif current < previous:
+                errors.append(
+                    f"{location}: {level}: marcador fora da ordem: {label}"
+                )
+            previous = max(previous, current)
+            positions[label] = current
+
+        if len(positions) != len(_SELF_CONTAINED_LABELS):
+            continue
+
+        fields = {
+            label: section[
+                positions[label] + len(label) :
+                positions[_SELF_CONTAINED_LABELS[index + 1]]
+                if index + 1 < len(_SELF_CONTAINED_LABELS)
+                else len(section)
+            ].strip()
+            for index, label in enumerate(_SELF_CONTAINED_LABELS)
+        }
+        for label, content in fields.items():
+            content_without_comments = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
+            if not content_without_comments.strip():
+                errors.append(
+                    f"{location}: {level}: campo obrigatório sem conteúdo: {label}"
+                )
+
+        artifact = fields["**Artefato que você irá usar**"]
+        preparation = fields["**Antes de executar**"]
+        action = fields["**O que fazer**"]
+        evidence = fields["**Evidência esperada**"]
+        if not _ACTIVITY_PATH.search(artifact):
+            errors.append(
+                f"{location}: {level}: artefato deve identificar um caminho"
+            )
+        if _requires_rooted_laboratory_paths(location):
+            for ambiguous_path in _ambiguous_laboratory_paths(
+                "\n".join(fields.values())
+            ):
+                errors.append(
+                    f"{location}: {level}: artefato não pode usar caminho relativo "
+                    f"ambíguo: {ambiguous_path}"
+                )
+        if (
+            not _ACTIVITY_INITIAL_STATE.search(preparation)
+            or not _has_minimum_context(preparation, 4)
+        ):
+            errors.append(
+                f"{location}: {level}: preparação deve declarar um estado inicial verificável"
+            )
+        if not _has_concrete_action(action):
+            errors.append(
+                f"{location}: {level}: ação deve listar uma manipulação ou execução concreta"
+            )
+        if (
+            not _ACTIVITY_EVIDENCE.search(evidence)
+            or not _has_minimum_context(evidence, 4)
+        ):
+            errors.append(
+                f"{location}: {level}: evidência deve indicar uma saída ou observação verificável"
+            )
+        if not _has_described_contingency("\n".join(fields.values())):
+            errors.append(
+                f"{location}: {level}: atividade deve informar uma contingência"
+            )
+    return errors
 
 
 def _location(path: Path, docs_root: Path) -> str:
@@ -527,13 +697,10 @@ def _validate_exercises(path: Path, docs_root: Path) -> list[str]:
             )
     for level in ("Aplicar", "Analisar", "Avaliar"):
         section = sections.get(level, "")
-        for marker in _ADVANCED_MARKERS:
-            if marker not in section:
-                errors.append(
-                    f"{location}: {level}: marcador obrigatório ausente: {marker}"
-                )
         errors.extend(_percentage_errors(section, location, level))
     errors.extend(_criteria_table_evidence_errors(text, location))
+    errors.extend(expandable_feedback_errors(text, location))
+    errors.extend(self_contained_activity_errors(text, location))
     return errors
 
 

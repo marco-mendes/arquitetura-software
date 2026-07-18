@@ -2,6 +2,32 @@
 
 Esta oficina usa dados sintéticos e dura aproximadamente noventa minutos na trilha essencial. Você executará a API FastAPI, observará `/docs`, importará OpenAPI no Bruno, validará o contrato com Spectral e rodará testes com `TestClient`. Nenhuma integração externa é chamada.
 
+## O que existe antes de você abrir o terminal
+
+Você trabalhará no repositório desta disciplina, dentro de `laboratorios/plataforma-hospitalar`. Essa pasta contém uma aplicação didática local chamada **API de elegibilidades da plataforma hospitalar**. Ela não consulta uma operadora real, não acessa prontuários e não envia dados para fora do seu computador. Seu objetivo é tornar observável um contrato HTTP pequeno, não simular uma plataforma hospitalar completa.
+
+O arquivo `src/hospital/api/main.py` inicia a aplicação FastAPI e expõe apenas duas operações públicas:
+
+| Operação | O que faz nesta oficina | Resultado observável |
+| --- | --- | --- |
+| `POST /elegibilidades` | recebe CPF sintético, código de operadora e matrícula; valida o contrato e aceita o pedido | `202 Accepted`, corpo com `protocolo` e cabeçalho `Location` |
+| `GET /elegibilidades/{protocolo}` | recupera o pedido aceito usando o protocolo retornado no `POST` | `200 OK` com a representação; `404` se o protocolo não existir |
+
+Os dados aceitos ficam somente na memória do processo. Isso significa que parar ou reiniciar o servidor remove todos os protocolos criados. Esse limite é deliberado: a prática permite comparar contrato, consumo e implementação sem afirmar persistência, idempotência distribuída, autenticação ou integração externa.
+
+Antes de instalar ou executar qualquer coisa, localize a raiz do clone e a pasta do laboratório:
+
+```text
+arquitetura-software/
+└── laboratorios/
+    └── plataforma-hospitalar/   ← os comandos desta oficina passam a ser executados aqui
+        ├── contratos/openapi.yaml
+        ├── src/hospital/api/main.py
+        └── tests/test_api_contract.py
+```
+
+Ao final da preparação, a condição inicial verificável será: existe uma pasta `.venv`; o interpretador dela informa versão de Python; `python -m pytest tests/test_api_contract.py -q` termina com testes aprovados; e, ao iniciar o servidor, o terminal informa `http://127.0.0.1:8000`. Só então abra `http://127.0.0.1:8000/docs` ou o Bruno.
+
 ## Ferramenta
 
 | Ferramenta | Papel | Evidência |

@@ -34,7 +34,7 @@ Os laboratórios reproduzíveis ficam em [`laboratorios/plataforma-hospitalar`](
 
 ## Acervo legado
 
-Os arquivos Markdown na raiz permanecem nos mesmos caminhos para preservar links e referências já compartilhados. Cada arquivo começa agora com uma nota que aponta para a página canônica da disciplina. Consulte o [mapa do acervo legado](docs/referencia/mapa-do-acervo-legado.md) para saber onde cada tema foi integrado ao novo percurso.
+Os arquivos Markdown na raiz permanecem nos mesmos caminhos para preservar links e referências já compartilhados. Cada arquivo começa agora com uma nota que aponta para a página canônica da disciplina.
 
 O índice original, mantido abaixo, conserva os links usados anteriormente.
 

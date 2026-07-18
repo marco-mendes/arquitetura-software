@@ -4,7 +4,7 @@
 
 Nuvem oferece recursos de computação que podem ser provisionados e medidos como serviço. O benefício arquitetural não é um logotipo: é diminuir o tempo e o custo de obter capacidade, desde que a equipe consiga descrevê-la, controlá-la e recuperá-la. Uma máquina virtual criada em minutos ainda exige imagem, acesso, atualização e monitoramento. Um banco gerenciado reduz tarefas de operação do motor, mas não decide retenção, modelo de dados ou quem pode consultar um resultado.
 
-Em **IaaS** (Infrastructure as a Service), a organização consome computação, rede e armazenamento virtualizados; normalmente administra sistema operacional, runtime, aplicação e dados. Em **PaaS** (Platform as a Service), o provedor também opera um runtime ou plataforma de entrega e a equipe concentra-se no código, configuração e dados. Em **SaaS** (Software as a Service), o produto pronto é consumido por configuração e integração. Uma ferramenta de agenda pode ser SaaS para o hospital, enquanto sua própria API roda em IaaS ou PaaS. Os modelos podem coexistir na mesma solução.
+Em **on-premise**, a organização mantém a infraestrutura em instalações próprias ou sob contrato dedicado e assume, em maior grau, espaço, hardware, capacidade e operação. Isso pode ser a decisão adequada para uma restrição de dados ou latência, mas não elimina automação, observabilidade ou recuperação. Em **IaaS** (Infrastructure as a Service), a organização consome computação, rede e armazenamento virtualizados; normalmente administra sistema operacional, runtime, aplicação e dados. Em **PaaS** (Platform as a Service), o provedor também opera um runtime ou plataforma de entrega e a equipe concentra-se no código, configuração e dados. Em **SaaS** (Software as a Service), o produto pronto é consumido por configuração e integração. Uma ferramenta de agenda pode ser SaaS para o hospital, enquanto sua própria API roda on-premise, em IaaS ou PaaS. Os modelos podem coexistir na mesma solução.
 
 | Camada | IaaS | PaaS | SaaS | Decisão que continua interna |
 | --- | --- | --- | --- | --- |
@@ -20,6 +20,10 @@ Esta tabela é uma simplificação intencional: contratos variam. **Responsabili
 Uma **região** é uma área geográfica ou administrativa onde um provedor oferece recursos; uma **zona** é uma unidade de isolamento dentro dela. Os nomes e garantias dependem do provedor, portanto não se deve inferir que “duas zonas” resolvem qualquer indisponibilidade. Separar réplicas entre zonas pode reduzir impacto de uma falha local, mas banco, fila, DNS, identidade e operação de deploy continuam sendo dependências a analisar.
 
 Para o hospital, região envolve latência, residência de dados, contratos e caminho de recuperação. Zona envolve domínio de falha. Uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó. Um plano honesto declara o cenário: duas réplicas em nós distintos, com anti-affinity se necessário; dados replicados com recuperação testada; e procedimentos para indisponibilidade regional. A arquitetura não deveria esconder essas condições atrás de “multi-AZ”.
+
+**Texto alternativo:** uma região contém duas zonas; cada zona recebe uma réplica, enquanto os dados mantêm uma política de recuperação própria.
+
+*Figura 6 — Réplicas entre domínios de falha e dados com política independente. Fonte: curso.*
 
 ```mermaid
 flowchart TB
@@ -37,7 +41,7 @@ flowchart TB
 
 ![Resiliência na nuvem: um cluster local executa duas réplicas da API hospitalar, aplica readiness e liveness, atualiza gradualmente e pode fazer rollback.](../assets/images/m06-resiliencia-nuvem.png)
 
-*Figura 7 — Estado desejado e recuperação de uma API em cluster.*
+*Figura 7 — Estado desejado e recuperação de uma API em cluster. Fonte: curso.*
 
 **Leitura textual da figura:** o cluster local mantém duas réplicas da API hospitalar. A verificação de readiness decide quando uma réplica pode receber tráfego; a de liveness permite reiniciar um processo travado. Durante uma atualização gradual, uma nova versão substitui réplicas progressivamente; se a evidência indicar falha, o rollback retorna à versão anterior. Configuração e imagem versionada dão contexto a esse estado desejado.
 

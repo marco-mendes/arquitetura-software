@@ -22,6 +22,10 @@ Uma resposta começa separando capacidade de produto. Um provedor pode tornar ha
 6. Em [Exercícios](exercicios.md), usamos os seis níveis da Taxonomia de Bloom para defender decisões e evidências.
 7. Em [Síntese e referências](sintese-e-referencias.md), consolidamos equivalências em Java e .NET e fontes públicas.
 
+**Texto alternativo:** clientes chegam a um Service, que distribui somente para dois Pods prontos; o Deployment os mantém e o HPA pode mudar a quantidade quando houver métrica.
+
+*Figura 5 — Estado declarado da API de elegibilidade no laboratório local. Fonte: curso.*
+
 ```mermaid
 flowchart LR
     U[Portal ou integração] --> S[Service hospital-api]

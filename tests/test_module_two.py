@@ -18,6 +18,52 @@ SPECTRAL_PACKAGE = "@stoplight/spectral-cli@6.16.1"
 
 
 class ModuleTwoTest(unittest.TestCase):
+    def test_unit_two_compares_api_styles_and_protocols_architecturally(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+        for term in (
+            "REST",
+            "GraphQL",
+            "gRPC",
+            "WebSocket",
+            "contrato",
+            "consumidor",
+        ):
+            self.assertIn(term, text)
+
+    def test_unit_two_figure_numbers_follow_navigation_reading_order(self):
+        pages = (
+            "index.md",
+            "conceitos.md",
+            "padroes-e-decisoes.md",
+            "exemplo-arquitetural.md",
+            "estudo-de-caso.md",
+            "oficina-de-ferramentas.md",
+            "exercicios.md",
+            "sintese-e-referencias.md",
+        )
+        figures = [
+            int(number)
+            for page in pages
+            for number in re.findall(
+                r"^\*Figura (\d+) —",
+                (MODULE / page).read_text(encoding="utf-8"),
+                re.MULTILINE,
+            )
+        ]
+
+        self.assertEqual(list(range(3, 12)), figures)
+
+    def test_api_workshop_names_the_local_application_before_commands(self):
+        text = (MODULE / "oficina-de-ferramentas.md").read_text(
+            encoding="utf-8"
+        )
+        for fragment in (
+            "API de elegibilidades da plataforma hospitalar",
+            "src/hospital/api/main.py",
+            "http://127.0.0.1:8000",
+        ):
+            self.assertIn(fragment, text)
+
     def test_content(self):
         assert_module_contract(
             self,

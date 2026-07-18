@@ -78,14 +78,31 @@ def assert_module_contract(
         {"Recordar", "Compreender", "Aplicar", "Analisar", "Avaliar", "Criar"},
         set(sections),
     )
+    legacy_markers = (
+        "**Situação**",
+        "**Seu papel**",
+        "**Insumos disponíveis**",
+        "**Como conduzir**",
+        "**Entrega esperada**",
+        "**Critérios de avaliação**",
+    )
+    self_contained_markers = (
+        "**Objetivo**",
+        "**Situação**",
+        "**Seu papel**",
+        "**Artefato que você irá usar**",
+        "**Antes de executar**",
+        "**O que fazer**",
+        "**Evidência esperada**",
+        "**Entrega esperada**",
+        "**Critérios de avaliação**",
+    )
     for level in ("Aplicar", "Analisar", "Avaliar"):
-        for marker in (
-            "**Situação**",
-            "**Seu papel**",
-            "**Insumos disponíveis**",
-            "**Como conduzir**",
-            "**Entrega esperada**",
-            "**Critérios de avaliação**",
-        ):
+        markers = (
+            self_contained_markers
+            if all(marker in sections[level] for marker in self_contained_markers)
+            else legacy_markers
+        )
+        for marker in markers:
             testcase.assertIn(marker, sections[level])
         testcase.assertRegex(sections[level], r"\|[^\n]*\|\s*\d+%\s*\|")

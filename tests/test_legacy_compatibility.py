@@ -48,3 +48,23 @@ class LegacyCompatibilityTest(unittest.TestCase):
             "GitHub Actions",
         ):
             self.assertIn(marker, text)
+
+    def test_traceability_matrix_remains_private_to_editorial_work(self):
+        private_matrix = ROOT / "docs/superpowers/traceability/recuperacao-editorial.md"
+        public_map = ROOT / "docs/referencia/mapa-do-acervo-legado.md"
+
+        self.assertTrue(private_matrix.is_file())
+        self.assertFalse(public_map.exists())
+
+        published_markdown = [ROOT / "README.md"]
+        published_markdown.extend(
+            path
+            for path in (ROOT / "docs").rglob("*.md")
+            if "superpowers" not in path.parts
+        )
+        for path in published_markdown:
+            self.assertNotIn(
+                "mapa-do-acervo-legado",
+                path.read_text(encoding="utf-8"),
+                path.relative_to(ROOT),
+            )

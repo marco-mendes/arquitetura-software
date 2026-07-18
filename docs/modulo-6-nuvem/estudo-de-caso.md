@@ -17,6 +17,14 @@ O primeiro diagnóstico separa camadas. Se CPU da API fica baixa e o tempo da de
 
 Não há vencedora genérica. Para uma capacidade simples com poucos serviços, PaaS pode diminuir risco mais que operar Kubernetes. Para várias cargas que já precisam de isolamento, observabilidade e deploy consistentes, um cluster pode justificar sua operação. A plataforma hospitalar usa kind no ensino para tornar Deployment e rollback visíveis; isso não é recomendação automática de Kubernetes em produção.
 
+## Contextos de mercado, não receitas
+
+**AWS** é um vocabulário concreto para discutir ofertas: uma máquina virtual como EC2 se aproxima do consumo de IaaS; um runtime ou banco gerenciado desloca mais responsabilidade para o provedor; um produto de agenda configurado pode ser SaaS. Esses nomes não classificam automaticamente uma solução nem respondem por residência de dados, custo de saída ou continuidade. A decisão do hospital começa pelos atributos e pelo contrato, e só depois pergunta qual serviço os satisfaz.
+
+Os casos públicos de **iFood** e **Taco Bell** servem como contexto para formular perguntas, não como propaganda nem como arquitetura copiável. Uma plataforma com picos de pedidos pode discutir elasticidade, telemetria e autonomia de times; uma operação de restaurantes pode discutir integração, sazonalidade e uma experiência de canal digital. Nenhum desses relatos prova que o hospital deve adotar AWS, serverless ou Kubernetes. Escala, dados regulados, capacidade da equipe, dependências existentes e evidências próprias determinam a escolha.
+
+Uma comparação responsável registra o princípio antes da marca: “reduzir operação de runtime” pode apontar para PaaS; “manter controle de rede e sistema” pode apontar para IaaS ou on-premise; “comprar uma capacidade não diferenciadora” pode apontar para SaaS. Para cada hipótese, a equipe declara o que fica sob sua responsabilidade, como exportará dados, que sinal confirmará o benefício e quando revisará a decisão.
+
 ## Proposta inicial verificável
 
 A equipe mantém a API stateless, move estado durável para serviço apropriado e define um SLO de disponibilidade e latência durante a janela. Ela começa com duas réplicas em domínios de falha distintos quando a infraestrutura suportar, request/limit medidos e HPA apenas depois de verificar a métrica. Uma fila ou rate limit pode proteger a dependência se a demanda exceder capacidade. A resposta ao usuário deve indicar “em processamento” quando o contrato permitir, em vez de manter conexões até falharem.

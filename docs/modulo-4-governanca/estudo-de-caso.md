@@ -4,7 +4,7 @@ A rede hospitalar Aurora cresceu de uma API única para oito serviços. Para “
 
 O problema não é existir gateway. Roteamento, TLS, proteção de volume, autenticação técnica e correlação são candidatas fortes a uma política comum. O problema é confundir centralização de plataforma com centralização de conhecimento. A regra de exame depende do estado de autorização, de exceções clínicas e de evolução do vocabulário; deve ser propriedade de uma capacidade de domínio. Quando está no proxy, a equipe responsável pelo domínio precisa negociar uma alteração de código que não controla, enquanto o proxy passa a conhecer informações que não deveria interpretar.
 
-O primeiro diagnóstico separou decisões. Cada serviço ganhou entrada de catálogo com proprietário, contrato, consumidores, classificação de dados, dependências e SLO candidato. A plataforma publicou um modelo declarativo de gateway, revisado por pull request, com rota, autenticação técnica, correlação, limite e exportação OTLP. A capacidade Autorização recebeu uma política explícita de domínio e testes no próprio repositório. O objetivo não era apagar todas as aprovações, mas tornar clara a autoridade: plataforma aprova compatibilidade e segurança de borda; dono do serviço aprova semântica do recurso; consumidores são avisados de mudança incompatível.
+O primeiro diagnóstico separou decisões. Cada serviço ganhou entrada de catálogo com proprietário, contrato, consumidores, classificação de dados, dependências e SLO candidato. A plataforma publicou um modelo declarativo de gateway, revisado por pull request, com rota, autenticação técnica, correlação, limite e exportação OTLP. A capacidade Autorização recebeu uma política explícita de domínio e testes no próprio repositório. O objetivo não era apagar todas as aprovações, mas tornar clara a autoridade: plataforma aprova compatibilidade e segurança de borda; dono do serviço aprova semântica do recurso; consumidores são avisados de mudança incompatível. A mediação passou a ser um mecanismo de contrato e política, não uma central que absorve qualquer decisão.
 
 ## Da presunção à evidência
 
@@ -24,7 +24,11 @@ flowchart TB
     end
 ```
 
-**Leitura textual da figura:** antes, um gateway central acumulava regras clínicas e os serviços não mostravam ownership. Depois, políticas comuns ficam declaradas no gateway, regras clínicas ficam com o responsável pelo domínio e ambos enviam telemetria correlacionada.
+**Texto alternativo:** comparação entre gateway que copia regras clínicas e cenário com política de borda, owner de domínio e telemetria correlacionada.
+
+*Figura 6 — Da centralização improdutiva à governança com fronteiras. Fonte: curso.*
+
+**Leitura textual:** políticas comuns ficam no gateway, regra clínica fica no serviço dono do domínio e a telemetria é correlacionada.
 
 ## Decisões avaliadas
 
@@ -36,7 +40,7 @@ Para versionamento, o catálogo passou a marcar a versão ativa e a fase de reti
 
 Governança leve consegue acelerar quando transforma ambiguidades em padrões fáceis de usar. Um template de serviço, uma rota declarativa e um teste de trace reduzem trabalho repetido. Ela se torna pesada quando pede uma aprovação para detalhes sem risco ou quando substitui dono do domínio. A revisão periódica deve perguntar: a política ainda protege um risco real? quem sofre com uma falsa recusa? o sinal mede a experiência que importa? há dados pessoais em logs? quem pode alterar e como a mudança é revertida?
 
-O laboratório é deliberadamente pequeno. Não demonstra gestão de identidades corporativa, alta disponibilidade do Collector, retenção legal, multi-região nem limite distribuído. Ele demonstra uma cadeia curta onde a decisão, a configuração e a evidência podem ser lidas juntas. Esse é um alicerce honesto para discutir as escolhas mais complexas.
+O laboratório é deliberadamente pequeno. Não demonstra gestão de identidades corporativa, alta disponibilidade do Collector, retenção legal, multi-região nem limite distribuído. Ele demonstra uma cadeia curta onde a decisão, a configuração e a evidência podem ser lidas juntas. Essa rastreabilidade é suficiente para discutir uma mudança local, mas não substitui auditoria legal ou prova de conformidade em produção. Esse é um alicerce honesto para discutir as escolhas mais complexas.
 
 ## Equivalências em Java e .NET
 

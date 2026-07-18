@@ -17,7 +17,11 @@ flowchart LR
     Q -. rejeição .-> D[DLX e DLQ]
 ```
 
-**Leitura textual da figura:** Resultados publica no canal `hospital.events`. A fila `billing.resultados.v1` entrega ao consumidor. O consumidor registra tentativa e efeito em armazenamento local; uma mensagem rejeitada por schema segue para a exchange de dead-letter e para a DLQ.
+**Texto alternativo:** Topologia em que Resultados publica por outbox ou publicador na exchange hospital.events, que alimenta a fila de faturamento; o consumidor grava tentativas e efeitos e rejeições seguem para DLQ.
+
+*Figura 10 — Contrato, fila de Faturamento, store idempotente e DLQ. Fonte: curso.*
+
+**Leitura textual:** Resultados publica no canal `hospital.events`. A fila `billing.resultados.v1` entrega ao consumidor. O consumidor registra tentativa e efeito em armazenamento local; uma mensagem rejeitada por schema segue para a exchange de dead-letter e para a DLQ.
 
 ## Fluxo normal
 

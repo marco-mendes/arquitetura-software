@@ -1,18 +1,22 @@
 # Oficina de ferramentas: política declarada, trace verificável
 
-Esta oficina acrescenta governança à plataforma hospitalar sem alterar a fronteira de dados do módulo anterior. Você subirá PostgreSQL, Elegibilidade, Kong, OpenTelemetry Collector e Jaeger a partir de `infra/compose.governanca.yml`. Chamará o serviço diretamente e pelo gateway, confirmará correlation ID, produzirá um `429` controlado e consultará um trace pela API do Jaeger. Todos os recursos são locais, descartáveis e de código aberto; não há estado configurado por painel.
+Esta oficina acrescenta governança à plataforma hospitalar sem alterar a fronteira de dados do módulo anterior. A demonstração local é a **Plataforma Hospitalar Governada**. `infra/compose.governanca.yml` declara PostgreSQL, Elegibilidade, Kong, OpenTelemetry Collector e Jaeger; `infra/kong/kong.yml` declara rota e políticas de borda; `infra/observabilidade/otel-collector.yml` encaminha a telemetria. Kong, OpenTelemetry e Jaeger implementam localmente o caso; contrato, política, responsável e evidência sobrevivem à troca de tecnologia.
+
+Parta de clone com Docker e Python, sem contêineres. A preparação valida configuração e fixa portas; a pilha pronta tem banco, Elegibilidade, gateway, Collector e Jaeger saudáveis. Guarde HTTP, log JSON seguro e trace da API Jaeger, sem identificador clínico.
+
+Antes dos comandos, observe `docker compose -f infra/compose.governanca.yml ps`; use HTTP para rota e `429`, logs de Elegibilidade e a API Jaeger `GET /api/traces/{traceId}` para o trace. Ao concluir, rode `docker compose -f infra/compose.governanca.yml down -v` para remover recursos.
 
 ## Ferramenta
 
 | Ferramenta | Papel local | Evidência observável |
 | --- | --- | --- |
 | Docker Engine e Compose v2 | criar rede e contêineres | `docker version` e `docker compose version` |
-| Kong Gateway 3.8 | rota e políticas declaradas | resposta com cabeçalho e `429` |
+| Kong Gateway 3.8 | mediação local de rota e políticas declaradas | resposta com cabeçalho e `429` |
 | OpenTelemetry Collector 0.111 | receber e encaminhar OTLP | trace no destino |
 | Jaeger all-in-one 1.62 | consultar trace local | `GET /api/traces/{id}` |
 | Python 3.11 ou superior | executar integração | `test_gateway_policy.py` |
 
-O Docker Compose é uma reprodução de estudo, não uma topologia de produção. O limite de três chamadas por segundo usa armazenamento local do Kong; múltiplas réplicas exigiriam uma decisão de armazenamento compartilhado. O Jaeger local não é retenção de dados clínicos e não deve receber dados sensíveis. Métricas são um sinal conceitual nesta oficina: ela não coleta nem consulta métricas. As evidências runtime deste roteiro são cabeçalhos, `429`, log JSON seguro e traces no Jaeger.
+Compose reproduz estudo, não produção. O limite de três chamadas por segundo é local; múltiplas réplicas pedem armazenamento compartilhado. Jaeger não recebe dados sensíveis. Métricas são um sinal conceitual; esta oficina não coleta nem consulta métricas. Evidências: cabeçalhos, `429`, `correlation_id` em log seguro e traces Jaeger.
 
 ## Pré-requisitos
 

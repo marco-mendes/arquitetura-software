@@ -3,7 +3,7 @@ import re
 import unittest
 
 from tests.course_assertions import assert_module_contract
-from scripts.validate_content import bloom_sections
+from scripts.validate_content import bloom_sections, expandable_feedback_errors
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +31,134 @@ class ModuleOneTest(unittest.TestCase):
             ),
         )
 
+    def test_unit_one_introduces_the_complete_style_map(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+
+        for term in (
+            "Camadas",
+            "MVC",
+            "Hexagonal",
+            "Microkernel",
+            "Pipes and Filters",
+            "DDD",
+            "microsserviços",
+            "APIs",
+            "eventos",
+            "nuvem",
+            "contêineres",
+        ):
+            self.assertIn(term, text)
+
+    def test_unit_one_recall_and_understand_use_individual_expandable_answers(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+
+        self.assertGreaterEqual(exercises.count("<summary>Ver resposta</summary>"), 12)
+        self.assertEqual(
+            [], expandable_feedback_errors(exercises, "exercicios.md")
+        )
+
+    def test_advanced_activities_explain_the_lab_before_commands(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+
+        for level in ("Aplicar", "Analisar", "Avaliar", "Criar"):
+            section = bloom_sections(exercises)[level]
+            for label in (
+                "**Objetivo**",
+                "**Situação**",
+                "**Seu papel**",
+                "**Artefato que você irá usar**",
+                "**Antes de executar**",
+                "**O que fazer**",
+                "**Evidência esperada**",
+                "**Entrega esperada**",
+                "**Critérios de avaliação**",
+            ):
+                self.assertIn(label, section, f"{level}: {label}")
+
+    def test_style_decision_frames_make_use_and_avoidance_explicit(self):
+        text = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+
+        for style in (
+            "Camadas",
+            "Pipes and Filters",
+            "Microkernel",
+            "Monólito modular",
+        ):
+            self.assertIn(f"### {style}", text)
+        for label in (
+            "Responsabilidade",
+            "Conectores",
+            "Forças",
+            "Anti-padrão",
+            "Quando usar",
+            "Evite quando",
+        ):
+            self.assertIn(label, text)
+
+    def test_every_example_mermaid_has_alt_caption_and_textual_reading(self):
+        text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")
+        diagrams = text.count("```mermaid")
+
+        self.assertGreaterEqual(diagrams, 3)
+        self.assertGreaterEqual(text.count("**Texto alternativo:**"), diagrams)
+        self.assertGreaterEqual(text.count("*Figura "), diagrams)
+        self.assertGreaterEqual(text.count("**Leitura textual da figura:**"), diagrams)
+
+    def test_example_preserves_code_responsibilities_and_ecosystem_equivalences(self):
+        text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")
+
+        for fragment in (
+            "processamento/",
+            "aplicacao/",
+            "dominio/",
+            "filtros/",
+            "adaptadores/",
+            "`Pipeline`",
+            "| Intenção | Python | Java | .NET |",
+            "| contrato do filtro |",
+            "| regra de dependência |",
+        ):
+            self.assertIn(fragment, text)
+
+    def test_advanced_activities_name_a_concrete_workspace_and_start_condition(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+        sections = bloom_sections(exercises)
+
+        for level, workspace in (
+            ("Analisar", "analise-integracao"),
+            ("Avaliar", "parecer.md"),
+            ("Criar", "baseline-inicial"),
+        ):
+            section = sections[level]
+            self.assertIn(workspace, section)
+            self.assertIn("Condição inicial verificável", section)
+            self.assertIn("**Entrega esperada**", section)
+
+    def test_advanced_activities_share_a_root_delivery_location(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+        sections = bloom_sections(exercises)
+
+        for level, delivery in (
+            ("Analisar", "entregas/unidade-1/analise-integracao"),
+            ("Avaliar", "entregas/unidade-1/avaliacao-leitos"),
+            ("Criar", "entregas/unidade-1/baseline-inicial"),
+        ):
+            self.assertIn(delivery, sections[level])
+            self.assertIn("raiz do repositório `arquitetura-software`", sections[level])
+
+    def test_installation_starts_each_platform_at_clone_root(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
+            encoding="utf-8"
+        )
+
+        for start, end in (
+            ("### Windows", "### macOS"),
+            ("### macOS", "### Linux"),
+            ("### Linux", "## Preparação do laboratório"),
+        ):
+            platform = workshop.split(start, 1)[1].split(end, 1)[0]
+            self.assertIn("terminal começa na raiz do clone `arquitetura-software`", platform)
+
     def test_diagrams_have_textual_readings(self):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
 
@@ -39,6 +167,48 @@ class ModuleOneTest(unittest.TestCase):
             corpus.count("**Leitura textual da figura:**"),
             corpus.count("```mermaid"),
         )
+
+    def test_editorial_mermaid_figures_have_complete_accessible_context(self):
+        pages = (
+            MODULE / "conceitos.md",
+            MODULE / "padroes-e-decisoes.md",
+            MODULE / "estudo-de-caso.md",
+        )
+        contexts = []
+        for page in pages:
+            text = page.read_text(encoding="utf-8")
+            contexts.extend(
+                re.findall(
+                    r"```mermaid\n.*?```\n\n"
+                    r"\*\*Texto alternativo:\*\*.+?\n\n"
+                    r"\*Figura (\d+) — .+? Fonte: .+?\*\n\n"
+                    r"\*\*Leitura textual(?: da figura)?:\*\*.+?"
+                    r"(?=\n\n|\Z)",
+                    text,
+                    re.DOTALL,
+                )
+            )
+
+        self.assertEqual(6, len(contexts))
+
+    def test_module_one_figure_numbers_follow_reading_order(self):
+        pages = (
+            MODULE / "conceitos.md",
+            MODULE / "padroes-e-decisoes.md",
+            MODULE / "exemplo-arquitetural.md",
+            MODULE / "estudo-de-caso.md",
+        )
+        figures = []
+        for page in pages:
+            figures.extend(
+                int(number)
+                for number in re.findall(
+                    r"\*Figura (\d+) — .+? Fonte: .+?\*",
+                    page.read_text(encoding="utf-8"),
+                )
+            )
+
+        self.assertEqual(list(range(1, len(figures) + 1)), figures)
 
     def test_structurizr_models_one_application_with_internal_modules(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(

@@ -2,6 +2,14 @@
 
 Oficina local: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponibilizado.v1`, efeito SQLite e dead-letter queue. Kafka é extensão comparativa. Use dados sintéticos.
 
+## Mapa da demonstração local
+
+Antes de iniciar RabbitMQ ou o consumidor, localize a topologia em `infra/compose.eventos.yml`, o publicador em `src/hospital/eventos/publicador.py` e o consumidor de Faturamento em `src/hospital/eventos/consumidor.py`. A exchange é `hospital.events`; a fila de trabalho é `billing.resultados.v1`; o armazenamento de idempotência é o SQLite `evidencias/modulo-5/processed-events.sqlite3`; e a DLQ é `billing.resultados.v1.dlq`, ligada pela DLX `hospital.events.dlx`.
+
+**Estado inicial**
+
+RabbitMQ está parado, não há mensagens nas filas e o arquivo SQLite ainda não contém `event_id` processado. A variável de cada experimento muda uma condição observável; o evento publicado, a evidência e o erro esperado são declarados antes dos comandos.
+
 ## Ferramenta
 
 | Ferramenta | Papel local | Evidência observável |
@@ -224,6 +232,22 @@ Declarar a fila, publicar o mesmo fato duas vezes e registrar um único lançame
 
 O broker está saudável e `RABBITMQ_URL` aponta para o terminal atual. Use um UUID sintético fixo nesta sequência para que as duas mensagens tenham o mesmo `event_id`.
 
+**Variável alterada**
+
+O número de publicação do mesmo `event_id`: primeira entrega e redelivery sintético.
+
+**Evento publicado**
+
+`ResultadoLaboratorialDisponibilizado.v1` válido, duas vezes com o mesmo `event_id`.
+
+**Evidência de processamento**
+
+Saídas `processed=True attempts=1` e `processed=False attempts=2`, com uma linha em `billing_effects`.
+
+**Erro esperado**
+
+Nenhum erro de contrato; duplicar o efeito seria a falha a investigar.
+
 **Execute**
 
 Primeiro execute o consumidor uma vez para declarar a fila; como ela está vazia, ele não produz efeito. Depois publique e consuma, repita a publicação com o mesmo ID e consuma de novo. No macOS ou Linux:
@@ -262,6 +286,22 @@ Inspecionar o estado persistido sem revelar dados clínicos.
 
 A sequência essencial já criou `evidencias/modulo-5/processed-events.sqlite3` com valores sintéticos.
 
+**Variável alterada**
+
+A consulta: tentativas por `event_id` e contagem de efeitos.
+
+**Evento publicado**
+
+Nenhum novo evento; a evidência vem das duas entregas válidas anteriores.
+
+**Evidência de processamento**
+
+Uma identidade com duas tentativas e apenas um efeito persistido.
+
+**Erro esperado**
+
+Arquivo inexistente indica que a sequência essencial não foi concluída.
+
 **Execute**
 
 Consulte apenas contagens e a identidade sintética da ocorrência:
@@ -292,6 +332,22 @@ Observar uma mensagem inválida na dead-letter queue.
 **Pré-requisito**
 
 A fila já foi declarada pelo consumidor. Mantenha o mesmo ambiente local e não use payloads reais.
+
+**Variável alterada**
+
+O payload omite `result_reference`.
+
+**Evento publicado**
+
+`ResultadoLaboratorialDisponibilizado.v1` inválido, com UUID sintético próprio.
+
+**Evidência de processamento**
+
+O endpoint management mostra mensagem em `billing.resultados.v1.dlq`.
+
+**Erro esperado**
+
+Validação Pydantic falha, não há ack de sucesso e a mensagem segue à DLQ.
 
 **Execute**
 

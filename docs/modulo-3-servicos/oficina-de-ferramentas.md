@@ -1,242 +1,144 @@
 # Oficina de ferramentas: dois serviços, dois bancos e uma falha parcial
 
-Nesta oficina você sobe quatro contêineres, confirma a propriedade dos dados, chama o fluxo nominal, interrompe uma dependência e guarda evidências. Os dados são sintéticos. As senhas do Compose valem somente para a rede local descartável e não devem ser reaproveitadas.
+Nesta oficina, a demonstração local descartável é definida por `laboratorios/plataforma-hospitalar/infra/compose.servicos.yml`. Ela reúne os arquivos de aplicação em `laboratorios/plataforma-hospitalar/src/hospital/servicos/`, dois serviços FastAPI (`elegibilidade` e `exames`) e duas bases PostgreSQL (`db_elegibilidade` e `db_exames`). Elegibilidade decide se um beneficiário pode prosseguir; Exames consulta esse contrato e grava somente em sua própria base. Ao iniciar, nada está em execução; ao encerrar com `down -v`, contêineres, redes e dados didáticos são removidos.
+
+As senhas são exclusivas dessa demonstração local. Dados são sintéticos. O health check de cada aplicação confirma seu processo e banco próprio, não todas as dependências remotas.
 
 ## Ferramenta
 
-| Ferramenta | Uso na oficina | Verificação |
+| Ferramenta | Uso | Verificação |
 | --- | --- | --- |
-| Docker Engine | executar contêineres e redes | `docker version` |
-| Docker Compose v2 | coordenar processos e health checks | `docker compose version` |
-| Python 3.11 ou superior | executar testes de contrato | `python --version` |
-| FastAPI e httpx | oferecer e consumir HTTP | respostas nas portas configuradas |
-| PostgreSQL 16 | persistir estados com propriedade separada | dois bancos saudáveis |
-
-O Docker Compose fornece reprodução local, mas não representa orquestração de produção. O health check informa prontidão limitada ao processo e seu banco; não prova toda capacidade ponta a ponta.
-
-## Pré-requisitos
+| Docker Engine e Docker Compose v2 | contêineres, redes e health checks | `docker version` e `docker compose version` |
+| Python 3.11+ | testes de fronteira | `python --version` |
+| FastAPI, httpx e PostgreSQL 16 | HTTP e persistência isolada | respostas de saúde e dois bancos |
 
 **Objetivo**
 
-Confirmar as ferramentas antes de criar qualquer recurso e trabalhar apenas na pasta do laboratório.
+Observar uma fronteira de dados e uma falha parcial em uma demonstração local.
 
 **Pré-requisito**
 
-Tenha o repositório disponível, Python 3.11 ou superior e Docker com Compose v2. Por padrão, Compose usa as portas `8001` e `8002`; os comandos assumem que o terminal começa na raiz do repositório.
+Docker em execução e Python 3.11 ou superior.
 
-**Execute**
+## Pré-requisitos
 
-Confira as versões:
-
-```text
-Docker 24 ou superior
-Docker Compose 2 ou superior
-Python 3.11 ou superior
-```
-
-**Observe**
-
-`docker version` possui seções Client e Server quando o daemon responde. Se aparecer apenas informação do cliente seguida de erro de conexão, a ferramenta está instalada, mas o ambiente de contêineres ainda não está pronto.
-
-**Compare**
-
-A validação `docker compose ... config --quiet` analisa o documento sem iniciar contêineres. O comando `up --wait` comprova execução e saúde. São evidências diferentes.
-
-**Questões exploratórias**
-
-- Qual evidência demonstra sintaxe válida sem demonstrar serviço ativo?
-- Por que um health check local não garante o fluxo entre serviços?
+Verifique `docker version`, `docker compose version` e `python --version` antes de continuar.
 
 ## Instalação
 
 ### Windows
 
-Instale Docker Desktop pelas [instruções oficiais](https://docs.docker.com/desktop/setup/install/windows-install/) e Python pelas [instruções oficiais](https://docs.python.org/3/using/windows.html). Reinicie o terminal depois da instalação. Em PowerShell:
-
-```powershell
-docker version
-docker compose version
-py --version
-cd laboratorios\plataforma-hospitalar
-py -m pip install -e ".[dev]"
-New-Item -ItemType Directory -Force evidencias\modulo-3
-```
-
-**Resultado esperado**
-
-O servidor Docker responde, Compose informa versão 2, Python informa 3.11 ou superior e a instalação termina sem erro. A pasta `evidencias\modulo-3` existe dentro do laboratório.
-
-**Contingência**
-
-Se o servidor Docker não responder, abra Docker Desktop e aguarde a indicação de execução. Se a virtualização exigida estiver desabilitada, siga o diagnóstico oficial da instalação. Não altere arquivos do sistema para contornar essa condição. Ainda é possível executar a validação estática do Compose; registre que não houve evidência de contêineres ativos.
+Instale Docker Desktop e Python; use `py` quando `python` não estiver no PATH.
 
 ### macOS
 
-Instale Docker Desktop pelas [instruções oficiais](https://docs.docker.com/desktop/setup/install/mac-install/) e Python por [Homebrew](https://brew.sh/) ou pelo instalador oficial. No terminal:
-
-```bash
-docker version
-docker compose version
-python3 --version
-cd laboratorios/plataforma-hospitalar
-python3 -m pip install -e ".[dev]"
-mkdir -p evidencias/modulo-3
-```
-
-**Resultado esperado**
-
-Client e Server aparecem, Compose informa versão 2 e Python informa 3.11 ou superior. A instalação editável permite importar `hospital`.
-
-**Contingência**
-
-Se o daemon não responder, abra Docker Desktop e aguarde. Em Mac com Apple Silicon, a imagem usada possui variante compatível; não force uma plataforma diferente. Se `python3 -m pip` recusar instalação global, crie `.venv` com `python3 -m venv .venv`, ative-a e repita.
+Instale Docker Desktop e Python 3 pelo instalador oficial ou gerenciador de pacotes.
 
 ### Linux
 
-Instale Docker Engine e o plugin Compose pelas [instruções oficiais para Linux](https://docs.docker.com/engine/install/). Instale Python 3 com o gerenciador da distribuição. Depois:
+Instale Docker Engine, o plugin Compose e Python 3 pelo método da sua distribuição.
+
+## Preparação do laboratório
+
+Na raiz do clone, entre na pasta do laboratório e prepare um local para evidências. Em Windows use `py` no lugar de `python`, se necessário.
 
 ```bash
-docker version
-docker compose version
-python3 --version
 cd laboratorios/plataforma-hospitalar
-python3 -m venv .venv
-source .venv/bin/activate
 python -m pip install -e ".[dev]"
 mkdir -p evidencias/modulo-3
 ```
 
-**Resultado esperado**
+No PowerShell, o equivalente para o diretório é `New-Item -ItemType Directory -Force evidencias\modulo-3`.
 
-As versões são exibidas e o pacote é instalado no ambiente `.venv`.
-
-**Contingência**
-
-Se houver erro de permissão no socket Docker, use o procedimento pós-instalação oficial ou execute os comandos Docker com o mecanismo previsto pela sua distribuição. Não mude permissões do socket de forma ampla. Se o serviço estiver parado, inicie-o pelo gerenciador do sistema e repita `docker version`.
-
-## Preparação do laboratório
-
-### Essencial em aula
+## Execução
 
 **Execute**
 
-Dentro de `laboratorios/plataforma-hospitalar`, valide o arquivo antes de subir o ambiente:
+As etapas na ordem.
+
+**Observe**
+
+A saída de cada uma.
+
+**Compare**
+
+O estado nominal com a falha parcial.
+
+**Questões exploratórias**
+
+Qual dependência permanece saudável e qual capacidade deixa de ser concluída?
+
+Modalidades: **Essencial em aula**, **Exploração em dupla** e **Extensão** usam o mesmo roteiro com profundidades diferentes.
+
+### Roteiro de transição do ambiente
+
+| Etapa | Estado de entrada | Ação e evidência esperada | Contingência |
+| --- | --- | --- | --- |
+| Validar configuração | Os quatro serviços estão parados. | Execute os dois comandos `config`; `--quiet` termina sem texto e `--services` lista `elegibilidade`, `exames`, `db_elegibilidade` e `db_exames`. | Se o Docker não responder, guarde a saída e faça só a validação estática. |
+| Iniciar e inspecionar | Compose válido e serviços parados. | Suba a demonstração; `ps` mostra quatro serviços `healthy` e os dois `/health` retornam `200`. | Se uma porta estiver ocupada, escolha outras portas; não remova recursos fora deste projeto. |
+| Demonstrar falha parcial | As duas aplicações e bases estão saudáveis. | Pare `elegibilidade`; Exames permanece saudável, mas `POST /exames` retorna `503 dependencia_indisponivel`. | Se o resultado divergir, guarde `ps` e logs antes de reiniciar. |
+| Recuperar e verificar | Elegibilidade está parada e Exames continua saudável. | Execute `up -d --wait`; os dois `/health` voltam a `200`, então rode o teste de fronteiras. | Se o daemon não responder, execute somente os testes Python e registre a limitação. |
+| Limpar | A demonstração pode estar em qualquer estado anterior. | `down -v` remove contêineres, redes e volumes; `ps -a` não lista recursos ativos. | Se houver resíduo, repita apenas esse `down -v`. |
+
+### Escolher portas e validar a configuração
+
+Defina portas livres para não disputar os padrões 8001 e 8002. Em shells POSIX:
 
 ```bash
 export ELEGIBILIDADE_PORT=18001
 export EXAMES_PORT=18002
-docker compose -f infra/compose.servicos.yml config --quiet
 ```
 
-Em PowerShell, escolha as mesmas portas livres:
+No PowerShell:
 
 ```powershell
 $env:ELEGIBILIDADE_PORT = 18001
 $env:EXAMES_PORT = 18002
+```
+
+```bash
 docker compose -f infra/compose.servicos.yml config --quiet
 ```
 
-Em seguida, leia os nomes dos serviços:
+Resultado: nenhum texto e código zero significam que a configuração é sintaticamente válida. Essa validação não demonstra que Docker está em execução nem que os serviços estão saudáveis.
 
 ```bash
 docker compose -f infra/compose.servicos.yml config --services
 ```
 
-**Resultado esperado**
+Confirme os quatro nomes apresentados. O comando ajuda a evitar iniciar um arquivo Compose diferente por engano.
 
-O primeiro comando não imprime conteúdo e termina com código zero. O segundo lista `db_elegibilidade`, `db_exames`, `elegibilidade` e `exames`. As variáveis valem apenas para o terminal atual; para voltar às portas padrão, use `unset ELEGIBILIDADE_PORT EXAMES_PORT` em POSIX ou `Remove-Item Env:ELEGIBILIDADE_PORT,Env:EXAMES_PORT` em PowerShell antes do próximo `up`.
-
-**Observe**
-
-Cada aplicação recebe somente sua `DATABASE_URL`. Exames também recebe `ELIGIBILIDADE_URL`, que aponta para o contrato HTTP. Há uma rede de aplicação e uma rede interna para cada banco: Exames não está na rede de Elegibilidade, e o inverso também vale. Os bancos não publicam portas na máquina; as credenciais de aplicação são papéis PostgreSQL distintos, sem a senha administrativa.
-
-**Compare**
-
-Dois schemas no mesmo servidor poderiam garantir propriedade com permissões. Dois contêineres tornam a demonstração física mais clara, ao custo de mais recursos.
-
-**Questões exploratórias**
-
-- Qual variável demonstra dependência autorizada de Exames?
-- Qual configuração impediria o acesso direto mesmo sem o teste textual?
-
-### Exploração em dupla
-
-**Execute**
-
-Uma pessoa identifica as garantias do Compose. A outra identifica o que somente os testes provam. Reúnam as listas e classifiquem configuração, comportamento e intenção.
-
-**Observe**
-
-Configuração pode declarar isolamento; a execução confirma que os componentes iniciam; o teste de fronteira detecta uma regressão de código. Nenhuma evidência isolada cobre tudo.
-
-**Compare**
-
-Relacione cada evidência a uma afirmação arquitetural específica.
-
-**Questões exploratórias**
-
-- Uma aplicação saudável pode ter uma operação indisponível?
-- Um teste com transporte simulado elimina a necessidade de teste integrado?
-
-### Extensão
-
-**Execute**
-
-Leia `infra/postgres/init.sql` e explique como `current_database()` escolhe o schema criado. Não altere o arquivo durante a execução principal.
-
-**Observe**
-
-O mesmo arquivo é incorporado nas duas imagens PostgreSQL didáticas, mas cada execução cria apenas a estrutura de seu proprietário.
-
-**Compare**
-
-Compare script de inicialização descartável com migrações versionadas necessárias em produção.
-
-**Questões exploratórias**
-
-- Como uma migração com rollback mudaria o processo?
-- Que alerta detectaria falha repetida de inicialização?
-
-## Execução
-
-### Essencial em aula
-
-**Execute**
-
-Suba e aguarde os health checks:
+## Iniciar e observar a demonstração
 
 ```bash
 docker compose -f infra/compose.servicos.yml up -d --build --wait
-docker compose ps
 ```
 
-**Resultado esperado**
+## Resultado esperado
 
-O `up` termina com quatro serviços iniciados. `docker compose ps` mostra `db_elegibilidade`, `db_exames`, `elegibilidade` e `exames` como `healthy`. Com as variáveis acima, as aplicações publicam `0.0.0.0:18001->8000` e `0.0.0.0:18002->8000`.
+O `--wait` termina quando os quatro health checks ficam saudáveis. Se uma imagem não puder ser baixada ou uma porta estiver ocupada, guarde a saída e escolha outra porta; não remova recursos Docker fora deste projeto.
 
-**Contingência**
+```bash
+docker compose -f infra/compose.servicos.yml ps
+```
 
-Se o build falhar por indisponibilidade de rede ao baixar imagens ou dependências, preserve o log e repita quando a conexão estiver estável. Se uma porta estiver ocupada, encerre apenas o processo local conhecido ou altere temporariamente o mapeamento e registre a nova URL. Não remova processos desconhecidos.
+A saída equivalente de `docker compose ps` deve listar `db_elegibilidade`, `db_exames`, `elegibilidade` e `exames` como `healthy`. Com as portas escolhidas, as aplicações aparecem como `0.0.0.0:18001->8000` e `0.0.0.0:18002->8000`.
 
-Consulte saúde. Em macOS ou Linux:
+Confirme a saúde a partir da sua máquina:
 
 ```bash
 curl -i "http://localhost:${ELEGIBILIDADE_PORT}/health"
 curl -i "http://localhost:${EXAMES_PORT}/health"
 ```
 
-No PowerShell:
+No PowerShell, `curl.exe` evita o alias `curl` para `Invoke-WebRequest`:
 
 ```powershell
 curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/health"
 curl.exe -i "http://localhost:$env:EXAMES_PORT/health"
 ```
 
-**Resultado esperado**
-
-Ambas respondem `HTTP/1.1 200 OK`. Os corpos são `{"status":"ok","servico":"elegibilidade"}` e `{"status":"ok","servico":"exames"}`.
-
-Solicite um exame. Em macOS ou Linux:
+Cada resposta deve ser `200`. Agora crie uma solicitação elegível:
 
 ```bash
 curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
@@ -244,7 +146,7 @@ curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
-No PowerShell:
+PowerShell (201):
 
 ```powershell
 curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
@@ -252,18 +154,21 @@ curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
-**Resultado esperado**
+Espere `201 Created`, com `situacao: "solicitado"`. O identificador pode variar entre execuções; depois de `down -v`, volta ao primeiro valor da nova base.
 
-A resposta é `201 Created`; após um `down -v` novo, o identificador normalmente começa em `1`, mas a verificação deve aceitar o identificador retornado. O beneficiário e o exame são repetidos e `situacao` é `solicitado`.
+## Interpretação
 
-Interrompa somente Elegibilidade:
+### Tornar a falha parcial observável
 
 ```bash
 docker compose -f infra/compose.servicos.yml stop elegibilidade
+```
+
+```bash
 docker compose -f infra/compose.servicos.yml ps
 ```
 
-Repita o `POST` pela URL configurada. Em POSIX:
+Repita a chamada abaixo. Ela deve retornar `503 Service Unavailable` e o código `dependencia_indisponivel`, enquanto `GET /health` de Exames ainda retorna `200`:
 
 ```bash
 curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
@@ -271,104 +176,42 @@ curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
-**Resultado esperado**
+PowerShell (503):
 
-Exames continua em execução, mas a operação responde `503 Service Unavailable` com `{"detail":{"codigo":"dependencia_indisponivel"}}`. Essa é a falha parcial observável.
+```powershell
+curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
+  -H "Content-Type: application/json" `
+  -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
+```
 
-**Observe**
-
-O banco de Exames e seu processo não caíram. A capacidade não conclui porque depende de uma decisão remota. O timeout limita a espera e o código preserva a causa sem revelar detalhes internos.
-
-**Compare**
-
-Compare esse resultado com um processo único. A chamada local evitaria indisponibilidade de rede, mas também não ofereceria isolamento de implantação.
-
-**Questões exploratórias**
-
-- Por que não assumir `elegivel: true` como fallback?
-- Que métrica diferenciaria erro do consumidor de falha da dependência?
-
-Reinicie a dependência e aguarde sua saúde:
+Essa é a falha parcial: a capacidade de criar exame depende temporalmente de Elegibilidade, mas o processo e a base de Exames não pararam.
 
 ```bash
 docker compose -f infra/compose.servicos.yml up -d --wait
 ```
 
-Esse comando espera health checks de serviços em execução; ele não espera um contêiner saudável terminar. Confirme novamente os dois `/health` nas URLs configuradas antes de continuar.
+## Verificar as fronteiras sem depender do Compose
 
-Execute o contrato de fronteira:
+Com os serviços saudáveis, execute:
 
 ```bash
 python -m pytest tests/test_service_boundaries.py -q
 ```
 
-No Windows, se não ativou ambiente:
-
-```powershell
-py -m pytest tests/test_service_boundaries.py -q
-```
-
-**Resultado esperado**
-
-O pytest informa `4 passed`: `test_exames_consumes_eligibility_only_through_http_contract`, `test_exames_makes_partial_failure_observable_when_dependency_is_down`, `test_exames_makes_its_own_database_failure_observable` e a guarda de SQL alheio. O teste de banco próprio torna a falha de sua própria fronteira observável; a guarda de fonte é secundária à separação de rede e credenciais.
-
-## Resultado esperado
-
-Ao final da execução nominal, há evidência de quatro componentes saudáveis, duas respostas de saúde, um `201`, um `503` deliberado e quatro testes aprovados. Resultados diferentes devem ser registrados com comando, horário e saída; não substitua evidência ausente por uma descrição presumida.
-
-## Interpretação
-
-O experimento separa três afirmações. **Coesão:** cada serviço implementa uma capacidade pequena. **Propriedade:** cada processo recebe somente seu banco. **Acoplamento:** Exames ainda depende temporalmente de Elegibilidade. O `503` não é um defeito do laboratório; é o custo visível da decisão síncrona.
-
-SAGA não resolveria indisponibilidade de uma consulta necessária antes da escrita. CQRS não faria a rede desaparecer. Um cache de elegibilidade poderia aumentar disponibilidade, mas introduziria defasagem e exigiria uma regra clínica explícita para validade.
+Espere `4 passed`, incluindo `test_exames_makes_its_own_database_failure_observable`. Os testes verificam o contrato HTTP, a falha parcial, a falha da base própria e a ausência de SQL contra a tabela de Elegibilidade. Em Windows sem ambiente ativado, use `py -m pytest tests/test_service_boundaries.py -q`.
 
 ## Limpeza e contingência
 
-**Execute**
-
-Remova contêineres, rede e volumes didáticos:
+### Limpar a demonstração
 
 ```bash
 docker compose -f infra/compose.servicos.yml down -v
+```
+
+```bash
 docker compose -f infra/compose.servicos.yml ps -a
 ```
 
-**Resultado esperado**
-
-O primeiro comando informa remoção dos quatro contêineres, da rede e dos volumes. O segundo não lista contêineres do projeto. Os arquivos em `evidencias/modulo-3` permanecem.
-
-**Contingência**
-
-Se o daemon esteve indisponível desde o início, execute apenas `docker compose -f infra/compose.servicos.yml config --quiet` e os testes Python. Registre literalmente “Compose validado estaticamente; execução de contêineres não realizada porque o daemon não respondeu”, junto do erro de `docker version`. Quando o daemon voltar, repita `up`, chamadas e `down -v`. Não declare health checks observados sem execução.
-
-Se a oficina for interrompida depois do `up`, retorne à pasta do laboratório e execute `down -v`. Esse comando usa apenas recursos do projeto descrito no arquivo; não use limpeza global do Docker.
-
 ## Evidência a entregar
 
-Organize em `evidencias/modulo-3`:
-
-Em POSIX, capture as chamadas nas portas que você configurou; repita o último comando depois de parar Elegibilidade para obter a falha parcial:
-
-```bash
-curl -i "http://localhost:${ELEGIBILIDADE_PORT}/health" | tee evidencias/modulo-3/health-elegibilidade.txt
-curl -i "http://localhost:${EXAMES_PORT}/health" | tee evidencias/modulo-3/health-exames.txt
-curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" -H 'Content-Type: application/json' -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}' | tee evidencias/modulo-3/exame-criado.txt
-# depois de `stop elegibilidade`, repita o POST e grave em falha-parcial.txt
-curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" -H 'Content-Type: application/json' -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}' | tee evidencias/modulo-3/falha-parcial.txt
-```
-
-- `versoes.txt` com versões e resposta do servidor Docker;
-- `compose-ps.txt` com quatro estados saudáveis;
-- `health-elegibilidade.txt` e `health-exames.txt`;
-- `exame-criado.txt` com `201`;
-- `falha-parcial.txt` com `503`;
-- `testes-fronteira.txt` com `4 passed`;
-- `limpeza.txt` com remoção ou a contingência precisa.
-
-### Exploração em dupla
-
-Produzam um parágrafo relacionando cada arquivo a coesão, acoplamento, propriedade ou falha parcial. Identifiquem uma afirmação que a oficina não prova.
-
-### Extensão
-
-Proponha um novo teste que rejeite corpo incompatível do provedor e compare `502 contrato_invalido` com `503 dependencia_indisponivel`. Não implemente SAGA ou CQRS; registre apenas quando seriam justificáveis.
+Guarde em `laboratorios/plataforma-hospitalar/evidencias/modulo-3/` as saídas de versões, health checks, `201`, `503` e testes. Se o daemon nunca respondeu, faça somente `config --quiet` e os testes Python e registre: “Compose validado estaticamente; execução de contêineres não realizada porque o daemon não respondeu”. Não afirme que observou health checks sem uma execução real.

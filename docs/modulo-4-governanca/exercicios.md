@@ -1,105 +1,134 @@
 # Exercícios: tornar políticas governáveis
 
-As atividades percorrem a Taxonomia de Bloom e exigem premissas explícitas. Não existe desenho único: use os fatos do caso, declare incertezas e mostre como a proposta seria verificada. Todas as atividades pedem uma entrega autocontida, sem depender de console manual.
+Tente responder antes de abrir cada feedback. Nas atividades avançadas, os nove campos tornam explícitos contexto, artefato e avaliação de uma decisão justificável. Cada entrega distingue política, arquivo declarativo, serviço que a recebe e saída que comprova o comportamento.
 
 ## Recordar
 
-### Inventariar a linguagem de governança
+1. Defina governança de serviços em uma frase.
 
-**Situação**
+<details>
+<summary>Ver resposta</summary>
 
-Uma equipe recebeu o repositório da plataforma hospitalar e encontrou rota pública, serviço, Collector e Jaeger, mas não sabe nomear o papel de cada elemento.
+É o conjunto de contratos, responsabilidades e políticas verificáveis que torna uma decisão repetível e revisável.
+</details>
 
-**Seu papel**
+2. O que uma política de rate limiting protege e o que ela não decide?
 
-Você organiza um glossário inicial para a nova equipe.
+<details>
+<summary>Ver resposta</summary>
 
-**Insumos disponíveis**
+Protege a capacidade da borda contra volume excessivo; não decide autorização ou regra clínica do domínio.
+</details>
 
-Os arquivos `kong.yml`, `otel-collector.yml`, Compose e este módulo; nenhuma informação adicional de produção.
+3. Diferencie `correlation_id` de trace ID.
 
-**Como conduzir**
+<details>
+<summary>Ver resposta</summary>
 
-1. Defina governança, política, ownership, catálogo e versionamento.
-2. Diferencie logs, métricas e traces por pergunta respondida.
-3. Defina SLO, correlation ID, trace ID e rate limiting.
-4. Relacione cada termo a um artefato do laboratório.
+`correlation_id` facilita a busca humana entre resposta e logs; trace ID identifica a árvore técnica de spans distribuídos.
+</details>
 
-**Entrega esperada**
+4. Nomeie o arquivo da política de rota local.
 
-Um glossário de uma página com uma definição, um exemplo e uma evidência para cada termo.
+<details>
+<summary>Ver resposta</summary>
 
-**Critérios de avaliação**
+`laboratorios/plataforma-hospitalar/infra/kong/kong.yml`.
+</details>
 
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Definições precisas | 35% | Evidência: definição e exemplo; insuficiente: termo apenas repetido. |
-| Relação com artefatos | 35% | Evidência: artefato citado; insuficiente: conceito sem aplicação. |
-| Distinção entre sinais | 30% | Evidência: finalidade distinta; insuficiente: logs, métricas e traces confundidos. |
+5. Que saída comprova o limite da oficina?
+
+<details>
+<summary>Ver resposta</summary>
+
+Uma resposta HTTP `429 Too Many Requests` depois de mais chamadas que o limiar da janela.
+</details>
 
 ## Compreender
 
-### Explicar a fronteira de responsabilidade
+1. Explique por que Kong não é sinônimo de governança.
 
-**Situação**
+<details>
+<summary>Ver resposta</summary>
 
-Uma pessoa propõe implementar no gateway a regra “beneficiário com plano vencido não pode solicitar exame”, porque a entrada já conhece a rota.
+Kong implementa localmente políticas de borda; governança também inclui contrato, owner, versão, evidência e revisão, que sobrevivem à troca da ferramenta.
+</details>
 
-**Seu papel**
+2. Por que uma regra de plano vencido deve permanecer em Elegibilidade?
 
-Você explica a fronteira sem rejeitar a preocupação com segurança.
+<details>
+<summary>Ver resposta</summary>
 
-**Insumos disponíveis**
+Ela depende de estado e exceções do domínio, que pertencem ao serviço; o gateway só medeia controles comuns de entrada.
+</details>
 
-A rota pública, o serviço Elegibilidade, banco próprio e a política de correlação e limite da oficina.
+3. Compare uma resposta `200` direta e uma `200` pelo gateway.
 
-**Como conduzir**
+<details>
+<summary>Ver resposta</summary>
 
-1. Descreva o objetivo técnico do gateway.
-2. Localize a regra de plano vencido e justifique.
-3. Identifique duas políticas adequadas à borda.
-4. Explique como os sinais operacionais ajudam a investigar a decisão.
+A direta prova serviço e dado didático; a governada também prova a rota e a aplicação da política de borda, mas não autorização clínica.
+</details>
 
-**Entrega esperada**
+4. Por que o trace não substitui um log estruturado?
 
-Uma nota para a equipe, com diagrama simples de responsabilidade e consequências da escolha.
+<details>
+<summary>Ver resposta</summary>
 
-**Critérios de avaliação**
+O trace mostra caminho e tempo causal; o log descreve evento e campos seguros. A investigação usa ambos com a mesma correlação.
+</details>
 
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Separação entre borda e domínio | 40% | Evidência: responsabilidade localizada; insuficiente: regra clínica no gateway. |
-| Justificativa contextual | 30% | Evidência: decisão ligada ao caso; insuficiente: regra genérica. |
-| Uso correto de telemetria | 30% | Evidência: sinal com pergunta; insuficiente: coleta sem finalidade. |
+5. O que a rastreabilidade permite afirmar com segurança?
+
+<details>
+<summary>Ver resposta</summary>
+
+Que uma decisão publicada, sua configuração e uma execução observada podem ser relacionadas; ela não prova sozinha uma conclusão clínica ou de conformidade.
+</details>
 
 ## Aplicar
 
 ### Publicar uma rota de resultado de exame
 
+**Objetivo**
+
+Preparar uma política inicial para Resultados que seja declarada, limitada e verificável.
+
 **Situação**
 
-O serviço Resultados deve ganhar entrada pública. Ele contém dado de saúde, tem consumidor móvel autenticado e precisa de proteção contra picos. A regra de quem pode ler cada resultado depende de vínculo clínico e permanece no serviço.
+Resultados contém dado de saúde, possui consumidor móvel autenticado, precisa suportar picos e mantém a decisão de vínculo clínico no serviço.
 
 **Seu papel**
 
-Você prepara uma política inicial, declarada e testável.
+Você prepara a proposta de owner do serviço.
+
+**Artefato que você irá usar**
+
+Crie `<raiz-do-clone>/entregas/modulo-4/aplicar-resultados.md`, usando `docs/modulo-4-governanca/padroes-e-decisoes.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` como referência, sem alterar o laboratório.
+
+**Antes de executar**
+
+O estado inicial é Kong DB-less com uma réplica local, Collector, Jaeger e a convenção `X-Correlation-ID`; não há tráfego real nesta atividade.
 
 **Insumos disponíveis**
 
-Kong DB-less, Collector, Jaeger, um catálogo em Markdown e a convenção de correlation ID da oficina. O time ainda opera uma única réplica de gateway no ambiente de estudo.
+Contrato de Resultados, catálogo em Markdown e políticas da oficina.
 
-**Como conduzir**
+**O que fazer**
 
-1. Escreva a entrada de catálogo com owner, contrato, consumidores e dados.
-2. Proponha rota, chave de limite, janela e consequência de `429`.
-3. Declare o que gateway faz e o que o serviço faz.
-4. Desenhe um trace com gateway, serviço e dependência.
-5. Descreva chamada e consulta de trace automatizáveis.
-6. Registre uma condição que exigiria rever limite local.
+1. Registre owner, contrato, consumidores, dados e versão.
+2. Proponha rota, chave, janela, consequência de `429` e fronteira de domínio.
+3. Desenhe a propagação de `correlation_id` e trace.
+4. Declare um gatilho de revisão do limite.
+5. Se a política não puder ser verificada com dados sintéticos, mantenha-a como hipótese e registre o teste pendente.
+
+**Evidência esperada**
+
+Política observada: limite de entrada; arquivo: `<raiz-do-clone>/entregas/modulo-4/aplicar-resultados.md`; serviço que a recebe: Resultados via gateway; saída: uma chamada automatizável com `429`, `X-Correlation-ID` e trace consultável.
 
 **Entrega esperada**
 
-Um arquivo de política, mapa de fluxo e roteiro de verificação com entradas e efeitos esperados.
+Envie o arquivo com uma página, política, mapa de fluxo, hipótese e risco.
 
 **Critérios de avaliação**
 
@@ -115,30 +144,44 @@ Um arquivo de política, mapa de fluxo e roteiro de verificação com entradas e
 
 ### Diagnosticar uma cadeia sem correlação
 
+**Objetivo**
+
+Separar fatos, inferências e hipóteses ao investigar uma cadeia sem correlação consistente.
+
 **Situação**
 
-Atendimento relata que algumas consultas falham. Gateway registra `502`, Elegibilidade registra erro de banco e Jaeger contém traces sem nome consistente de serviço. Cada registro usa identificador diferente; a média de latência está estável.
+Gateway registra `502`, Elegibilidade registra erro de banco e Jaeger contém traces sem nome consistente; a média de latência permanece estável.
 
 **Seu papel**
 
-Você analisa o incidente sem concluir causalidade além das evidências.
+Você conduz a análise do incidente sem afirmar causalidade além da evidência.
+
+**Artefato que você irá usar**
+
+Crie `<raiz-do-clone>/entregas/modulo-4/analisar-correlacao.md`, usando `docs/modulo-4-governanca/conceitos.md`, `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`.
+
+**Antes de executar**
+
+O estado inicial reúne três logs anonimizados, taxa de `5xx`, traces parciais e a política atual; não inclua dado clínico na entrega.
 
 **Insumos disponíveis**
 
-Três amostras de logs anonimizados, taxa de `5xx` por minuto, traces parciais e o arquivo de política atual.
+As amostras do caso e os arquivos declarativos indicados.
 
-**Como conduzir**
+**O que fazer**
 
 1. Separe fato, inferência e hipótese.
-2. Mapeie lacunas de correlation ID e traceparent.
-3. Explique por que média pode ocultar uma falha relevante.
-4. Compare ao menos duas causas plausíveis.
-5. Proponha alteração mínima em política, sinal e teste.
-6. Indique qual dado adicional confirmaria ou enfraqueceria a hipótese.
+2. Mapeie lacunas de `correlation_id` e `traceparent`.
+3. Compare duas causas plausíveis e uma mudança mínima.
+4. Declare o dado que confirmaria ou enfraqueceria cada hipótese.
+
+**Evidência esperada**
+
+Política: contexto; artefatos: `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`; serviços: Kong e Elegibilidade. Kong extrai e injeta o `traceparent` W3C; o middleware de Elegibilidade extrai o contexto e cria o span filho. `infra/observabilidade/otel-collector.yml` recebe sinais OTLP, processa em lote e exporta ao Jaeger; não propaga `traceparent`. Saída: trace e log correlacionados, ou lacuna registrada.
 
 **Entrega esperada**
 
-Um diagnóstico com linha do tempo, mapa de evidências e plano de investigação seguro.
+Envie o arquivo com linha do tempo, mapa de evidências e plano de investigação seguro.
 
 **Critérios de avaliação**
 
@@ -154,30 +197,43 @@ Um diagnóstico com linha do tempo, mapa de evidências e plano de investigaçã
 
 ### Escolher uma política de limite
 
+**Objetivo**
+
+Recomendar uma política temporária que proteja capacidade e explicite seu impacto.
+
 **Situação**
 
-Um portal parceiro dispara lotes de consultas toda manhã. Limite por IP protege a infraestrutura, mas hospitais diferentes saem pelo mesmo proxy. Limite por credencial permite justiça maior, porém as credenciais ainda estão em transição. Recusar solicitações pode atrasar atendimento; aceitar tudo pode degradar todos os consumidores.
+Um portal parceiro atinge 20 chamadas por segundo por cinco minutos; a capacidade atual é oito por segundo e hospitais compartilham proxy.
 
 **Seu papel**
 
-Você recomenda uma política temporária e condições de evolução.
+Você recomenda a decisão e suas condições de evolução.
+
+**Artefato que você irá usar**
+
+Crie `<raiz-do-clone>/entregas/modulo-4/avaliar-limite.md`, usando `docs/modulo-4-governanca/exemplo-arquitetural.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml`.
+
+**Antes de executar**
+
+O estado inicial considera consumidores parcialmente identificados, suporte em horário comercial e meta de latência para consultas aceitas.
 
 **Insumos disponíveis**
 
-Picos de 20 chamadas por segundo durante cinco minutos, capacidade atual de oito por segundo, consumidores identificados parcialmente, suporte em horário comercial e meta de latência para consultas aceitas.
+Pico, capacidade, risco de atraso e alternativas IP, credencial e fila.
 
-**Como conduzir**
+**O que fazer**
 
-1. Compare IP, credencial e fila como chaves ou estratégias.
-2. Avalie proteção, justiça, operação e risco de atraso.
-3. Declare resposta para `429` e orientação a clientes.
-4. Escolha indicador, SLO e sinal de revisão.
-5. Registre impactos para owner, consumidores e plataforma.
-6. Descreva experimento reversível antes de uso amplo.
+1. Compare as três estratégias por proteção, justiça e operação.
+2. Declare resposta `429`, SLO, sinal de revisão e comunicação a consumidores.
+3. Proponha experimento reversível e plano de retorno.
+
+**Evidência esperada**
+
+Política observada: rate limiting; arquivo: `infra/kong/kong.yml`; serviço que a recebe: Kong diante de Elegibilidade; entrega: `<raiz-do-clone>/entregas/modulo-4/avaliar-limite.md`; saída: série controlada de chamadas com `429` e decisão registrada sobre o impacto.
 
 **Entrega esperada**
 
-Um registro de decisão com alternativas, decisão, consequências, evidências e plano de retorno.
+Envie o arquivo com alternativas, decisão, consequências, evidências e retorno.
 
 **Critérios de avaliação**
 
@@ -193,31 +249,44 @@ Um registro de decisão com alternativas, decisão, consequências, evidências 
 
 ### Desenhar o mínimo de governança para agenda
 
+**Objetivo**
+
+Criar um pacote inicial de decisão para Agenda que continue verificável ao evoluir.
+
 **Situação**
 
-Agenda será adicionada à plataforma. Ela consulta Elegibilidade, reserva horário e informa preparo de sala. O novo serviço terá owner próprio, uma API pública e integração com duas equipes. A primeira versão precisa começar localmente, mas sua governança não pode depender de memória informal.
+Agenda consulta Elegibilidade, reserva horário e informa preparo de sala; terá owner próprio, API pública e integração com duas equipes.
 
 **Seu papel**
 
-Você cria um pacote de decisão para iniciar e evoluir o serviço.
+Você cria a proposta que começa localmente sem depender de memória informal.
+
+**Artefato que você irá usar**
+
+Crie `<raiz-do-clone>/entregas/modulo-4/criar-agenda/` e entregue nele `adr.md`, `politica.yml`, `sinais.md` e `teste.md`, usando `laboratorios/plataforma-hospitalar/infra/compose.governanca.yml` apenas como referência.
+
+**Antes de executar**
+
+Considere dados sintéticos, confirmação inicial em três segundos e no máximo três novas unidades implantáveis no semestre.
 
 **Insumos disponíveis**
 
-Contrato de Elegibilidade, Compose da oficina, limite de três novas unidades implantáveis no semestre, dados sintéticos e objetivo de confirmação inicial em três segundos.
+Contrato de Elegibilidade, Compose da oficina e as restrições declaradas.
 
-**Como conduzir**
+**O que fazer**
 
-1. Crie entrada de catálogo, ownership e classificação de dados.
-2. Defina contrato e estratégia de versão.
-3. Separe políticas de gateway, serviço e domínio.
-4. Modele logs, métricas, traces e correlation ID.
-5. Defina um SLO e seu orçamento de erro.
-6. Descreva teste de rota, limite e propagação.
-7. Inclua dois gatilhos que exigiriam revisão arquitetural.
+1. Defina catálogo, classificação de dados, contrato e estratégia de versão.
+2. Separe políticas de gateway, serviço e domínio.
+3. Modele logs, métricas conceituais, trace, `correlation_id`, SLO e orçamento de erro.
+4. Planeje testes de rota, limite e propagação, além de dois gatilhos de revisão.
+
+**Evidência esperada**
+
+Política observada: rota, correlação e limite; arquivo: `<raiz-do-clone>/entregas/modulo-4/criar-agenda/politica.yml`; serviço que a recebe: Agenda através do gateway; saída: roteiro reproduzível com resposta de rota, `429`, `X-Correlation-ID` e consulta de trace.
 
 **Entrega esperada**
 
-Um pacote com ADR, diagrama, configuração declarativa ilustrativa, plano de sinais e roteiro de teste reproduzível.
+Envie os quatro arquivos com ADR, diagrama, configuração ilustrativa, plano de sinais e roteiro de teste.
 
 **Critérios de avaliação**
 

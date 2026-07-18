@@ -2,7 +2,17 @@
 
 Esta oficina cria e remove um cluster local descartável. Ela usa a imagem da API de elegibilidade, mas não envia dados, credenciais ou imagens a serviço remoto. Todos os nomes e portas são fixos: cluster `hospital-local`, namespace `hospital`, Deployment e Service `hospital-api`, porta do contêiner `8000` e acesso local `http://127.0.0.1:18080`. Não use estes comandos contra um contexto compartilhado.
 
-## Ferramenta
+## Leia antes de executar comandos
+
+O `Dockerfile` descreve como produzir a imagem imutável: parte de Python 3.12, instala a aplicação, cria um usuário sem privilégios e expõe a porta 8000. A construção local materializa esse pacote; a tag `hospital-api:1.0.0` é a revisão usada pelo Deployment e não um endereço de registry de produção. Um contêiner só aparece quando essa imagem é executada.
+
+O arquivo `infra/kind/cluster.yaml` instrui o **kind** a criar o cluster Kubernetes `hospital-local` em contêineres Docker, com um nó de controle e a porta 30080 limitada a `127.0.0.1:18080`. Ele cria um **cluster local descartável** para a oficina; não deve ser usado em um cluster compartilhado, nem os comandos desta página devem ser apontados para qualquer contexto compartilhado.
+
+Os manifestos expressam o estado inicial, antes de serem aplicados ao cluster: `namespace.yaml` cria a fronteira `hospital`; `configmap.yaml` fornece somente `APP_ENV=local-kind`; `deployment.yaml` pede duas réplicas da imagem, recursos e atualização gradual; `service.yaml` seleciona os Pods por `app: hospital-api`; e `hpa.yaml` declara a faixa de duas a cinco réplicas, dependente de métricas disponíveis. Nada disso cria dados clínicos ou tolerância a falhas de zona.
+
+As probes deixam a condição observável. `readiness` consulta `/health/ready` e mantém um Pod fora dos endpoints enquanto ele não pode receber tráfego. `liveness` consulta `/health/live` para permitir reinício de um processo travado; ela não deve depender de banco ou de uma API remota. O estado inicial esperado é: nenhum recurso do namespace `hospital` aplicado, nenhuma imagem no nó kind e nenhum contexto `kind-hospital-local` até que o cluster seja criado e a imagem seja carregada.
+
+## Ferramentas e evidências
 
 | Ferramenta | Papel | Evidência observável |
 | --- | --- | --- |

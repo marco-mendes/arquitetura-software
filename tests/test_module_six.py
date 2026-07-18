@@ -10,6 +10,51 @@ MODULE = ROOT / "docs" / "modulo-6-nuvem"
 
 
 class ModuleSixTest(unittest.TestCase):
+    def test_workshop_explains_complete_runtime_before_executable_commands(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        presentation = (
+            "## Leia antes de executar comandos",
+            "O `Dockerfile` descreve",
+            "O arquivo `infra/kind/cluster.yaml` instrui",
+            "Os manifestos expressam o estado inicial",
+            "As probes deixam a condição observável",
+        )
+        commands = (
+            "kubectl apply",
+            "docker build -t hospital-api:1.0.0 .",
+            "docker image inspect hospital-api:1.0.0",
+            "kind get clusters",
+            "kind create cluster --name hospital-local",
+            "kind load docker-image hospital-api:1.0.0 --name hospital-local",
+            "kubectl config current-context",
+            "curl --fail --silent http://127.0.0.1:18080/health/ready",
+            "python -m pytest tests/test_k8s_manifests.py -q",
+        )
+
+        presentation_positions = [workshop.index(item) for item in presentation]
+        self.assertEqual(presentation_positions, sorted(presentation_positions))
+        self.assertLess(
+            max(presentation_positions),
+            min(workshop.index(command) for command in commands),
+        )
+
+    def test_unit_six_distinguishes_service_models_and_runtime_mechanisms(self):
+        text = (
+            (MODULE / "conceitos.md").read_text(encoding="utf-8")
+            + (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+        )
+        for term in (
+            "IaaS",
+            "PaaS",
+            "SaaS",
+            "on-premise",
+            "contêiner",
+            "orquestração",
+            "readiness",
+            "liveness",
+        ):
+            self.assertIn(term, text)
+
     def test_content_contract(self):
         assert_module_contract(
             self,

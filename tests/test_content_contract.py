@@ -10,6 +10,8 @@ from scripts.validate_content import (
     MODULES,
     PAGES,
     bloom_sections,
+    expandable_feedback_errors,
+    self_contained_activity_errors,
     validate_all,
     validate_document,
     validate_module,
@@ -52,7 +54,11 @@ class ContentContractTest(unittest.TestCase):
     def test_mkdocs_excludes_internal_planning_documents(self):
         config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
 
-        self.assertIn("superpowers/**", config.get("exclude_docs", ()))
+        excluded = config.get("exclude_docs", "")
+        self.assertIsInstance(excluded, str)
+        patterns = tuple(line.strip() for line in excluded.splitlines() if line.strip())
+        self.assertEqual(("superpowers/**",), patterns)
+        self.assertNotIn("superpowers", yaml.safe_dump(config.get("nav", ())))
 
     def test_public_pages_use_assessment_criteria_vocabulary(self):
         for path in DOCS.rglob("*.md"):
@@ -90,6 +96,30 @@ class ContentContractTest(unittest.TestCase):
 
         self.assertEqual({"Recordar", "Compreender"}, set(sections))
         self.assertNotIn("Resposta", sections["Recordar"])
+
+    def test_exercise_parsers_report_missing_feedback_and_context(self):
+        text = """## Recordar
+
+1. Defina conector.
+
+## Aplicar
+
+**Objetivo**
+
+Definir um contrato.
+"""
+
+        feedback_errors = expandable_feedback_errors(text, "exemplo.md")
+        activity_errors = self_contained_activity_errors(text, "exemplo.md")
+
+        self.assertEqual(
+            ["exemplo.md: Recordar: pergunta sem resposta expansível"],
+            feedback_errors,
+        )
+        self.assertIn(
+            "exemplo.md: Aplicar: marcador obrigatório ausente: **Situação**",
+            activity_errors,
+        )
 
     def test_mkdocs_renders_explicit_anchors_accepted_by_validator(self):
         config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))

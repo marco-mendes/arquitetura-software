@@ -6,6 +6,10 @@ A plataforma hospitalar recebe uma solicitação de elegibilidade e devolve um p
 
 O Deployment pede duas réplicas e seleciona `app: hospital-api`. O mesmo rótulo aparece no template do Pod e no Service; esse contrato simples é vital. Se selector e labels divergirem, o Service existe, mas não tem endpoints. A porta interna é sempre `8000`, chamada `http`. O Service NodePort expõe a porta `30080` dentro do nó kind; a configuração do cluster a mapeia para `127.0.0.1:18080`, evitando exposição em todas as interfaces da máquina.
 
+**Texto alternativo:** o acesso restrito a `127.0.0.1:18080` chega ao Service, que seleciona dois Pods na porta 8000; o Deployment mantém as réplicas.
+
+*Figura 9 — Encaminhamento local até as réplicas da API. Fonte: curso.*
+
 ```mermaid
 flowchart TB
     C[Cliente local :18080] --> N[Nó kind :30080]

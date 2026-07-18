@@ -12,8 +12,8 @@ class ConceptInfographicsTest(unittest.TestCase):
     def test_each_infographic_has_its_own_markdown_reference_and_equivalent(self):
         figures = (
             ("index.md", "assets/images/capa-arquitetura-software.png", 1),
-            ("modulo-1-visao-geral/conceitos.md", "../assets/images/m01-mapa-estilos.png", 2),
-            ("modulo-2-apis/conceitos.md", "../assets/images/m02-anatomia-api.png", 3),
+            ("modulo-1-visao-geral/conceitos.md", "../assets/images/m01-mapa-estilos.png", 4),
+            ("modulo-2-apis/conceitos.md", "../assets/images/m02-anatomia-api.png", 4),
             ("modulo-3-servicos/conceitos.md", "../assets/images/m03-fronteiras-servicos.png", 4),
             ("modulo-4-governanca/conceitos.md", "../assets/images/m04-governanca-observavel.png", 5),
             ("modulo-5-eventos/conceitos.md", "../assets/images/m05-fluxo-eventos.png", 6),

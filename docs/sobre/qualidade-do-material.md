@@ -47,6 +47,8 @@ Os prompts que originaram os infográficos ficam em [prompts das imagens](../ass
 
 Os exercícios de Recordar e Compreender podem oferecer apoio direto quando ele ajuda a consolidar vocabulário. Nos níveis Aplicar, Analisar e Avaliar, o material apresenta situação, papel, insumos, condução e entrega esperada, mas não publica uma resposta única para o cenário. Os critérios de avaliação descrevem o que observar e os percentuais relativos de cada aspecto.
 
+A revisão editorial garante a rastreabilidade das fontes que fundamentam cada capítulo, respostas expansíveis para apoiar estudantes em níveis iniciais, contexto completo — situação, papel, insumos, condução e entrega — nas atividades avançadas e acessibilidade das figuras por meio de texto alternativo e leitura textual. Essas garantias permitem verificar a origem do conteúdo e compreender as atividades e relações arquiteturais sem depender apenas de uma imagem ou de conhecimento prévio.
+
 Gabaritos, notas de condução e observações de turma pertencem ao material do professor, mantido fora do site público e do controle de versão. Os exemplos públicos usam dados sintéticos e devem declarar suas limitações quando não representam uma topologia de produção.
 
 ## Como reportar uma correção

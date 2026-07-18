@@ -29,11 +29,13 @@ O padrão banco por serviço protege invariantes e evolução. Cada serviço dec
 
 Consultas que atravessam limites podem ser resolvidas por composição síncrona, cópias orientadas a eventos, plataforma analítica ou modelo materializado. Cada alternativa troca frescor, disponibilidade, complexidade e custo. Não use acesso compartilhado como atalho silencioso.
 
+Quando necessidades de acesso diferem de modo comprovado, a persistência poliglota pode usar tecnologias distintas por proprietário. A questão não é “qual banco é moderno?”, mas qual mecanismo mantém os invariantes e a operação compreensíveis. Começar com uma tecnologia conhecida e registrar o sinal de revisão costuma ser mais reversível que multiplicar bancos sem uma necessidade mensurável.
+
 ## Consistência local e consistência entre serviços
 
 Dentro de um serviço, uma transação ACID pode preservar invariantes locais. Entre serviços, não existe rollback automático de todas as decisões. É preciso definir quando o usuário considera o fluxo aceito, quais estados intermediários são legítimos e como detectar ou reparar divergências.
 
-Consistência forte é útil quando uma leitura precisa refletir a escrita mais recente. Consistência eventual permite uma janela de defasagem, desde que o domínio aceite isso, a janela seja observável e haja convergência. **Consistência eventual não significa** ausência de regras; exige identidade, ordem quando necessária, idempotência, repetição e reconciliação.
+Consistência forte é útil quando uma leitura precisa refletir a escrita mais recente. A consistência eventual permite uma janela de defasagem aceita pelo domínio, observável e convergente. **Consistência eventual não significa** ausência de regras; exige identidade, ordem quando necessária, idempotência, repetição e reconciliação.
 
 ## CAP sem o triângulo simplista
 
@@ -56,6 +58,18 @@ No caso hospitalar, uma SAGA poderia coordenar reservar agenda, autorizar proced
 Um modelo de leitura materializado pode reduzir composições remotas e atender consultas de alto volume, mas cria atualização, defasagem, reconstrução e monitoramento. Por isso, **não aplique CQRS por padrão**. Use quando a assimetria entre leitura e escrita, a complexidade dos modelos ou a escala justificarem a duplicação e sua governança.
 
 CQRS e SAGA resolvem problemas diferentes. SAGA coordena mudança distribuída; CQRS separa responsabilidades de ler e escrever. Eles podem coexistir, mas nenhum depende automaticamente do outro.
+
+## Event sourcing: quando os fatos são o registro necessário
+
+Em **event sourcing**, o estado atual é reconstruído a partir de fatos imutáveis do domínio, como “solicitação recebida” e “autorização concedida”. Isso é útil quando a história, a auditoria, a reprodução e a evolução de projeções são requisitos centrais. Não é sinônimo de publicar eventos para integração: um serviço pode emitir eventos sem guardar seu estado como sequência de eventos.
+
+O custo inclui versões de eventos, reconstrução, projeções, privacidade e correções que não apagam fatos já publicados. Para a solicitação de exame didática, uma tabela transacional é mais direta. Event sourcing só entraria se o histórico de decisões fosse parte essencial do produto e a equipe pudesse operar as consequências.
+
+## Chassi e estrangulador: evoluir sem reescrever no escuro
+
+Um **chassi arquitetural** reúne capacidades transversais repetidas — configuração, logs, métricas, autenticação, tratamento de erro e entrega — de modo que equipes possam iniciar serviços com guardas coerentes. Ele deve oferecer padrões e bibliotecas, não um núcleo que concentre toda regra de negócio; quando cada mudança precisa passar pelo chassi, ele vira um gargalo.
+
+O padrão **estrangulador** (strangler) encaminha gradualmente partes de uma interface antiga para uma implementação nova, preservando o contrato enquanto consumidores migram. Use-o para reduzir risco de substituição; mantenha uma única fonte de verdade por etapa e defina data e evidência para remover o caminho antigo. Sem esses cuidados, o roteador apenas prolonga dois sistemas divergentes.
 
 ## Chamadas síncronas: orçamento de falha
 
