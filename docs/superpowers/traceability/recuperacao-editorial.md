@@ -69,3 +69,9 @@ ao aluno a história de migração dos materiais.
   explícitos.
 - Uma decisão de figura não autoriza copiar imagens frágeis. Os diagramas
   recriados devem ter texto alternativo, legenda e leitura textual adjacente.
+
+## Apêndice — numeração das figuras da Unidade 2
+
+Na ordem de navegação pública, as figuras da Unidade 2 são numeradas de 3 a
+11, sem lacunas ou inversões; a verificação automatizada cobre todas as
+legendas da unidade.

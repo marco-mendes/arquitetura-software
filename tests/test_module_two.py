@@ -30,10 +30,28 @@ class ModuleTwoTest(unittest.TestCase):
         ):
             self.assertIn(term, text)
 
-    def test_concept_figure_numbers_follow_their_reading_order(self):
-        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+    def test_unit_two_figure_numbers_follow_navigation_reading_order(self):
+        pages = (
+            "index.md",
+            "conceitos.md",
+            "padroes-e-decisoes.md",
+            "exemplo-arquitetural.md",
+            "estudo-de-caso.md",
+            "oficina-de-ferramentas.md",
+            "exercicios.md",
+            "sintese-e-referencias.md",
+        )
+        figures = [
+            int(number)
+            for page in pages
+            for number in re.findall(
+                r"^\*Figura (\d+) —",
+                (MODULE / page).read_text(encoding="utf-8"),
+                re.MULTILINE,
+            )
+        ]
 
-        self.assertLess(text.index("*Figura 3 — Formas de interação"), text.index("*Figura 4 — Anatomia"))
+        self.assertEqual(list(range(3, 12)), figures)
 
     def test_api_workshop_names_the_local_application_before_commands(self):
         text = (MODULE / "oficina-de-ferramentas.md").read_text(

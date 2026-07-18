@@ -54,7 +54,7 @@ sequenceDiagram
 
 **Texto alternativo:** o consumidor envia `POST`; a API valida, guarda protocolo `recebida` em memória e responde `202` com `Location`. Um `GET` devolve `200` com a representação aceita.
 
-*Figura 12 — Sequência de aceitação e consulta de uma elegibilidade armazenada em memória. Fonte: curso.*
+*Figura 8 — Sequência de aceitação e consulta de uma elegibilidade armazenada em memória. Fonte: curso.*
 
 **Leitura textual:** o consumidor envia pedido; a API valida, guarda estado efêmero e responde `202` com endereço de consulta. O uso do endereço devolve `200` e a representação aceita.
 

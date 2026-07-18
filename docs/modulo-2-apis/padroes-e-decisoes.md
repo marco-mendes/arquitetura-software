@@ -21,7 +21,7 @@ flowchart LR
 
 **Texto alternativo:** o fluxo vai de identificar consumidor a evoluir a API; evidência de uso retorna à comparação de interação.
 
-*Figura 6 — Ciclo de decisão de uma API, da necessidade do consumidor à evolução observada. Fonte: curso.*
+*Figura 5 — Ciclo de decisão de uma API, da necessidade do consumidor à evolução observada. Fonte: curso.*
 
 **Leitura textual:** a equipe identifica consumidor, delimita capacidade, compara interações e desenha contrato; depois implementa, testa, publica e observa uso. Evidências de uso revisam a comparação de alternativas.
 
@@ -58,7 +58,7 @@ flowchart TB
 
 **Texto alternativo:** desenvolvimento publica a API; execução aplica políticas técnicas e engajamento oferece documentação e suporte; ambos retornam informações ao desenvolvimento.
 
-*Figura 7 — Três capacidades conectadas de uma plataforma de APIs. Fonte: curso.*
+*Figura 6 — Três capacidades conectadas de uma plataforma de APIs. Fonte: curso.*
 
 **Leitura textual:** desenvolvimento prepara contratos e testes; execução atende o tráfego; engajamento permite descoberta e suporte. Telemetria e dúvidas retornam ao desenvolvimento.
 
@@ -79,7 +79,7 @@ flowchart LR
 
 **Texto alternativo:** o portal acessa um gateway, que encaminha às APIs de elegibilidade e agenda; a primeira usa adaptador para chamar o laboratório.
 
-*Figura 8 — Gateway na borda e adaptador junto à diferença semântica. Fonte: curso.*
+*Figura 7 — Gateway na borda e adaptador junto à diferença semântica. Fonte: curso.*
 
 **Leitura textual:** o gateway concentra políticas técnicas; o adaptador traduz linguagem interna e SOAP/TISS perto da dependência externa. Roteamento não se confunde com domínio.
 
