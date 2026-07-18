@@ -207,6 +207,37 @@ textarea {
   outline-offset: 3px;
 }
 
+.academia-toc-toggle {
+  background: var(--academia-white);
+  border: 1px solid rgb(37 77 184 / 28%);
+  border-radius: 999px;
+  color: var(--academia-cobalt);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin: 0 0 var(--academia-space-3);
+  padding: var(--academia-space-2) var(--academia-space-3);
+}
+
+.academia-toc-toggle:hover {
+  background: var(--academia-surface);
+}
+
+@media (min-width: 76.25em) {
+  html.toc-collapsed .md-sidebar--secondary {
+    display: none;
+  }
+
+  html.toc-collapsed .md-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html.toc-collapsed .md-content {
+    max-width: none;
+  }
+}
+
 @media (max-width: 767.98px) {
   .objective-card,
   .adr-block,

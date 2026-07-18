@@ -20,6 +20,7 @@ markdown_extensions:
 
 extra_javascript:
   - assets/javascripts/mermaid.mjs
+  - assets/javascripts/toc-toggle.mjs
 
 extra_css:
   - assets/stylesheets/extra.css
