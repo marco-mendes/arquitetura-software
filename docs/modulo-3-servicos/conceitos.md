@@ -59,7 +59,7 @@ flowchart TD
 
 **Texto alternativo:** sequência de decisão que separa regras em módulos e dados com proprietário antes de decidir se a autonomia física justifica um contrato remoto.
 
-*Figura 1 — Da fronteira lógica à fronteira física.*
+*Figura 1 — Da fronteira lógica à fronteira física. Fonte: curso.*
 
 **Leitura textual da figura:** primeiro separam-se módulos e proprietários dos dados; só quando existe necessidade comprovada de autonomia física um limite vira processo remoto, caso contrário a implantação permanece conjunta.
 
@@ -77,9 +77,9 @@ Propriedade responde quem é autoridade para interpretar e alterar uma informaç
 
 ![Fronteiras de serviços na plataforma hospitalar: Elegibilidade e Exames possuem contratos de API e bancos próprios; uma tentativa de acesso direto ao banco de outro serviço é proibida.](../assets/images/m03-fronteiras-servicos.png)
 
-*Figura 4 — Fronteiras lógicas, contratos e dados de serviços.*
+*Figura 4 — Fronteiras, contratos e dados. Fonte: curso.*
 
-**Leitura textual da figura:** Elegibilidade e Exames são capacidades distintas da plataforma hospitalar. Cada uma oferece um contrato de API e mantém seu próprio armazenamento. A interação permitida passa pelo contrato; a seta de acesso direto de um serviço ao banco do outro aparece bloqueada porque violaria a propriedade dos dados e criaria acoplamento oculto.
+**Leitura textual da figura:** Elegibilidade e Exames são capacidades distintas da plataforma hospitalar. Cada uma oferece contrato de API e mantém armazenamento próprio. A interação permitida passa pelo contrato; a seta de acesso direto de um serviço ao banco do outro aparece bloqueada porque violaria a propriedade dos dados e criaria acoplamento oculto.
 
 No laboratório, dois PostgreSQL deixam a regra visível: a credencial de Exames conhece apenas o banco `exames`; Elegibilidade conhece apenas `elegibilidade`. Cada banco fica em uma rede interna própria; ambos os processos compartilham somente a rede de aplicação necessária ao HTTP. Portanto, mesmo que Exames descubra o alias `elegibilidade-db`, ele não consegue resolvê-lo pela sua rede. Em ambientes maiores, isolamento lógico no mesmo cluster pode equilibrar custo e proteção, desde que permissões e responsabilidade sejam reais.
 

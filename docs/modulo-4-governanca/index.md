@@ -33,7 +33,7 @@ flowchart LR
 
 **Texto alternativo:** ciclo de governança que transforma decisão com owner em política, aplicação e evidência para revisão.
 
-*Figura 1 — Ciclo de uma política governável.*
+*Figura 1 — Ciclo de uma política governável. Fonte: curso.*
 
 **Leitura textual:** uma decisão com responsável vira política declarada, aplicada no lugar adequado; os sinais permitem revisar a decisão.
 

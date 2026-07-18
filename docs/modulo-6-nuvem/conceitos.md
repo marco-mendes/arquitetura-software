@@ -23,7 +23,7 @@ Para o hospital, região envolve latência, residência de dados, contratos e ca
 
 **Texto alternativo:** uma região contém duas zonas; cada zona recebe uma réplica, enquanto os dados mantêm uma política de recuperação própria.
 
-*Figura 6 — Réplicas entre domínios de falha e dados com política independente.*
+*Figura 6 — Réplicas entre domínios de falha e dados com política independente. Fonte: curso.*
 
 ```mermaid
 flowchart TB
@@ -41,7 +41,7 @@ flowchart TB
 
 ![Resiliência na nuvem: um cluster local executa duas réplicas da API hospitalar, aplica readiness e liveness, atualiza gradualmente e pode fazer rollback.](../assets/images/m06-resiliencia-nuvem.png)
 
-*Figura 7 — Estado desejado e recuperação de uma API em cluster.*
+*Figura 7 — Estado desejado e recuperação de uma API em cluster. Fonte: curso.*
 
 **Leitura textual da figura:** o cluster local mantém duas réplicas da API hospitalar. A verificação de readiness decide quando uma réplica pode receber tráfego; a de liveness permite reiniciar um processo travado. Durante uma atualização gradual, uma nova versão substitui réplicas progressivamente; se a evidência indicar falha, o rollback retorna à versão anterior. Configuração e imagem versionada dão contexto a esse estado desejado.
 

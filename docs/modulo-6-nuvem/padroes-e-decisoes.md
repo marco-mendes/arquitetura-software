@@ -16,7 +16,7 @@ Cada réplica tem request de `100m` de CPU e `128Mi` de memória: são insumos p
 
 **Texto alternativo:** uma métrica disponível alimenta o HPA, que altera réplicas no Deployment; essas réplicas ainda dependem de serviços que podem se tornar o próximo gargalo.
 
-*Figura 8 — Escala da API limitada por suas dependências.*
+*Figura 8 — Escala da API limitada por suas dependências. Fonte: curso.*
 
 ```mermaid
 flowchart LR

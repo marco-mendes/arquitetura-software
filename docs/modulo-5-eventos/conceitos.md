@@ -22,7 +22,7 @@ Um exemplo contrastante ajuda. Depois do evento de resultado, Faturamento pode c
 
 ![Fluxo de eventos: um resultado laboratorial disponível é publicado em um broker, entregue a um consumidor de faturamento, verificado por idempotência e enviado à DLQ se inválido.](../assets/images/m05-fluxo-eventos.png)
 
-*Figura 6 — Publicação, consumo, idempotência e dead-letter queue.*
+*Figura 6 — Publicação, consumo, idempotência e dead-letter queue. Fonte: curso.*
 
 **Leitura textual da figura:** o laboratório publica o fato “resultado disponível” no broker. O broker entrega uma cópia ao consumidor de Faturamento. Antes de produzir efeito, o consumidor consulta o registro de idempotência para impedir uma cobrança duplicada. Uma mensagem inválida ou que não possa ser processada segue para a DLQ, onde fica visível para diagnóstico e reprocessamento controlado, sem desaparecer silenciosamente.
 
@@ -43,7 +43,7 @@ flowchart TB
 
 **Texto alternativo:** Comparação entre um produtor que publica em exchange ou tópico para filas independentes e grupos que leem posições próprias em um log particionado.
 
-*Figura 8 — Topologias de distribuição por fila, tópico e log.*
+*Figura 8 — Topologias de distribuição por fila, tópico e log. Fonte: curso.*
 
 **Leitura textual:** Um produtor publica no canal. Um tópico pode encaminhar cópias para filas com responsabilidades distintas. Em um log distribuído, grupos independentes mantêm posições próprias de leitura sobre o registro retido.
 

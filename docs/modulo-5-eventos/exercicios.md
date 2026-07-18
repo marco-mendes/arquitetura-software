@@ -140,7 +140,7 @@ Além de Faturamento, a plataforma precisa atualizar uma projeção administrati
 
 **Seu papel**
 
-Você desenha o contrato e a reação mínima para a nova capacidade.
+Você desenha contrato e reação mínima para a capacidade.
 
 **Artefato que você irá usar**
 
@@ -151,8 +151,6 @@ O evento da oficina, a exchange `hospital.events`, referências sintéticas, uma
 Delimite uma projeção sintética e escolha a identidade que representa uma ocorrência; não use conteúdo clínico nem um ambiente remoto.
 
 **O que fazer**
-
-Com premissas explícitas, responda aos passos a seguir.
 
 1. Declare se a entrada é evento, comando ou consulta e justifique.
 2. Escreva o payload mínimo, a identidade de deduplicação e a versão de contrato.

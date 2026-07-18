@@ -2,12 +2,25 @@ from pathlib import Path
 import unittest
 
 from scripts.validate_content import (
+    MODULES,
     expandable_feedback_errors,
     self_contained_activity_errors,
 )
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MODULE_SLUGS = tuple(MODULES)
+ADVANCED_LABELS = (
+    "Objetivo",
+    "Situação",
+    "Seu papel",
+    "Artefato que você irá usar",
+    "Antes de executar",
+    "O que fazer",
+    "Evidência esperada",
+    "Entrega esperada",
+    "Critérios de avaliação",
+)
 
 _ALLOWED_ACTIONS = {"integrar", "consolidar", "substituir figura", "referenciar"}
 _ALLOWED_FIGURE_DECISIONS = (
@@ -19,6 +32,23 @@ _ALLOWED_FIGURE_DECISIONS = (
 
 
 class EditorialRecoveryTest(unittest.TestCase):
+    def test_every_module_exercise_page_uses_expandable_feedback_and_self_contained_labels(self):
+        for slug in MODULE_SLUGS:
+            text = (ROOT / "docs" / slug / "exercicios.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertGreaterEqual(text.count("<summary>Ver resposta</summary>"), 6, slug)
+            for label in ADVANCED_LABELS:
+                self.assertIn(f"**{label}**", text, slug)
+
+    def test_public_figure_captions_identify_their_source(self):
+        for path in (ROOT / "docs").rglob("*.md"):
+            if "superpowers" in path.parts:
+                continue
+            for caption in path.read_text(encoding="utf-8").splitlines():
+                if caption.startswith("*Figura "):
+                    self.assertIn("Fonte:", caption, path.as_posix())
+
     def test_expandable_feedback_parser(self):
         text = (
             "## Recordar\n\n"
@@ -60,6 +90,36 @@ class EditorialRecoveryTest(unittest.TestCase):
 """
 
         self.assertEqual([], self_contained_activity_errors(text, "exemplo.md"))
+
+    def test_self_contained_activity_parser_reports_an_out_of_order_label(self):
+        text = """## Aplicar
+
+**Objetivo**
+
+**Situação**
+
+**Seu papel**
+
+**Artefato que você irá usar**
+
+**Antes de executar**
+
+**Evidência esperada**
+
+**O que fazer**
+
+**Entrega esperada**
+
+**Critérios de avaliação**
+"""
+
+        self.assertEqual(
+            [
+                "exemplo.md: Aplicar: marcador fora da ordem: "
+                "**Evidência esperada**"
+            ],
+            self_contained_activity_errors(text, "exemplo.md"),
+        )
 
     def test_traceability_covers_every_numbered_legacy_markdown(self):
         traceability = (

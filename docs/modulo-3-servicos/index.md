@@ -31,7 +31,7 @@ flowchart LR
 
 **Texto alternativo:** percurso que parte de capacidades de negócio, passa por limites e propriedade de dados, e chega à implantação, às falhas, à consistência e à operação.
 
-*Figura 1 — Percurso de decisão para arquitetura de serviços.*
+*Figura 1 — Percurso de decisão para arquitetura de serviços. Fonte: curso.*
 
 **Leitura textual da figura:** o percurso começa pelas capacidades, define limites e propriedade dos dados, escolhe a forma de implantação e somente então trata comunicação, falhas, consistência e operação.
 

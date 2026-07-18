@@ -21,7 +21,7 @@ flowchart LR
 
 **Texto alternativo:** cliente acessa Kong, que chama Elegibilidade; apenas o serviço acessa PostgreSQL e os dois enviam telemetria ao Collector e Jaeger.
 
-*Figura 4 — Rota governada e telemetria da consulta de Elegibilidade.*
+*Figura 4 — Rota governada e telemetria da consulta de Elegibilidade. Fonte: curso.*
 
 **Leitura textual:** Kong medeia a rota, Elegibilidade acessa o banco e ambos enviam telemetria à cadeia Collector–Jaeger.
 

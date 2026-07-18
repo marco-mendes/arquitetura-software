@@ -119,7 +119,7 @@ O cuidado central para quem começa é não transformar o mapa em uma escada de 
 
 ![Mapa comparativo de quatro estilos arquiteturais: camadas, pipes e filtros, microkernel e monólito modular, com as forças de mudabilidade, vazão e extensibilidade.](../assets/images/m01-mapa-estilos.png)
 
-*Figura 2 — Mapa comparativo de estilos arquiteturais.*
+*Figura 2 — Mapa comparativo de estilos arquiteturais. Fonte: curso.*
 
 **Leitura textual da figura:** o mapa coloca quatro organizações lado a lado. Camadas separam responsabilidades por nível; pipes e filtros encadeiam transformações; microkernel mantém um núcleo e extensões; e monólito modular isola capacidades dentro de uma implantação. As forças na base lembram que a escolha compara modificabilidade, vazão e extensibilidade, em vez de eleger um estilo universalmente superior.
 

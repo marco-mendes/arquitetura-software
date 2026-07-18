@@ -24,7 +24,7 @@ Uma resposta começa separando capacidade de produto. Um provedor pode tornar ha
 
 **Texto alternativo:** clientes chegam a um Service, que distribui somente para dois Pods prontos; o Deployment os mantém e o HPA pode mudar a quantidade quando houver métrica.
 
-*Figura 5 — Estado declarado da API de elegibilidade no laboratório local.*
+*Figura 5 — Estado declarado da API de elegibilidade no laboratório local. Fonte: curso.*
 
 ```mermaid
 flowchart LR

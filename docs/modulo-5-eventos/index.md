@@ -33,7 +33,7 @@ flowchart LR
 
 **Texto alternativo:** Fluxo em que Resultados publica um evento versionado para um broker; Faturamento e Notificação reagem de forma independente, e a cobrança converge depois do resultado.
 
-*Figura 7 — Reações independentes a um fato publicado.*
+*Figura 7 — Reações independentes a um fato publicado. Fonte: curso.*
 
 **Leitura textual:** Resultados publica um fato versionado no broker. Faturamento e Notificação podem reagir de modo independente; por isso a informação de cobrança pode ficar correta depois da disponibilidade do resultado, e não no mesmo instante.
 

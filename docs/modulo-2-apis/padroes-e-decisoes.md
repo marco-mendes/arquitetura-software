@@ -6,7 +6,7 @@ Antes dos endpoints, identifique consumidor, resultado, tempo, dados e falhas. A
 
 ## Um processo arquitetural para construir APIs
 
-O processo não é uma sequência burocrática. Ele diminui o risco de implementar uma interface tecnicamente correta e inutilizável para o consumidor.
+O processo evita interface correta e inútil ao consumidor.
 
 ```mermaid
 flowchart LR
@@ -21,7 +21,7 @@ flowchart LR
 
 **Texto alternativo:** o fluxo vai de identificar consumidor a evoluir a API; evidência de uso retorna à comparação de interação.
 
-*Figura 6 — Ciclo de decisão de uma API, da necessidade do consumidor à evolução observada.*
+*Figura 6 — Ciclo de decisão de uma API, da necessidade do consumidor à evolução observada. Fonte: curso.*
 
 **Leitura textual:** a equipe identifica consumidor, delimita capacidade, compara interações e desenha contrato; depois implementa, testa, publica e observa uso. Evidências de uso revisam a comparação de alternativas.
 
@@ -58,7 +58,7 @@ flowchart TB
 
 **Texto alternativo:** desenvolvimento publica a API; execução aplica políticas técnicas e engajamento oferece documentação e suporte; ambos retornam informações ao desenvolvimento.
 
-*Figura 7 — Três capacidades conectadas de uma plataforma de APIs.*
+*Figura 7 — Três capacidades conectadas de uma plataforma de APIs. Fonte: curso.*
 
 **Leitura textual:** desenvolvimento prepara contratos e testes; execução atende o tráfego; engajamento permite descoberta e suporte. Telemetria e dúvidas retornam ao desenvolvimento.
 
@@ -79,11 +79,11 @@ flowchart LR
 
 **Texto alternativo:** o portal acessa um gateway, que encaminha às APIs de elegibilidade e agenda; a primeira usa adaptador para chamar o laboratório.
 
-*Figura 8 — Gateway na borda e adaptador junto à diferença semântica.*
+*Figura 8 — Gateway na borda e adaptador junto à diferença semântica. Fonte: curso.*
 
 **Leitura textual:** o gateway concentra políticas técnicas; o adaptador traduz linguagem interna e SOAP/TISS perto da dependência externa. Roteamento não se confunde com domínio.
 
-Agregação pede uma tela composta e medição de latência, falha e cache. Gateway sem necessidade de fronteira adiciona salto, configuração e operação. O módulo 4 aprofunda suas políticas.
+Agregação pede uma tela composta e medição de latência, falha e cache. Gateway sem fronteira adiciona salto, configuração e operação.
 
 ## ADR-002: uma decisão que pode ser revisada
 

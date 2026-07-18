@@ -114,7 +114,7 @@ Considere Kong DB-less, uma réplica local, Collector, Jaeger e a convenção `X
 
 Contrato de Resultados, catálogo em Markdown e políticas da oficina.
 
-**Como conduzir**
+**O que fazer**
 
 1. Registre owner, contrato, consumidores, dados e versão.
 2. Proponha rota, chave, janela, consequência de `429` e fronteira de domínio.
@@ -167,7 +167,7 @@ Considere três logs anonimizados, taxa de `5xx`, traces parciais e a política 
 
 As amostras do caso e os arquivos declarativos indicados.
 
-**Como conduzir**
+**O que fazer**
 
 1. Separe fato, inferência e hipótese.
 2. Mapeie lacunas de `correlation_id` e `traceparent`.
@@ -220,7 +220,7 @@ Considere consumidores parcialmente identificados, suporte em horário comercial
 
 Pico, capacidade, risco de atraso e alternativas IP, credencial e fila.
 
-**Como conduzir**
+**O que fazer**
 
 1. Compare as três estratégias por proteção, justiça e operação.
 2. Declare resposta `429`, SLO, sinal de revisão e comunicação a consumidores.
@@ -272,7 +272,7 @@ Considere dados sintéticos, confirmação inicial em três segundos e no máxim
 
 Contrato de Elegibilidade, Compose da oficina e as restrições declaradas.
 
-**Como conduzir**
+**O que fazer**
 
 1. Defina catálogo, classificação de dados, contrato e estratégia de versão.
 2. Separe políticas de gateway, serviço e domínio.

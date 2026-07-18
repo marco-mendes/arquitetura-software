@@ -32,7 +32,7 @@ sequenceDiagram
 
 **Texto alternativo:** sequência de uma requisição em que Kong propaga correlação e trace ao serviço, e ambos enviam spans ao Collector e Jaeger.
 
-*Figura 3 — Correlação e rastreabilidade por trace distribuído.*
+*Figura 3 — Correlação e rastreabilidade por trace distribuído. Fonte: curso.*
 
 **Leitura textual:** consumidor, gateway e serviço compartilham contexto; os spans chegam ao Collector e são consultáveis no Jaeger.
 

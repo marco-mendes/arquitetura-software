@@ -28,7 +28,7 @@ flowchart TB
 
 **Texto alternativo:** contratos e ADRs definem política aplicada por gateway e serviço, com sinais usados para revisar o SLO.
 
-*Figura 2 — Contrato, política e evidência em dois tempos.*
+*Figura 2 — Contrato, política e evidência em dois tempos. Fonte: curso.*
 
 **Leitura textual:** contratos e catálogo orientam a política; gateway e serviço aplicam partes distintas e geram sinais para revisão.
 
@@ -36,7 +36,7 @@ flowchart TB
 
 ![Governança observável: uma requisição atravessa gateway com política, recebe identificador de correlação, chega ao serviço e produz logs estruturados, traces e uma medida de limite.](../assets/images/m04-governanca-observavel.png)
 
-*Figura 5 — Política aplicada e evidência observável em execução.*
+*Figura 5 — Política aplicada e evidência observável em execução. Fonte: curso.*
 
 **Leitura textual da figura:** a requisição entra pelo gateway, onde uma política de rota ou limite é aplicada. O gateway acrescenta um identificador de correlação antes de encaminhar ao serviço. A execução produz logs estruturados e traces relacionados; a métrica de limite revela quantas requisições foram recusadas ou aceitas. Nenhum desses sinais deve conter nome de paciente ou outro dado clínico identificável.
 

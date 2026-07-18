@@ -133,6 +133,11 @@ textarea {
   max-width: 100%;
 }
 
+.md-content img {
+  height: auto;
+  max-width: 100%;
+}
+
 .comparison-table {
   border-collapse: collapse;
   display: block;

@@ -8,7 +8,7 @@ O Deployment pede duas réplicas e seleciona `app: hospital-api`. O mesmo rótul
 
 **Texto alternativo:** o acesso restrito a `127.0.0.1:18080` chega ao Service, que seleciona dois Pods na porta 8000; o Deployment mantém as réplicas.
 
-*Figura 9 — Encaminhamento local até as réplicas da API.*
+*Figura 9 — Encaminhamento local até as réplicas da API. Fonte: curso.*
 
 ```mermaid
 flowchart TB

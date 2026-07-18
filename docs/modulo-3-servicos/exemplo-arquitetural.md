@@ -19,7 +19,7 @@ flowchart LR
 
 **Texto alternativo:** o consumidor solicita exames; Exames consulta Elegibilidade por HTTP e cada serviço acessa exclusivamente seu próprio banco PostgreSQL.
 
-*Figura 1 — Contrato entre serviços e propriedade de dados.*
+*Figura 1 — Contrato entre serviços e propriedade de dados. Fonte: curso.*
 
 **Leitura textual da figura:** o consumidor chama Exames; Exames consulta Elegibilidade por HTTP; cada serviço acessa apenas seu PostgreSQL, e o caminho direto entre Exames e o banco de Elegibilidade é explicitamente proibido.
 

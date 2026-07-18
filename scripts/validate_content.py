@@ -94,14 +94,6 @@ _PROCEDURAL_LABEL = re.compile(
     r"^[ \t]*(?:(?:[-*+]|\d+\.)[ \t]+)?"
     r"\*\*(?P<label>[^*\n]+)\*\*(?P<tail>.*)$"
 )
-_ADVANCED_MARKERS = (
-    "**Situação**",
-    "**Seu papel**",
-    "**Insumos disponíveis**",
-    "**Como conduzir**",
-    "**Entrega esperada**",
-    "**Critérios de avaliação**",
-)
 _SELF_CONTAINED_LABELS = (
     "**Objetivo**",
     "**Situação**",
@@ -188,7 +180,7 @@ def self_contained_activity_errors(text: str, location: str) -> list[str]:
             continue
         previous = -1
         for label in _SELF_CONTAINED_LABELS:
-            current = section.find(label, previous + 1)
+            current = section.find(label)
             if current == -1:
                 errors.append(
                     f"{location}: {level}: marcador obrigatório ausente: {label}"
@@ -580,13 +572,10 @@ def _validate_exercises(path: Path, docs_root: Path) -> list[str]:
             )
     for level in ("Aplicar", "Analisar", "Avaliar"):
         section = sections.get(level, "")
-        for marker in _ADVANCED_MARKERS:
-            if marker not in section:
-                errors.append(
-                    f"{location}: {level}: marcador obrigatório ausente: {marker}"
-                )
         errors.extend(_percentage_errors(section, location, level))
     errors.extend(_criteria_table_evidence_errors(text, location))
+    errors.extend(expandable_feedback_errors(text, location))
+    errors.extend(self_contained_activity_errors(text, location))
     return errors
 
 
