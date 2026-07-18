@@ -2,7 +2,9 @@
 
 ## Tipos de APIs
 
-![tipos de apis](https://github.com/user-attachments/assets/8d90f8d0-aafd-41c4-9c82-0252819ce133)
+![Tipos de APIs conforme o contexto de solução: web, mobile, cloud, integração, omnichannel e IoT, cada um com exemplo real, protocolos de transporte e formatos de dados.](https://github.com/user-attachments/assets/8d90f8d0-aafd-41c4-9c82-0252819ce133)
+
+**Leitura textual da figura:** o quadro compara seis contextos. APIs web alimentam sites e aplicações dinâmicas com HTTP/HTTPS e JSON, XML ou HTML, como a busca de produtos da Amazon. APIs mobile priorizam dados leves e experiência otimizada com HTTPS, HTTP/2, gRPC e WebSocket, como Uber e Instagram. APIs cloud expõem plataformas SaaS para automação e integração entre nuvens, como o Dropbox. APIs de integração conectam empresas e parceiros com contratos rígidos, usando HTTPS, gRPC, SOAP e JMS ou AMQP, como o SAP e as APIs de governo. APIs omnichannel garantem experiência consistente entre canais e dispositivos, como a Shopify. APIs de IoT coletam dados e enviam comandos com MQTT, CoAP, HTTPS e AMQP, como o Google Nest. Uma legenda final resume os protocolos e formatos citados.
 
 ---
 
@@ -23,7 +25,7 @@ Um aplicativo da Web de comércio eletrônico, por exemplo, exibe produtos em um
 
 O número de dispositivos móveis e tablets superou o número de computadores. Os aplicativos para celular são diferentes dos aplicativos de desktop tradicionais, já que a maioria dos aplicativos móveis não é autônoma nem autossuficiente.
 
-Os aplicativos precisam se conectar aos servidores na Internet para serem utilizáveis ou, pelo menos, serem utilizáveis em todo o seu potencial.
+Os aplicativos precisam se conectar aos servidores na Internet para serem utilizáveis ou, pelo menos, serem utilizáveis em seu pleno potencial.
 
 Os dados entregues pelas APIs precisam ser leves e particionados. Isso garante que a API possa ser consumida por dispositivos com capacidade de processamento limitada e largura de banda limitada de conexão à Internet.
 
@@ -96,7 +98,9 @@ Exemplos de tais soluções API incluem wearables inteligentes, carros inteligen
 
 ## Como pensar em APIs a partir da lente de uma plataforma
 
-![Plataformas de APIs](https://github.com/user-attachments/assets/1cad9c6b-da09-4bf6-91e4-0620428e4809)
+![Arquitetura de referência moderna com firewall, gateway de API, servidor web, fila de mensagens, sistemas legados e banco de dados, ao lado da visão de plataforma de APIs com desenvolvimento, execução e engajamento.](https://github.com/user-attachments/assets/1cad9c6b-da09-4bf6-91e4-0620428e4809)
+
+**Leitura textual da figura:** à esquerda, usuários web e mobile acessam o sistema principal: o firewall encaminha as requisições ao gateway de API, que roteia para o servidor web com a lógica de negócios, publica mensagens na fila e consulta e atualiza dois sistemas legados; o servidor web grava no banco de dados. À direita, a plataforma de APIs tem três camadas: a plataforma de desenvolvimento (IDE e extensões, templates, mock servers, testes locais e governança) implanta as APIs na plataforma de execução (gateway, roteamento e transformação, segurança e OAuth, rate limiting e observabilidade), que as publica na plataforma de engajamento (portal do desenvolvedor, documentação e SDKs, catálogo, planos e assinaturas, analytics e feedback). Na base, segurança, escalabilidade, observabilidade, padronização e experiência atravessam o conjunto.
 
 ### Ferramentas para Cada Parte da Plataforma de APIs
 
@@ -134,7 +138,9 @@ Estas ferramentas abrangem o desenvolvimento, execução e engajamento de APIs, 
 
 ## Resumo - A Agenda do Arquiteto para APIs
 
-![agenda do arquiteto](https://github.com/user-attachments/assets/cf10adc2-d2a1-4a37-b95f-57d59151afaf)
+![A agenda do arquiteto para APIs em seis frentes: desenhar, implementar e testar, documentar, definir tecnologias, gerenciar e reutilizar APIs, com etapas conduzidas junto com o time.](https://github.com/user-attachments/assets/cf10adc2-d2a1-4a37-b95f-57d59151afaf)
+
+**Leitura textual da figura:** o infográfico organiza a agenda em seis perguntas. Como identificar, escolher e desenhar APIs: entender requisitos, definir escopo, escolher o estilo arquitetural e criar um protótipo. Como implementar e testar: escolher plataforma, implementar endpoints, testar e iterar. Como documentar e comunicar: gerar documentação, adicionar exemplos e publicar um portal. Como definir tecnologias: avaliar requisitos, escolher linguagens e frameworks e selecionar protocolos. Como gerenciar: publicar, monitorar, versionar e proteger. Como descobrir e reutilizar: mapear catálogos, avaliar compatibilidade e reutilizar com SDKs e conectores. Cada frente lista ferramentas de apoio, e a moldura lembra que arquitetura é sociotécnica: o arquiteto conduz junto com o time e responde pelas consequências das decisões.
 
 ### Como identificar, escolher e desenhar APIs?
 

@@ -51,7 +51,7 @@ class ModuleTwoTest(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(list(range(3, 12)), figures)
+        self.assertEqual(list(range(3, 9)), figures)
 
     def test_api_workshop_names_the_local_application_before_commands(self):
         text = (MODULE / "oficina-de-ferramentas.md").read_text(

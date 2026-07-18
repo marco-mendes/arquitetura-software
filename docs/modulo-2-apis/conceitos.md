@@ -6,7 +6,9 @@ Uma API (Application Programming Interface) é um elemento central no desenvolvi
 
 Um exemplo da grande popularidade de APIs é a fundamentação Web, com REST e HTTP como carros-chefe.
 
-![image](https://github.com/user-attachments/assets/393774d6-854a-48d2-8899-d0d19cb9ce57)
+![Infográfico dos fundamentos da web: a World Wide Web como biblioteca digital de documentos interligados, o protocolo HTTP como carteiro digital com métodos e códigos de status, e as APIs como ponte entre sistemas.](https://github.com/user-attachments/assets/393774d6-854a-48d2-8899-d0d19cb9ce57)
+
+**Leitura textual da figura:** o infográfico tem três blocos. O primeiro apresenta a web como uma grande biblioteca digital de documentos HTML interligados por hyperlinks e localizados por URLs. O segundo apresenta o HTTP como o carteiro digital: métodos GET, POST, PUT/PATCH e DELETE transportam mensagens e recebem códigos de status como 200 OK, 404 Not Found, 403 Forbidden e 500 Error, num protocolo sem estado. O terceiro apresenta as APIs como a ponte entre sistemas, com a analogia do garçom que leva o pedido à cozinha, integrações do dia a dia como login com Google e previsão do tempo, e um guia com os principais tipos: REST, SOAP, GraphQL e WebSocket.
 
 As APIs tornam possível o desenvolvimento modular e ágil, pois permitem que desenvolvedores integrem recursos de sistemas externos ou exponham os próprios serviços para consumo por terceiros. Um exemplo disso é a integração de aplicativos com serviços como mapas, pagamentos, redes sociais e até mesmo plataformas completas de e-commerce ou IoT. Dessa forma, os desenvolvedores podem se concentrar na lógica de suas aplicações sem precisar reinventar a funcionalidade básica que já foi criada e exposta por outros sistemas.
 

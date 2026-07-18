@@ -16,7 +16,7 @@ flowchart LR
 
 **Texto alternativo:** canais administrativos acessam a plataforma, que troca solicitações e respostas com operadora e laboratório e produz acompanhamento.
 
-*Figura 10 — A plataforma hospitalar como fronteira entre canais internos e parceiros com contratos próprios. Fonte: curso.*
+*Figura 7 — A plataforma hospitalar como fronteira entre canais internos e parceiros com contratos próprios. Fonte: curso.*
 
 **Leitura textual:** canais usam a plataforma, que conversa com parceiros por contratos próprios; as setas indicam solicitações e respostas em momentos distintos.
 
@@ -77,7 +77,7 @@ sequenceDiagram
 
 **Texto alternativo:** o sistema envia elegibilidade; a API cria protocolo e responde `202` com `Location`. O adaptador recebe timeout da operadora e registra falha temporária; consulta posterior devolve estado conhecido.
 
-*Figura 11 — A plataforma registra o pedido antes de consultar a operadora e preserva o estado conhecido após um timeout. Fonte: curso.*
+*Figura 8 — A plataforma registra o pedido antes de consultar a operadora e preserva o estado conhecido após um timeout. Fonte: curso.*
 
 **Leitura textual:** a plataforma cria protocolo antes da chamada externa; o adaptador encontra timeout; consulta posterior devolve estado conhecido, não decisão da operadora.
 
