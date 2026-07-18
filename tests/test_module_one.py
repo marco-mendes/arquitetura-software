@@ -175,7 +175,7 @@ class ModuleOneTest(unittest.TestCase):
             "Microkernel",
             "Monólito modular",
         ):
-            self.assertIn(f"### {style}", text)
+            self.assertIn(f"## {style}", text)
         for label in (
             "Responsabilidade",
             "Conectores",
@@ -185,6 +185,30 @@ class ModuleOneTest(unittest.TestCase):
             "Evite quando",
         ):
             self.assertIn(label, text)
+
+    def test_decision_page_restores_the_three_style_deep_dives(self):
+        text = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+        expected = {
+            "Camadas": ("camada fechada", "camada aberta", "sumidouro", "OCP", "MVC"),
+            "Pipes and Filters": (
+                "filtro sem estado",
+                "filtro com estado",
+                "rejeição",
+                "ordenação",
+                "throughput",
+            ),
+            "Microkernel": (
+                "registro",
+                "contrato de extensão",
+                "compatibilidade",
+                "core creep",
+                "plugin",
+            ),
+        }
+        for heading, terms in expected.items():
+            section = text.split(f"## {heading}", 1)[1]
+            for term in terms:
+                self.assertIn(term, section)
 
     def test_every_example_mermaid_has_alt_caption_and_textual_reading(self):
         text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")

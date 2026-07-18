@@ -25,7 +25,7 @@ Antes de comparar implementações, localize o problema. O mapa não é sequênc
 
 ### Organização interna
 
-**Problema:** manter uma aplicação compreensível quando suas regras, entradas e recursos técnicos começam a se misturar. **Ideia de organização:** declarar fronteiras internas e dependências permitidas. **Estilos abrangidos:** [Camadas](padroes-e-decisoes.md#camadas-regras-de-dependencia-nao-somente-caixas-empilhadas), MVC, Hexagonal, [Microkernel](padroes-e-decisoes.md#microkernel-extensoes-obedecem-a-um-contrato-estavel) e [Monólito modular](padroes-e-decisoes.md#monolito-modular-uma-implantacao-capacidades-com-autonomia-interna). **Quando ajuda:** uma equipe precisa mudar uma regra ou uma interface sem atravessar detalhes de infraestrutura. **Limite:** só separar pastas não cria fronteiras; atalhos e dependências não declaradas devolvem o acoplamento.
+**Problema:** manter uma aplicação compreensível quando suas regras, entradas e recursos técnicos começam a se misturar. **Ideia de organização:** declarar fronteiras internas e dependências permitidas. **Estilos abrangidos:** [Camadas](padroes-e-decisoes.md#camadas), MVC, Hexagonal, [Microkernel](padroes-e-decisoes.md#microkernel) e [Monólito modular](padroes-e-decisoes.md#monolito-modular-uma-implantacao-capacidades-com-autonomia-interna). **Quando ajuda:** uma equipe precisa mudar uma regra ou uma interface sem atravessar detalhes de infraestrutura. **Limite:** só separar pastas não cria fronteiras; atalhos e dependências não declaradas devolvem o acoplamento.
 
 ### Decomposição por domínio
 

@@ -37,6 +37,8 @@ flowchart TB
 
 Esse arranjo favorece consistência local e teste da regra de conflito sem banco. Se quase toda leitura apenas atravessar todas as camadas sem validação ou decisão, a equipe mede o custo e registra um caminho de leitura justificado; não cria atalhos silenciosos.
 
+[Aprofundar Camadas](padroes-e-decisoes.md#camadas)
+
 ### Faturamento como fluxo: cada transformação deixa uma pista
 
 ```mermaid
@@ -57,6 +59,8 @@ flowchart LR
 **Leitura textual da figura:** o Adaptador de entrada entrega um documento bruto ao filtro de validação. Documentos válidos atravessam normalização, enriquecimento e publicação; uma rejeição em validação, normalização ou enriquecimento é registrada com sua etapa. Nenhum filtro consulta o estado interno de outro filtro.
 
 As setas nomeiam o contrato de cada pipe. Cada filtro recebe um valor e devolve sucesso com um novo valor ou rejeição com identificador, etapa e causa. Os filtros não consultam o estado interno uns dos outros. Essa restrição permite testar cada etapa e compor o fluxo.
+
+[Aprofundar Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters)
 
 ## Uma execução observável
 
@@ -104,6 +108,8 @@ flowchart LR
 **Leitura textual da figura:** a Entrada de triagem entrega a solicitação ao Núcleo, que controla identidade, estados e autorização. O Núcleo expõe um Contrato de extensão usado por dois plugins: uma coleta específica da unidade A e uma validação de parceiro. Os plugins devolvem resultados ao Núcleo, que produz fato com correlação para Auditoria. As ligações pontilhadas indicam que plugins não leem os dados internos do núcleo diretamente.
 
 Para essa estrutura ser honesta, o contrato deve especificar entrada, resultado, erros e versão. Se um plugin precisa editar tabelas internas ou se o núcleo conhece regras particulares de todos os plugins, a equipe encontrou core creep e deve revisar a fronteira em vez de chamar o acoplamento de extensibilidade.
+
+[Aprofundar Microkernel](padroes-e-decisoes.md#microkernel)
 
 ## Do cenário à evidência
 
