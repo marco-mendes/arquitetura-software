@@ -57,6 +57,7 @@ Antes de publicar um contrato, verifique:
 - [Node.js](https://nodejs.org/en/download): instalação do runtime que fornece npm e npx.
 - [TestClient do FastAPI](https://fastapi.tiangolo.com/tutorial/testing/): testes HTTP em processo.
 - [Documentação do Uvicorn](https://www.uvicorn.org/): servidor ASGI usado na oficina.
+- [Documentação do Ocelot](https://ocelot.readthedocs.io/): gateway de API para .NET usado na extensão opcional da oficina.
 
 ## Continuidade
 

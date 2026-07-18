@@ -224,6 +224,7 @@ class ModuleOneTest(unittest.TestCase):
 
     def test_example_preserves_code_responsibilities_and_ecosystem_equivalences(self):
         text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")
+        text = re.sub(r"[ \t]+", " ", text)
 
         for fragment in (
             "processamento/",

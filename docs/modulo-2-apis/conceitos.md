@@ -4,11 +4,11 @@
 
 Uma **interface de programação de aplicações** (API) permite que aplicação web, móvel, nuvem, parceiro ou dispositivo use uma capacidade sem conhecer tabelas ou algoritmos internos. Separe três camadas:
 
-| Camada | Pergunta que responde | Exemplo na plataforma hospitalar |
-| --- | --- | --- |
-| Interface | O que está disponível para interação? | `POST /elegibilidades` e `GET /elegibilidades/{protocolo}` |
-| Contrato | Que promessa é observável? | campos obrigatórios, `202`, `Location`, `422` e schemas publicados |
-| Implementação | Como a promessa é cumprida hoje? | FastAPI, Pydantic e armazenamento em memória |
+| Camada        | Pergunta que responde                 | Exemplo na plataforma hospitalar                                   |
+| ------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| Interface     | O que está disponível para interação? | `POST /elegibilidades` e `GET /elegibilidades/{protocolo}`         |
+| Contrato      | Que promessa é observável?            | campos obrigatórios, `202`, `Location`, `422` e schemas publicados |
+| Implementação | Como a promessa é cumprida hoje?      | FastAPI, Pydantic e armazenamento em memória                       |
 
 O **consumidor** depende do contrato, não do código ou banco. Trocar biblioteca ou armazenamento pode ser interno; renomear campo, mudar status ou remover operação pede transição. Contrato, governança e evidência — não apenas a URL — tornam a API reutilizável.
 
@@ -16,19 +16,19 @@ O **consumidor** depende do contrato, não do código ou banco. Trocar bibliotec
 
 Não se escolhe um estilo por popularidade. Aplicação web tende a valorizar semântica HTTP e documentação; móvel, payload e rede; integração entre organizações, contrato durável e tradução de vocabulário; canal em tempo real, reconexão e ritmo. Uma API multicanal não precisa entregar a mesma representação a todos, mas precisa preservar o significado de negócio e declarar diferenças.
 
-## HTTP: protocolo de aplicação com semântica
+## Exemplo - A semância do HTTP
 
 HTTP não é apenas um túnel para “chamar função remota”. Uma requisição combina método, alvo, cabeçalhos e, quando necessário, conteúdo; uma resposta combina status, cabeçalhos e conteúdo. Clientes, proxies, caches e ferramentas compreendem essa semântica.
 
 Considere `POST /elegibilidades`. O método comunica que o cliente submete uma representação para processamento. A resposta `202 Accepted` informa aceitação, mas não afirma que a operadora já decidiu. `Location: /elegibilidades/{protocolo}` comunica onde acompanhar o recurso aceito. Cada elemento reduz uma ambiguidade diferente.
 
-| Método | Intenção comum | Propriedade relevante |
-| --- | --- | --- |
-| `GET` | recuperar uma representação | seguro e idempotente |
-| `POST` | submeter dados ou criar sob uma coleção | não é idempotente por definição |
-| `PUT` | substituir o estado conhecido de um recurso | idempotente |
-| `PATCH` | aplicar alteração parcial | depende do formato da alteração |
-| `DELETE` | remover a associação de um recurso | idempotente na intenção |
+| Método   | Intenção comum                              | Propriedade relevante           |
+| -------- | ------------------------------------------- | ------------------------------- |
+| `GET`    | recuperar uma representação                 | seguro e idempotente            |
+| `POST`   | submeter dados ou criar sob uma coleção     | não é idempotente por definição |
+| `PUT`    | substituir o estado conhecido de um recurso | idempotente                     |
+| `PATCH`  | aplicar alteração parcial                   | depende do formato da alteração |
+| `DELETE` | remover a associação de um recurso          | idempotente na intenção         |
 
 **Seguro** significa que o consumidor não pede mudança de estado; logs e métricas ainda podem existir. **Idempotente** significa que repetir a mesma intenção produz o mesmo efeito pretendido no servidor, embora a resposta ou metadados possam variar. Idempotência não equivale a deduplicação automática de uma transação distribuída.
 
@@ -44,7 +44,7 @@ Uma representação inclui dados necessários à tarefa, não tabelas internas: 
 
 REST não é JSON sobre HTTP. **Cliente-servidor**, **sem estado** e **cache** delimitam colaboração; **interface uniforme** reúne identificação de recursos, representações, mensagens autodescritivas e hipermídia; **sistema em camadas** aceita intermediários; **código sob demanda** é opcional. Uma API HTTP não é automaticamente REST: rota com substantivo pode ser **RPC com aparência de recurso**. O laboratório usa recursos e mensagens HTTP, mas não demonstra todas as restrições.
 
-## Estilos e protocolos: comparar a interação, não eleger vencedor
+## Além do HTTP - Estilos de APIs
 
 REST, RPC, GraphQL, gRPC, WebSocket e SOAP resolvem interações distintas. O protocolo e o estilo devem ser avaliados pela necessidade do consumidor, topologia, volume, latência, evolução e operação.
 
@@ -68,21 +68,19 @@ flowchart LR
 
 **Leitura textual:** as formas convergem na mesma capacidade: REST usa recursos, GraphQL seleciona campos, gRPC/RPC expõe operações, WebSocket mantém canal e SOAP/XML apoia contrato existente.
 
-| Alternativa | Quando ajuda | Cuidado arquitetural |
-| --- | --- | --- |
-| REST/HTTP | recursos em integrações web heterogêneas | não reduzir REST a nomes de URL |
-| RPC/gRPC | comandos ou colaboração interna tipada | evolução de métodos, mensagens e toolchain |
-| GraphQL | leituras com seleção variável | custo, autorização e cache nos resolvers |
-| WebSocket | atualização bidirecional em tempo real | reconexão, ordenação e pressão de consumo |
-| SOAP/XML | contrato de parceiro legado | isolar tradução do domínio |
+| Alternativa | Quando ajuda                             | Cuidado arquitetural                       |
+| ----------- | ---------------------------------------- | ------------------------------------------ |
+| REST/HTTP   | recursos em integrações web heterogêneas | não reduzir REST a nomes de URL            |
+| RPC/gRPC    | comandos ou colaboração interna tipada   | evolução de métodos, mensagens e toolchain |
+| GraphQL     | leituras com seleção variável            | custo, autorização e cache nos resolvers   |
+| WebSocket   | atualização bidirecional em tempo real   | reconexão, ordenação e pressão de consumo  |
+| SOAP/XML    | contrato de parceiro legado              | isolar tradução do domínio                 |
 
 GraphQL exige schema e política para consultas caras. gRPC não garante baixo tempo de resposta se a dependência externa continua lenta. WebSocket não substitui evento durável ou mensageria. SOAP não exige que a plataforma moderna use XML. Em cada caso, o arquiteto registra a força que levou à escolha e a evidência que poderá revisá-la.
 
-## Cabeçalhos, OpenAPI e contrato verificável
+## O contrato verificável e a sua evolução
 
-Cabeçalhos transportam metadados da interação. `Content-Type` descreve a representação enviada; `Accept` expressa formatos aceitos; `Location` aponta recurso relacionado; `ETag` identifica versão de uma representação para cache ou concorrência; um identificador de correlação conecta registros técnicos. Dados de negócio pertencem normalmente ao corpo; metadados de transporte, negociação, cache, condição ou rastreamento são candidatos a cabeçalho.
-
-OpenAPI descreve caminhos, operações, parâmetros, corpos, respostas e schemas em YAML ou JSON. No laboratório, `contratos/openapi.yaml` é a promessa explícita versionada.
+Cabeçalhos transportam metadados da interação: `Content-Type` descreve a representação enviada, `Accept` expressa os formatos aceitos, `Location` aponta um recurso relacionado, `ETag` identifica a versão de uma representação para cache ou concorrência, e um identificador de correlação conecta registros técnicos. OpenAPI descreve caminhos, operações, parâmetros, corpos, respostas e schemas em YAML ou JSON; no laboratório, `contratos/openapi.yaml` é a promessa explícita versionada. Um arquivo válido ainda pode ser um contrato fraco — tipo sem significado, erro ausente, exemplo incompatível: Spectral examina o documento, Bruno o consumo e `TestClient` a execução HTTP, perspectivas complementares.
 
 ![Anatomia de um contrato de API: cliente consome um contrato OpenAPI, a API processa a solicitação e responde 202 Accepted com Location para acompanhamento pela operadora de plano.](../assets/images/m02-anatomia-api.png)
 
@@ -90,8 +88,4 @@ OpenAPI descreve caminhos, operações, parâmetros, corpos, respostas e schemas
 
 **Leitura textual da figura:** um cliente consulta o contrato OpenAPI e envia uma requisição à API. A API responde `202 Accepted` e `Location` para informar aceitação e o caminho de acompanhamento. Outro consumidor, como uma operadora, pode usar a mesma promessa sem conhecer a implementação do servidor.
 
-Arquivo válido pode ser contrato fraco: tipo sem significado, erro ausente ou exemplo incompatível. Spectral examina o documento; Bruno, o consumo; `TestClient`, a execução HTTP. São perspectivas complementares.
-
-## Evolução: paginação, repetição e compatibilidade
-
-`offset/limit` pode repetir ou omitir itens em coleção mutável; cursor opaco lida melhor com mudança, mas pede mais política. Declare ordenação, continuação, filtros e erro. Para repetição de `POST`, chave de idempotência precisa de escopo, retenção, comparação e resposta divergente. O **versionamento** identifica linha de evolução incompatível; prefira campo opcional e significado preservado antes de nova versão. Remoção, obrigatoriedade ou unidade nova tendem a quebrar consumidores.
+Na evolução do contrato, a **paginação** por `offset/limit` pode repetir ou omitir itens em coleção mutável; um cursor opaco lida melhor com mudança, mas pede mais política — declare ordenação, continuação e filtros. Para a repetição segura de `POST`, uma chave de **idempotência** precisa de escopo, retenção, comparação e resposta divergente. O **versionamento** identifica uma linha de evolução incompatível; prefira campo opcional e significado preservado antes de abrir nova versão — remoção, obrigatoriedade ou unidade nova tendem a quebrar consumidores.

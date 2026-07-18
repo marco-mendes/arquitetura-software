@@ -117,7 +117,7 @@ Um teste funcional usa exemplos pequenos para verificar ordem e transformação.
 
 Também há limites não resolvidos. Se o enriquecimento depender de um serviço remoto lento, o filtro pode dominar toda a vazão. Paralelizar exige decidir ordenação e concorrência. Persistir resultados intermediários melhora recuperação, mas acrescenta estado. Esses aspectos viram forças de um ADR posterior, em vez de serem ocultados pelo desenho inicial.
 
-## Equivalências em Java e .NET
+## Estrutura de Projeto
 
 Uma implementação pode separar o coordenador `Pipeline`, os filtros puros e os adaptadores de formato. A árvore indica **responsabilidades**, não dependências automaticamente garantidas:
 
@@ -138,15 +138,17 @@ processamento/
     └── xml.py
 ```
 
+## Equivalências em Java e .NET
+
 Em Python, um `Protocol` define o filtro; em Java, uma `interface Filtro`; em .NET, `IFiltro`. A equivalência mantém intenção, não código idêntico:
 
-| Intenção | Python | Java | .NET |
-| --- | --- | --- | --- |
-| contrato do filtro | `typing.Protocol` | `interface` | `interface` |
-| resultado explícito | `dataclass` | `record` | `record` |
-| teste parametrizado | pytest | JUnit 5 | xUnit |
-| regra de dependência | import-linter | ArchUnit | NetArchTest |
-| modelo como código | Structurizr DSL | Structurizr DSL | Structurizr DSL |
+| Intenção             | Python            | Java            | .NET            |
+| -------------------- | ----------------- | --------------- | --------------- |
+| contrato do filtro   | `typing.Protocol` | `interface`     | `interface`     |
+| resultado explícito  | `dataclass`       | `record`        | `record`        |
+| teste parametrizado  | pytest            | JUnit 5         | xUnit           |
+| regra de dependência | import-linter     | ArchUnit        | NetArchTest     |
+| modelo como código   | Structurizr DSL   | Structurizr DSL | Structurizr DSL |
 
 Uma árvore não prova isolamento: teste imports proibidos e substitua um filtro para verificar composição.
 

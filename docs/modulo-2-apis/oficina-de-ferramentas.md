@@ -1,6 +1,6 @@
 # Oficina de ferramentas: contrato, execução e comparação
 
-Esta oficina usa dados sintéticos e dura aproximadamente noventa minutos na trilha essencial. Você executará a API FastAPI, observará `/docs`, importará OpenAPI no Bruno, validará o contrato com Spectral e rodará testes com `TestClient`. Nenhuma integração externa é chamada.
+Esta oficina usa dados sintéticos e dura aproximadamente noventa minutos na trilha essencial. Você executará a API FastAPI, observará `/docs`, importará OpenAPI no Bruno, validará o contrato com Spectral e rodará testes com `TestClient`. Nenhuma integração externa é chamada. Ao final há uma extensão opcional em .NET que coloca um gateway de API com Ocelot na frente de dois serviços.
 
 ## O que existe antes de você abrir o terminal
 
@@ -380,9 +380,140 @@ Explique por que o contrato alterado falha antes de chamar a API e por que o ser
 
 Leia `app.openapi()` no teste e acrescente, em uma cópia de estudo, uma comparação entre os status documentados e gerados. Não altere a API pública. Discuta que divergências são incompatibilidades e quais são apenas diferenças de descrição.
 
+## Extensão: gateway de API com Ocelot em .NET
+
+Esta extensão é opcional e independente da trilha essencial: nada do que segue altera a API de elegibilidades. Ela demonstra o padrão de **gateway de API** com o [Ocelot](https://ocelot.readthedocs.io/), um gateway leve para .NET configurado por um arquivo JSON declarativo. Um processo na porta 4000 vira a única entrada para duas APIs internas nas portas 5001 e 5002, reescrevendo os caminhos públicos `/api/...` para os serviços de destino.
+
+**Objetivo**
+
+Observar um gateway roteando requisições por configuração declarativa, sem lógica de negócio própria: o consumidor enxerga uma única origem, e a topologia interna fica livre para mudar sem quebrar quem consome.
+
+**Pré-requisito**
+
+SDK do .NET 8 ou superior, verificado com `dotnet --version`. Instale com `winget install Microsoft.DotNet.SDK.8` no Windows, `brew install --cask dotnet-sdk` no macOS ou pelos [pacotes oficiais do .NET](https://dotnet.microsoft.com/download) no Linux. Reserve três terminais e as portas 4000, 5001 e 5002. Crie os projetos numa pasta de trabalho fora do clone da disciplina.
+
+**Execute**
+
+Crie os três projetos e adicione o pacote do Ocelot ao gateway. Os comandos do `dotnet` são idênticos no PowerShell, no macOS e no Linux; execute-os na pasta de trabalho:
+
+```bash
+dotnet new web -n ClienteService
+dotnet new web -n ProdutoService
+dotnet new web -n OcelotGateway
+dotnet add OcelotGateway package Ocelot
+```
+
+Substitua o `Program.cs` do `ClienteService`:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/clientes", () => new[] {
+    new { Id = 1, Nome = "João Silva" },
+    new { Id = 2, Nome = "Maria Oliveira" }
+});
+
+app.Run();
+```
+
+Substitua o `Program.cs` do `ProdutoService`:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/produtos", () => new[] {
+    new { Id = 1, Nome = "Produto A" },
+    new { Id = 2, Nome = "Produto B" }
+});
+
+app.Run();
+```
+
+No `OcelotGateway`, substitua o `Program.cs` e crie um arquivo `ocelot.json` na raiz do projeto:
+
+```csharp
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
+builder.Services.AddOcelot(builder.Configuration);
+
+var app = builder.Build();
+
+await app.UseOcelot();
+
+app.Run();
+```
+
+```json
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/clientes",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5001 }],
+      "UpstreamPathTemplate": "/api/clientes"
+    },
+    {
+      "DownstreamPathTemplate": "/produtos",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5002 }],
+      "UpstreamPathTemplate": "/api/produtos"
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:4000"
+  }
+}
+```
+
+Cada rota declara o caminho público (`UpstreamPathTemplate`) e o destino interno (`DownstreamPathTemplate`, esquema, host e porta). Para repassar subcaminhos inteiros a um serviço, o Ocelot aceita o coringa `{everything}` nos dois templates — por exemplo, `/api/clientes/{everything}` para `/clientes/{everything}`.
+
+Inicie cada processo no próprio terminal, sempre a partir da pasta de trabalho:
+
+```bash
+dotnet run --project ClienteService --urls=http://localhost:5001
+dotnet run --project ProdutoService --urls=http://localhost:5002
+dotnet run --project OcelotGateway --urls=http://localhost:4000
+```
+
+Com os três processos ativos, consulte os serviços pelo gateway. No PowerShell:
+
+```powershell
+Invoke-RestMethod http://localhost:4000/api/clientes
+Invoke-RestMethod http://localhost:4000/api/produtos
+```
+
+Em macOS ou Linux:
+
+```bash
+curl -s http://localhost:4000/api/clientes
+curl -s http://localhost:4000/api/produtos
+```
+
+**Resultado esperado**
+
+O gateway responde `200 OK` com os JSON dos serviços internos — clientes com João Silva e Maria Oliveira, produtos com Produto A e Produto B — sem que o consumidor conheça as portas 5001 e 5002. Consultar `http://localhost:5001/clientes` diretamente devolve o mesmo corpo: o gateway não transformou a resposta, apenas roteou a requisição.
+
+**Contingência**
+
+Se `dotnet` não for reconhecido, reabra o terminal após instalar o SDK. Se uma porta estiver ocupada, encerre o processo antigo ou ajuste a porta no `--urls` e no `ocelot.json` ao mesmo tempo. Se o gateway responder `404`, confirme que `ocelot.json` está na raiz do projeto `OcelotGateway` e que o caminho requisitado coincide com `UpstreamPathTemplate`. Se a restauração de pacotes falhar por rede, repita `dotnet add OcelotGateway package Ocelot` com a conexão disponível.
+
+**Observe**
+
+O gateway não tem lógica de negócio: as rotas são dados, não código. Versionar `ocelot.json` documenta a topologia da borda da mesma forma que `openapi.yaml` documenta o contrato de cada serviço.
+
+**Compare**
+
+A restrição REST de sistema em camadas aparece aqui na prática: o consumidor não sabe se fala com o serviço final ou com um intermediário. Na trilha essencial, o contrato OpenAPI protege a fronteira de um serviço; o gateway organiza a fronteira do conjunto. Ao terminar, encerre os três processos com `Ctrl+C` em cada terminal.
+
 ## Resultado esperado
 
-Ao final, você terá observado `202`, `Location`, recuperação por `GET`, erro `422`, lint aprovado, lint deliberadamente reprovado e seis testes aprovados. Mais importante: conseguirá dizer qual ferramenta examina documento, implementação ou experiência do consumidor.
+Ao final, você terá observado `202`, `Location`, recuperação por `GET`, erro `422`, lint aprovado, lint deliberadamente reprovado e seis testes aprovados. Mais importante: conseguirá dizer qual ferramenta examina documento, implementação ou experiência do consumidor. Quem fez a extensão terá visto ainda um gateway de API roteando duas APIs por configuração declarativa.
 
 ## Interpretação
 
@@ -416,7 +547,7 @@ Se algum arquivo estiver em uso no Windows, feche terminais e editor ligados à 
 
 ## Evidência a entregar
 
-Entregue `spectral-valido.txt`, `testes-contrato.txt`, a coleção Bruno importada, respostas de `POST`, `GET` e `422`, e uma nota curta comparando contrato explícito, contrato gerado e execução. Inclua a falha deliberada sem apresentá-la como defeito pendente.
+Entregue `spectral-valido.txt`, `testes-contrato.txt`, a coleção Bruno importada, respostas de `POST`, `GET` e `422`, e uma nota curta comparando contrato explícito, contrato gerado e execução. Inclua a falha deliberada sem apresentá-la como defeito pendente. Se fizer a extensão do Ocelot, acrescente a saída das duas consultas feitas pelo gateway e o `ocelot.json` usado.
 
 ## Questões exploratórias
 
