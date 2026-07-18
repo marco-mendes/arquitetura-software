@@ -59,6 +59,39 @@ class ModuleFiveTest(unittest.TestCase):
             ),
         )
 
+    def test_concepts_and_decisions_compare_activemq_conditionally(self):
+        comparison = read_module_page(
+            "modulo-5-eventos", "conceitos.md"
+        ) + read_module_page("modulo-5-eventos", "padroes-e-decisoes.md")
+        self.assertIn("ActiveMQ", comparison)
+        self.assertIn("custo operacional", comparison)
+        self.assertIn("limites", comparison)
+
+    def test_advanced_exercises_use_only_the_nine_self_contained_fields(self):
+        exercises = read_module_page("modulo-5-eventos", "exercicios.md")
+        required_labels = (
+            "**Objetivo**",
+            "**Situação**",
+            "**Seu papel**",
+            "**Artefato que você irá usar**",
+            "**Antes de executar**",
+            "**O que fazer**",
+            "**Evidência esperada**",
+            "**Entrega esperada**",
+            "**Critérios de avaliação**",
+        )
+        advanced_sections = {
+            level: section
+            for level, section in zip(
+                ("Aplicar", "Analisar", "Avaliar", "Criar"),
+                re.split(r"^## (?:Aplicar|Analisar|Avaliar|Criar)$", exercises, flags=re.MULTILINE)[1:],
+            )
+        }
+
+        for level, section in advanced_sections.items():
+            labels = tuple(re.findall(r"^\*\*[^*]+\*\*$", section, re.MULTILINE))
+            self.assertEqual(required_labels, labels, level)
+
     def test_event_exercises_are_self_contained_with_initial_feedback(self):
         exercises = read_module_page("modulo-5-eventos", "exercicios.md")
         self.assertEqual(

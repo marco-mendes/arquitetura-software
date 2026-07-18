@@ -146,19 +146,13 @@ Você desenha o contrato e a reação mínima para a nova capacidade.
 
 O evento da oficina, a exchange `hospital.events`, referências sintéticas, uma tabela própria da projeção e a hipótese de que mensagens podem repetir e chegar atrasadas.
 
-**Insumos disponíveis**
-
-Os mesmos artefatos descritos acima.
-
 **Antes de executar**
 
 Delimite uma projeção sintética e escolha a identidade que representa uma ocorrência; não use conteúdo clínico nem um ambiente remoto.
 
 **O que fazer**
 
-**Como conduzir**
-
-Responda aos passos a seguir com premissas explícitas.
+Com premissas explícitas, responda aos passos a seguir.
 
 1. Declare se a entrada é evento, comando ou consulta e justifique.
 2. Escreva o payload mínimo, a identidade de deduplicação e a versão de contrato.
@@ -205,17 +199,11 @@ Você analisa causas plausíveis sem concluir além das evidências.
 
 As métricas descritas, os schemas de `v1` e uma mudança proposta que tornou uma referência obrigatória.
 
-**Insumos disponíveis**
-
-As métricas, schemas e mudança descritos acima.
-
 **Antes de executar**
 
 Marque no diagnóstico o que é observação e o que ainda é hipótese; use somente amostras sintéticas e dados já fornecidos.
 
 **O que fazer**
-
-**Como conduzir**
 
 Estruture a análise pelos passos a seguir, sem exceder a evidência.
 
@@ -262,11 +250,7 @@ Você recomenda uma decisão inicial e condições objetivas de revisão.
 
 **Artefato que você irá usar**
 
-O laboratório RabbitMQ, a descrição de tópicos e logs distribuídos, estimativa de volume mensal e owners de Faturamento e Qualidade.
-
-**Insumos disponíveis**
-
-O laboratório, a estimativa e os owners descritos acima.
+O laboratório RabbitMQ, descrições de Kafka e ActiveMQ, estimativa de volume mensal e owners de Faturamento e Qualidade.
 
 **Antes de executar**
 
@@ -274,11 +258,9 @@ Separe as necessidades comprovadas de Qualidade e Faturamento das hipóteses de 
 
 **O que fazer**
 
-**Como conduzir**
-
 Compare as alternativas pelos passos a seguir e registre suas condições.
 
-1. Compare fila RabbitMQ e log Kafka quanto a trabalho, leitura independente, replay, retenção e operação.
+1. Compare RabbitMQ, Kafka e ActiveMQ quanto a trabalho, leitura independente, replay, retenção, interoperabilidade e operação.
 2. Avalie o que é requisito comprovado e o que ainda é hipótese.
 3. Declare chave de ordenação necessária e o que ela não ordena.
 4. Inclua idempotência para o efeito de Faturamento em ambas as alternativas.
@@ -323,17 +305,11 @@ Você cria um plano de evolução e convivência entre consumidores.
 
 O contrato `v1`, lista de consumers, tópicos ou filas disponíveis, store idempotente e uma janela de transição definida pela equipe responsável.
 
-**Insumos disponíveis**
-
-O contrato, consumidores, canais e janela descritos acima.
-
 **Antes de executar**
 
 Declare o owner do contrato e a janela de convivência antes de escrever a versão ou alterar uma fila existente.
 
 **O que fazer**
-
-**Como conduzir**
 
 Produza o plano pelos passos a seguir, preservando a identidade da ocorrência.
 
