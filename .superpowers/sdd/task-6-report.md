@@ -27,6 +27,16 @@
 | `docker compose -f laboratorios/plataforma-hospitalar/infra/compose.governanca.yml config --quiet` | configuração válida (código zero) |
 | `git diff --check` | sem erros de espaço em branco |
 
+## Correção final de rastreamento
+
+- No enunciado de **Analisar**, explicitei que `infra/observabilidade/otel-collector.yml` recebe sinais OTLP, processa-os em lote e os exporta ao Jaeger; ele não propaga `traceparent`. Permanecem atribuídas a Kong a extração e injeção W3C e ao middleware de Elegibilidade a extração do contexto e a criação do span filho.
+- A redação foi condensada no próprio enunciado para preservar o limite editorial de 8.500 palavras, sem alterar os demais exercícios.
+
+| Comando | Resultado |
+| --- | --- |
+| `python -m unittest tests.test_module_four tests.test_editorial_recovery -v` | 10 testes aprovados |
+| `git diff --check` | sem erros de espaço em branco |
+
 ## Limites e preocupações
 
 - O Compose foi validado estaticamente; a tarefa não inicia contêineres. A oficina separa essa validação da evidência de rota, `429`, correlação e trace, que exigem execução local real.

@@ -176,7 +176,7 @@ As amostras do caso e os arquivos declarativos indicados.
 
 **Evidência esperada**
 
-Política observada: propagação de contexto; artefatos: `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`; serviço que a recebe: Kong e Elegibilidade. O gateway extrai e injeta o `traceparent` W3C; o middleware de Elegibilidade extrai o contexto recebido e cria o span filho. Saída: trace com nomes de serviço consistentes e log correlacionado, ou a lacuna registrada como falha.
+Política: contexto; artefatos: `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`; serviços: Kong e Elegibilidade. Kong extrai e injeta o `traceparent` W3C; o middleware de Elegibilidade extrai o contexto e cria o span filho. `infra/observabilidade/otel-collector.yml` recebe sinais OTLP, processa em lote e exporta ao Jaeger; não propaga `traceparent`. Saída: trace e log correlacionados, ou lacuna registrada.
 
 **Entrega esperada**
 
