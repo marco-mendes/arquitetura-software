@@ -264,18 +264,63 @@ class ModuleOneTest(unittest.TestCase):
             self.assertIn(delivery, sections[level])
             self.assertIn("raiz do repositório `arquitetura-software`", sections[level])
 
-    def test_installation_starts_each_platform_at_clone_root(self):
-        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
-            encoding="utf-8"
+    def test_workshop_uses_the_three_existing_chapter_one_examples(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        for path in (
+            "codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas",
+            "codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters",
+            "codigos/cap01-estilos-fundamentais/1.4-microkernel",
+        ):
+            self.assertIn(path, workshop)
+        self.assertNotIn("laboratorios/plataforma-hospitalar", workshop)
+        self.assertNotIn("Structurizr", workshop)
+        self.assertNotIn("Podman", workshop)
+
+    def test_workshop_experiments_declare_setup_and_keep_shell_commands_copyable(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        expected_artifacts = (
+            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas",
+            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters",
+            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel",
         )
 
-        for start, end in (
-            ("### Windows", "### macOS"),
-            ("### macOS", "### Linux"),
-            ("### Linux", "## Preparação do laboratório"),
+        experiments = re.split(r"(?m)^## Experimento [1-3] — ", workshop)[1:]
+        self.assertEqual(3, len(experiments))
+        for experiment, artifact in zip(experiments, expected_artifacts):
+            before_table_or_command = re.split(r"(?m)^\||^```", experiment, maxsplit=1)[0]
+            self.assertIn("**Objetivo:**", before_table_or_command)
+            self.assertRegex(
+                before_table_or_command,
+                rf"\*\*Artefato:\*\*\n\n`{re.escape(artifact)}`",
+            )
+            self.assertIn("**Pré-condição:**", before_table_or_command)
+            self.assertIn("terminal aberto na raiz do clone", before_table_or_command.casefold())
+            self.assertIn("Python 3.10+ confirmado", before_table_or_command)
+
+        shell_blocks = re.findall(r"```(?:powershell|bash)\n(.*?)```", workshop, re.DOTALL)
+        self.assertGreaterEqual(len(shell_blocks), 6)
+        self.assertTrue(all("<raiz-do-clone>" not in block for block in shell_blocks))
+
+    def test_workshop_captures_before_and_after_evidence_for_all_experiments(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+
+        for command in (
+            "py main.py | Tee-Object -FilePath saida-antes.txt",
+            "py main.py | Tee-Object -FilePath saida-depois.txt",
+            "python3 main.py | tee saida-antes.txt",
+            "python3 main.py | tee saida-depois.txt",
         ):
-            platform = workshop.split(start, 1)[1].split(end, 1)[0]
-            self.assertIn("terminal começa na raiz do clone `arquitetura-software`", platform)
+            self.assertEqual(3, workshop.count(command), command)
+
+    def test_workshop_links_each_style_to_real_chapter_one_source_files(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        for filename in (
+            "apresentacao.py", "servicos.py", "dominio.py", "repositorios.py",
+            "framework.py", "filtros/testers.py", "filtros/transformers.py",
+            "nucleo.py", "plugins/impostos_sp.py", "plugins/frete.py",
+        ):
+            self.assertIn(filename, workshop)
+        self.assertGreaterEqual(workshop.count("github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais"), 10)
 
     def test_diagrams_have_textual_readings(self):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
@@ -328,63 +373,6 @@ class ModuleOneTest(unittest.TestCase):
 
         self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9], figures)
 
-    def test_structurizr_models_one_application_with_internal_modules(self):
-        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
-            encoding="utf-8"
-        )
-        dsl = workshop.split("```structurizr", 1)[1].split("```", 1)[0]
-
-        self.assertIn(
-            'aplicacao = container "Aplicação hospitalar" '
-            '"Monólito modular implantado como uma unidade" '
-            '"Python 3.12 e FastAPI" {',
-            dsl,
-        )
-        for module in ("agenda", "triagem", "faturamento", "auditoria"):
-            self.assertRegex(dsl, rf"(?m)^\s*{module}\s*=\s*component\b")
-            self.assertNotRegex(dsl, rf"(?m)^\s*{module}\s*=\s*container\b")
-        self.assertIn('component aplicacao "Modulos"', dsl)
-        self.assertNotRegex(
-            dsl,
-            r'\b(?:container|component)\s+"[^"]+"\s+"[^"]+"\s+'
-            r'"(?:Microkernel|Pipes and filters|Módulo[^\"]*)"',
-        )
-
-    def test_workshop_captures_exact_evidence_files_on_both_shells(self):
-        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
-            encoding="utf-8"
-        )
-        for command in (
-            "mkdir -p evidencias",
-            "cp structurizr/workspace.dsl evidencias/workspace.dsl",
-            "python -m pytest tests/test_estilos.py -q 2>&1 | tee evidencias/testes-estilos.txt",
-            "python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-modificabilidade.txt",
-            "python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-fluxo.txt",
-            "New-Item -ItemType Directory -Force evidencias",
-            r"Copy-Item .\structurizr\workspace.dsl .\evidencias\workspace.dsl",
-            r".venv\Scripts\python.exe -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt",
-            r".venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt",
-            r".venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt",
-        ):
-            self.assertIn(command, workshop)
-        for filename in (
-            "testes-estilos.txt",
-            "comparacao-modificabilidade.txt",
-            "comparacao-fluxo.txt",
-            "workspace.dsl",
-            "ADR-001-estilo-inicial.md",
-        ):
-            self.assertIn(filename, workshop)
-
-    def test_workshop_reports_current_test_order_and_counts(self):
-        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("O terceiro teste compara", workshop)
-        self.assertIn("3 passed", workshop)
-        self.assertIn("4 passed", workshop)
-        self.assertNotIn("2 passed", workshop)
-
     def test_advanced_scenarios_do_not_leak_the_resolved_case(self):
         exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
         sections = bloom_sections(exercises)
@@ -416,95 +404,6 @@ class ModuleOneTest(unittest.TestCase):
         self.assertIn("prática de documentação de decisões", text)
         self.assertNotIn("Repository, Adapter, Circuit Breaker e ADR são padrões", text)
         self.assertNotIn("| Padrão de decisão | ADR |", text)
-
-    def test_workshop_has_process_scoped_powershell_contingency(self):
-        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
-            encoding="utf-8"
-        )
-        windows = workshop.split("### Windows", 1)[1].split("### macOS", 1)[0]
-
-        self.assertIn(
-            "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned",
-            windows,
-        )
-        self.assertRegex(
-            windows,
-            r"(?is)escopo `Process`.*(?:feche|fechar).*PowerShell",
-        )
-        self.assertLess(
-            windows.index("py -m venv .venv"),
-            windows.index(
-                "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned"
-            ),
-        )
-        self.assertLess(
-            windows.index(
-                "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned"
-            ),
-            windows.index(r".venv\Scripts\Activate.ps1"),
-        )
-        self.assertLess(
-            windows.index(r".venv\Scripts\Activate.ps1"),
-            windows.index(r'.venv\Scripts\python.exe -m pip install -e ".[dev]"'),
-        )
-
-        powershell_blocks = re.findall(
-            r"```powershell\n(.*?)```", windows, re.DOTALL
-        )
-        activation_blocks = [
-            block.strip()
-            for block in powershell_blocks
-            if "Activate.ps1" in block
-        ]
-        self.assertEqual(
-            [r".venv\Scripts\Activate.ps1"],
-            activation_blocks,
-        )
-        activation_end = windows.index("```", windows.index("Activate.ps1")) + 3
-        checkpoint = windows.index("`(.venv)`", activation_end)
-        installation = windows.index(
-            r'.venv\Scripts\python.exe -m pip install -e ".[dev]"'
-        )
-        self.assertLess(activation_end, checkpoint)
-        self.assertLess(checkpoint, installation)
-
-        after_venv_creation = windows.split("py -m venv .venv", 1)[1]
-        later_commands = "\n".join(
-            re.findall(
-                r"```powershell\n(.*?)```", after_venv_creation, re.DOTALL
-            )
-        )
-        self.assertNotRegex(later_commands, r"(?m)^python(?:\.exe)?\s")
-        for line in later_commands.splitlines():
-            if any(
-                marker in line
-                for marker in (
-                    "-m pip",
-                    "-m pytest",
-                    "python.exe --version",
-                    "python.exe evidencias",
-                )
-            ):
-                self.assertTrue(
-                    line.startswith(r".venv\Scripts\python.exe"),
-                    line,
-                )
-
-        no_activation = windows.split("#### Rota sem ativação", 1)[1]
-        for command in (
-            r".venv\Scripts\python.exe -m pip install --upgrade pip",
-            r'.venv\Scripts\python.exe -m pip install -e ".[dev]"',
-            r".venv\Scripts\python.exe --version",
-            r".venv\Scripts\python.exe -m pytest --version",
-            r".venv\Scripts\python.exe -m pytest tests -q",
-            r".venv\Scripts\python.exe -m pytest tests/test_estilos.py -q",
-        ):
-            self.assertIn(command, no_activation)
-        commands = "\n".join(
-            re.findall(r"```powershell\n(.*?)```", no_activation, re.DOTALL)
-        )
-        self.assertNotRegex(commands, r"(?m)^python(?:\.exe)?\s")
-        self.assertNotIn("Activate.ps1", commands)
 
     def test_synthesis_links_primary_and_official_public_sources(self):
         text = (MODULE / "sintese-e-referencias.md").read_text(encoding="utf-8")
