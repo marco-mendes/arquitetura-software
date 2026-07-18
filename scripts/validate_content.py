@@ -102,6 +102,17 @@ _ADVANCED_MARKERS = (
     "**Entrega esperada**",
     "**Critérios de avaliação**",
 )
+_SELF_CONTAINED_LABELS = (
+    "**Objetivo**",
+    "**Situação**",
+    "**Seu papel**",
+    "**Artefato que você irá usar**",
+    "**Antes de executar**",
+    "**O que fazer**",
+    "**Evidência esperada**",
+    "**Entrega esperada**",
+    "**Critérios de avaliação**",
+)
 _ANSWER_BLOCK = re.compile(
     r"^(?:#{1,6}[ \t]+|\*\*|!!![ \t]+\w+[ \t]+[\"']?|"
     r"\?\?\?[ \t]+\w+[ \t]+[\"']?|<summary>)"
@@ -146,6 +157,48 @@ def bloom_sections(text: str) -> dict[str, str]:
         ].strip()
         for index, match in enumerate(matches)
     }
+
+
+def expandable_feedback_errors(text: str, location: str) -> list[str]:
+    """Exige uma resposta expansível para cada pergunta inicial de Bloom."""
+
+    errors: list[str] = []
+    for level in ("Recordar", "Compreender"):
+        section = bloom_sections(text).get(level, "")
+        items = re.split(r"(?m)(?=^\d+\.\s)", section)
+        for item in (item for item in items if re.match(r"^\d+\.\s", item)):
+            if not re.search(
+                r"<details>\s*<summary>Ver resposta</summary>.*?</details>",
+                item,
+                re.DOTALL,
+            ):
+                errors.append(
+                    f"{location}: {level}: pergunta sem resposta expansível"
+                )
+    return errors
+
+
+def self_contained_activity_errors(text: str, location: str) -> list[str]:
+    """Exige o roteiro contextual completo nas atividades avançadas de Bloom."""
+
+    errors: list[str] = []
+    for level in ("Aplicar", "Analisar", "Avaliar", "Criar"):
+        section = bloom_sections(text).get(level, "")
+        if not section:
+            continue
+        previous = -1
+        for label in _SELF_CONTAINED_LABELS:
+            current = section.find(label, previous + 1)
+            if current == -1:
+                errors.append(
+                    f"{location}: {level}: marcador obrigatório ausente: {label}"
+                )
+            elif current < previous:
+                errors.append(
+                    f"{location}: {level}: marcador fora da ordem: {label}"
+                )
+            previous = max(previous, current)
+    return errors
 
 
 def _location(path: Path, docs_root: Path) -> str:

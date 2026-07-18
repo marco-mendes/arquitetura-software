@@ -10,15 +10,21 @@ Comece pelas definições e pelos atributos de qualidade relacionados ao tema. R
 
 Leia o exemplo arquitetural procurando componentes, conectores, fronteiras e decisões. Compare a implementação Python com as equivalências em Java e .NET quando precisar transferir a ideia para seu ambiente profissional.
 
-## 3. Oficina
+## 3. Exercícios
+
+Em **Recordar** e **Compreender**, formule primeiro sua resposta e só então abra **Ver resposta**. Esse bloco expansível é uma autocorreção: ele esclarece o vocabulário e a interpretação esperados, sem substituir sua tentativa inicial.
+
+Nas atividades de **Aplicar**, **Analisar**, **Avaliar** e **Criar**, leia o roteiro inteiro antes de agir. Ele apresenta o objetivo, a situação, seu papel, o artefato que será usado, a preparação necessária, o que fazer, a evidência esperada, a entrega e os critérios de avaliação. Assim, você sabe qual arquivo ou processo está em jogo, por que cada passo é necessário e o que observar ao concluí-lo.
+
+## 4. Oficina
 
 Confira os pré-requisitos, prepare o ambiente indicado para seu sistema operacional e execute primeiro o percurso essencial. Observe a saída antes de alterar o experimento. As extensões são opcionais e podem ser escolhidas conforme o ritmo da turma.
 
-## 4. Evidência
+## 5. Evidência
 
 Guarde a evidência solicitada: resultado de teste, trecho de telemetria, diagrama, contrato ou registro de decisão. Uma evidência deve permitir que outra pessoa compreenda o que foi executado e qual conclusão é sustentada.
 
-## 5. Projeto
+## 6. Projeto
 
 Transfira a decisão para o caso hospitalar somente depois de interpretar a evidência. Atualize o incremento e o ADR correspondente, conectando contexto, alternativa escolhida, consequências e forma de verificação.
 

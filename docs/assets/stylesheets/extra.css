@@ -164,6 +164,29 @@ textarea {
   content: "CRITÉRIOS";
 }
 
+.md-typeset details {
+  background: var(--academia-surface);
+  border: 1px solid rgb(37 77 184 / 24%);
+  border-radius: var(--academia-radius);
+  margin-block: var(--academia-space-4);
+  padding: var(--academia-space-3) var(--academia-space-4);
+}
+
+.md-typeset details > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.md-typeset details[open] > summary {
+  margin-bottom: var(--academia-space-3);
+}
+
+.md-typeset details > summary:focus-visible {
+  background: var(--academia-white);
+  outline: 3px solid var(--academia-cobalt);
+  outline-offset: 3px;
+}
+
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--academia-cobalt);
   outline-offset: 3px;

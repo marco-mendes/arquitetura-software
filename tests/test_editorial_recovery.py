@@ -1,6 +1,11 @@
 from pathlib import Path
 import unittest
 
+from scripts.validate_content import (
+    expandable_feedback_errors,
+    self_contained_activity_errors,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -14,6 +19,48 @@ _ALLOWED_FIGURE_DECISIONS = (
 
 
 class EditorialRecoveryTest(unittest.TestCase):
+    def test_expandable_feedback_parser(self):
+        text = (
+            "## Recordar\n\n"
+            "1. Defina conector.\n\n"
+            "<details>\n"
+            "<summary>Ver resposta</summary>\n\n"
+            "Um mecanismo de colaboração entre elementos arquiteturais.\n"
+            "</details>\n\n"
+            "## Compreender\n\n"
+            "1. Explique por que um conector não é um componente.\n\n"
+            "<details>\n"
+            "<summary>Ver resposta</summary>\n\n"
+            "O conector descreve a comunicação; o componente concentra responsabilidade.\n"
+            "</details>\n"
+        )
+
+        self.assertEqual([], expandable_feedback_errors(text, "exemplo.md"))
+
+    def test_self_contained_activity_parser(self):
+        text = """## Aplicar
+
+**Objetivo**
+
+**Situação**
+
+**Seu papel**
+
+**Artefato que você irá usar**
+
+**Antes de executar**
+
+**O que fazer**
+
+**Evidência esperada**
+
+**Entrega esperada**
+
+**Critérios de avaliação**
+"""
+
+        self.assertEqual([], self_contained_activity_errors(text, "exemplo.md"))
+
     def test_traceability_covers_every_numbered_legacy_markdown(self):
         traceability = (
             ROOT / "docs/superpowers/traceability/recuperacao-editorial.md"
