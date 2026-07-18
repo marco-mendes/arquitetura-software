@@ -57,3 +57,20 @@ class AcademiaVisualSystemTest(unittest.TestCase):
         html = on_page_content('<h1 data-class="legacy">Título</h1>')
         self.assertIn('data-class="legacy"', html)
         self.assertIn(' class="module-opening"', html)
+
+
+class VisualSystemTest(unittest.TestCase):
+    def test_right_toc_can_be_collapsed_accessibly_on_desktop(self):
+        navigation = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
+        css = (ROOT / "docs/assets/stylesheets/extra.css").read_text(encoding="utf-8")
+        script = (ROOT / "docs/assets/javascripts/toc-toggle.mjs").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("assets/javascripts/toc-toggle.mjs", navigation)
+        self.assertIn("html.toc-collapsed .md-sidebar--secondary", css)
+        self.assertIn("@media (min-width: 76.25em)", css)
+        self.assertIn("academia-toc-toggle", script)
+        self.assertIn("aria-expanded", script)
+        self.assertIn("localStorage", script)
+        self.assertIn("document$.subscribe", script)
