@@ -1,56 +1,84 @@
 # Padrões e decisões para APIs
 
-## Começar pelos consumidores e pelas forças
+## Começar pelo problema do consumidor
 
-Antes dos endpoints, identifique consumidores, tarefas, volume, latência, falhas, propriedade dos dados e evolução. Pergunte qual resultado deve ser observado, quando ele é necessário e quais mudanças internas não deveriam afetar o consumidor. No laboratório, `202` e `Location` prometem aceitação e acompanhamento, não decisão final da operadora.
+Antes dos endpoints, identifique consumidor, resultado, tempo, dados e falhas. API é decisão de colaboração, não rotas derivadas de tabelas. Na elegibilidade, `202` com `Location` promete aceitação e acompanhamento, não aprovação nem mecanismo de processamento.
 
-## Escolher estilo por interação
+## Um processo arquitetural para construir APIs
 
-Uma arquitetura pode combinar estilos por critério explícito: REST/HTTP para recursos web, gRPC para comandos internos tipados, GraphQL para grafos com seleções variáveis e RPC para operações naturalmente verbais.
+O processo não é uma sequência burocrática. Ele diminui o risco de implementar uma interface tecnicamente correta e inutilizável para o consumidor.
 
-Compare alternativas pelas mesmas dimensões:
+```mermaid
+flowchart LR
+    A[Identificar consumidor\ne resultado] --> B[Delimitar capacidade\ne responsabilidade]
+    B --> C[Comparar forma\nde interação]
+    C --> D[Desenhar contrato\ne exemplos]
+    D --> E[Implementar\ne testar]
+    E --> F[Publicar, descobrir\ne observar uso]
+    F --> G[Evoluir ou retirar\ncom transição]
+    G -. evidência de uso .-> C
+```
 
-| Dimensão | REST/HTTP | RPC | GraphQL | gRPC |
-| --- | --- | --- | --- | --- |
-| Unidade principal | recurso e representação | operação | tipo e seleção | serviço e mensagem |
-| Descoberta | OpenAPI e documentação | descrição de métodos | introspecção e schema | arquivos `.proto` |
-| Evolução | compatibilidade de recursos e schemas | compatibilidade de argumentos | depreciação de campos | regras de evolução do protobuf |
-| Cache web | aproveita semântica HTTP | depende da convenção | exige estratégia própria | fora do modelo usual de cache web |
-| Consumidores | amplo suporte HTTP | simples quando convenção é clara | clientes capazes de formular consultas | geração de código e suporte HTTP/2 |
-| Risco típico | REST apenas nominal | proliferação de métodos | consultas caras e autorização granular | acoplamento a toolchain e operação |
+*Figura 6 — Ciclo de decisão de uma API, da necessidade do consumidor à evolução observada.*
 
-## Contract-first e code-first
+**Leitura textual da figura:** a equipe identifica consumidor e resultado, delimita a capacidade e compara formas de interação antes de desenhar o contrato. Depois implementa, testa, publica e observa uso. Evidências de uso retornam à comparação de alternativas quando a API precisa evoluir ou ser retirada.
 
-**Contract-first** antecipa revisão e mocks, mas pode se afastar da execução. **Code-first** gera o contrato de tipos e rotas rapidamente, mas pode publicar detalhes do framework sem decisão consciente. O laboratório compara `openapi.yaml` com `app.openapi()` e testa exemplos. Em uma equipe, escolha uma fonte principal e automatize a detecção de deriva.
+Para cada etapa, guarde cenário, responsabilidade, contrato, teste, referência de consumo e telemetria. FastAPI, Spring Boot e ASP.NET Core implementam; OpenAPI, Spectral e Bruno tornam a promessa analisável. Nenhuma ferramenta decide se a operação pertence à API ou se uma integração deve ser assíncrona.
 
-## Evolução compatível
+## Comparar formas de interação pelas mesmas forças
 
-Compatibilidade não é apenas validar JSON. Adicionar `prazo_estimado` opcional tende a ser compatível; reaproveitar `situacao: recebida` para significar “aprovada” preserva a forma e quebra a semântica.
+Uma solução pode combinar estilos por critério explícito: REST/HTTP para recursos acessíveis a múltiplos clientes, GraphQL para leituras com seleção muito variável, gRPC para colaboração interna tipada e streaming, WebSocket para canal bidirecional e SOAP/XML para o contrato de um parceiro. A escolha não é um ranking.
 
-Classifique a mudança como aditiva, restritiva, semântica ou remoção; identifique consumidores; preserve comportamento antigo na transição; publique depreciação e alternativa; observe adoção; remova apenas depois do critério acordado.
+Compare unidade de colaboração, descoberta, evolução, cache, operação e risco. Para tela móvel variável, GraphQL é hipótese a testar por número de chamadas, autorização e cache. Para processos internos, gRPC só ajuda se a medida incluir dependências lentas. SOAP/TISS é restrição de fronteira, não ordem para a plataforma inteira falar XML.
 
-Versão no caminho é visível, mas pode agrupar mudanças demais; cabeçalho preserva URI, porém é menos óbvio; negociação de mídia é precisa e mais complexa. Registre uma estratégia.
+## Contract-first, code-first e compatibilidade
 
-## Idempotência como política
+**Contract-first** revisa contrato e exemplos antes do servidor; **code-first** gera documentação de rotas e tipos. Escolha fonte principal e sentinelas contra deriva. Aqui, `contratos/openapi.yaml`, `src/hospital/api/main.py` e `tests/test_api_contract.py` são perspectivas diferentes, não prova de equivalência total.
 
-`GET`, `PUT` e `DELETE` têm semântica idempotente, mas a implementação pode violá-la: `GET` não deve confirmar uma ação e `PUT` não deve somar a cada tentativa.
+Classifique mudanças como aditiva, restritiva, semântica ou remoção. Campo opcional tende a ser aditivo; trocar o significado de `recebida` quebra mesmo mantendo a forma. Versão no caminho é visível, cabeçalho preserva URI e negociação de mídia é mais precisa; nenhuma opção substitui inventário de consumidores e observação de uso.
 
-Para `POST`, uma chave pode associar consumidor, operação e conteúdo ao resultado. Repetição equivalente recebe o mesmo protocolo; corpo diferente, conflito. A política define retenção e concorrência. A API mínima não a implementa para não apresentar um dicionário local como solução distribuída confiável.
+## Paginação e idempotência são políticas, não adornos
 
-## Paginação e consistência de leitura
+Lista precisa declarar ordenação: `offset/limit` pode mover itens; cursor opaco pede expiração, filtro e erro válido. Para `POST`, chave de idempotência precisa declarar retenção, concorrência e corpo divergente. A API local não demonstra idempotência distribuída.
 
-Paginação exige uma ordenação estável. `?offset=20&limit=10` sem ordenação definida não produz páginas reproduzíveis. Mesmo com ordenação, inserções antes do deslocamento movem itens. Um cursor pode incorporar a última chave observada e a ordenação; deve ser opaco para permitir evolução interna.
+## Plataforma de APIs: capacidades, não catálogo de produtos
 
-O contrato define limite padrão e máximo, continuação, cursor inválido, filtros e se a leitura é instantâneo ou coleção viva. A API mínima não lista elegibilidades, portanto não inventa paginação.
+Uma plataforma de APIs reúne capacidades que tornam contratos construíveis, executáveis e encontráveis. Ela não precisa começar como uma compra corporativa, e a presença de um produto não substitui uma política de arquitetura.
 
-## API gateway: entrada central, não centro do domínio
+```mermaid
+flowchart TB
+    D[Desenvolvimento\ncontrato, exemplos, lint, testes] --> X[API publicada]
+    X --> R[Execução\nroteamento, TLS, limites, telemetria]
+    X --> E[Engajamento\ndocumentação, catálogo, suporte]
+    E --> D
+    R --> D
+```
 
-Um **API gateway** encaminha chamadas e pode centralizar roteamento, TLS, limites, autenticação técnica, correlação e observabilidade. Regras do domínio e tradução semântica pertencem a componentes próprios; roteamento não resolve significado. Como traz salto de rede, configuração e operação, seria excesso no laboratório local. O módulo 4 retomará essa decisão.
+*Figura 7 — Três capacidades conectadas de uma plataforma de APIs.*
 
-## Erros e observabilidade sem vazamento
+**Leitura textual da figura:** desenvolvimento prepara contratos, exemplos, análise e testes; execução atende o tráfego com políticas técnicas; engajamento permite que consumidores encontrem, entendam e obtenham suporte. As setas de retorno mostram que telemetria e dúvidas de consumo devem alimentar o próximo ciclo de desenvolvimento.
 
-Separe erro do consumidor, recurso ausente, conflito, indisponibilidade e defeito interno. Códigos públicos são estáveis; diagnóstico fica em logs. Correlação segue uma execução, enquanto `protocolo` acompanha o negócio; não misture finalidades.
+Desenvolvimento responde por contrato, exemplos e testes; execução por tráfego, TLS, limites e telemetria; engajamento por descoberta e suporte. O laboratório usa uma versão mínima desse ciclo: repositório, OpenAPI, FastAPI, Bruno, Spectral e testes; não declara gateway ou catálogo empresarial.
 
-## ADR-002: o que registrar
+## API gateway: borda pública, não centro do domínio
 
-Registre contexto, alternativas, decisão, consequências, evidência e revisão. Delimite REST/HTTP, `202`, OpenAPI, compatibilidade e testes; framework é mecanismo. Novo consumidor, streaming, paginação, idempotência forte ou duas versões podem disparar revisão.
+Um **API gateway** pode aplicar roteamento, TLS, autenticação técnica, limites, correlação e observabilidade. Não deve ser depósito de regras de negócio ou tradutor universal de conceitos externos.
+
+```mermaid
+flowchart LR
+    C[Portal administrativo] --> G[Gateway\nrota, TLS, limite, correlação]
+    G --> A[API de elegibilidade]
+    G --> H[API de agenda]
+    A --> L[Adaptador do laboratório\ntradução REST ↔ SOAP/TISS]
+    L --> X[Laboratório parceiro]
+```
+
+*Figura 8 — Gateway na borda e adaptador junto à diferença semântica.*
+
+**Leitura textual da figura:** o gateway concentra políticas técnicas e encaminha a chamada a APIs da plataforma. A tradução entre a linguagem interna e o SOAP/TISS do laboratório fica no adaptador, próximo da dependência externa. Assim, roteamento não é confundido com entendimento do domínio.
+
+Agregação pede uma tela composta e medição de latência, falha e cache. Gateway sem necessidade de fronteira adiciona salto, configuração e operação. O módulo 4 aprofunda suas políticas.
+
+## ADR-002: uma decisão que pode ser revisada
+
+O ADR registra contexto, alternativas, decisão, consequências, evidência e gatilho. Na baseline, explique REST/HTTP, `202`, `Location`, OpenAPI, limites e sinais de revisão, como streaming, paginação ou idempotência forte.

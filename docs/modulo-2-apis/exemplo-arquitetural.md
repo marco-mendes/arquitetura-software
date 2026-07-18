@@ -2,7 +2,7 @@
 
 ## Da necessidade ao contrato
 
-A equipe administrativa precisa perguntar à plataforma se uma matrícula está elegível para uma solicitação. A operadora externa pode responder com latência variável e não pertence à mesma unidade operacional. Neste incremento, a API não simula a integração completa. Ela estabelece a primeira parte do protocolo: receber dados sintéticos válidos, gerar um identificador e permitir recuperação do estado aceito.
+A equipe administrativa consulta elegibilidade; a operadora externa pode responder com latência variável. Neste incremento, a API só recebe dado sintético, gera identificador e permite recuperar o estado aceito.
 
 O consumidor envia:
 
@@ -54,7 +54,26 @@ sequenceDiagram
 
 **Leitura textual da figura:** o consumidor envia um pedido, a API valida e guarda um estado efêmero, responde com `202` e o endereço de consulta; em seguida, o consumidor usa esse endereço e recebe `200` com a representação aceita.
 
-O diagrama mostra mensagens públicas e uma dependência interna. Trocar o dicionário por persistência não deveria mudar as quatro mensagens entre consumidor e API. Já acrescentar a decisão da operadora exigirá novos estados, regras de transição e testes. O contrato deve evoluir antes que o diagrama passe a sugerir um comportamento inexistente.
+Trocar o dicionário por persistência não deveria mudar as mensagens públicas. Decisão da operadora exigirá novos estados, regras e testes.
+
+## Onde termina o gateway e começa a tradução
+
+O laboratório não instala gateway: uma FastAPI única atende em `http://127.0.0.1:8000`. Em evolução com várias capacidades, borda pública e integração externa têm responsabilidades diferentes.
+
+```mermaid
+flowchart LR
+    A[Sistema administrativo] --> G[Gateway de borda\nrota, autenticação técnica, limite, correlação]
+    G --> E[API de elegibilidade\ncontrato da plataforma]
+    E --> T[Adaptador de operadora\ntradução de vocabulário e protocolo]
+    T --> O[Operadora externa]
+    E --> M[(estado do pedido)]
+```
+
+*Figura 9 — Uma evolução possível: políticas técnicas na borda, tradução no adaptador e estado na plataforma.*
+
+**Leitura textual da figura:** gateway aplica políticas e encaminha à API; adaptador traduz vocabulário e protocolo da operadora; o estado pertence à API. A figura é hipótese de evolução, não componente do laboratório.
+
+O gateway pode autenticar, limitar e rotear. Ele não deve converter `beneficiaryKey` da operadora para `matricula_plano` nem decidir que um estado desconhecido significa `negada`; isso é responsabilidade do adaptador, onde a diferença semântica pode ser testada e observada. Essa separação evita espalhar SOAP/XML ou regras externas pelos consumidores internos.
 
 ## Caminho de erro
 
@@ -74,26 +93,16 @@ Quando `cpf` está ausente, FastAPI detecta a violação do modelo Pydantic. Um 
 }
 ```
 
-O status é `422 Unprocessable Entity`. `codigo` apoia decisão automatizada; `mensagem` ajuda pessoas; `detalhes` localiza cada violação. O consumidor não deve depender da frase inglesa do validador. Uma versão posterior pode normalizar mensagens preservando `codigo`, `campo` e `tipo`.
-
-Consultar um protocolo desconhecido produz `404` e `elegibilidade_nao_encontrada`. Após reiniciar o servidor, todos os protocolos anteriores se tornam desconhecidos porque não há persistência. A oficina destaca essa limitação para impedir que o exemplo seja confundido com arquitetura de produção.
+`422 Unprocessable Entity` usa `codigo` para automação e `mensagem`/`detalhes` para pessoas. Protocolo desconhecido produz `404`; reinício o perde porque não há persistência.
 
 ## Contrato explícito e contrato gerado
 
-`contratos/openapi.yaml` declara exatamente duas rotas, três schemas públicos principais, exemplos e respostas. FastAPI também expõe `/openapi.json` a partir do código. O teste automatizado confere que ambos incluem as operações e os mesmos campos obrigatórios de `PedidoElegibilidade`. Outro teste lê o exemplo do YAML e o envia à aplicação.
-
-Essa verificação não prova equivalência total. Ela cria uma sentinela pequena e útil. Uma equipe pode ampliar a comparação com ferramentas de diff semântico, testes de consumidor ou geração do contrato a partir de uma fonte única. A evidência deve acompanhar o risco: operações públicas críticas pedem verificação mais profunda que um protótipo local.
+`contratos/openapi.yaml` declara rotas, schemas e exemplos; FastAPI expõe `/openapi.json`. Testes comparam operações, campos e exemplo. Isso é sentinela, não equivalência total.
 
 ## Estrutura do código
 
-`models.py` contém representações públicas. `main.py` liga rotas, status, cabeçalhos, tratamento de erro e armazenamento. Essa separação é pequena, mas permite ler o contrato de dados sem percorrer o fluxo HTTP. Não há repositório, fila, serviço externo nem autenticação real. Adicioná-los agora esconderia a lição e criaria promessas não exigidas.
-
-O teste usa `TestClient(app)`. Ele envia HTTP em processo e verifica resposta como um consumidor, sem chamar diretamente `criar_elegibilidade`. Assim, valida serialização, status, cabeçalho e roteamento. Um teste unitário da função seria mais rápido, porém não demonstraria o contrato HTTP completo.
+`models.py` contém representações; `main.py`, rota, status, erro e memória. `TestClient(app)` verifica HTTP em processo: serialização, status, cabeçalho e roteamento.
 
 ## Equivalências em Java e .NET
 
-Em **Spring Boot**, `@RestController` e `@PostMapping`/`@GetMapping` expõem operações; records ou classes com Jakarta Bean Validation modelam o corpo; `ResponseEntity.accepted().location(uri).body(...)` representa a resposta `202`; `@RestControllerAdvice` pode normalizar erros. Springdoc pode produzir OpenAPI, e testes com MockMvc exercitam a fronteira HTTP sem servidor externo.
-
-Em **ASP.NET Core**, Minimal APIs com `MapPost`/`MapGet` ou controllers com atributos expõem operações; records modelam DTOs; `Results.Accepted(location, value)` produz `202`; middleware ou `IExceptionHandler` normaliza erros. Swashbuckle ou o suporte OpenAPI da plataforma descreve o contrato, enquanto `WebApplicationFactory` permite testes em processo.
-
-As equivalências preservam a decisão: recurso, semântica HTTP, schemas, erro e evidência. Decoradores Python, anotações Java e métodos C# são mecanismos diferentes. Se uma migração exigir redesenhar o significado público, o contrato estava acoplado à tecnologia.
+Em **Spring Boot**, `@RestController`, `ResponseEntity.accepted`, Springdoc e MockMvc cumprem papéis equivalentes. Em **ASP.NET Core**, `MapPost`/`MapGet`, `Results.Accepted`, OpenAPI e `WebApplicationFactory` fazem o mesmo. Python, Java e C# variam no mecanismo; a decisão preserva recurso, HTTP, schema, erro e evidência.
