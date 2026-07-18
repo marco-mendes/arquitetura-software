@@ -14,6 +14,10 @@ Os **doze fatores** são heurísticas para aplicações entregues como serviço:
 
 Cada réplica tem request de `100m` de CPU e `128Mi` de memória: são insumos para agendamento. Os limits de `250m` e `256Mi` estabelecem teto; CPU pode sofrer throttling e memória excedida pode resultar em término. Escolher números por hábito é pior que não declarar hipótese. Comece com uma carga sintética, registre consumo e latência, ajuste e repita. A capacidade de banco, conexão e dependências também limita a escala; aumentar somente a API pode amplificar uma falha posterior.
 
+**Texto alternativo:** uma métrica disponível alimenta o HPA, que altera réplicas no Deployment; essas réplicas ainda dependem de serviços que podem se tornar o próximo gargalo.
+
+*Figura 8 — Escala da API limitada por suas dependências.*
+
 ```mermaid
 flowchart LR
     M[Métrica disponível] --> H[HPA]

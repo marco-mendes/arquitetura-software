@@ -10,6 +10,23 @@ MODULE = ROOT / "docs" / "modulo-6-nuvem"
 
 
 class ModuleSixTest(unittest.TestCase):
+    def test_unit_six_distinguishes_service_models_and_runtime_mechanisms(self):
+        text = (
+            (MODULE / "conceitos.md").read_text(encoding="utf-8")
+            + (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+        )
+        for term in (
+            "IaaS",
+            "PaaS",
+            "SaaS",
+            "on-premise",
+            "contêiner",
+            "orquestração",
+            "readiness",
+            "liveness",
+        ):
+            self.assertIn(term, text)
+
     def test_content_contract(self):
         assert_module_contract(
             self,

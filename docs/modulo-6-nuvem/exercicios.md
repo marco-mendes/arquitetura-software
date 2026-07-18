@@ -20,7 +20,29 @@ As páginas do módulo e os manifests do laboratório.
 
 **Como conduzir**
 
-Defina IaaS, PaaS, SaaS, responsabilidade compartilhada, região, zona, contêiner, imagem, orquestração, readiness, liveness, elasticidade, resiliência e rollback. Para cada termo, relacione uma decisão ou arquivo do caso.
+1. Defina IaaS, PaaS, SaaS e on-premise.
+
+<details>
+<summary>Ver resposta</summary>
+
+IaaS entrega infraestrutura virtualizada; PaaS entrega runtime operado; SaaS entrega produto configurável; on-premise mantém infraestrutura sob maior responsabilidade interna. Nenhum modelo elimina o owner de dados, configuração e continuidade.
+</details>
+
+2. Diferencie região, zona, contêiner, imagem e orquestração.
+
+<details>
+<summary>Ver resposta</summary>
+
+Região e zona delimitam localização e falha; imagem é o pacote versionado; contêiner é sua execução; orquestração reconcilia execuções com o estado declarado.
+</details>
+
+3. Explique readiness, liveness, elasticidade, resiliência e rollback. Para cada termo, relacione uma decisão ou arquivo do caso.
+
+<details>
+<summary>Ver resposta</summary>
+
+Readiness controla tráfego, liveness permite reiniciar processo travado, elasticidade ajusta capacidade, resiliência mede continuidade e rollback retorna uma revisão compatível. Os manifests e a oficina fornecem as evidências locais.
+</details>
 
 **Entrega esperada**
 
@@ -52,7 +74,29 @@ Os endpoints `/health/live` e `/health/ready`, a definição de Service e o Depl
 
 **Como conduzir**
 
-Descreva o que acontece quando readiness falha, quando liveness falha e quando a dependência compartilhada está indisponível. Diferencie processo vivo, pronto para tráfego e resposta de negócio correta. Explique por que reiniciar todas as réplicas pode piorar o incidente.
+1. Descreva o que acontece quando readiness falha.
+
+<details>
+<summary>Ver resposta</summary>
+
+O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a ele; isso não confirma que a regra de negócio está correta.
+</details>
+
+2. Descreva o que acontece quando liveness falha e quando a dependência compartilhada está indisponível.
+
+<details>
+<summary>Ver resposta</summary>
+
+Falha de liveness permite reinício do contêiner. Se uma dependência remota cai, usá-la como liveness pode reiniciar todas as réplicas e ampliar o incidente; ela deve orientar readiness ou degradação conforme o contrato.
+</details>
+
+3. Diferencie processo vivo, pronto para tráfego e resposta de negócio correta. Explique por que reiniciar todas as réplicas pode piorar o incidente.
+
+<details>
+<summary>Ver resposta</summary>
+
+Vivo significa processo executando; pronto significa elegível ao tráfego; correto requer validação de negócio. Reinícios coletivos removem capacidade enquanto a dependência externa ainda está indisponível.
+</details>
 
 **Entrega esperada**
 
@@ -70,6 +114,10 @@ Uma sequência de no máximo 400 palavras e um diagrama de estado simples.
 
 ### Preparar uma implantação local reproduzível
 
+**Objetivo**
+
+Demonstrar uma implantação descartável, delimitada à máquina do grupo e baseada em evidências.
+
 **Situação**
 
 Outro grupo precisa demonstrar a API hospitalar sem acesso a provedor remoto. Ele possui Docker, kind, kubectl e os arquivos do laboratório.
@@ -78,11 +126,15 @@ Outro grupo precisa demonstrar a API hospitalar sem acesso a provedor remoto. El
 
 Você produz o roteiro operacional mínimo.
 
-**Insumos disponíveis**
+**Artefato que você irá usar**
 
 `Dockerfile`, manifests, `cluster.yaml` e os endpoints de saúde.
 
-**Como conduzir**
+**Antes de executar**
+
+Confirme que o contexto ativo será `kind-hospital-local` antes de aplicar recursos. O kind cria um cluster local descartável; não use um cluster compartilhado como substituto.
+
+**O que fazer**
 
 1. Liste as verificações de versão e o contexto esperado.
 2. Construa `hospital-api:1.0.0`, crie `hospital-local` e carregue a imagem.
@@ -90,9 +142,13 @@ Você produz o roteiro operacional mínimo.
 4. Mostre uma evidência de duas réplicas e uma de endpoints prontos.
 5. Inclua limpeza do cluster e o caminho estático caso kind não funcione.
 
+**Evidência esperada**
+
+Versões, contexto local, imagem carregada, duas réplicas prontas, resposta de readiness e confirmação de limpeza.
+
 **Entrega esperada**
 
-Um roteiro por plataforma, saída esperada e checklist de evidências.
+Um roteiro por plataforma, saída esperada e checklist de evidências em `<raiz-do-clone>/entregas/modulo-6/aplicar-implantacao-local.md`.
 
 **Critérios de avaliação**
 
@@ -103,9 +159,15 @@ Um roteiro por plataforma, saída esperada e checklist de evidências.
 | Evidência observável | 25% | Evidência: saída ou status; insuficiente: implantação sem prova. |
 | Limpeza e contingência | 25% | Evidência: remoção limitada; insuficiente: comando global perigoso. |
 
+<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
+
 ## Analisar
 
 ### Investigar uma atualização que não termina
+
+**Objetivo**
+
+Separar sinal, hipótese e contenção de uma atualização bloqueada sem tocar em dados ou em ambiente compartilhado.
 
 **Situação**
 
@@ -115,11 +177,15 @@ Após mudança de imagem, o Deployment mostra progresso incompleto. Existem even
 
 Você conduz a análise sem assumir que cada erro é “Kubernetes”.
 
-**Insumos disponíveis**
+**Artefato que você irá usar**
 
 Saídas de `kubectl get pods`, `kubectl describe deployment`, histórico do rollout e manifest versionado.
 
-**Como conduzir**
+**Antes de executar**
+
+Use somente as saídas sintéticas fornecidas e uma imagem propositalmente ausente no cluster kind local; não altere uma imagem ou Deployment compartilhado.
+
+**O que fazer**
 
 1. Separe fatos, inferências e hipóteses.
 2. Compare tag inexistente, falta de credencial de registry e readiness que falha após iniciar.
@@ -127,9 +193,13 @@ Saídas de `kubectl get pods`, `kubectl describe deployment`, histórico do roll
 4. Declare quando `kubectl rollout undo` é seguro no cenário e o que você verificaria depois.
 5. Proponha barreira de pipeline que reduza recorrência.
 
+**Evidência esperada**
+
+Linha do tempo, eventos de `ImagePullBackOff`, revisão anterior identificada, justificativa do rollback e barreira de pipeline verificável.
+
 **Entrega esperada**
 
-Uma linha do tempo, tabela de hipóteses/evidências e plano de contenção.
+Uma linha do tempo, tabela de hipóteses/evidências e plano de contenção em `<raiz-do-clone>/entregas/modulo-6/analisar-rollout-bloqueado.md`.
 
 **Critérios de avaliação**
 
@@ -140,9 +210,15 @@ Uma linha do tempo, tabela de hipóteses/evidências e plano de contenção.
 | Uso correto de rollout e rollback | 25% | Evidência: estado e retorno; insuficiente: rollback usado sem falha observada. |
 | Prevenção verificável | 25% | Evidência: controle testável; insuficiente: recomendação sem teste. |
 
+<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
+
 ## Avaliar
 
 ### Escolher uma plataforma para uma nova capacidade
+
+**Objetivo**
+
+Justificar um modelo de serviço por responsabilidade, dados, custo e capacidade de operação, e não pela fama de um fornecedor.
 
 **Situação**
 
@@ -152,17 +228,25 @@ O hospital criará um portal de confirmação de consultas. Há poucas APIs pró
 
 Você recomenda IaaS, PaaS, Kubernetes gerenciado ou integração prioritária com SaaS, com condições de revisão.
 
-**Insumos disponíveis**
+**Artefato que você irá usar**
 
 Estimativa de picos, requisitos de disponibilidade, contrato de dados, capacidade da equipe e custo mensal por alternativa.
 
-**Como conduzir**
+**Antes de executar**
+
+Trate AWS, iFood e Taco Bell somente como contextos comparáveis; não assuma que a plataforma ou a escala deles transfere-se ao hospital.
+
+**O que fazer**
 
 Compare responsabilidade compartilhada, elasticidade, recuperação, custo direto/operacional e lock-in. Separe requisito confirmado de hipótese. Inclua região, zonas e exportação de dados. Defina dois gatilhos mensuráveis que fariam a equipe reavaliar a escolha.
 
+**Evidência esperada**
+
+Matriz de responsabilidades, estimativa de custo operacional, plano de exportação, domínio de falha e dois gatilhos mensuráveis.
+
 **Entrega esperada**
 
-Um ADR com alternativas, decisão, consequências, riscos, custo e sinais de revisão.
+Um ADR com alternativas, decisão, consequências, riscos, custo e sinais de revisão em `<raiz-do-clone>/entregas/modulo-6/avaliar-plataforma.md`.
 
 **Critérios de avaliação**
 
@@ -174,9 +258,15 @@ Um ADR com alternativas, decisão, consequências, riscos, custo e sinais de rev
 | Resiliência e operação | 20% | Evidência: falha e operação; insuficiente: réplica tratada como garantia. |
 | Gatilhos mensuráveis | 15% | Evidência: limiar definido; insuficiente: revisão sem medida. |
 
+<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
+
 ## Criar
 
 ### Desenhar evolução resiliente de elegibilidade
+
+**Objetivo**
+
+Projetar uma evolução que declare estado, recuperação e limites antes de prometer resiliência.
 
 **Situação**
 
@@ -186,17 +276,25 @@ A API terá armazenamento durável e uma integração assíncrona para notificar
 
 Você cria uma proposta arquitetural e operacional.
 
-**Insumos disponíveis**
+**Artefato que você irá usar**
 
 O caso do módulo, requisitos de retenção, SLO proposto, dados de carga sintética e o laboratório Kubernetes.
 
-**Como conduzir**
+**Antes de executar**
+
+Use dados sintéticos e mantenha a demonstração no kind local. Declare toda dependência que o rollback não consegue desfazer antes de propor o teste de falha.
+
+**O que fazer**
 
 Desenhe componentes stateful e stateless, declare ownership de dados, região/zona e domínios de falha. Inclua configuração segundo os doze fatores, requests/limits iniciais, probes, estratégia de rollout, procedimento de rollback e plano de backup/restore. Descreva como medir elasticidade e custo. Termine com teste de falha seguro e condição para aceitar ou rejeitar a proposta.
 
+**Evidência esperada**
+
+Diagrama acessível, ADR, manifestos ou pseudomanifests, sinal de rollout, procedimento de rollback e teste de backup/restore planejado.
+
 **Entrega esperada**
 
-Um pacote com diagrama, ADR, manifests ou pseudomanifests, plano de evidências e registro de riscos.
+Um pacote com diagrama, ADR, manifests ou pseudomanifests, plano de evidências e registro de riscos em `<raiz-do-clone>/entregas/modulo-6/criar-evolucao-resiliente.md`.
 
 **Critérios de avaliação**
 
@@ -206,3 +304,5 @@ Um pacote com diagrama, ADR, manifests ou pseudomanifests, plano de evidências 
 | Resiliência e recuperação testáveis | 25% | Evidência: falha e recuperação; insuficiente: resiliência só declarada. |
 | Operação, custo e segurança | 25% | Evidência: trade-off registrado; insuficiente: operação omitida. |
 | Clareza de evidências e limites | 25% | Evidência: limites e prova; insuficiente: conclusão sem contexto. |
+
+<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
