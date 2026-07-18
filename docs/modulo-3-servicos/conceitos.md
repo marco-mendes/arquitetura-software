@@ -57,6 +57,10 @@ flowchart TD
     D -- Sim --> F[Extrair processo e contrato remoto]
 ```
 
+**Texto alternativo:** sequência de decisão que separa regras em módulos e dados com proprietário antes de decidir se a autonomia física justifica um contrato remoto.
+
+*Figura 1 — Da fronteira lógica à fronteira física.*
+
 **Leitura textual da figura:** primeiro separam-se módulos e proprietários dos dados; só quando existe necessidade comprovada de autonomia física um limite vira processo remoto, caso contrário a implantação permanece conjunta.
 
 Extrair cedo demais adiciona latência, serialização, autenticação entre serviços, descoberta, telemetria e recuperação. Extrair tarde demais pode manter equipes e ciclos de entrega presos. A arquitetura evolutiva mantém opções: módulos com APIs internas e testes de fronteira tornam uma futura extração menos traumática.
@@ -80,6 +84,12 @@ Propriedade responde quem é autoridade para interpretar e alterar uma informaç
 No laboratório, dois PostgreSQL deixam a regra visível: a credencial de Exames conhece apenas o banco `exames`; Elegibilidade conhece apenas `elegibilidade`. Cada banco fica em uma rede interna própria; ambos os processos compartilham somente a rede de aplicação necessária ao HTTP. Portanto, mesmo que Exames descubra o alias `elegibilidade-db`, ele não consegue resolvê-lo pela sua rede. Em ambientes maiores, isolamento lógico no mesmo cluster pode equilibrar custo e proteção, desde que permissões e responsabilidade sejam reais.
 
 Compartilhar uma tabela parece conveniente para relatórios e transações, porém cria contrato implícito. Uma alteração de coluna pode quebrar consumidores desconhecidos; uma escrita externa pode violar invariantes; o proprietário deixa de controlar evolução. Para leitura integrada, avalie composição por API, eventos, réplica analítica ou modelo de leitura, sempre deixando defasagem e origem explícitas.
+
+## Persistência como decisão de fronteira
+
+**Persistência poliglota** significa escolher mecanismos de armazenamento diferentes quando a forma do dado e seus acessos justificam isso: por exemplo, uma base relacional para regras transacionais, uma busca para documentos e uma série temporal para medições. Não significa dar um banco novo a cada serviço nem trocar de tecnologia por prestígio. Cada mecanismo acrescenta backup, segurança, observabilidade, migração e competência operacional.
+
+Comece pela autoridade e pelo contrato: quem escreve, quais invariantes precisam de transação e quais leituras podem ser projetadas. No exemplo, os dois PostgreSQL não demonstram poliglotismo; demonstram propriedade de dados. A decisão de persistência só muda quando as forças do domínio e da operação pagam o seu custo.
 
 ## Chamadas síncronas e falhas parciais
 

@@ -41,6 +41,12 @@ A arquitetura seria revista se equipes diferentes assumissem partes do macrosser
 
 O caso ensina que consolidar não é fracassar e distribuir não é modernizar. O objetivo é alinhar coesão do software, propriedade do dado, comunicação e organização. Macroserviços podem ser uma etapa estável ou um estágio de evolução; monólito modular pode ser destino adequado; microsserviços podem ser necessários em limites específicos.
 
+## Netflix e Uber como consequências, não como receitas
+
+Relatos públicos sobre Netflix costumam destacar a escala de entrega e a necessidade de isolar mudanças e falhas. Relatos sobre Uber mostram como domínios, volumes e operações geográficas podem tornar certos limites independentes. Esses contextos não são um argumento para copiar a topologia de um fornecedor: eles têm históricos, equipes, dados e obrigações operacionais que podem ser muito diferentes dos de uma clínica.
+
+Use os dois casos como perguntas de consequência. Que carga precisa escalar separadamente? Que falha precisa ficar contida? Qual contrato precisa permanecer estável durante uma migração? E, sobretudo, como a equipe volta atrás se o limite escolhido não entregar autonomia? Uma extração reversível começa por módulos, contratos, telemetria e dados com proprietário; um estrangulador pode migrar uma rota gradualmente, desde que haja uma fonte de verdade e um plano para remover o caminho anterior.
+
 ## Equivalências em Java e .NET
 
 Uma consolidação em Java pode usar módulos Maven ou Gradle, pacotes de domínio e ArchUnit para impedir referências proibidas. Spring Modulith oferece recursos adicionais de verificação e eventos internos. Em .NET, projetos por módulo, modificadores de visibilidade e testes de dependência cumprem papel semelhante.

@@ -34,6 +34,22 @@ class ModuleThreeTest(unittest.TestCase):
             ),
         )
 
+    def test_unit_three_covers_distributed_service_consequences(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8") + (
+            MODULE / "padroes-e-decisoes.md"
+        ).read_text(encoding="utf-8")
+        for term in (
+            "persistência",
+            "consistência eventual",
+            "CAP",
+            "SAGA",
+            "CQRS",
+            "event sourcing",
+            "estrangulador",
+            "chassi",
+        ):
+            self.assertIn(term, text)
+
     def test_module_has_exactly_eight_pages_and_expected_navigation(self):
         pages = sorted(path.name for path in MODULE.glob("*.md"))
         self.assertEqual(
