@@ -230,7 +230,7 @@ textarea {
     display: inline-flex;
     position: fixed;
     right: var(--academia-space-4);
-    top: calc(var(--md-header-height, 0px) + var(--academia-space-4));
+    top: calc(3rem + var(--academia-space-4));
     z-index: 2;
   }
 

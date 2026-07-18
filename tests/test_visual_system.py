@@ -78,6 +78,11 @@ class VisualSystemTest(unittest.TestCase):
             css,
             r"(?s)@media \(min-width: 76\.25em\)\s*\{.*?\.academia-toc-toggle\s*\{[^}]*display:\s*inline-flex;[^}]*position:\s*fixed;",
         )
+        self.assertRegex(
+            css,
+            r"(?s)@media \(min-width: 76\.25em\)\s*\{.*?\.academia-toc-toggle\s*\{[^}]*top:\s*calc\(3rem\s*\+\s*var\(--academia-space-4\)\);",
+        )
+        self.assertNotIn("var(--md-header-height, 0px)", css)
         self.assertNotRegex(
             css,
             r"html\.toc-collapsed \.academia-toc-toggle\s*\{[^}]*position:\s*fixed;",
