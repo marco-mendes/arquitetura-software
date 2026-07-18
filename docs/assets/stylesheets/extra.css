@@ -213,6 +213,7 @@ textarea {
   border-radius: 999px;
   color: var(--academia-cobalt);
   cursor: pointer;
+  display: none;
   font: inherit;
   font-size: 0.75rem;
   font-weight: 700;
@@ -225,6 +226,10 @@ textarea {
 }
 
 @media (min-width: 76.25em) {
+  .academia-toc-toggle {
+    display: inline-flex;
+  }
+
   html.toc-collapsed .md-sidebar--secondary {
     display: none;
   }

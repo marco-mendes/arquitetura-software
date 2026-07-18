@@ -70,6 +70,14 @@ class VisualSystemTest(unittest.TestCase):
         self.assertIn("assets/javascripts/toc-toggle.mjs", navigation)
         self.assertIn("html.toc-collapsed .md-sidebar--secondary", css)
         self.assertIn("@media (min-width: 76.25em)", css)
+        self.assertRegex(
+            css,
+            r"\.academia-toc-toggle\s*\{[^}]*display:\s*none;",
+        )
+        self.assertRegex(
+            css,
+            r"@media \(min-width: 76\.25em\)\s*\{[\s\S]*?\.academia-toc-toggle\s*\{[^}]*display:\s*inline-flex;",
+        )
         self.assertIn("academia-toc-toggle", script)
         self.assertIn('querySelector(".md-content")', script)
         self.assertIn('matchMedia("(min-width: 76.25em)")', script)
