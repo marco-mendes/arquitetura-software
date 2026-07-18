@@ -228,22 +228,16 @@ textarea {
 @media (min-width: 76.25em) {
   .academia-toc-toggle {
     display: inline-flex;
+    position: fixed;
+    right: var(--academia-space-4);
+    top: calc(var(--md-header-height, 0px) + var(--academia-space-4));
+    z-index: 2;
   }
 
   html.toc-collapsed .md-sidebar--secondary {
     display: none;
   }
 
-  .md-content {
-    position: relative;
-  }
-
-  html.toc-collapsed .academia-toc-toggle {
-    position: fixed;
-    right: var(--academia-space-4);
-    top: 50%;
-    transform: translateY(-50%);
-  }
 }
 
 @media (max-width: 767.98px) {

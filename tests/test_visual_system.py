@@ -76,7 +76,11 @@ class VisualSystemTest(unittest.TestCase):
         )
         self.assertRegex(
             css,
-            r"@media \(min-width: 76\.25em\)\s*\{[\s\S]*?\.academia-toc-toggle\s*\{[^}]*display:\s*inline-flex;",
+            r"(?s)@media \(min-width: 76\.25em\)\s*\{.*?\.academia-toc-toggle\s*\{[^}]*display:\s*inline-flex;[^}]*position:\s*fixed;",
+        )
+        self.assertNotRegex(
+            css,
+            r"html\.toc-collapsed \.academia-toc-toggle\s*\{[^}]*position:\s*fixed;",
         )
         self.assertIn("academia-toc-toggle", script)
         self.assertIn('querySelector(".md-content")', script)
