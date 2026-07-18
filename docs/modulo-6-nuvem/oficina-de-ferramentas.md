@@ -4,7 +4,7 @@ Esta oficina cria e remove um cluster local descartável. Ela usa a imagem da AP
 
 ## Leia antes de executar comandos
 
-O `Dockerfile` descreve como produzir a imagem imutável: parte de Python 3.12, instala a aplicação, cria um usuário sem privilégios e expõe a porta 8000. `docker build -t hospital-api:1.0.0 .` materializa esse pacote local; a tag é a revisão usada pelo Deployment e não um endereço de registry de produção. Um contêiner só aparece quando essa imagem é executada.
+O `Dockerfile` descreve como produzir a imagem imutável: parte de Python 3.12, instala a aplicação, cria um usuário sem privilégios e expõe a porta 8000. A construção local materializa esse pacote; a tag `hospital-api:1.0.0` é a revisão usada pelo Deployment e não um endereço de registry de produção. Um contêiner só aparece quando essa imagem é executada.
 
 O arquivo `infra/kind/cluster.yaml` instrui o **kind** a criar o cluster Kubernetes `hospital-local` em contêineres Docker, com um nó de controle e a porta 30080 limitada a `127.0.0.1:18080`. Ele cria um **cluster local descartável** para a oficina; não deve ser usado em um cluster compartilhado, nem os comandos desta página devem ser apontados para qualquer contexto compartilhado.
 

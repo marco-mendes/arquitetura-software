@@ -10,15 +10,27 @@ MODULE = ROOT / "docs" / "modulo-6-nuvem"
 
 
 class ModuleSixTest(unittest.TestCase):
-    def test_workshop_explains_runtime_before_tool_evidence_commands(self):
+    def test_workshop_explains_complete_runtime_before_executable_commands(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
-        explanation = workshop.index("## Leia antes de executar comandos")
-
-        for command in (
+        presentation = (
+            "## Leia antes de executar comandos",
+            "O `Dockerfile` descreve",
+            "O arquivo `infra/kind/cluster.yaml` instrui",
+            "Os manifestos expressam o estado inicial",
+            "As probes deixam a condição observável",
+        )
+        commands = (
+            "docker build -t hospital-api:1.0.0 .",
             "docker image inspect hospital-api:1.0.0",
             "kind get clusters",
-        ):
-            self.assertGreater(workshop.index(command), explanation)
+        )
+
+        presentation_positions = [workshop.index(item) for item in presentation]
+        self.assertEqual(presentation_positions, sorted(presentation_positions))
+        self.assertLess(
+            max(presentation_positions),
+            min(workshop.index(command) for command in commands),
+        )
 
     def test_unit_six_distinguishes_service_models_and_runtime_mechanisms(self):
         text = (
