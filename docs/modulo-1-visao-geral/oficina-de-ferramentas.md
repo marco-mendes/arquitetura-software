@@ -40,6 +40,8 @@ Ao final, `python --version`, `python -m pytest --version` e `podman --version` 
 
 ### Windows
 
+Antes de qualquer `Set-Location` relativo, o terminal começa na raiz do clone `arquitetura-software`.
+
 Abra PowerShell. Instale Python e Podman com o gerenciador do Windows:
 
 ```powershell
@@ -97,6 +99,8 @@ Os demais comandos PowerShell usam `.venv\Scripts\python.exe`, sem Python global
 
 ### macOS
 
+Antes de qualquer `cd` relativo, o terminal começa na raiz do clone `arquitetura-software`.
+
 Abra Terminal. Com Homebrew disponível, instale Python e Podman, inicie a máquina e prepare o workspace:
 
 ```bash
@@ -116,6 +120,8 @@ podman --version
 Se a máquina já existir, execute só `podman machine start`; se necessário, use `python3`.
 
 ### Linux
+
+Antes de qualquer `cd` relativo, o terminal começa na raiz do clone `arquitetura-software`.
 
 Os comandos abaixo usam Debian ou Ubuntu. Em outra distribuição, instale os pacotes equivalentes pelo gerenciador do sistema.
 

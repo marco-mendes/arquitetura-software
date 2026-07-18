@@ -2,9 +2,9 @@
 
 ## Contexto antes da estrutura
 
-Uma organização recebe documentos em JSON, CSV e XML. Todos precisam passar por validação, normalização, enriquecimento e publicação. O volume esperado é de duzentos mil documentos por hora, mas novos formatos entram apenas algumas vezes ao ano. Uma equipe pequena opera a solução em um único ambiente.
+Uma organização recebe JSON, CSV e XML para validação, normalização, enriquecimento e publicação. Espera duzentos mil documentos por hora; novos formatos entram poucas vezes por ano; uma equipe pequena opera um único ambiente.
 
-As funções são simples; a dificuldade está nas forças. Throughput e rastreabilidade de falhas têm prioridade alta. Modificabilidade dos formatos tem prioridade média. A operação não deve exigir uma unidade independente por etapa. O cenário de qualidade principal é: durante uma carga de duzentos mil documentos, a solução deve processar pelo menos sessenta itens por segundo e identificar a etapa responsável por cada rejeição.
+Prioridades são throughput e rastreabilidade; modificabilidade é média. Durante a carga, a solução deve processar sessenta itens por segundo e identificar a etapa de cada rejeição.
 
 ## Alternativas comparadas
 
@@ -113,7 +113,36 @@ Também há limites não resolvidos. Se o enriquecimento depender de um serviço
 
 ## Equivalências em Java e .NET
 
-Python, Java e .NET usam contratos de filtro e testes equivalentes; preserve responsabilidades, conectores, restrições e evidências.
+Uma implementação pode separar o coordenador `Pipeline`, os filtros puros e os adaptadores de formato. A árvore indica **responsabilidades**, não dependências automaticamente garantidas:
+
+```text
+processamento/
+├── aplicacao/
+│   └── pipeline.py       ← ordena filtros; não conhece seus detalhes
+├── dominio/
+│   ├── documento.py      ← modelo canônico
+│   └── resultado.py      ← sucesso ou rejeição explícita
+├── filtros/
+│   ├── validar.py
+│   ├── normalizar.py
+│   └── enriquecer.py
+└── adaptadores/
+    ├── json.py
+    ├── csv.py
+    └── xml.py
+```
+
+Em Python, um `Protocol` define o filtro; em Java, uma `interface Filtro`; em .NET, `IFiltro`. A equivalência mantém intenção, não código idêntico:
+
+| Intenção | Python | Java | .NET |
+| --- | --- | --- | --- |
+| contrato do filtro | `typing.Protocol` | `interface` | `interface` |
+| resultado explícito | `dataclass` | `record` | `record` |
+| teste parametrizado | pytest | JUnit 5 | xUnit |
+| regra de dependência | import-linter | ArchUnit | NetArchTest |
+| modelo como código | Structurizr DSL | Structurizr DSL | Structurizr DSL |
+
+Uma árvore não prova isolamento: teste imports proibidos e substitua um filtro para verificar composição.
 
 ## Decisão provisória
 

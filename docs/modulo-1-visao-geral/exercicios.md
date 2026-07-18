@@ -181,11 +181,11 @@ O enunciado fornece volume, formatos, mudança e prazo; Mermaid registra compone
 
 **Antes de executar**
 
-Crie `analise-integracao` com `forcas.md`, `alternativas.md` e `fluxo.md`. Leia [conceitos](conceitos.md). Aqui, executar é elaborar e revisar arquivos, não iniciar uma API.
+No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/analise-integracao/` com `forcas.md`, `alternativas.md` e `fluxo.md`. Leia [conceitos](conceitos.md). Aqui, executar é elaborar e revisar arquivos, não iniciar uma API.
 
 **Condição inicial verificável**
 
-A pasta `analise-integracao` existe e contém os três arquivos vazios. Você consegue abrir `fluxo.md` em um editor que renderize Mermaid ou em um visualizador Markdown.
+A pasta `entregas/unidade-1/analise-integracao` existe, contém os três arquivos vazios e `fluxo.md` abre em editor com Mermaid.
 
 **Como conduzir**
 
@@ -193,7 +193,7 @@ Comece pelas forças; o diagrama é consequência da decomposição.
 
 **O que fazer**
 
-1. Em `forcas.md`, classifique throughput, variação, ordenação, deduplicação, rastreabilidade e operação.
+1. Em `entregas/unidade-1/analise-integracao/forcas.md`, classifique throughput, variação, ordenação, deduplicação, rastreabilidade e operação.
 2. Escreva três cenários mensuráveis.
 3. Em `alternativas.md`, modele duas decomposições e nomeie componentes, conectores e estado.
 4. Compare os quatro estilos por ganho, limite e evidência.
@@ -206,7 +206,7 @@ Os arquivos tratam repetição, atraso e rejeição; o diagrama identifica produ
 
 **Entrega esperada**
 
-Entregue a pasta `analise-integracao/` com os três arquivos, até mil palavras e uma lacuna de medição.
+Entregue `entregas/unidade-1/analise-integracao/` com os três arquivos, até mil palavras e uma lacuna de medição.
 
 **Critérios de avaliação**
 
@@ -241,11 +241,11 @@ Use propostas, amostra, equipe e [padrões e decisões](padroes-e-decisoes.md). 
 
 **Antes de executar**
 
-Crie `avaliacao-leitos/parecer.md` com “critério”, “medida”, “evidência”, “lacuna” e “impacto”. Não escolha antes dos critérios.
+No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/avaliacao-leitos/parecer.md` com “critério”, “medida”, “evidência”, “lacuna” e “impacto”. Não escolha antes dos critérios.
 
 **Condição inicial verificável**
 
-A pasta `avaliacao-leitos` existe e `parecer.md` contém a tabela vazia. Você tem a amostra sintética do enunciado disponível para registrar as experiências, sem precisar iniciar software adicional.
+A pasta `entregas/unidade-1/avaliacao-leitos` existe e `parecer.md` contém a tabela vazia. A amostra do enunciado está disponível; não inicie software adicional.
 
 **Como conduzir**
 
@@ -265,7 +265,7 @@ O parecer distingue desconhecido de medido.
 
 **Entrega esperada**
 
-Entregue `avaliacao-leitos/parecer.md` com tabela, recomendação, incertezas, objeção e experiências.
+Entregue `entregas/unidade-1/avaliacao-leitos/parecer.md` com tabela, recomendação, incertezas, objeção e experiências.
 
 **Critérios de avaliação**
 
@@ -301,11 +301,11 @@ O projeto fornece domínio; referências estruturam cenários e ADR; Mermaid reg
 
 **Antes de executar**
 
-Crie `baseline-inicial` com `cenarios`, `modelos`, `decisoes` e `evidencias`. Prepare a [oficina](oficina-de-ferramentas.md) e confirme `3 passed` no teste de estilos.
+No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/baseline-inicial/` com `cenarios`, `modelos`, `decisoes` e `evidencias`. Prepare a [oficina](oficina-de-ferramentas.md) e confirme `3 passed` no teste de estilos.
 
 **Condição inicial verificável**
 
-As quatro subpastas existem dentro de `baseline-inicial`, e, no terminal aberto na raiz do repositório, `cd laboratorios/plataforma-hospitalar` seguido do teste indicado na oficina termina com `3 passed`.
+As quatro subpastas existem em `entregas/unidade-1/baseline-inicial`, e `cd laboratorios/plataforma-hospitalar` seguido do teste termina com `3 passed`.
 
 **Como conduzir**
 
@@ -327,7 +327,7 @@ Cadeia legível de escopo → cenário → alternativas → modelos → ADR → 
 
 **Entrega esperada**
 
-Entregue `baseline-inicial` com `README.md` de leitura.
+Entregue `entregas/unidade-1/baseline-inicial/` com `README.md` de leitura.
 
 **Critérios de avaliação**
 

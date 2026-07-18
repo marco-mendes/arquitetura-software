@@ -104,6 +104,22 @@ class ModuleOneTest(unittest.TestCase):
         self.assertGreaterEqual(text.count("*Figura "), diagrams)
         self.assertGreaterEqual(text.count("**Leitura textual da figura:**"), diagrams)
 
+    def test_example_preserves_code_responsibilities_and_ecosystem_equivalences(self):
+        text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")
+
+        for fragment in (
+            "processamento/",
+            "aplicacao/",
+            "dominio/",
+            "filtros/",
+            "adaptadores/",
+            "`Pipeline`",
+            "| Intenção | Python | Java | .NET |",
+            "| contrato do filtro |",
+            "| regra de dependência |",
+        ):
+            self.assertIn(fragment, text)
+
     def test_advanced_activities_name_a_concrete_workspace_and_start_condition(self):
         exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
         sections = bloom_sections(exercises)
@@ -117,6 +133,31 @@ class ModuleOneTest(unittest.TestCase):
             self.assertIn(workspace, section)
             self.assertIn("Condição inicial verificável", section)
             self.assertIn("**Entrega esperada**", section)
+
+    def test_advanced_activities_share_a_root_delivery_location(self):
+        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
+        sections = bloom_sections(exercises)
+
+        for level, delivery in (
+            ("Analisar", "entregas/unidade-1/analise-integracao"),
+            ("Avaliar", "entregas/unidade-1/avaliacao-leitos"),
+            ("Criar", "entregas/unidade-1/baseline-inicial"),
+        ):
+            self.assertIn(delivery, sections[level])
+            self.assertIn("raiz do repositório `arquitetura-software`", sections[level])
+
+    def test_installation_starts_each_platform_at_clone_root(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
+            encoding="utf-8"
+        )
+
+        for start, end in (
+            ("### Windows", "### macOS"),
+            ("### macOS", "### Linux"),
+            ("### Linux", "## Preparação do laboratório"),
+        ):
+            platform = workshop.split(start, 1)[1].split(end, 1)[0]
+            self.assertIn("terminal começa na raiz do clone `arquitetura-software`", platform)
 
     def test_diagrams_have_textual_readings(self):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
