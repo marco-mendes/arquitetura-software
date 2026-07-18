@@ -30,5 +30,17 @@
 ## Limites e observações
 
 - O Compose foi validado estaticamente; a Task 5 não inicia contêineres. A oficina deixa claro que health checks só podem ser afirmados após execução local real.
-- A Unidade 3 contém 8.482 palavras, dentro da faixa exigida de 5.000 a 8.500.
+- A Unidade 3 contém 8.496 palavras, dentro da faixa exigida de 5.000 a 8.500.
 - Nenhuma alteração foi feita nos serviços ou na infraestrutura: o trabalho é editorial e de teste de regressão de conteúdo.
+
+## Correção da revisão P1 — trilha PowerShell
+
+- A oficina passou a identificar explicitamente os blocos PowerShell de health check, criação bem-sucedida (`201`) e indisponibilidade (`503`).
+- Esses blocos usam `$env:ELEGIBILIDADE_PORT` e `$env:EXAMES_PORT`; usam `curl.exe` para evitar que o alias PowerShell `curl` acione `Invoke-WebRequest` e altere a interpretação dos parâmetros cURL.
+- Foi adicionado `test_workshop_has_powershell_http_calls_with_overrideable_ports`, que exige os dois health checks e duas chamadas POST com a sintaxe PowerShell.
+
+| Verificação da correção | Resultado |
+| --- | --- |
+| Teste vermelho: `python -m unittest tests.test_module_three.ModuleThreeTest.test_workshop_has_powershell_http_calls_with_overrideable_ports -v` | falhou como esperado antes da documentação dos comandos PowerShell |
+| `python -m unittest tests.test_module_three tests.test_editorial_recovery -v` | 15 testes aprovados |
+| `git diff --check` | sem erros de espaço em branco |

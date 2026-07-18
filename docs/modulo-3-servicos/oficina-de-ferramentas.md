@@ -129,11 +129,26 @@ curl -i "http://localhost:${ELEGIBILIDADE_PORT}/health"
 curl -i "http://localhost:${EXAMES_PORT}/health"
 ```
 
+No PowerShell, `curl.exe` evita o alias `curl` para `Invoke-WebRequest`:
+
+```powershell
+curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/health"
+curl.exe -i "http://localhost:$env:EXAMES_PORT/health"
+```
+
 Cada resposta deve ser `200`. Agora crie uma solicitação elegível:
 
 ```bash
 curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
   -H 'Content-Type: application/json' \
+  -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
+```
+
+PowerShell (201):
+
+```powershell
+curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
+  -H "Content-Type: application/json" `
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
@@ -160,6 +175,14 @@ Repita a chamada abaixo. Ela deve retornar `503 Service Unavailable` e o código
 ```bash
 curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
   -H 'Content-Type: application/json' \
+  -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
+```
+
+PowerShell (503):
+
+```powershell
+curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
+  -H "Content-Type: application/json" `
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 

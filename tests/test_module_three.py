@@ -123,6 +123,23 @@ class ModuleThreeTest(unittest.TestCase):
         ):
             self.assertIn(fragment, workshop)
 
+    def test_workshop_has_powershell_http_calls_with_overrideable_ports(self):
+        workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("`curl.exe`", workshop)
+        for fragment in (
+            'curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/health"',
+            'curl.exe -i "http://localhost:$env:EXAMES_PORT/health"',
+        ):
+            self.assertIn(fragment, workshop)
+        self.assertEqual(
+            2,
+            workshop.count(
+                'curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames"'
+            ),
+        )
+
     def test_patterns_are_introduced_without_claiming_they_are_default_choices(self):
         patterns = (MODULE / "padroes-e-decisoes.md").read_text(
             encoding="utf-8"
