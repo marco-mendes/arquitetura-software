@@ -229,12 +229,15 @@ textarea {
     display: none;
   }
 
-  html.toc-collapsed .md-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .md-content {
+    position: relative;
   }
 
-  html.toc-collapsed .md-content {
-    max-width: none;
+  html.toc-collapsed .academia-toc-toggle {
+    position: fixed;
+    right: var(--academia-space-4);
+    top: 50%;
+    transform: translateY(-50%);
   }
 }
 

@@ -16,7 +16,15 @@ function updateButton(button, collapsed) {
 
 function mountTocToggle() {
   const sidebar = document.querySelector(".md-sidebar--secondary");
-  if (!sidebar || sidebar.querySelector("#academia-toc-toggle")) return;
+  const content = document.querySelector(".md-content");
+  const desktop = window.matchMedia("(min-width: 76.25em)").matches;
+  if (
+    !desktop ||
+    !sidebar ||
+    !content ||
+    document.querySelector("#academia-toc-toggle")
+  )
+    return;
 
   const button = document.createElement("button");
   button.id = "academia-toc-toggle";
@@ -34,7 +42,7 @@ function mountTocToggle() {
     updateButton(button, nextCollapsed);
   });
 
-  sidebar.prepend(button);
+  content.append(button);
 }
 
 document$.subscribe(mountTocToggle);
