@@ -18,7 +18,7 @@
 
 ---
 
-### Tarefa 1: Cobrir a extensão visual com testes editoriais
+### Task 1: Cobrir a extensão visual com testes editoriais
 
 **Arquivos:**
 
@@ -68,7 +68,7 @@ git add tests/test_visual_system.py
 git commit -m "test: cobre índice direito colapsável"
 ```
 
-### Tarefa 2: Implementar controle acessível e layout recolhido
+### Task 2: Implementar controle acessível e layout recolhido
 
 **Arquivos:**
 
@@ -191,7 +191,7 @@ git add mkdocs.yml docs/assets/stylesheets/extra.css docs/assets/javascripts/toc
 git commit -m "feat: permite recolher índice direito"
 ```
 
-### Tarefa 3: Validar o portal completo
+### Task 3: Validar o portal completo
 
 **Arquivos:**
 
@@ -215,4 +215,3 @@ Abrir uma página com títulos, como `modulo-1-visao-geral/conceitos/`, em viewp
 - [ ] **Passo 3: registrar a evidência de conclusão**
 
 Anotar no relatório de execução os comandos aprovados e a página usada na inspeção manual. Nenhum arquivo didático precisa ser alterado nesta tarefa.
-
