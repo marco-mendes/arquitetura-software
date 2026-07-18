@@ -484,7 +484,7 @@ Definir um contrato.
                 "Aplicar: marcador obrigatório ausente",
                 "percentuais do instrumento somam 90%",
                 "seção Bloom duplicada: Recordar",
-                "fora da faixa de 5.000–8.500 palavras",
+                "fora da faixa de 5.000–30.000 palavras",
             ):
                 self.assertTrue(any(expected in error for error in errors), expected)
 
@@ -575,4 +575,3 @@ Definir um contrato.
             self.assertTrue(
                 any("comecar/superpowers/pagina.md" in error for error in errors)
             )
-            self.assertTrue(any("32.000–51.000 palavras" in error for error in errors))

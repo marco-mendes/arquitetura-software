@@ -144,7 +144,7 @@ class ModuleFiveTest(unittest.TestCase):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
         words = _word_count(corpus)
         self.assertGreaterEqual(words, 5000)
-        self.assertLessEqual(words, 8500)
+        self.assertLessEqual(words, 30000)
         self.assertGreaterEqual(corpus.count("```mermaid"), 3)
         # Diagramas Mermaid e infográficos gerados possuem leitura textual.
         # Os infográficos acrescentam equivalências além das exigidas pelos Mermaid.

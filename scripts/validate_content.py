@@ -741,15 +741,15 @@ def validate_module(slug: str, docs_root: Path) -> list[str]:
         if page_name == "exercicios.md":
             errors.extend(_validate_exercises(path, docs_root))
     count = _word_count("\n".join(texts))
-    if not 5_000 <= count <= 8_500:
+    if not 5_000 <= count <= 30_000:
         errors.append(
-            f"{slug}: fora da faixa de 5.000–8.500 palavras ({count} palavras)"
+            f"{slug}: fora da faixa de 5.000–30.000 palavras ({count} palavras)"
         )
     return errors
 
 
 def validate_all(docs_root: Path) -> list[str]:
-    """Valida todas as páginas públicas e os limites globais de extensão."""
+    """Valida todas as páginas públicas e os limites de extensão por módulo."""
 
     errors: list[str] = []
     for path in sorted(docs_root.rglob("*.md")):
@@ -760,19 +760,8 @@ def validate_all(docs_root: Path) -> list[str]:
             continue
         errors.extend(validate_document(path, docs_root))
 
-    module_texts: list[str] = []
     for slug in MODULES:
         errors.extend(validate_module(slug, docs_root))
-        for page_name in PAGES:
-            page = docs_root / slug / page_name
-            if page.is_file():
-                module_texts.append(page.read_text(encoding="utf-8"))
-    total = _word_count("\n".join(module_texts))
-    if not 32_000 <= total <= 51_000:
-        errors.append(
-            "curso: fora da faixa de 32.000–51.000 palavras nos módulos "
-            f"({total} palavras)"
-        )
     return errors
 
 

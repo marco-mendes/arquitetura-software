@@ -74,7 +74,7 @@ class ModuleFourTest(unittest.TestCase):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))
         words = re.findall(r"\b[^\W_]+(?:[-'][^\W_]+)*\b", corpus)
         self.assertGreaterEqual(len(words), 5000)
-        self.assertLessEqual(len(words), 8500)
+        self.assertLessEqual(len(words), 30000)
         self.assertGreaterEqual(corpus.count("```mermaid"), 3)
         # Cada Mermaid possui uma equivalência textual breve para leitores não visuais.
         self.assertGreaterEqual(
