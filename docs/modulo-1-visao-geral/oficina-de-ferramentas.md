@@ -1,444 +1,229 @@
-# Oficina de ferramentas: comparar, observar e registrar
+# Oficina de ferramentas: três estilos em código executável
 
-Esta oficina é local e usa ferramentas de código aberto. Python executa a comparação explícita; pytest preserva o comportamento esperado; Structurizr Lite apresenta a estrutura como texto versionável. Reserve aproximadamente setenta minutos para a trilha essencial e mais quarenta para exploração.
-
-Use somente dados sintéticos. O laboratório trata decisões administrativas e não precisa de informações reais de pacientes, profissionais ou parceiros.
-
-## O que existe antes de você abrir o terminal
-
-Você trabalhará no repositório desta disciplina, dentro da pasta `laboratorios/plataforma-hospitalar`. Ela contém uma aplicação didática local, e não uma integração com hospital, plano de saúde ou banco de dados real. Nesta unidade, o artefato principal é `src/hospital/estilos.py`: uma tabela legível que relaciona quatro estilos a forças, limites e evidências possíveis. A função `comparar_estilos` recebe prioridades declaradas, ordena alternativas compatíveis e devolve a explicação usada nessa ordenação.
-
-O arquivo `tests/test_estilos.py` não mede a qualidade de uma arquitetura em produção. Ele verifica o **contrato do comparador**: se alternativas retornam força, limite e evidência, e se prioridades distintas produzem comparações diferentes. Você vai executar o teste, alterar um cenário local e interpretar o que mudou. A condição inicial verificável é simples: a pasta do repositório existe no seu computador e você consegue abrir um terminal nela. Antes de instalar qualquer coisa, localize a raiz do repositório e entre na pasta do laboratório:
-
-```text
-arquitetura-software/
-└── laboratorios/
-    └── plataforma-hospitalar/   ← execute os comandos desta oficina aqui
-```
-
-Ao final da preparação, a condição de início da prática será: existe uma pasta `.venv`, `python --version` mostra o interpretador do ambiente virtual e `python -m pytest tests/test_estilos.py -q` termina com `3 passed`.
+Reserve aproximadamente **120 minutos**. Você executará três programas já presentes no capítulo 1, observará a saída e conectará o que ela mostra às responsabilidades de cada estilo arquitetural. Os exemplos usam somente a biblioteca padrão do Python; não crie ambiente virtual e não instale pacotes.
 
 ## Ferramenta
 
-Python executa `comparar_estilos`; pytest verifica seu contrato; Structurizr Lite e Podman renderizam o modelo; o editor registra o ADR. Resultado verde não substitui interpretação.
+Python 3.10+ executa os três programas; um editor permite ler e alterar somente as cópias de entrega. A oficina não requer pacotes, contêineres ou ferramentas adicionais.
 
 ## Pré-requisitos
 
 **Objetivo**
 
-Preparar um ambiente descartável capaz de executar o comparador de estilos, seus testes e, na extensão, um modelo de arquitetura.
+Executar e observar três exemplos reais do capítulo 1.
 
 **Pré-requisito**
 
-Tenha o repositório local, terminal, editor e permissão para instalar pacotes. Execute em `laboratorios/plataforma-hospitalar`.
-
-**O que cada verificação significa**
-
-Ao final, `python --version`, `python -m pytest --version` e `podman --version` mostram versões. Em macOS/Linux, use `python3` antes da ativação; Podman é só para extensão.
+Ter o repositório clonado e acesso a um terminal e editor.
 
 ## Instalação
 
+Não instale dependências do projeto. Apenas confirme ou instale Python 3.10+ pelo canal do seu sistema quando ele não estiver disponível.
+
+## Preparação do laboratório (10 minutos)
+
+Abra a raiz do seu clone, indicada abaixo por `<raiz-do-clone>`. Confirme Python 3.10 ou mais recente antes de começar. Cada programa é independente: execute `main.py` dentro do diretório do exemplo, para que seus imports locais funcionem.
+
 ### Windows
 
-Antes de qualquer `Set-Location` relativo, o terminal começa na raiz do clone `arquitetura-software`.
-
-Abra PowerShell. Instale Python e Podman com o gerenciador do Windows:
+No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
-winget install --exact --id Python.Python.3.12
-winget install --exact --id RedHat.Podman
+py --version
+Set-Location codigos\cap01-estilos-fundamentais\1.2-estilo-em-camadas
+py main.py
 ```
-
-Feche e abra PowerShell para atualizar os comandos disponíveis. Inicie a máquina Linux usada pelo Podman:
-
-```powershell
-podman machine init
-podman machine start
-```
-
-Se a máquina já existir, ignore apenas a mensagem de existência e execute `podman machine start`. Entre no laboratório e crie o ambiente, sem ativá-lo ainda:
-
-```powershell
-Set-Location laboratorios\plataforma-hospitalar
-py -m venv .venv
-```
-
-Se a execução de scripts for bloqueada nesse computador, aplique agora a contingência somente à sessão atual, antes de qualquer ativação ou instalação:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-```
-
-O escopo `Process` termina ao fechar PowerShell; se bloqueado, use a rota sem ativação.
-
-#### Ativação opcional
-
-Tente ativar a venv executando somente o script de ativação:
-
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-Confirme `(.venv)` no prompt; se não aparecer, use a rota sem ativação.
-
-#### Rota sem ativação e continuação comum
-
-Com ou sem `(.venv)` no prompt, continue pelos mesmos comandos explícitos. Assim, a instalação e os testes não dependem da ativação nem do Python global:
-
-```powershell
-.venv\Scripts\python.exe -m pip install --upgrade pip
-.venv\Scripts\python.exe -m pip install -e ".[dev]"
-.venv\Scripts\python.exe --version
-.venv\Scripts\python.exe -m pytest --version
-.venv\Scripts\python.exe -m pytest tests -q
-.venv\Scripts\python.exe -m pytest tests/test_estilos.py -q
-podman --version
-```
-
-Os demais comandos PowerShell usam `.venv\Scripts\python.exe`, sem Python global.
 
 ### macOS
 
-Antes de qualquer `cd` relativo, o terminal começa na raiz do clone `arquitetura-software`.
-
-Abra Terminal. Com Homebrew disponível, instale Python e Podman, inicie a máquina e prepare o workspace:
+No Terminal, a partir de `<raiz-do-clone>`:
 
 ```bash
-brew install python@3.12 podman
-podman machine init
-podman machine start
-cd laboratorios/plataforma-hospitalar
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-python --version
-python -m pytest --version
-podman --version
+python3 --version
+cd codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas
+python3 main.py
 ```
-
-Se a máquina já existir, execute só `podman machine start`; se necessário, use `python3`.
 
 ### Linux
 
-Antes de qualquer `cd` relativo, o terminal começa na raiz do clone `arquitetura-software`.
-
-Os comandos abaixo usam Debian ou Ubuntu. Em outra distribuição, instale os pacotes equivalentes pelo gerenciador do sistema.
+No Terminal, a partir de `<raiz-do-clone>`:
 
 ```bash
-sudo apt update
-sudo apt install -y python3 python3-venv python3-pip podman
-cd laboratorios/plataforma-hospitalar
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-python --version
-python -m pytest --version
-podman --version
+python3 --version
+cd codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas
+python3 main.py
 ```
 
-Em Linux, não execute `podman machine init`.
-
-## Preparação do laboratório
-
-### Essencial em aula
-
-**Execute**
-
-Confirme a pasta e `(.venv)`. O primeiro arquivo contém a tabela; o segundo, as verificações:
-
-```text
-src/hospital/estilos.py
-tests/test_estilos.py
-```
-
-Crie a pasta `evidencias`. No PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force evidencias
-```
-
-Em macOS ou Linux:
-
-```bash
-mkdir -p evidencias
-```
-
-Em `src/hospital/estilos.py`, `_ESTILOS` declara estilo, força, limite e evidência; a função apenas filtra e ordena prioridades.
-
-**Observe**
-
-Saída é uma lista com `estilo`, `forcas`, `limites` e `evidencias`. `evidencias` guarda suas saídas, sem alterar código.
-
-### Exploração em dupla
-
-**Execute**
-
-Crie `evidencias/comparacao.py` com o conteúdo abaixo:
-
-```python
-from pprint import pprint
-
-from hospital.estilos import comparar_estilos
-
-
-cenario = {
-    "dominio": "triagem administrativa",
-    "prioridades": ["modificabilidade", "extensibilidade"],
-}
-
-pprint(comparar_estilos(cenario))
-```
-
-Uma pessoa descreve a força; outra confere limite e evidência. Troquem papéis.
-
-**Compare**
-
-Antes de editar, prevejam o primeiro estilo e registrem sem alterar o teste.
-
-### Extensão
-
-**Execute**
-
-Crie a pasta `structurizr` e, dentro dela, o arquivo `workspace.dsl`:
-
-```structurizr
-workspace "Plataforma hospitalar" "Estrutura inicial do módulo 1" {
-    model {
-        equipe = person "Equipe administrativa"
-        plataforma = softwareSystem "Plataforma hospitalar" {
-            aplicacao = container "Aplicação hospitalar" "Monólito modular implantado como uma unidade" "Python 3.12 e FastAPI" {
-                agenda = component "Agenda" "Módulo em camadas para reservas consistentes" "Python" {
-                    tags "Camadas"
-                }
-                triagem = component "Triagem" "Núcleo administrativo com extensões por plugin" "Python" {
-                    tags "Microkernel"
-                }
-                faturamento = component "Faturamento" "Módulo com fluxo de validação e transformação" "Python" {
-                    tags "Pipes and filters"
-                }
-                auditoria = component "Auditoria" "Módulo de correlação administrativa" "Python" {
-                    tags "Módulo"
-                }
-            }
-        }
-        equipe -> agenda "Solicita e remarca horários" "HTTPS/JSON"
-        agenda -> auditoria "Registra alterações"
-        triagem -> auditoria "Registra etapas"
-        faturamento -> auditoria "Registra rejeições"
-    }
-    views {
-        container plataforma "Aplicacao" {
-            include *
-            autolayout lr
-        }
-        component aplicacao "Modulos" {
-            include *
-            autolayout lr
-        }
-        styles {
-            element "Person" {
-                shape person
-            }
-        }
-    }
-}
-```
-
-O arquivo modela uma única aplicação implantável, coerente com o monólito modular decidido no estudo de caso. Agenda, Triagem, Faturamento e Auditoria são componentes internos, não unidades de implantação. O campo de tecnologia contém apenas mecanismos concretos (`Python 3.12 e FastAPI` ou `Python`); os estilos aparecem nas descrições e tags. O arquivo usa nomes e relações, não coordenadas fixas, e pode ser versionado como qualquer outro texto.
+Se `py` (Windows) ou `python3` (macOS/Linux) não for reconhecido, instale Python 3.10+ pelo canal de instalação do seu sistema operacional, feche e reabra o terminal e repita a verificação. Se a versão exibida for anterior a 3.10, atualize-a pelo mesmo canal. Não há dependências adicionais para instalar.
 
 ## Execução
 
-Contexto de terminal: abra na raiz `arquitetura-software`, entre em `laboratorios/plataforma-hospitalar` e mantenha essa pasta nos blocos seguintes.
-
 ### Essencial em aula
+
+## Experimento 1 — Camadas: agenda clínica (30 minutos)
+
+Diretório local: `<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`
+
+Leia os arquivos na ordem que fizer mais sentido para você; os links permitem comparar o clone com a fonte do capítulo:
+
+- [apresentacao.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas/apresentacao.py)
+- [servicos.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas/servicos.py)
+- [dominio.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas/dominio.py)
+- [repositorios.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas/repositorios.py)
+
+| O que abrir | O que executar | O que observar | Se algo sair diferente |
+| --- | --- | --- | --- |
+| `main.py` e os quatro arquivos acima | Windows: `py main.py`<br>macOS/Linux: `python3 main.py` | Os agendamentos válidos retornam HTTP 201; a sobreposição de horário retorna HTTP 409; a agenda muda após realizar e cancelar consultas. | Confirme que o terminal está no diretório deste exemplo e que executou `main.py`, não um arquivo isolado. Releia a mensagem exibida e compare o cenário em `main.py` com a regra em `servicos.py`. |
 
 **Execute**
 
-Rode primeiro toda a suíte. Em seguida, execute `test_estilos.py` e capture em `evidencias/testes-estilos.txt`.
-
-#### Windows / PowerShell — captura
-
-```powershell
-.venv\Scripts\python.exe -m pytest tests -q
-.venv\Scripts\python.exe -m pytest tests/test_estilos.py -q 2>&1 | Tee-Object -FilePath evidencias\testes-estilos.txt
-```
-
-#### macOS ou Linux — captura
-
-```bash
-python -m pytest tests -q
-python -m pytest tests/test_estilos.py -q 2>&1 | tee evidencias/testes-estilos.txt
-```
+Execute o comando indicado na tabela.
 
 **Observe**
 
-O teste `test_alternativas_explicam_forcas_limites_e_evidencias` impede respostas vazias. O terceiro teste compara duas prioridades distintivas: modificabilidade com extensibilidade, depois throughput com processamento incremental. Leia o nome do teste e as asserções antes de concluir o que foi demonstrado.
+Registre as linhas de agendamento e conflito.
+
+**Compare**
+
+Relacione cada resultado às responsabilidades dos arquivos.
 
 ### Exploração em dupla
 
-**Execute**
+Questões exploratórias:
 
-No mesmo terminal aberto na raiz e posicionado no laboratório, execute o roteiro e capture a primeira saída.
+1. Onde a entrada é convertida em uma chamada ao serviço e onde a resposta HTTP é formatada?
+2. Qual regra impede o conflito de agenda? Que objeto do domínio ajuda a expressá-la?
+3. Que dependência precisaria mudar para substituir o armazenamento em memória, e qual camada deveria permanecer estável?
 
-#### Windows / PowerShell — captura
+### Extensão reversível
 
-```powershell
-.venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-modificabilidade.txt
-```
-
-#### macOS ou Linux — captura
-
-```bash
-python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-modificabilidade.txt
-```
-
-Depois altere somente o domínio e as prioridades:
-
-```python
-cenario = {
-    "dominio": "ingestão em fluxo",
-    "prioridades": ["throughput", "processamento incremental"],
-}
-```
-
-No mesmo diretório, execute novamente e capture outro arquivo.
-
-#### Windows / PowerShell — captura
+Antes de alterar qualquer condição, copie o exemplo para sua entrega. No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
-.venv\Scripts\python.exe evidencias\comparacao.py 2>&1 | Tee-Object -FilePath evidencias\comparacao-fluxo.txt
+New-Item -ItemType Directory -Force entregas\unidade-1 | Out-Null
+Copy-Item -Recurse codigos\cap01-estilos-fundamentais\1.2-estilo-em-camadas entregas\unidade-1\camadas
+Set-Location entregas\unidade-1\camadas
+py main.py | Tee-Object -FilePath saida-antes.txt
 ```
 
-#### macOS ou Linux — captura
+No macOS/Linux:
 
 ```bash
-python evidencias/comparacao.py 2>&1 | tee evidencias/comparacao-fluxo.txt
+mkdir -p entregas/unidade-1
+cp -R codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas entregas/unidade-1/camadas
+cd entregas/unidade-1/camadas
+python3 main.py | tee saida-antes.txt
 ```
 
-Não mude a tabela para forçar uma preferência. A alteração deve representar novas forças do contexto.
+Altere uma condição já existente no cenário ou em uma regra, execute de novo e guarde `saida-depois.txt`. Descreva o que mudou na saída e qual responsabilidade foi afetada. Não há uma alteração canônica: escolha uma hipótese que você consiga explicar. Para reverter, exclua a cópia em `entregas/unidade-1/camadas` e faça a cópia novamente; o exemplo original não deve ser modificado.
 
-**Compare**
+## Experimento 2 — Pipes and Filters: triagem de currículos (35 minutos)
 
-Na primeira execução, microkernel combina modificabilidade e extensibilidade, com duas evidências correspondentes. Na segunda, pipes and filters combina throughput e processamento incremental. Compare também os limites; mudar apenas o nome vencedor produziria uma análise pobre.
+Diretório local: `<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters`
 
-### Extensão
+Abra o orquestrador e os quatro tipos de filtro:
 
-**Execute**
+- [framework.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters/framework.py)
+- [filtros/producer.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters/filtros/producer.py)
+- [filtros/testers.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters/filtros/testers.py)
+- [filtros/transformers.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters/filtros/transformers.py)
+- [filtros/consumer.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters/filtros/consumer.py)
 
-Abra outro terminal em `laboratorios/plataforma-hospitalar`. No PowerShell, descubra o caminho completo e inicie Structurizr Lite:
+| O que abrir | O que executar | O que observar | Se algo sair diferente |
+| --- | --- | --- | --- |
+| `main.py`, `framework.py` e os filtros producer, tester, transformer e consumer | No Windows: `Set-Location <raiz-do-clone>\codigos\cap01-estilos-fundamentais\1.3-pipes-and-filters; py main.py`<br>macOS/Linux: `cd <raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters && python3 main.py` | Mensagens de descarte ou reprovação surgem antes do relatório; campos são normalizados e os aprovados aparecem ranqueados por score. | Confirme o diretório e revise a sequência de `.adicionar(...)` em `main.py`. Um resultado diferente pode decorrer de ordem, critérios ou dados de entrada: localize qual filtro produz a linha inesperada. |
+
+Questões exploratórias:
+
+1. Qual parte recebe dados brutos e qual parte apresenta o resultado final?
+2. Em que etapas itens deixam de seguir pelo pipe? Em que etapa eles são transformados sem descarte?
+3. Por que o ranking pertence ao fim do fluxo? Que efeito teria reorganizar filtros?
+
+### Extensão reversível
+
+Copie antes de experimentar. No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
-$workspace = (Resolve-Path .\structurizr).Path
-podman run --rm --interactive --tty --publish 8080:8080 --volume "${workspace}:/usr/local/structurizr" docker.io/structurizr/lite
+New-Item -ItemType Directory -Force entregas\unidade-1 | Out-Null
+Copy-Item -Recurse codigos\cap01-estilos-fundamentais\1.3-pipes-and-filters entregas\unidade-1\pipes-and-filters
+Set-Location entregas\unidade-1\pipes-and-filters
+py main.py | Tee-Object -FilePath saida-antes.txt
 ```
 
-Em macOS ou Linux:
+No macOS/Linux:
 
 ```bash
-podman run --rm --interactive --tty --publish 8080:8080 --volume "$PWD/structurizr:/usr/local/structurizr:Z" docker.io/structurizr/lite
+mkdir -p entregas/unidade-1
+cp -R codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters entregas/unidade-1/pipes-and-filters
+cd entregas/unidade-1/pipes-and-filters
+python3 main.py | tee saida-antes.txt
 ```
 
-Abra `http://localhost:8080` no navegador. Na visão de containers, localize uma única Aplicação hospitalar. Na visão de componentes, localize os quatro módulos e os conectores com Auditoria. Confira que tecnologias e estilos ocupam campos diferentes.
+Altere uma condição observável da cópia — dados de entrada, um critério ou a composição do fluxo — e gere `saida-depois.txt`. Registre o efeito sobre descarte, transformação ou ranking. Evite buscar uma saída “certa”: a entrega deve explicar sua hipótese e a evidência. Para desfazer, exclua a cópia e repita a cópia a partir do código original.
 
-**Observe**
+## Experimento 3 — Microkernel: faturamento por plugins (35 minutos)
 
-Altere a descrição de `Triagem`, salve `workspace.dsl` e atualize o navegador. A mudança deve aparecer sem reconstruir uma imagem. Isso demonstra modelo como código, não adequação do estilo. Copie então a versão executada para as evidências. No PowerShell:
+Diretório local: `<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel`
+
+Observe o núcleo e extensões concretas:
+
+- [nucleo.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.4-microkernel/nucleo.py)
+- [dominio.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.4-microkernel/dominio.py)
+- [plugins/impostos_sp.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.4-microkernel/plugins/impostos_sp.py)
+- [plugins/impostos_rj.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.4-microkernel/plugins/impostos_rj.py)
+- [plugins/frete.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.4-microkernel/plugins/frete.py)
+- [plugins/notificacao.py](https://github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais/1.4-microkernel/plugins/notificacao.py)
+
+| O que abrir | O que executar | O que observar | Se algo sair diferente |
+| --- | --- | --- | --- |
+| `main.py`, `nucleo.py` e os plugins listados | No Windows: `Set-Location <raiz-do-clone>\codigos\cap01-estilos-fundamentais\1.4-microkernel; py main.py`<br>macOS/Linux: `cd <raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel && python3 main.py` | O registro mostra plugins por categoria; o núcleo executa impostos, frete e notificação nessa ordem; cada regra só contribui quando seu contexto se aplica. | Verifique se está usando o `main.py` do microkernel. Compare `ORDEM_CATEGORIAS` em `nucleo.py`, os plugins registrados e os dados da fatura que ativam cada regra. |
+
+Questões exploratórias:
+
+1. Que contrato o núcleo conhece e quais detalhes ele deixa para os plugins?
+2. Como a ordem por categoria afeta o total e a notificação?
+3. Quais regras contribuem para uma fatura de SP, uma de RJ e uma de valor alto? Onde a saída mostra isso?
+
+### Extensão reversível
+
+Crie uma cópia antes de investigar. No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
-Copy-Item .\structurizr\workspace.dsl .\evidencias\workspace.dsl
+New-Item -ItemType Directory -Force entregas\unidade-1 | Out-Null
+Copy-Item -Recurse codigos\cap01-estilos-fundamentais\1.4-microkernel entregas\unidade-1\microkernel
+Set-Location entregas\unidade-1\microkernel
+py main.py | Tee-Object -FilePath saida-antes.txt
 ```
 
-Em macOS ou Linux:
+No macOS/Linux:
 
 ```bash
-cp structurizr/workspace.dsl evidencias/workspace.dsl
+mkdir -p entregas/unidade-1
+cp -R codigos/cap01-estilos-fundamentais/1.4-microkernel entregas/unidade-1/microkernel
+cd entregas/unidade-1/microkernel
+python3 main.py | tee saida-antes.txt
 ```
+
+Na cópia, modifique uma condição de uma regra, do registro ou de uma fatura e capture `saida-depois.txt`. Explique como a ordem de categorias e a contribuição das regras tornaram a mudança visível. Não existe uma modificação prescrita. Para retornar ao estado inicial, apague a cópia em `entregas/unidade-1/microkernel` e copie novamente o diretório original.
 
 ## Resultado esperado
 
-A suíte completa do laboratório possui quatro testes e deve encerrar sem falhas:
-
-```text
-....                                                                     [100%]
-4 passed
-```
-
-Uma execução típica do arquivo focado possui três testes:
-
-```text
-...                                                                      [100%]
-3 passed
-```
-
-Para modificabilidade e extensibilidade, a primeira alternativa é `microkernel`; para throughput e processamento incremental, `pipes and filters`. Structurizr Lite renderiza uma aplicação com quatro componentes internos.
+Cada `main.py` termina sem erro e imprime a demonstração descrita em sua tabela: respostas HTTP e conflito em Camadas; descarte, transformação e ranking em Pipes and Filters; categorias e contribuições de plugins em Microkernel.
 
 ## Interpretação
 
-**Observe**
-
-O comparador usa conhecimento declarado; força ausente revela limite do instrumento.
-
 **Compare**
 
-Teste, execução e diagrama são complementares; nenhum mede carga real ou prova segurança.
-
-### Questões exploratórias
-
-1. Por que throughput diferencia faturamento de agenda neste cenário?
-2. Qual limite do microkernel teria maior impacto se os plugins compartilhassem estado?
-3. Que teste impediria um módulo do monólito de importar detalhes internos de outro?
-4. Qual evento levaria a substituir o ADR em vez de apenas atualizar o diagrama?
-
-Preencha um mini-ADR. Copie o modelo para `evidencias/ADR-001-estilo-inicial.md`. No PowerShell:
-
-```powershell
-Copy-Item ..\..\docs\referencia\template-adr.md evidencias\ADR-001-estilo-inicial.md
-```
-
-Em macOS ou Linux:
-
-```bash
-cp ../../docs/referencia/template-adr.md evidencias/ADR-001-estilo-inicial.md
-```
-
-Registre contexto, duas alternativas, decisão provisória, uma consequência favorável, uma desfavorável, o resultado do teste e um gatilho de revisão.
+Uma saída observável mostra o comportamento deste cenário didático; ela não demonstra que um estilo é universalmente melhor. Use as perguntas e sua nota para justificar a relação entre código, responsabilidade e evidência.
 
 ## Limpeza e contingência
 
-**Execute**
-
-Interrompa Structurizr Lite com `Ctrl+C`; `--rm` remove o contêiner de execução. Preserve `evidencias`, pois ela contém a entrega. Para sair do ambiente virtual, execute:
-
-```bash
-deactivate
-```
-
-Se precisar reconstruir completamente o ambiente, remova apenas `.venv` e repita a instalação. No PowerShell:
-
-```powershell
-Remove-Item -Recurse -Force .venv
-```
-
-Em macOS ou Linux:
-
-```bash
-rm -rf .venv
-```
-
-Se a porta 8080 estiver ocupada, troque `--publish 8080:8080` por `--publish 8081:8080` e abra `http://localhost:8081`. Se `hospital` não puder ser importado, confirme a pasta atual e repita `python -m pip install -e ".[dev]"`. Se o modelo não renderizar, leia a linha indicada pelo Structurizr Lite e compare chaves, nomes e relações com o arquivo fornecido.
+Se o comando falhar, confira o diretório atual e a versão de Python, depois registre a mensagem completa. Para desfazer uma extensão, exclua apenas a cópia correspondente em `<raiz-do-clone>/entregas/unidade-1/` e copie o exemplo original novamente.
 
 ## Evidência a entregar
 
-**Objetivo**
+## Entrega e fechamento (10 minutos)
 
-Demonstrar uma cadeia curta entre força, comparação, estrutura e decisão.
+Em `<raiz-do-clone>/entregas/unidade-1/`, entregue as três cópias, cada uma com `saida-antes.txt`, `saida-depois.txt` e uma breve nota (por exemplo, `observacoes.md`) contendo: a condição alterada, o que a saída revelou e qual responsabilidade arquitetural você relacionou à evidência. A saída deve sustentar a explicação; ela não precisa coincidir com a de outro grupo.
 
-**Execute**
-
-Entregue a pasta `evidencias` com exatamente os artefatos criados no roteiro: `comparacao.py`, `comparacao-modificabilidade.txt`, `comparacao-fluxo.txt`, `testes-estilos.txt`, `workspace.dsl` e `ADR-001-estilo-inicial.md`. Os arquivos de texto preservam os comandos observados; `workspace.dsl` preserva o modelo que foi renderizado.
-
-**Compare**
-
-Revise se o ADR cita a força alterada, se a consequência desfavorável aparece e se a evidência realmente observa a promessa. Declare limites: a oficina usa uma tabela didática e dados sintéticos. A entrega deve permitir que outra pessoa repita os comandos e compreenda por que a decisão permanece provisória.
+Se algum experimento não executar, registre o comando, a mensagem completa e o diretório atual na nota. Isso é evidência suficiente para retomar a investigação sem alterar o código original.
