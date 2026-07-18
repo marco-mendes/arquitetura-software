@@ -16,7 +16,18 @@ COLLECTOR_DOCKERFILE = LAB / "infra" / "observabilidade" / "Dockerfile"
 TELEMETRIA = LAB / "src" / "hospital" / "telemetria.py"
 
 
+def read_module_page(module: str, page: str) -> str:
+    return (ROOT / "docs" / module / page).read_text(encoding="utf-8")
+
+
 class ModuleFourTest(unittest.TestCase):
+    def test_unit_four_explains_governance_as_contract_policy_and_evidence(self):
+        text = read_module_page(
+            "modulo-4-governanca", "conceitos.md"
+        ) + read_module_page("modulo-4-governanca", "padroes-e-decisoes.md")
+        for term in ("política", "versionamento", "gateway", "mediação", "rastreabilidade"):
+            self.assertIn(term, text)
+
     def test_content_contract(self):
         assert_module_contract(
             self,
@@ -65,10 +76,9 @@ class ModuleFourTest(unittest.TestCase):
         self.assertGreaterEqual(len(words), 5000)
         self.assertLessEqual(len(words), 8500)
         self.assertGreaterEqual(corpus.count("```mermaid"), 3)
-        # Diagramas Mermaid e infográficos gerados possuem leitura textual.
-        # Os infográficos acrescentam equivalências além das exigidas pelos Mermaid.
+        # Cada Mermaid possui uma equivalência textual breve para leitores não visuais.
         self.assertGreaterEqual(
-            corpus.count("**Leitura textual da figura:**"),
+            corpus.count("**Leitura textual:**"),
             corpus.count("```mermaid"),
         )
 

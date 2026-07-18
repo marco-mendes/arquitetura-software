@@ -2,9 +2,9 @@
 
 **Encontro:** 4 de 6
 
-Governança é o conjunto de decisões, responsabilidades e **políticas verificáveis** que torna uma arquitetura repetível sem congelá-la. Não é uma reunião, uma ferramenta ou uma camada que alguém aprova de vez em quando. Uma política útil informa a intenção, o responsável, o local de aplicação, a evidência e a condição de revisão. Por exemplo: “toda chamada pública recebe um `X-Correlation-ID`; o gateway limita três chamadas por segundo por origem; o trace chega ao Jaeger”. Cada parte pode ser conferida por configuração, chamada HTTP ou consulta de telemetria.
+Governança é o conjunto de decisões, responsabilidades e **políticas verificáveis** que torna uma arquitetura repetível sem congelá-la. Não é uma reunião, uma ferramenta ou uma camada que alguém aprova de vez em quando. Ela transforma contrato, ownership, fronteira e evidência em mecanismos que podem ser revisados. Uma política útil informa a intenção, o responsável, o local de aplicação, a evidência e a condição de revisão. Por exemplo: “toda chamada pública recebe um `X-Correlation-ID`; o gateway limita três chamadas por segundo por origem; o trace chega ao Jaeger”. Cada parte pode ser conferida por configuração, chamada HTTP ou consulta de telemetria.
 
-No caso hospitalar, Elegibilidade já é um serviço com dado próprio. Agora ele precisa oferecer uma entrada pública previsível e uma trilha de operação. O [Kong](https://docs.konghq.com/gateway/latest/) encaminhará a rota `/hospital/elegibilidades`, atribuirá correlation ID quando necessário e aplicará rate limiting. O [OpenTelemetry](https://opentelemetry.io/docs/) transportará o contexto do trace ao Collector, e o [Jaeger](https://www.jaegertracing.io/docs/) permitirá consultar a evidência. O desenho não desloca decisão clínica para infraestrutura: uma regra como “beneficiário está elegível” continua pertencendo ao serviço e ao domínio.
+No caso hospitalar, Elegibilidade já é um serviço com dado próprio. Agora ele precisa oferecer uma entrada pública previsível e uma trilha de operação. O [Kong](https://docs.konghq.com/gateway/latest/) encaminhará a rota `/hospital/elegibilidades`, atribuirá correlation ID quando necessário e aplicará rate limiting. O [OpenTelemetry](https://opentelemetry.io/docs/) transportará o contexto do trace ao Collector, e o [Jaeger](https://www.jaegertracing.io/docs/) permitirá consultar a evidência. São implementações locais da política no laboratório, e não sinônimos de governança: a mesma política pode sobreviver a outra tecnologia de mediação. O desenho não desloca decisão clínica para infraestrutura: uma regra como “beneficiário está elegível” continua pertencendo ao serviço e ao domínio.
 
 ## Pergunta orientadora
 
@@ -31,7 +31,11 @@ flowchart LR
     E --> A
 ```
 
-**Leitura textual da figura:** uma decisão com responsável vira política declarada, aplicada no lugar adequado. Logs, métricas e traces fornecem evidência para revisar a própria decisão e reiniciar o ciclo.
+**Texto alternativo:** ciclo de governança que transforma decisão com owner em política, aplicação e evidência para revisão.
+
+*Figura 1 — Ciclo de uma política governável.*
+
+**Leitura textual:** uma decisão com responsável vira política declarada, aplicada no lugar adequado; os sinais permitem revisar a decisão.
 
 ## Limite deliberado
 

@@ -1,12 +1,12 @@
 # Exemplo arquitetural: uma consulta que deixa evidências
 
-Considere a consulta `GET /hospital/elegibilidades/{beneficiario_id}`. O endereço público contém `/hospital` para identificar a entrada governada; o serviço mantém o contrato interno `/elegibilidades/{beneficiario_id}`. A separação evita fazer o consumidor depender do nome de rede de um contêiner. Ela não transforma o Kong em dono de Elegibilidade. O catálogo registra que o serviço é responsável por regra, banco, contrato e SLO da capacidade; a plataforma é responsável pela política comum de entrada.
+Considere a consulta `GET /hospital/elegibilidades/{beneficiario_id}`. O endereço público contém `/hospital` para identificar a entrada governada; o serviço mantém o contrato interno `/elegibilidades/{beneficiario_id}`. A separação evita fazer o consumidor depender do nome de rede de um contêiner. Ela não transforma o Kong em dono de Elegibilidade. O catálogo registra que o serviço é responsável por regra, banco, contrato e SLO da capacidade; a plataforma é responsável pela política comum de entrada. A mediação é contratual: o gateway preserva o contrato público e aplica políticas transversais, enquanto o serviço continua dono da semântica do recurso.
 
 Antes da requisição, a configuração declarativa fixa quatro componentes. PostgreSQL contém dado sintético de Elegibilidade numa rede interna. O processo FastAPI acessa só essa rede de banco e expõe saúde e consulta na rede de aplicação. Kong alcança o serviço pela rede de aplicação, mas não alcança PostgreSQL. Collector e Jaeger também ficam na rede de aplicação, pois recebem telemetria dos dois processos. Essa topologia preserva a fronteira física introduzida no módulo anterior: acrescentar observabilidade não dá ao gateway permissão para ler dados diretamente.
 
 Quando chega a chamada, Kong avalia a rota e as políticas. A política de correlação usa `X-Correlation-ID` já fornecido ou cria UUID. A política de limite conta a origem durante uma janela de um segundo e aceita as três primeiras chamadas; a seguinte recebe `429`. A política OpenTelemetry extrai `traceparent`, cria span `kong-gateway` e encaminha o contexto. Elegibilidade extrai o mesmo contexto, registra span filho, inclui o correlation ID como atributo seguro e responde. O cabeçalho de correlação volta ao consumidor mesmo que ele não tenha enviado um.
 
-O Collector não é um banco de observabilidade. Ele recebe OTLP, aplica processamento em lote e exporta ao Jaeger. Essa separação permite alterar destino ou filtros sem reescrever serviço. Jaeger agrupa spans pelo trace ID. Na oficina, o teste cria um trace ID conhecido, chama o gateway e consulta `/api/traces/{traceId}` até encontrar o trace. Depois confirma que há processos `kong-gateway` e `elegibilidade`; assim a evidência inclui a borda e o serviço, não apenas um log de proxy.
+O Collector não é um banco de observabilidade. Ele recebe OTLP, aplica processamento em lote e exporta ao Jaeger. Essa separação permite alterar destino ou filtros sem reescrever serviço. Jaeger agrupa spans pelo trace ID. Na oficina, o teste cria um trace ID conhecido, chama o gateway e consulta `/api/traces/{traceId}` até encontrar o trace. Depois confirma que há processos `kong-gateway` e `elegibilidade`; assim a evidência inclui a borda e o serviço, não apenas um log de proxy. A rastreabilidade resultante conecta o contrato da rota, a política declarada e a execução observada; ela não prova, sozinha, correção clínica nem autorização de domínio.
 
 ```mermaid
 flowchart LR
@@ -19,7 +19,11 @@ flowchart LR
     K -. X-Correlation-ID e traceparent .-> E
 ```
 
-**Leitura textual da figura:** o cliente chama Kong; Kong remove o prefixo público e encaminha ao serviço. Apenas Elegibilidade consulta PostgreSQL. Kong e serviço enviam telemetria ao Collector, que exporta ao Jaeger; correlation ID e traceparent acompanham a chamada entre Kong e serviço.
+**Texto alternativo:** cliente acessa Kong, que chama Elegibilidade; apenas o serviço acessa PostgreSQL e os dois enviam telemetria ao Collector e Jaeger.
+
+*Figura 4 — Rota governada e telemetria da consulta de Elegibilidade.*
+
+**Leitura textual:** Kong medeia a rota, Elegibilidade acessa o banco e ambos enviam telemetria à cadeia Collector–Jaeger.
 
 ## O que cada evidência permite afirmar
 
