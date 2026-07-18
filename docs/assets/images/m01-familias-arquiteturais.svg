@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Quatro famílias de decisões para arquiteturas de backend</title>
+  <desc id="desc">Quatro cartões organizam estilos de backend por organização interna, decomposição por domínio com DDD, microsserviços e macrosserviços, integração e comunicação, e execução e operação com nuvem, contêineres, orquestração e serverless.</desc>
+  <defs>
+    <style>
+      .title { fill: #16243A; font: 700 35px Arial, sans-serif; }
+      .subtitle { fill: #425466; font: 400 18px Arial, sans-serif; }
+      .card-title { fill: #16243A; font: 700 24px Arial, sans-serif; }
+      .question { fill: #254DB8; font: 600 17px Arial, sans-serif; }
+      .content { fill: #243447; font: 400 17px Arial, sans-serif; }
+      .label { fill: #16243A; font: 700 14px Arial, sans-serif; letter-spacing: 1.2px; }
+    </style>
+  </defs>
+  <rect width="1200" height="760" fill="#F2F6FB"/>
+  <text x="600" y="66" text-anchor="middle" class="title">Arquiteturas de backend: comece pela pergunta</text>
+  <text x="600" y="98" text-anchor="middle" class="subtitle">Cada família orienta uma decisão diferente; elas podem coexistir.</text>
+
+  <g transform="translate(70 140)">
+    <rect width="510" height="250" rx="18" fill="#FFFFFF" stroke="#5FC0D1" stroke-width="3"/>
+    <rect width="510" height="12" rx="6" fill="#5FC0D1"/>
+    <text x="32" y="58" class="card-title">Organização interna</text>
+    <text x="32" y="94" class="question">Como as responsabilidades colaboram?</text>
+    <text x="32" y="130" class="label">ESTILOS PRINCIPAIS</text>
+    <text x="32" y="164" class="content">Camadas · MVC · Hexagonal</text>
+    <text x="32" y="196" class="content">Microkernel · Monólito modular</text>
+    <text x="32" y="228" class="subtitle">Foco: fronteiras dentro de uma aplicação.</text>
+  </g>
+
+  <g transform="translate(620 140)">
+    <rect width="510" height="250" rx="18" fill="#FFFFFF" stroke="#254DB8" stroke-width="3"/>
+    <rect width="510" height="12" rx="6" fill="#254DB8"/>
+    <text x="32" y="58" class="card-title">Decomposição por domínio</text>
+    <text x="32" y="94" class="question">Onde termina um modelo de negócio?</text>
+    <text x="32" y="130" class="label">ESTILOS PRINCIPAIS</text>
+    <text x="32" y="164" class="content">DDD · microsserviços</text>
+    <text x="32" y="196" class="content">macrosserviços</text>
+    <text x="32" y="228" class="subtitle">Foco: capacidades e times que as sustentam.</text>
+  </g>
+
+  <g transform="translate(70 430)">
+    <rect width="510" height="250" rx="18" fill="#FFFFFF" stroke="#F2B84B" stroke-width="3"/>
+    <rect width="510" height="12" rx="6" fill="#F2B84B"/>
+    <text x="32" y="58" class="card-title">Integração e comunicação</text>
+    <text x="32" y="94" class="question">Que contrato atravessa a fronteira?</text>
+    <text x="32" y="130" class="label">ESTILOS PRINCIPAIS</text>
+    <text x="32" y="164" class="content">Pipes and Filters · APIs</text>
+    <text x="32" y="196" class="content">Eventos</text>
+    <text x="32" y="228" class="subtitle">Foco: chamadas, mensagens e transformações.</text>
+  </g>
+
+  <g transform="translate(620 430)">
+    <rect width="510" height="250" rx="18" fill="#FFFFFF" stroke="#16243A" stroke-width="3"/>
+    <rect width="510" height="12" rx="6" fill="#16243A"/>
+    <text x="32" y="58" class="card-title">Execução e operação</text>
+    <text x="32" y="94" class="question">Onde a solução roda e se recupera?</text>
+    <text x="32" y="130" class="label">ESTILOS PRINCIPAIS</text>
+    <text x="32" y="164" class="content">nuvem · contêineres</text>
+    <text x="32" y="196" class="content">orquestração · serverless</text>
+    <text x="32" y="228" class="subtitle">Foco: capacidade e confiabilidade operacional.</text>
+  </g>
+</svg>

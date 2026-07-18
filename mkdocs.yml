@@ -97,6 +97,7 @@ nav:
       - Template de ADR: referencia/template-adr.md
   - Referência:
       - Glossário: referencia/glossario.md
+      - Como ler uma arquitetura: referencia/como-ler-uma-arquitetura.md
       - Atributos de qualidade: referencia/atributos-de-qualidade.md
       - Catálogo de padrões: referencia/catalogo-de-padroes.md
       - Guia de ferramentas: referencia/guia-de-ferramentas.md

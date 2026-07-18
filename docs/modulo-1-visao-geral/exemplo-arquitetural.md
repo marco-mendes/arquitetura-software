@@ -31,11 +31,13 @@ flowchart TB
 
 **Texto alternativo:** fluxo de reserva em camadas: a interface chama o caso de uso, que aplica a regra de conflito antes de persistir; a interface não acessa os dados diretamente.
 
-*Figura 6 — Uma reserva atravessa fronteiras de camadas antes de ser persistida. Fonte: curso.*
+*Figura 4 — Uma reserva atravessa fronteiras de camadas antes de ser persistida. Fonte: curso.*
 
 **Leitura textual da figura:** a Equipe administrativa envia o pedido à Interface HTTP. A interface chama o Caso de uso, que consulta a Regra de Agenda antes de pedir ao Repositório que grave os Dados da agenda. O Caso de uso também registra um fato mínimo em Auditoria. A ligação pontilhada mostra que a interface não consulta os dados diretamente; a regra de conflito não pode ser ignorada por uma tela.
 
 Esse arranjo favorece consistência local e teste da regra de conflito sem banco. Se quase toda leitura apenas atravessar todas as camadas sem validação ou decisão, a equipe mede o custo e registra um caminho de leitura justificado; não cria atalhos silenciosos.
+
+[Aprofundar Camadas](padroes-e-decisoes.md#camadas)
 
 ### Faturamento como fluxo: cada transformação deixa uma pista
 
@@ -52,11 +54,13 @@ flowchart LR
 
 **Texto alternativo:** pipeline de faturamento no qual validar, normalizar, enriquecer e publicar recebem documentos em sequência; rejeições seguem para um registro com etapa identificada.
 
-*Figura 7 — Transformações independentes conservam o contexto de uma rejeição. Fonte: curso.*
+*Figura 5 — Transformações independentes conservam o contexto de uma rejeição. Fonte: curso.*
 
 **Leitura textual da figura:** o Adaptador de entrada entrega um documento bruto ao filtro de validação. Documentos válidos atravessam normalização, enriquecimento e publicação; uma rejeição em validação, normalização ou enriquecimento é registrada com sua etapa. Nenhum filtro consulta o estado interno de outro filtro.
 
 As setas nomeiam o contrato de cada pipe. Cada filtro recebe um valor e devolve sucesso com um novo valor ou rejeição com identificador, etapa e causa. Os filtros não consultam o estado interno uns dos outros. Essa restrição permite testar cada etapa e compor o fluxo.
+
+[Aprofundar Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters)
 
 ## Uma execução observável
 
@@ -76,7 +80,7 @@ sequenceDiagram
 
 **Texto alternativo:** sequência de processamento em que a correlação acompanha o documento e uma falha no enriquecimento retorna com etapa e causa.
 
-*Figura 8 — Uma falha parcial preserva correlação, etapa e causa. Fonte: curso.*
+*Figura 6 — Uma falha parcial preserva correlação, etapa e causa. Fonte: curso.*
 
 **Leitura textual da figura:** a Entrada envia um documento com correlação a Validar, que passa um valor válido para Normalizar e depois para Enriquecer. A falha de enriquecimento retorna à Entrada com etapa e causa; a Entrada registra duração e rejeição. A sequência evidencia que a correlação acompanha o fluxo, inclusive na falha.
 
@@ -99,11 +103,13 @@ flowchart LR
 
 **Texto alternativo:** núcleo de triagem mantém estados, autorização e contrato; plugins devolvem resultados pelo contrato sem acessar dados internos.
 
-*Figura 9 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos. Fonte: curso.*
+*Figura 7 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos. Fonte: curso.*
 
 **Leitura textual da figura:** a Entrada de triagem entrega a solicitação ao Núcleo, que controla identidade, estados e autorização. O Núcleo expõe um Contrato de extensão usado por dois plugins: uma coleta específica da unidade A e uma validação de parceiro. Os plugins devolvem resultados ao Núcleo, que produz fato com correlação para Auditoria. As ligações pontilhadas indicam que plugins não leem os dados internos do núcleo diretamente.
 
 Para essa estrutura ser honesta, o contrato deve especificar entrada, resultado, erros e versão. Se um plugin precisa editar tabelas internas ou se o núcleo conhece regras particulares de todos os plugins, a equipe encontrou core creep e deve revisar a fronteira em vez de chamar o acoplamento de extensibilidade.
+
+[Aprofundar Microkernel](padroes-e-decisoes.md#microkernel)
 
 ## Do cenário à evidência
 

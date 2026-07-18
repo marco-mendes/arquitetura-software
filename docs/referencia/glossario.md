@@ -4,9 +4,19 @@
 
 **Estilo arquitetural:** conjunto reconhecível de tipos de elemento, relações e restrições que orienta a organização de uma solução.
 
+**Decisão arquitetural:** escolha de organização difícil de reverter que atende forças relevantes e restringe escolhas posteriores.
+
+**Restrição:** limite que reduz as alternativas admissíveis para a arquitetura, como ambiente, tecnologia ou regra de dependência.
+
+**Premissa:** condição considerada verdadeira para decidir, mas que deve ser revista quando surgirem evidências contrárias.
+
 **Componente:** unidade com responsabilidade identificável que realiza computação ou armazena dados.
 
 **Conector:** mecanismo pelo qual componentes colaboram, como chamada, mensagem, evento ou fluxo de dados.
+
+**Configuração:** arranjo de componentes, conectores e restrições que descreve como uma arquitetura é organizada em uma visão.
+
+**Visão arquitetural:** representação de uma arquitetura para uma preocupação específica, como módulos, execução ou implantação.
 
 **Fronteira:** limite de responsabilidade, mudança ou propriedade que separa partes da solução.
 

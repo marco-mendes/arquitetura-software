@@ -23,6 +23,15 @@ DOCS = ROOT / "docs"
 
 
 class ContentContractTest(unittest.TestCase):
+    def test_reference_navigation_includes_architecture_reading_page(self):
+        config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
+        navigation = yaml.safe_dump(config["nav"])
+
+        self.assertIn("referencia/como-ler-uma-arquitetura.md", navigation)
+        for module in MODULES:
+            pages = [path for path in navigation.splitlines() if f"{module}/" in path]
+            self.assertEqual(8, len(pages), module)
+
     def test_course_has_six_modules_and_eight_page_contract(self):
         expected_modules = (
             ("modulo-1-visao-geral", "Visão geral de estilos"),

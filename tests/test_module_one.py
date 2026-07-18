@@ -11,6 +11,29 @@ MODULE = ROOT / "docs" / "modulo-1-visao-geral"
 
 
 class ModuleOneTest(unittest.TestCase):
+    def test_module_one_begins_with_architectural_styles(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+
+        self.assertEqual("# Conceitos: estilos arquiteturais", text.splitlines()[0])
+        self.assertNotIn("## O que torna uma decisão arquitetural", text)
+
+    def test_reference_appendix_preserves_how_to_read_architecture(self):
+        appendix = ROOT / "docs/referencia/como-ler-uma-arquitetura.md"
+        text = appendix.read_text(encoding="utf-8")
+
+        for term in (
+            "Componente",
+            "Conector",
+            "Configuração",
+            "Estrutura",
+            "comportamento",
+        ):
+            self.assertIn(term, text)
+        self.assertEqual(2, text.count("```mermaid"))
+        self.assertEqual(2, text.count("**Texto alternativo:**"))
+        self.assertEqual(2, text.count("*Figura "))
+        self.assertEqual(2, text.count("**Leitura textual da figura:**"))
+
     def test_content(self):
         assert_module_contract(
             self,
@@ -49,6 +72,74 @@ class ModuleOneTest(unittest.TestCase):
         ):
             self.assertIn(term, text)
 
+    def test_family_map_includes_operational_and_service_alternatives(self):
+        concepts = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+        decisions = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+        svg = (ROOT / "docs/assets/images/m01-familias-arquiteturais.svg").read_text(
+            encoding="utf-8"
+        )
+        alt = re.search(
+            r"!\[(.*?)\]\(\.\./assets/images/m01-familias-arquiteturais\.svg\)",
+            concepts,
+        ).group(1)
+        reading = concepts.split("**Leitura textual da figura:**", 1)[1].split(
+            "\n\n", 1
+        )[0]
+        table = concepts.split("| Família", 1)[1].split("\n\n", 1)[0]
+        decomposition = concepts.split("### Decomposição por domínio", 1)[1].split(
+            "###", 1
+        )[0]
+        operation = concepts.split("### Execução e operação", 1)[1].split(
+            "## Comparar", 1
+        )[0]
+        integration = concepts.split("### Integração e comunicação", 1)[1].split(
+            "###", 1
+        )[0]
+
+        for term, narrative in (
+            ("macrosserviços", decomposition),
+            ("orquestração", operation),
+            ("serverless", operation),
+        ):
+            self.assertIn(term, alt)
+            self.assertIn(term, reading)
+            self.assertIn(term, table)
+            self.assertIn(term, narrative)
+            self.assertIn(term, svg)
+        self.assertIn(
+            "[Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters)",
+            integration,
+        )
+        self.assertTrue((MODULE / "padroes-e-decisoes.md").is_file())
+        self.assertIn("{#pipes-and-filters}", decisions)
+
+    def test_module_one_uses_accessible_static_family_map_not_mermaid_mindmap(self):
+        text = (MODULE / "conceitos.md").read_text(encoding="utf-8")
+
+        self.assertIn("m01-familias-arquiteturais.svg", text)
+        self.assertNotIn("mindmap", text)
+        for family in (
+            "Organização interna",
+            "Decomposição por domínio",
+            "Integração e comunicação",
+            "Execução e operação",
+        ):
+            self.assertIn(family, text)
+
+        asset = ROOT / "docs" / "assets" / "images" / "m01-familias-arquiteturais.svg"
+        self.assertTrue(asset.is_file())
+        svg = asset.read_text(encoding="utf-8")
+        self.assertIn('viewBox="0 0 1200 760"', svg)
+        self.assertNotRegex(svg, r"<script\\b|(?:href|src)=[\"']https?://")
+        self.assertIn("<title", svg)
+        self.assertIn("<desc", svg)
+        self.assertIn(
+            "![Diagrama em quatro cartões:",
+            text,
+        )
+        self.assertIn("*Figura 1 — Quatro famílias de decisões", text)
+        self.assertIn("**Leitura textual da figura:**", text)
+
     def test_unit_one_recall_and_understand_use_individual_expandable_answers(self):
         exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
 
@@ -82,9 +173,12 @@ class ModuleOneTest(unittest.TestCase):
             "Camadas",
             "Pipes and Filters",
             "Microkernel",
-            "Monólito modular",
         ):
-            self.assertIn(f"### {style}", text)
+            self.assertIn(f"## {style}", text)
+        self.assertRegex(
+            text,
+            r"(?m)^### Monólito modular: uma implantação, capacidades com autonomia interna$",
+        )
         for label in (
             "Responsabilidade",
             "Conectores",
@@ -94,6 +188,30 @@ class ModuleOneTest(unittest.TestCase):
             "Evite quando",
         ):
             self.assertIn(label, text)
+
+    def test_decision_page_restores_the_three_style_deep_dives(self):
+        text = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+        expected = {
+            "Camadas": ("camada fechada", "camada aberta", "sumidouro", "OCP", "MVC"),
+            "Pipes and Filters": (
+                "filtro sem estado",
+                "filtro com estado",
+                "rejeição",
+                "ordenação",
+                "throughput",
+            ),
+            "Microkernel": (
+                "registro",
+                "contrato de extensão",
+                "compatibilidade",
+                "core creep",
+                "plugin",
+            ),
+        }
+        for heading, terms in expected.items():
+            section = text.split(f"## {heading}", 1)[1]
+            for term in terms:
+                self.assertIn(term, section)
 
     def test_every_example_mermaid_has_alt_caption_and_textual_reading(self):
         text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")
@@ -189,7 +307,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(6, len(contexts))
+        self.assertEqual(3, len(contexts))
 
     def test_module_one_figure_numbers_follow_reading_order(self):
         pages = (
@@ -208,7 +326,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(list(range(1, len(figures) + 1)), figures)
+        self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9], figures)
 
     def test_structurizr_models_one_application_with_internal_modules(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(
