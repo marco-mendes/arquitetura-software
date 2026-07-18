@@ -52,8 +52,10 @@ class ContentContractTest(unittest.TestCase):
     def test_mkdocs_excludes_internal_planning_documents(self):
         config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
 
-        excluded = config.get("exclude_docs", ())
-        self.assertIn("superpowers/**", excluded)
+        excluded = config.get("exclude_docs", "")
+        self.assertIsInstance(excluded, str)
+        patterns = tuple(line.strip() for line in excluded.splitlines() if line.strip())
+        self.assertEqual(("superpowers/**",), patterns)
         self.assertNotIn("superpowers", yaml.safe_dump(config.get("nav", ())))
 
     def test_public_pages_use_assessment_criteria_vocabulary(self):
