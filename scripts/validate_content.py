@@ -105,6 +105,26 @@ _SELF_CONTAINED_LABELS = (
     "**Entrega esperada**",
     "**Critérios de avaliação**",
 )
+_ACTIVITY_PATH = re.compile(
+    r"(?:<raiz-do-clone>/|(?:\.\.?/|[A-Za-z0-9_.-]+/)[A-Za-z0-9_./-]+)"
+)
+_ACTIVITY_INITIAL_STATE = re.compile(
+    r"\b(?:estado|inicial|existe|parad[oa]s?|confirm\w*|verifi\w*|"
+    r"instalad[oa]s?)\b",
+    re.IGNORECASE,
+)
+_ACTIVITY_ACTION = re.compile(r"(?m)^\s*(?:\d+\.|[-*+])\s+\S+")
+_ACTIVITY_EVIDENCE = re.compile(
+    r"\b(?:sa[ií]da|resposta|status|registro|arquivo|resultado|observ\w*|"
+    r"mensagem|teste|log|m[eé]trica|tabela|diagrama|parecer|cadeia|pol[ií]tica|"
+    r"artefato|linha)\b",
+    re.IGNORECASE,
+)
+_ACTIVITY_CONTINGENCY = re.compile(
+    r"\b(?:se|caso|conting[êe]ncia|falha|erro|indispon\w*|"
+    r"n[aã]o\s+funcion\w*|retorn\w*)\b",
+    re.IGNORECASE,
+)
 _ANSWER_BLOCK = re.compile(
     r"^(?:#{1,6}[ \t]+|\*\*|!!![ \t]+\w+[ \t]+[\"']?|"
     r"\?\?\?[ \t]+\w+[ \t]+[\"']?|<summary>)"
@@ -179,6 +199,7 @@ def self_contained_activity_errors(text: str, location: str) -> list[str]:
         if not section:
             continue
         previous = -1
+        positions: dict[str, int] = {}
         for label in _SELF_CONTAINED_LABELS:
             current = section.find(label)
             if current == -1:
@@ -190,6 +211,51 @@ def self_contained_activity_errors(text: str, location: str) -> list[str]:
                     f"{location}: {level}: marcador fora da ordem: {label}"
                 )
             previous = max(previous, current)
+            positions[label] = current
+
+        if len(positions) != len(_SELF_CONTAINED_LABELS):
+            continue
+
+        fields = {
+            label: section[
+                positions[label] + len(label) :
+                positions[_SELF_CONTAINED_LABELS[index + 1]]
+                if index + 1 < len(_SELF_CONTAINED_LABELS)
+                else len(section)
+            ].strip()
+            for index, label in enumerate(_SELF_CONTAINED_LABELS)
+        }
+        for label, content in fields.items():
+            content_without_comments = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
+            if not content_without_comments.strip():
+                errors.append(
+                    f"{location}: {level}: campo obrigatório sem conteúdo: {label}"
+                )
+
+        artifact = fields["**Artefato que você irá usar**"]
+        preparation = fields["**Antes de executar**"]
+        action = fields["**O que fazer**"]
+        evidence = fields["**Evidência esperada**"]
+        if not _ACTIVITY_PATH.search(artifact):
+            errors.append(
+                f"{location}: {level}: artefato deve identificar um caminho"
+            )
+        if not _ACTIVITY_INITIAL_STATE.search(preparation):
+            errors.append(
+                f"{location}: {level}: preparação deve declarar um estado inicial verificável"
+            )
+        if not _ACTIVITY_ACTION.search(action):
+            errors.append(
+                f"{location}: {level}: ação deve listar uma manipulação ou execução concreta"
+            )
+        if not _ACTIVITY_EVIDENCE.search(evidence):
+            errors.append(
+                f"{location}: {level}: evidência deve indicar uma saída ou observação verificável"
+            )
+        if not _ACTIVITY_CONTINGENCY.search("\n".join(fields.values())):
+            errors.append(
+                f"{location}: {level}: atividade deve informar uma contingência"
+            )
     return errors
 
 

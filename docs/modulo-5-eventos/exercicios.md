@@ -136,7 +136,7 @@ Projetar uma reação administrativa que permaneça explicável diante de atraso
 
 **Situação**
 
-Além de Faturamento, a plataforma precisa atualizar uma projeção administrativa quando um resultado fica disponível. A projeção aceita alguns minutos de atraso, mas não pode contar o mesmo exame duas vezes. Ela não precisa receber conteúdo clínico.
+A plataforma precisa atualizar projeção administrativa quando um resultado fica disponível. Aceita atraso de minutos, mas não conta o mesmo exame duas vezes nem recebe conteúdo clínico.
 
 **Seu papel**
 
@@ -144,24 +144,24 @@ Você desenha contrato e reação mínima para a capacidade.
 
 **Artefato que você irá usar**
 
-O evento da oficina, a exchange `hospital.events`, referências sintéticas, uma tabela própria da projeção e a hipótese de que mensagens podem repetir e chegar atrasadas.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml`, `src/hospital/eventos/publicador.py` e `src/hospital/eventos/consumidor.py`. Eles nomeiam `hospital.events`, `billing.resultados.v1`, `ResultadoLaboratorialDisponibilizado.v1` e o store idempotente.
 
 **Antes de executar**
 
-Delimite uma projeção sintética e escolha a identidade que representa uma ocorrência; não use conteúdo clínico nem um ambiente remoto.
+Crie `<raiz-do-clone>/entregas/modulo-5/`. O estado inicial é Compose parado e laboratório imutável. Confirme exchange, fila e `event_id`; use Markdown e dados sintéticos.
 
 **O que fazer**
 
-1. Declare se a entrada é evento, comando ou consulta e justifique.
-2. Escreva o payload mínimo, a identidade de deduplicação e a versão de contrato.
-3. Defina fila ou tópico, owner e política de confirmação.
-4. Mostre como um efeito será único após duas entregas iguais.
-5. Declare o atraso aceitável e como a interface representa estado pendente.
-6. Inclua uma condição que envia uma mensagem à DLQ.
+1. Crie `<raiz-do-clone>/entregas/modulo-5/aplicar-projecao-administrativa.md` e declare se a entrada é evento, comando ou consulta.
+2. Copie para o documento um payload sintético mínimo, a versão `v1` e a chave `event_id`; não copie resultado clínico.
+3. Desenhe `hospital.events`, fila própria, owner e confirmação após persistência.
+4. Simule duas entregas do mesmo `event_id` e um registro.
+5. Declare atraso, estado pendente e DLQ.
+6. Se faltar `event_id` ou o contrato falhar, rejeite na DLQ.
 
 **Evidência esperada**
 
-Payload versionado, duas entregas do mesmo `event_id`, um efeito persistido e um caso de rejeição observável na DLQ.
+Payload `v1`, duas entradas de `event_id`, saída com um `INSERT` e rejeição com nome da DLQ verificam deduplicação sem RabbitMQ.
 
 **Entrega esperada**
 
@@ -187,7 +187,7 @@ Formar hipóteses operacionais sem transformar uma contagem de fila em diagnóst
 
 **Situação**
 
-Após uma mudança de contrato, a fila `billing.resultados.v1` cresce, a DLQ recebe mensagens e parte das cobranças fica pendente. A equipe possui idade da mensagem mais antiga, contagem por fila, amostras sintéticas de `event_id`, logs de validação e a versão publicada por Resultados. Não há evidência de indisponibilidade do broker.
+Após mudança de contrato, `billing.resultados.v1` cresce, a DLQ recebe mensagens e cobranças pendem. Há idade da mensagem, contagem, `event_id` sintético, logs e versão publicada; não há indisponibilidade do broker.
 
 **Seu papel**
 
@@ -195,26 +195,24 @@ Você analisa causas plausíveis sem concluir além das evidências.
 
 **Artefato que você irá usar**
 
-As métricas descritas, os schemas de `v1` e uma mudança proposta que tornou uma referência obrigatória.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml` para `billing.resultados.v1` e `.dlq`, e `src/hospital/eventos/consumidor.py` para validação e tentativas. Registre métricas e schema `v1` em `<raiz-do-clone>/entregas/modulo-5/analisar-fila-crescente.md`.
 
 **Antes de executar**
 
-Marque no diagnóstico o que é observação e o que ainda é hipótese; use somente amostras sintéticas e dados já fornecidos.
+O estado inicial é documental: Compose parado, fila e DLQ sintéticas, diagnóstico inexistente. Crie-o, marque observação/hipótese e não altere mensagens reais.
 
 **O que fazer**
 
-Estruture a análise pelos passos a seguir, sem exceder a evidência.
-
-1. Separe fatos, inferências e hipóteses.
-2. Compare incompatibilidade de schema, capacidade insuficiente e dependência do consumidor.
-3. Explique como cada hipótese apareceria em fila, DLQ e store de tentativas.
-4. Proponha uma verificação reproduzível para reduzir incerteza.
-5. Indique ação segura de contenção e a decisão que exigiria owner do contrato.
-6. Declare o que não se pode deduzir apenas pela contagem de mensagens.
+1. Escreva uma linha do tempo que separe fatos, inferências e hipóteses.
+2. Compare schema, capacidade e dependência nos sinais de fila, DLQ e tentativas.
+3. Descreva a saída esperada de cada hipótese.
+4. Proponha verificação com payload sintético, sem alterar Compose.
+5. Registre uma contenção segura e a decisão que exige owner do contrato.
+6. Se o sinal for ambíguo, preserve amostras e peça captura ao owner; não reprocesse.
 
 **Evidência esperada**
 
-Tabela de hipóteses com sinais de fila, DLQ e store, além de uma verificação sintética segura.
+Tabela de hipóteses e saídas (`aceita`, `DLQ` ou `tentativa`), payload sintético e verificação segura; contagem isolada não confirma causa.
 
 **Entrega esperada**
 
@@ -240,7 +238,7 @@ Registrar uma decisão proporcional a requisitos de trabalho, replay, retenção
 
 **Situação**
 
-Qualidade quer recalcular indicadores de exames por mês; Faturamento precisa tratar uma unidade de trabalho por vez; ambos consomem fatos de resultados. A organização consegue operar um broker local hoje, mas a necessidade de reprocessamento histórico ainda é uma hipótese. A referência de resultado tem classificação sensível e não pode ser retida sem prazo e justificativa.
+Qualidade recalcula indicadores mensais; Faturamento trata uma unidade por vez; ambos consomem resultados. Há broker local, mas replay histórico é hipótese. A referência sensível exige prazo e justificativa de retenção.
 
 **Seu papel**
 
@@ -248,26 +246,24 @@ Você recomenda uma decisão inicial e condições objetivas de revisão.
 
 **Artefato que você irá usar**
 
-O laboratório RabbitMQ, descrições de Kafka e ActiveMQ, estimativa de volume mensal e owners de Faturamento e Qualidade.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml` (RabbitMQ) e `<raiz-do-clone>/docs/modulo-5-eventos/padroes-e-decisoes.md` (Kafka/ActiveMQ). Crie `<raiz-do-clone>/entregas/modulo-5/avaliar-fila-ou-log.md`.
 
 **Antes de executar**
 
-Separe as necessidades comprovadas de Qualidade e Faturamento das hipóteses de crescimento e reprocessamento.
+O estado inicial não tem broker adicional: Faturamento/Qualidade são fatos; crescimento/replay, hipóteses. Abra o ADR e separe-as.
 
 **O que fazer**
 
-Compare as alternativas pelos passos a seguir e registre suas condições.
-
-1. Compare RabbitMQ, Kafka e ActiveMQ quanto a trabalho, leitura independente, replay, retenção, interoperabilidade e operação.
-2. Avalie o que é requisito comprovado e o que ainda é hipótese.
-3. Declare chave de ordenação necessária e o que ela não ordena.
-4. Inclua idempotência para o efeito de Faturamento em ambas as alternativas.
-5. Defina regra de retenção e proteção de referência antes de sugerir replay.
-6. Registre gatilhos mensuráveis para reavaliar a escolha.
+1. Preencha uma tabela que compare RabbitMQ, Kafka e ActiveMQ quanto a trabalho, leitura independente, replay, retenção, interoperabilidade e operação.
+2. Marque requisito comprovado ou hipótese em cada linha.
+3. Declare a chave de ordenação e o que ela não ordena.
+4. Escreva como Faturamento mantém um efeito idempotente nas duas alternativas finalistas.
+5. Defina retenção e proteção da referência antes de sugerir replay.
+6. Registre dois gatilhos mensuráveis de revisão; se a estimativa de retenção não estiver disponível, mantenha replay como hipótese e não o aprove.
 
 **Evidência esperada**
 
-Registro de decisão com requisito, hipótese, retenção, chave de ordem, sinal operacional e gatilho de revisão.
+ADR com tabela, escolha, ordem, retenção, idempotência, sinais e gatilhos; a saída nomeia o dado faltante para replay.
 
 **Entrega esperada**
 
@@ -301,26 +297,24 @@ Você cria um plano de evolução e convivência entre consumidores.
 
 **Artefato que você irá usar**
 
-O contrato `v1`, lista de consumers, tópicos ou filas disponíveis, store idempotente e uma janela de transição definida pela equipe responsável.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/publicador.py`, `src/hospital/eventos/consumidor.py` e `tests/test_event_idempotency.py`. Escreva em `<raiz-do-clone>/entregas/modulo-5/criar-evolucao-v2.md`.
 
 **Antes de executar**
 
-Declare o owner do contrato e a janela de convivência antes de escrever a versão ou alterar uma fila existente.
+O estado inicial é `ResultadoLaboratorialDisponibilizado.v1` imutável, consumidores só `v1` e Compose parado. Declare owner e janela; não altere laboratório.
 
 **O que fazer**
 
-Produza o plano pelos passos a seguir, preservando a identidade da ocorrência.
-
-1. Classifique a mudança como compatível ou incompatível e justifique.
-2. Defina `v2` ou campo opcional, exemplos sintéticos e owner do contrato.
-3. Descreva publicação dupla ou adaptação, com início e fim observáveis.
-4. Mantenha a chave de deduplicação através da transição.
+1. Classifique a mudança como compatível ou incompatível e justifique com o contrato `v1` nomeado.
+2. Escreva `v2` ou campo opcional, exemplos sintéticos e owner do contrato.
+3. Desenhe publicação dupla ou adaptação, com início, métrica e fim observáveis.
+4. Mantenha `event_id`: duas versões produzem uma cobrança.
 5. Planeje validação, DLQ, métricas de consumidores e retorno seguro.
-6. Registre como remover `v1` depois da migração confirmada.
+6. Se qualquer consumidor não confirmar compatibilidade na janela, prolongue `v1`, não retire a fila e registre o retorno; só então defina a remoção de `v1`.
 
 **Evidência esperada**
 
-Contrato sintético, plano de convivência, métricas de transição, DLQ monitorada e critério objetivo para retirar `v1`.
+Contrato `v1`/`v2`, diagrama, saída `uma cobrança`, métrica, DLQ e critério numérico para retirar `v1` ou retornar.
 
 **Entrega esperada**
 

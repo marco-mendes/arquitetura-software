@@ -108,7 +108,7 @@ Crie `<raiz-do-clone>/entregas/modulo-4/aplicar-resultados.md`, usando `docs/mod
 
 **Antes de executar**
 
-Considere Kong DB-less, uma réplica local, Collector, Jaeger e a convenção `X-Correlation-ID`.
+O estado inicial é Kong DB-less com uma réplica local, Collector, Jaeger e a convenção `X-Correlation-ID`; não há tráfego real nesta atividade.
 
 **Insumos disponíveis**
 
@@ -120,6 +120,7 @@ Contrato de Resultados, catálogo em Markdown e políticas da oficina.
 2. Proponha rota, chave, janela, consequência de `429` e fronteira de domínio.
 3. Desenhe a propagação de `correlation_id` e trace.
 4. Declare um gatilho de revisão do limite.
+5. Se a política não puder ser verificada com dados sintéticos, mantenha-a como hipótese e registre o teste pendente.
 
 **Evidência esperada**
 
@@ -161,7 +162,7 @@ Crie `<raiz-do-clone>/entregas/modulo-4/analisar-correlacao.md`, usando `docs/mo
 
 **Antes de executar**
 
-Considere três logs anonimizados, taxa de `5xx`, traces parciais e a política atual; não inclua dado clínico na entrega.
+O estado inicial reúne três logs anonimizados, taxa de `5xx`, traces parciais e a política atual; não inclua dado clínico na entrega.
 
 **Insumos disponíveis**
 
@@ -214,7 +215,7 @@ Crie `<raiz-do-clone>/entregas/modulo-4/avaliar-limite.md`, usando `docs/modulo-
 
 **Antes de executar**
 
-Considere consumidores parcialmente identificados, suporte em horário comercial e meta de latência para consultas aceitas.
+O estado inicial considera consumidores parcialmente identificados, suporte em horário comercial e meta de latência para consultas aceitas.
 
 **Insumos disponíveis**
 

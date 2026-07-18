@@ -70,6 +70,16 @@ Qual dependência permanece saudável e qual capacidade deixa de ser concluída?
 
 Modalidades: **Essencial em aula**, **Exploração em dupla** e **Extensão** usam o mesmo roteiro com profundidades diferentes.
 
+### Roteiro de transição do ambiente
+
+| Etapa | Estado de entrada | Ação e evidência esperada | Contingência |
+| --- | --- | --- | --- |
+| Validar configuração | Os quatro serviços estão parados. | Execute os dois comandos `config`; `--quiet` termina sem texto e `--services` lista `elegibilidade`, `exames`, `db_elegibilidade` e `db_exames`. | Se o Docker não responder, guarde a saída e faça só a validação estática. |
+| Iniciar e inspecionar | Compose válido e serviços parados. | Suba a demonstração; `ps` mostra quatro serviços `healthy` e os dois `/health` retornam `200`. | Se uma porta estiver ocupada, escolha outras portas; não remova recursos fora deste projeto. |
+| Demonstrar falha parcial | As duas aplicações e bases estão saudáveis. | Pare `elegibilidade`; Exames permanece saudável, mas `POST /exames` retorna `503 dependencia_indisponivel`. | Se o resultado divergir, guarde `ps` e logs antes de reiniciar. |
+| Recuperar e verificar | Elegibilidade está parada e Exames continua saudável. | Execute `up -d --wait`; os dois `/health` voltam a `200`, então rode o teste de fronteiras. | Se o daemon não responder, execute somente os testes Python e registre a limitação. |
+| Limpar | A demonstração pode estar em qualquer estado anterior. | `down -v` remove contêineres, redes e volumes; `ps -a` não lista recursos ativos. | Se houver resíduo, repita apenas esse `down -v`. |
+
 ### Escolher portas e validar a configuração
 
 Defina portas livres para não disputar os padrões 8001 e 8002. Em shells POSIX:
@@ -86,15 +96,11 @@ $env:ELEGIBILIDADE_PORT = 18001
 $env:EXAMES_PORT = 18002
 ```
 
-Antes deste Compose: a demonstração é `compose.servicos.yml`, com `elegibilidade`, `exames`, `db_elegibilidade` e `db_exames`, todos parados. Ele só valida arquivos; numa execução, espere os dois `/health` em `200` nas portas configuradas. Encerre com `docker compose -f infra/compose.servicos.yml down -v`.
-
 ```bash
 docker compose -f infra/compose.servicos.yml config --quiet
 ```
 
 Resultado: nenhum texto e código zero significam que a configuração é sintaticamente válida. Essa validação não demonstra que Docker está em execução nem que os serviços estão saudáveis.
-
-Antes deste Compose: `infra/compose.servicos.yml` ainda declara Elegibilidade, Exames e suas duas bases paradas. Ele só lista a topologia; não há portas ou health checks ativos. Depois de iniciar, espere 18001/18002 e encerre com `down -v`.
 
 ```bash
 docker compose -f infra/compose.servicos.yml config --services
@@ -104,8 +110,6 @@ Confirme os quatro nomes apresentados. O comando ajuda a evitar iniciar um arqui
 
 ## Iniciar e observar a demonstração
 
-Antes deste Compose: a demonstração **serviços da plataforma hospitalar** usa `infra/compose.servicos.yml` e `src/hospital/servicos/` para iniciar Elegibilidade, Exames e suas duas bases, todas paradas inicialmente. Espere os dois `/health` em `200` nas portas configuradas; encerre com `docker compose -f infra/compose.servicos.yml down -v`.
-
 ```bash
 docker compose -f infra/compose.servicos.yml up -d --build --wait
 ```
@@ -113,8 +117,6 @@ docker compose -f infra/compose.servicos.yml up -d --build --wait
 ## Resultado esperado
 
 O `--wait` termina quando os quatro health checks ficam saudáveis. Se uma imagem não puder ser baixada ou uma porta estiver ocupada, guarde a saída e escolha outra porta; não remova recursos Docker fora deste projeto.
-
-Antes deste Compose: `infra/compose.servicos.yml` mantém Elegibilidade, Exames e as duas bases em execução. Espere aplicações e bases `healthy`, com os dois `/health` nas portas configuradas. Encerre somente esta demonstração com `docker compose -f infra/compose.servicos.yml down -v`.
 
 ```bash
 docker compose -f infra/compose.servicos.yml ps
@@ -158,13 +160,9 @@ Espere `201 Created`, com `situacao: "solicitado"`. O identificador pode variar 
 
 ### Tornar a falha parcial observável
 
-Antes deste Compose: `infra/compose.servicos.yml` tem as duas aplicações e bases saudáveis. Pare só Elegibilidade; Exames e `db_exames` ficam ativos e seu `/health` continua `200`. Encerre todos os recursos depois com `docker compose -f infra/compose.servicos.yml down -v`.
-
 ```bash
 docker compose -f infra/compose.servicos.yml stop elegibilidade
 ```
-
-Antes deste Compose: o mesmo arquivo contém as duas aplicações e bases, mas Elegibilidade está parada; Exames e sua base continuam saudáveis na porta configurada. Encerre tudo com `docker compose -f infra/compose.servicos.yml down -v`.
 
 ```bash
 docker compose -f infra/compose.servicos.yml ps
@@ -188,8 +186,6 @@ curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
 
 Essa é a falha parcial: a capacidade de criar exame depende temporalmente de Elegibilidade, mas o processo e a base de Exames não pararam.
 
-Antes deste Compose: `infra/compose.servicos.yml` e seus dois serviços e bancos permanecem definidos, com Elegibilidade parada e Exames saudável. Reinicie e espere ambos os `/health` em `200`; encerre com `docker compose -f infra/compose.servicos.yml down -v`.
-
 ```bash
 docker compose -f infra/compose.servicos.yml up -d --wait
 ```
@@ -208,13 +204,9 @@ Espere `4 passed`, incluindo `test_exames_makes_its_own_database_failure_observa
 
 ### Limpar a demonstração
 
-Antes deste Compose: `infra/compose.servicos.yml` reúne os arquivos em `src/hospital/servicos/`, os dois serviços e suas bases, saudáveis nas portas 18001/18002. O comando remove contêineres, redes e volumes; depois não há portas ou health checks. Ele encerra a demonstração.
-
 ```bash
 docker compose -f infra/compose.servicos.yml down -v
 ```
-
-Antes deste Compose: o arquivo ainda descreve os dois serviços e bases, mas todos estão encerrados, sem portas ou health checks. O comando confirma isso; se houver resíduo, repita `docker compose -f infra/compose.servicos.yml down -v`.
 
 ```bash
 docker compose -f infra/compose.servicos.yml ps -a

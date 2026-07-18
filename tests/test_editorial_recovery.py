@@ -72,24 +72,137 @@ class EditorialRecoveryTest(unittest.TestCase):
 
 **Objetivo**
 
+Definir uma projeção administrativa com dados sintéticos.
+
 **Situação**
+
+Uma fila pode entregar o mesmo evento duas vezes.
 
 **Seu papel**
 
+Você é responsável pelo contrato da projeção.
+
 **Artefato que você irá usar**
+
+Leia `<raiz-do-clone>/laboratorios/eventos/contrato-v1.json`.
 
 **Antes de executar**
 
+O arquivo existe e a fila local está parada; confirme esse estado antes de editar.
+
 **O que fazer**
+
+1. Crie a projeção e registre a chave de deduplicação; se a validação falhar, registre a rejeição.
 
 **Evidência esperada**
 
+Saída: duas entregas do mesmo evento produzem um único registro.
+
 **Entrega esperada**
+
+Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
+
+**Critérios de avaliação**
+
+O contrato identifica a chave, a saída e o limite da projeção.
+"""
+
+        self.assertEqual([], self_contained_activity_errors(text, "exemplo.md"))
+
+    def test_self_contained_activity_parser_rejects_empty_field_content(self):
+        text = """## Aplicar
+
+**Objetivo**
+
+Definir uma projeção administrativa com dados sintéticos.
+
+**Situação**
+
+Uma fila pode entregar o mesmo evento duas vezes.
+
+**Seu papel**
+
+Você é responsável pelo contrato da projeção.
+
+**Artefato que você irá usar**
+
+Leia `<raiz-do-clone>/laboratorios/eventos/contrato-v1.json`.
+
+**Antes de executar**
+
+O arquivo existe e a fila local está parada; confirme esse estado antes de editar.
+
+**O que fazer**
+
+1. Crie a projeção e registre a chave de deduplicação.
+
+**Evidência esperada**
+
+Saída: duas entregas do mesmo evento produzem um único registro.
+
+**Entrega esperada**
+
+Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
 
 **Critérios de avaliação**
 """
 
-        self.assertEqual([], self_contained_activity_errors(text, "exemplo.md"))
+        self.assertIn(
+            "exemplo.md: Aplicar: campo obrigatório sem conteúdo: "
+            "**Critérios de avaliação**",
+            self_contained_activity_errors(text, "exemplo.md"),
+        )
+
+    def test_self_contained_activity_parser_rejects_insufficient_practical_guidance(self):
+        text = """## Aplicar
+
+**Objetivo**
+
+Definir uma projeção administrativa com dados sintéticos.
+
+**Situação**
+
+Uma fila pode entregar o mesmo evento duas vezes.
+
+**Seu papel**
+
+Você é responsável pelo contrato da projeção.
+
+**Artefato que você irá usar**
+
+O contrato.
+
+**Antes de executar**
+
+Prepare tudo.
+
+**O que fazer**
+
+Faça a atividade.
+
+**Evidência esperada**
+
+Evidência.
+
+**Entrega esperada**
+
+Entregue o resultado.
+
+**Critérios de avaliação**
+
+Use os critérios do módulo.
+"""
+
+        errors = self_contained_activity_errors(text, "exemplo.md")
+
+        for expected in (
+            "artefato deve identificar um caminho",
+            "preparação deve declarar um estado inicial verificável",
+            "ação deve listar uma manipulação ou execução concreta",
+            "evidência deve indicar uma saída ou observação verificável",
+            "atividade deve informar uma contingência",
+        ):
+            self.assertTrue(any(expected in error for error in errors), expected)
 
     def test_self_contained_activity_parser_reports_an_out_of_order_label(self):
         text = """## Aplicar
@@ -113,11 +226,9 @@ class EditorialRecoveryTest(unittest.TestCase):
 **Critérios de avaliação**
 """
 
-        self.assertEqual(
-            [
-                "exemplo.md: Aplicar: marcador fora da ordem: "
-                "**Evidência esperada**"
-            ],
+        self.assertIn(
+            "exemplo.md: Aplicar: marcador fora da ordem: "
+            "**Evidência esperada**",
             self_contained_activity_errors(text, "exemplo.md"),
         )
 

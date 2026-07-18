@@ -233,7 +233,7 @@ Você pode recomendar, rejeitar ou propor experimento limitado; não há respost
 
 **Artefato que você irá usar**
 
-Use planilha ou Markdown. A proposta A mantém conectores, modelo canônico e sequência na mesma implantação; B usa coletor por parceiro e processador comum. Há seis pessoas, uma equipe operacional e amostra sintética de mil atualizações, cinquenta repetições, vinte atrasos e cinco contradições; não há medições de carga, custo ou inclusão.
+Use `<raiz-do-clone>/entregas/unidade-1/avaliacao-leitos/parecer.md`. A mantém conectores e modelo comum; B usa coletor por parceiro. Há equipe e amostra de atualizações, cinquenta repetições, vinte atrasos e cinco contradições; não há medições de carga, custo ou inclusão.
 
 **Insumos disponíveis**
 
@@ -258,6 +258,7 @@ Preencha a tabela antes da conclusão.
 3. Relacione cada proposta a estilos possíveis e consequências.
 4. Recomende, rejeite ou adie com condição de revisão.
 5. Descreva duas experiências e a objeção mais forte.
+6. Se uma medida necessária estiver ausente, adie a recomendação e registre a experiência que produziria essa medida.
 
 **Evidência esperada**
 

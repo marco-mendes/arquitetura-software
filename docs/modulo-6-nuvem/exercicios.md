@@ -116,11 +116,11 @@ Uma sequência de no máximo 400 palavras e um diagrama de estado simples.
 
 **Objetivo**
 
-Demonstrar uma implantação descartável, delimitada à máquina do grupo e baseada em evidências.
+Demonstrar implantação local descartável com evidências.
 
 **Situação**
 
-Outro grupo precisa demonstrar a API hospitalar sem acesso a provedor remoto. Ele possui Docker, kind, kubectl e os arquivos do laboratório.
+Outro grupo precisa demonstrar a API sem provedor remoto, usando Docker, kind, kubectl e o laboratório.
 
 **Seu papel**
 
@@ -128,23 +128,24 @@ Você produz o roteiro operacional mínimo.
 
 **Artefato que você irá usar**
 
-`Dockerfile`, manifests, `cluster.yaml` e os endpoints de saúde.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/Dockerfile`, `infra/kind/cluster.yaml`, `infra/k8s/deployment.yaml` e `infra/k8s/service.yaml`. Eles definem imagem, cluster, réplicas e probes.
 
 **Antes de executar**
 
-Confirme que o contexto ativo será `kind-hospital-local` antes de aplicar recursos. O kind cria um cluster local descartável; não use um cluster compartilhado como substituto.
+O estado inicial não usa `hospital-local`, não aplicou manifests e mira `kind-hospital-local`. Crie `<raiz-do-clone>/entregas/modulo-6/`; confirme versões e contexto. Não use cluster compartilhado.
 
 **O que fazer**
 
-1. Liste as verificações de versão e o contexto esperado.
-2. Construa `hospital-api:1.0.0`, crie `hospital-local` e carregue a imagem.
-3. Execute dry-run, apply, rollout status e chamada a `127.0.0.1:18080`.
-4. Mostre uma evidência de duas réplicas e uma de endpoints prontos.
-5. Inclua limpeza do cluster e o caminho estático caso kind não funcione.
+1. Registre no roteiro as versões e o contexto esperado `kind-hospital-local`.
+2. Em `<raiz-do-clone>/laboratorios/plataforma-hospitalar`, construa `hospital-api:1.0.0`, crie `hospital-local` por `infra/kind/cluster.yaml` e carregue a imagem.
+3. Faça dry-run, aplique namespace/manifests e acompanhe rollout.
+4. Faça port-forward para `127.0.0.1:18080`, consulte `/health/ready` e guarde pods/endpoints com duas réplicas.
+5. Salve em `<raiz-do-clone>/entregas/modulo-6/aplicar-implantacao-local.md` e remova o cluster.
+6. Se kind, Docker ou porta falhar, não use outro cluster: rode o teste de manifests e registre o desvio.
 
 **Evidência esperada**
 
-Versões, contexto local, imagem carregada, duas réplicas prontas, resposta de readiness e confirmação de limpeza.
+Versões/contexto, imagem, `2/2` réplicas, `200` de `/health/ready`, endpoints e limpeza. Na contingência, teste de manifests substitui o cluster.
 
 **Entrega esperada**
 
@@ -167,11 +168,11 @@ Um roteiro por plataforma, saída esperada e checklist de evidências em `<raiz-
 
 **Objetivo**
 
-Separar sinal, hipótese e contenção de uma atualização bloqueada sem tocar em dados ou em ambiente compartilhado.
+Separar sinal, hipótese e contenção sem tocar em ambiente compartilhado.
 
 **Situação**
 
-Após mudança de imagem, o Deployment mostra progresso incompleto. Existem eventos `ImagePullBackOff`, duas réplicas antigas prontas, revisão anterior e resposta local de readiness. Não há alteração de banco nessa versão.
+Após mudança de imagem, há `ImagePullBackOff`, duas réplicas antigas, revisão anterior e readiness; sem alteração de banco.
 
 **Seu papel**
 
@@ -179,23 +180,24 @@ Você conduz a análise sem assumir que cada erro é “Kubernetes”.
 
 **Artefato que você irá usar**
 
-Saídas de `kubectl get pods`, `kubectl describe deployment`, histórico do rollout e manifest versionado.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml` e `infra/kind/cluster.yaml`. Registre pods, describe e histórico em `<raiz-do-clone>/entregas/modulo-6/analisar-rollout-bloqueado.md`.
 
 **Antes de executar**
 
-Use somente as saídas sintéticas fornecidas e uma imagem propositalmente ausente no cluster kind local; não altere uma imagem ou Deployment compartilhado.
+O estado inicial tem duas réplicas antigas prontas, imagem nova ausente e sem alteração de banco. Use saídas sintéticas ou `kind-hospital-local`; não altere Deployment compartilhado.
 
 **O que fazer**
 
-1. Separe fatos, inferências e hipóteses.
-2. Compare tag inexistente, falta de credencial de registry e readiness que falha após iniciar.
-3. Explique por que `maxUnavailable: 0` limita impacto, mas não corrige a causa.
-4. Declare quando `kubectl rollout undo` é seguro no cenário e o que você verificaria depois.
-5. Proponha barreira de pipeline que reduza recorrência.
+1. Escreva linha do tempo: fatos, inferências e hipóteses.
+2. Compare `ImagePullBackOff`, tag, credencial e readiness.
+3. Relacione `maxUnavailable: 0` a impacto, não correção.
+4. Defina condição e saídas para rollback.
+5. Proponha teste de imagem/manifest no pipeline.
+6. Se sinais não distinguirem causa, preserve revisão e peça saída faltante; não faça rollback.
 
 **Evidência esperada**
 
-Linha do tempo, eventos de `ImagePullBackOff`, revisão anterior identificada, justificativa do rollback e barreira de pipeline verificável.
+Linha do tempo, `ImagePullBackOff`, revisão, saídas antes/depois e barreira executável; se insuficiente, registre “rollback não executado”.
 
 **Entrega esperada**
 
@@ -218,11 +220,11 @@ Uma linha do tempo, tabela de hipóteses/evidências e plano de contenção em `
 
 **Objetivo**
 
-Justificar um modelo de serviço por responsabilidade, dados, custo e capacidade de operação, e não pela fama de um fornecedor.
+Justificar modelo de serviço por responsabilidade, dados, custo e operação.
 
 **Situação**
 
-O hospital criará um portal de confirmação de consultas. Há poucas APIs próprias, uma equipe pequena, exigência de residência de dados, picos semanais previsíveis e integração possível com um SaaS de mensagens. A operação de cluster ainda não é competência consolidada.
+O hospital criará portal de consultas: poucas APIs, equipe pequena, residência de dados, picos previsíveis e possível SaaS de mensagens; cluster não é competência consolidada.
 
 **Seu papel**
 
@@ -230,19 +232,22 @@ Você recomenda IaaS, PaaS, Kubernetes gerenciado ou integração prioritária c
 
 **Artefato que você irá usar**
 
-Estimativa de picos, requisitos de disponibilidade, contrato de dados, capacidade da equipe e custo mensal por alternativa.
+Use `<raiz-do-clone>/docs/modulo-6-nuvem/conceitos.md`, `<raiz-do-clone>/docs/modulo-6-nuvem/padroes-e-decisoes.md` e `<raiz-do-clone>/docs/referencia/template-adr.md`, além da estimativa sintética de picos, requisitos de disponibilidade, contrato de dados, capacidade da equipe e custo mensal. Escreva em `<raiz-do-clone>/entregas/modulo-6/avaliar-plataforma.md`.
 
 **Antes de executar**
 
-Trate AWS, iFood e Taco Bell somente como contextos comparáveis; não assuma que a plataforma ou a escala deles transfere-se ao hospital.
+O estado inicial não tem provedor/cluster: residência, picos e equipe são fatos. Crie o ADR; AWS, iFood e Taco Bell são apenas comparações.
 
 **O que fazer**
 
-Compare responsabilidade compartilhada, elasticidade, recuperação, custo direto/operacional e lock-in. Separe requisito confirmado de hipótese. Inclua região, zonas e exportação de dados. Defina dois gatilhos mensuráveis que fariam a equipe reavaliar a escolha.
+1. Compare IaaS, PaaS, Kubernetes gerenciado e SaaS por responsabilidade, elasticidade, recuperação, custo e lock-in.
+2. Marque fato/hipótese, região, zonas e exportação.
+3. Registre decisão, consequências e dois gatilhos.
+4. Se residência ou exportação não estiver comprovada, bloqueie a alternativa.
 
 **Evidência esperada**
 
-Matriz de responsabilidades, estimativa de custo operacional, plano de exportação, domínio de falha e dois gatilhos mensuráveis.
+O ADR inclui matriz preenchida, estimativa de custo operacional, plano de exportação, domínio de falha e dois gatilhos mensuráveis. A saída nomeia alternativas bloqueadas e a evidência ausente que permitiria reavaliá-las.
 
 **Entrega esperada**
 
@@ -266,11 +271,11 @@ Um ADR com alternativas, decisão, consequências, riscos, custo e sinais de rev
 
 **Objetivo**
 
-Projetar uma evolução que declare estado, recuperação e limites antes de prometer resiliência.
+Projetar evolução com estado, recuperação e limites verificáveis.
 
 **Situação**
 
-A API terá armazenamento durável e uma integração assíncrona para notificar agenda. A equipe quer manter atualização gradual, uma região inicial e possibilidade de expansão futura, sem prometer recuperação regional que ainda não testou.
+A API terá armazenamento e notificação assíncrona; a equipe quer atualização gradual, região inicial e expansão futura sem prometer recuperação não testada.
 
 **Seu papel**
 
@@ -278,19 +283,24 @@ Você cria uma proposta arquitetural e operacional.
 
 **Artefato que você irá usar**
 
-O caso do módulo, requisitos de retenção, SLO proposto, dados de carga sintética e o laboratório Kubernetes.
+Use `<raiz-do-clone>/docs/modulo-6-nuvem/exemplo-arquitetural.md`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/service.yaml` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml`, com requisitos de retenção, SLO proposto e carga sintética. Crie o pacote em `<raiz-do-clone>/entregas/modulo-6/criar-evolucao-resiliente.md`.
 
 **Antes de executar**
 
-Use dados sintéticos e mantenha a demonstração no kind local. Declare toda dependência que o rollback não consegue desfazer antes de propor o teste de falha.
+O estado inicial não tem dados reais ou backup restaurado. Use kind local, não dependência externa; declare o que rollback não desfaz.
 
 **O que fazer**
 
-Desenhe componentes stateful e stateless, declare ownership de dados, região/zona e domínios de falha. Inclua configuração segundo os doze fatores, requests/limits iniciais, probes, estratégia de rollout, procedimento de rollback e plano de backup/restore. Descreva como medir elasticidade e custo. Termine com teste de falha seguro e condição para aceitar ou rejeitar a proposta.
+1. Desenhe componentes, owner, região/zona e falhas.
+2. Escreva pseudomanifests com fatores, requests/limits e probes.
+3. Defina rollout, rollback, backup/restore e saídas.
+4. Meça elasticidade/custo com carga sintética.
+5. Teste falha só em `kind-hospital-local` e registre aceite/rejeição.
+6. Se backup/restore não for localmente testável, mantenha risco aberto.
 
 **Evidência esperada**
 
-Diagrama acessível, ADR, manifestos ou pseudomanifests, sinal de rollout, procedimento de rollback e teste de backup/restore planejado.
+O pacote contém diagrama acessível, ADR, pseudomanifests, saída esperada de rollout e rollback, medição de custo/elasticidade e resultado ou limitação explícita do backup/restore. A evidência precisa mostrar a contingência quando o teste não puder ser executado.
 
 **Entrega esperada**
 

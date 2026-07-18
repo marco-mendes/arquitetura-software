@@ -172,7 +172,7 @@ Crie `entregas/modulo-3/aplicar-laudos.md`, a partir da raiz do clone, e use as 
 
 **Antes de executar**
 
-Crie o diretório `entregas/modulo-3/`; não é necessário iniciar serviços nem alterar o laboratório. Considere uma equipe, implantação semanal conjunta, transação local para assinatura/publicação, atraso aceitável de cinco minutos para avisos e volume estável.
+Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório. Considere uma equipe, implantação semanal conjunta, transação local para assinatura/publicação, atraso aceitável de cinco minutos para avisos e volume estável.
 
 **Insumos disponíveis**
 
@@ -187,6 +187,7 @@ As capacidades, restrições e referências indicadas acima.
 3. Desenhe interfaces internas e dependências permitidas.
 4. Indique um evento interno e sua semântica.
 5. Escolha a forma de implantação inicial e um sinal de revisão.
+6. Se uma fronteira não puder ser justificada pelos fatos, mantenha-a no monólito e registre a hipótese a medir.
 
 **Evidência esperada**
 
@@ -246,7 +247,7 @@ Mapa de chamadas e fatos declarados na situação.
 
 **Evidência esperada**
 
-O texto associa cada conclusão a um fato e marca claramente o que é inferência ou hipótese.
+Saída: o texto associa cada conclusão a fato, inferência ou hipótese.
 
 **Entrega esperada**
 
@@ -351,7 +352,7 @@ Considere resposta inicial em três segundos, identificador fornecido pelo consu
 
 **Evidência esperada**
 
-Cada componente tem proprietário, razão de existir, contrato verificável e consequência explícita para falha e atraso.
+Saída: cada componente tem proprietário, contrato verificável e consequência para falha e atraso.
 
 **Entrega esperada**
 

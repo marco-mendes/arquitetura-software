@@ -31,6 +31,19 @@ class AcademiaVisualSystemTest(unittest.TestCase):
             self.assertIn(marker, css)
         self.assertNotIn("outline: none", css)
 
+    def test_public_mermaid_render_is_responsive_in_material_content(self):
+        css = (ROOT / "docs/assets/stylesheets/extra.css").read_text(encoding="utf-8")
+
+        self.assertRegex(css, r"\.md-typeset\s+\.mermaid\s*\{")
+        self.assertRegex(
+            css,
+            r"\.md-typeset\s+\.mermaid\s*>\s*svg\s*\{[^}]*max-width:\s*100%[^}]*height:\s*auto",
+        )
+        self.assertRegex(
+            css,
+            r"\.md-typeset\s+\.mermaid\s*\{[^}]*overflow-x:\s*auto",
+        )
+
     def test_semantic_hook_exposes_expected_interface(self):
         from course_semantics import on_page_content
 

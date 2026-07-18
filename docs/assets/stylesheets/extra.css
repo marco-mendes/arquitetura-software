@@ -138,6 +138,16 @@ textarea {
   max-width: 100%;
 }
 
+.md-typeset .mermaid {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.md-typeset .mermaid > svg {
+  max-width: 100%;
+  height: auto;
+}
+
 .comparison-table {
   border-collapse: collapse;
   display: block;
