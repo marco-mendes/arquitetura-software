@@ -57,3 +57,40 @@ class AcademiaVisualSystemTest(unittest.TestCase):
         html = on_page_content('<h1 data-class="legacy">Título</h1>')
         self.assertIn('data-class="legacy"', html)
         self.assertIn(' class="module-opening"', html)
+
+
+class VisualSystemTest(unittest.TestCase):
+    def test_right_toc_can_be_collapsed_accessibly_on_desktop(self):
+        navigation = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
+        css = (ROOT / "docs/assets/stylesheets/extra.css").read_text(encoding="utf-8")
+        script = (ROOT / "docs/assets/javascripts/toc-toggle.mjs").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("assets/javascripts/toc-toggle.mjs", navigation)
+        self.assertIn("html.toc-collapsed .md-sidebar--secondary", css)
+        self.assertIn("@media (min-width: 76.25em)", css)
+        self.assertRegex(
+            css,
+            r"\.academia-toc-toggle\s*\{[^}]*display:\s*none;",
+        )
+        self.assertRegex(
+            css,
+            r"(?s)@media \(min-width: 76\.25em\)\s*\{.*?\.academia-toc-toggle\s*\{[^}]*display:\s*inline-flex;[^}]*position:\s*fixed;",
+        )
+        self.assertRegex(
+            css,
+            r"(?s)@media \(min-width: 76\.25em\)\s*\{.*?\.academia-toc-toggle\s*\{[^}]*top:\s*calc\(3rem\s*\+\s*var\(--academia-space-4\)\);",
+        )
+        self.assertNotIn("var(--md-header-height, 0px)", css)
+        self.assertNotRegex(
+            css,
+            r"html\.toc-collapsed \.academia-toc-toggle\s*\{[^}]*position:\s*fixed;",
+        )
+        self.assertIn("academia-toc-toggle", script)
+        self.assertIn('querySelector(".md-content")', script)
+        self.assertIn('matchMedia("(min-width: 76.25em)")', script)
+        self.assertIn("aria-expanded", script)
+        self.assertIn("localStorage", script)
+        self.assertIn("document$.subscribe", script)
+        self.assertNotIn("html.toc-collapsed .md-grid", css)

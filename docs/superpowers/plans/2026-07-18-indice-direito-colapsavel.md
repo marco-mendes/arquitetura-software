@@ -4,21 +4,21 @@
 
 **Objetivo:** permitir que o índice à direita seja recolhido em desktop, mantendo-o aberto por padrão e preservando a escolha da pessoa estudante entre páginas.
 
-**Arquitetura:** um módulo JavaScript próprio do portal será carregado pelo MKDocs depois da inicialização do Material. Ele observará `document$`, que também é emitido pela navegação instantânea, e inserirá um único botão no índice secundário. Uma classe na raiz do documento representa o estado; CSS desktop recolhe a coluna secundária e amplia o conteúdo. O estado será salvo em `localStorage`.
+**Arquitetura:** um módulo JavaScript próprio do portal será carregado pelo MKDocs depois da inicialização do Material. Ele observará `document$`, que também é emitido pela navegação instantânea, e inserirá um único botão em um contêiner próprio, fora do índice secundário. Uma classe na raiz do documento representa o estado; CSS no breakpoint desktop recolhe a coluna secundária e mantém uma alça compacta para restaurá-la. O estado será salvo em `localStorage`.
 
 **Tecnologias:** Material for MkDocs, CSS, JavaScript ES modules, `localStorage`, Python `unittest` e MkDocs.
 
 ## Restrições globais
 
 - O índice abre visível quando não houver preferência salva.
-- O controle só aparece em desktop, onde o tema exibe o índice direito.
+- O controle só aparece no breakpoint desktop de `76.25em` ou superior, onde o tema exibe o índice direito como coluna lateral.
 - O botão deve usar texto em português, teclado nativo e `aria-expanded` correto.
 - A preferência deve sobreviver à navegação instantânea e ao recarregamento.
 - Não alterar conteúdo didático, navegação à esquerda, paleta, tipografia ou comportamento móvel.
 
 ---
 
-### Tarefa 1: Cobrir a extensão visual com testes editoriais
+### Task 1: Cobrir a extensão visual com testes editoriais
 
 **Arquivos:**
 
@@ -68,7 +68,7 @@ git add tests/test_visual_system.py
 git commit -m "test: cobre índice direito colapsável"
 ```
 
-### Tarefa 2: Implementar controle acessível e layout recolhido
+### Task 2: Implementar controle acessível e layout recolhido
 
 **Arquivos:**
 
@@ -81,7 +81,7 @@ git commit -m "test: cobre índice direito colapsável"
 
 - [ ] **Passo 1: criar o módulo de comportamento**
 
-Criar `docs/assets/javascripts/toc-toggle.mjs` com a implementação abaixo. Ela retorna silenciosamente em páginas sem índice secundário, evita duplicação após transição instantânea, restaura a preferência e atualiza texto e atributo ARIA a cada alternância.
+Criar `docs/assets/javascripts/toc-toggle.mjs` com uma implementação que monte o botão dentro de `.md-content`, e não dentro de `.md-sidebar--secondary`; isso permite que a alça continue disponível quando o painel for ocultado. Ela deve retornar silenciosamente abaixo de `76.25em` e em páginas sem índice secundário, evitar duplicação após transição instantânea, restaurar a preferência e atualizar texto e atributo ARIA a cada alternância.
 
 ```javascript
 const storageKey = "academia-toc-collapsed";
@@ -102,7 +102,9 @@ function updateButton(button, collapsed) {
 
 function mountTocToggle() {
   const sidebar = document.querySelector(".md-sidebar--secondary");
-  if (!sidebar || sidebar.querySelector("#academia-toc-toggle")) return;
+  const content = document.querySelector(".md-content");
+  const desktop = window.matchMedia("(min-width: 76.25em)").matches;
+  if (!desktop || !sidebar || !content || document.querySelector("#academia-toc-toggle")) return;
 
   const button = document.createElement("button");
   button.id = "academia-toc-toggle";
@@ -120,7 +122,7 @@ function mountTocToggle() {
     updateButton(button, nextCollapsed);
   });
 
-  sidebar.prepend(button);
+  content.append(button);
 }
 
 document$.subscribe(mountTocToggle);
@@ -138,7 +140,7 @@ extra_javascript:
 
 - [ ] **Passo 3: adicionar as regras de apresentação**
 
-Em `docs/assets/stylesheets/extra.css`, acrescentar regras após os estilos de acessibilidade. O botão tem o mesmo azul do sistema visual; só em desktop a classe recolhe a coluna e amplia o conteúdo.
+Em `docs/assets/stylesheets/extra.css`, acrescentar regras após os estilos de acessibilidade. O botão tem o mesmo azul do sistema visual. Só em desktop a classe recolhe a coluna, mantém uma alça fixa na borda direita do conteúdo e deixa o flex layout nativo do Material usar a largura liberada; não configurar `.md-grid`, que não é a grade de layout do tema.
 
 ```css
 .academia-toc-toggle {
@@ -163,12 +165,15 @@ Em `docs/assets/stylesheets/extra.css`, acrescentar regras após os estilos de a
     display: none;
   }
 
-  html.toc-collapsed .md-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .md-content {
+    position: relative;
   }
 
-  html.toc-collapsed .md-content {
-    max-width: none;
+  html.toc-collapsed .academia-toc-toggle {
+    position: fixed;
+    right: var(--academia-space-4);
+    top: 50%;
+    transform: translateY(-50%);
   }
 }
 ```
@@ -191,7 +196,7 @@ git add mkdocs.yml docs/assets/stylesheets/extra.css docs/assets/javascripts/toc
 git commit -m "feat: permite recolher índice direito"
 ```
 
-### Tarefa 3: Validar o portal completo
+### Task 3: Validar o portal completo
 
 **Arquivos:**
 
@@ -215,4 +220,3 @@ Abrir uma página com títulos, como `modulo-1-visao-geral/conceitos/`, em viewp
 - [ ] **Passo 3: registrar a evidência de conclusão**
 
 Anotar no relatório de execução os comandos aprovados e a página usada na inspeção manual. Nenhum arquivo didático precisa ser alterado nesta tarefa.
-
