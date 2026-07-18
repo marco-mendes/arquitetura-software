@@ -204,6 +204,120 @@ Use os critérios do módulo.
         ):
             self.assertTrue(any(expected in error for error in errors), expected)
 
+    def test_self_contained_activity_parser_rejects_minimal_operational_tokens(self):
+        text = """## Aplicar
+
+**Objetivo**
+
+Definir uma projeção administrativa com dados sintéticos.
+
+**Situação**
+
+Uma fila pode entregar o mesmo evento duas vezes.
+
+**Seu papel**
+
+Você é responsável pelo contrato da projeção.
+
+**Artefato que você irá usar**
+
+Leia `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py`.
+
+**Antes de executar**
+
+Confirme.
+
+**O que fazer**
+
+- Faça.
+
+**Evidência esperada**
+
+Registro.
+
+**Entrega esperada**
+
+Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
+
+**Critérios de avaliação**
+
+Se necessário.
+"""
+
+        errors = self_contained_activity_errors(text, "exemplo.md")
+
+        for expected in (
+            "preparação deve declarar um estado inicial verificável",
+            "ação deve listar uma manipulação ou execução concreta",
+            "evidência deve indicar uma saída ou observação verificável",
+            "atividade deve informar uma contingência",
+        ):
+            self.assertTrue(any(expected in error for error in errors), expected)
+
+    def test_self_contained_activity_parser_rejects_ambiguous_artifact_paths(self):
+        text = """## Aplicar
+
+**Objetivo**
+
+Definir uma projeção administrativa com dados sintéticos.
+
+**Situação**
+
+Uma fila pode entregar o mesmo evento duas vezes.
+
+**Seu papel**
+
+Você é responsável pelo contrato da projeção.
+
+**Artefato que você irá usar**
+
+Leia `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml` e `src/hospital/eventos/consumidor.py`.
+
+**Antes de executar**
+
+O arquivo existe e a fila local está parada; confirme esse estado antes de editar.
+
+**O que fazer**
+
+1. Crie a projeção e registre a chave de deduplicação; se a validação falhar, registre a rejeição.
+
+**Evidência esperada**
+
+Saída: duas entregas do mesmo evento produzem um único registro.
+
+**Entrega esperada**
+
+Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
+
+**Critérios de avaliação**
+
+O contrato identifica a chave, a saída e o limite da projeção.
+"""
+
+        self.assertTrue(
+            any(
+                "artefato não pode usar caminho relativo ambíguo" in error
+                for error in self_contained_activity_errors(
+                    text, "modulo-5-eventos/exercicios.md"
+                )
+            )
+        )
+
+    def test_modules_five_and_six_use_rooted_laboratory_paths(self):
+        for slug in ("modulo-5-eventos", "modulo-6-nuvem"):
+            with self.subTest(module=slug):
+                path = ROOT / "docs" / slug / "exercicios.md"
+                errors = self_contained_activity_errors(
+                    path.read_text(encoding="utf-8"), f"{slug}/exercicios.md"
+                )
+                self.assertFalse(
+                    any(
+                        "artefato não pode usar caminho relativo ambíguo" in error
+                        for error in errors
+                    ),
+                    errors,
+                )
+
     def test_self_contained_activity_parser_reports_an_out_of_order_label(self):
         text = """## Aplicar
 

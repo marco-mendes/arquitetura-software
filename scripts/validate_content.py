@@ -108,12 +108,15 @@ _SELF_CONTAINED_LABELS = (
 _ACTIVITY_PATH = re.compile(
     r"(?:<raiz-do-clone>/|(?:\.\.?/|[A-Za-z0-9_.-]+/)[A-Za-z0-9_./-]+)"
 )
+_ACTIVITY_ROOT_PATH = re.compile(r"<raiz-do-clone>/[A-Za-z0-9_./-]+")
+_AMBIGUOUS_LABORATORY_PATH = re.compile(
+    r"(?<![A-Za-z0-9_.-])(?:src|tests|infra)/[A-Za-z0-9_./-]+"
+)
 _ACTIVITY_INITIAL_STATE = re.compile(
     r"\b(?:estado|inicial|existe|parad[oa]s?|confirm\w*|verifi\w*|"
     r"instalad[oa]s?)\b",
     re.IGNORECASE,
 )
-_ACTIVITY_ACTION = re.compile(r"(?m)^\s*(?:\d+\.|[-*+])\s+\S+")
 _ACTIVITY_EVIDENCE = re.compile(
     r"\b(?:sa[ií]da|resposta|status|registro|arquivo|resultado|observ\w*|"
     r"mensagem|teste|log|m[eé]trica|tabela|diagrama|parecer|cadeia|pol[ií]tica|"
@@ -140,6 +143,48 @@ _CRITERIA_LABEL = re.compile(
 )
 _BOLD_LABEL = re.compile(r"^[ \t]*\*\*[^*\n]+\*\*[ \t]*$", re.MULTILINE)
 _WORD = re.compile(r"\b[^\W_]+(?:[-'][^\W_]+)*\b", re.UNICODE)
+
+
+def _has_minimum_context(content: str, minimum_words: int) -> bool:
+    """Evita que um marcador isolado seja aceito como roteiro operacional."""
+
+    return len(_WORD.findall(content)) >= minimum_words
+
+
+def _has_concrete_action(content: str) -> bool:
+    """Exige ao menos um passo enumerado que descreva ação e alvo."""
+
+    return any(
+        _has_minimum_context(match.group("action"), 4)
+        for match in re.finditer(
+            r"(?m)^\s*(?:\d+\.|[-*+])\s+(?P<action>[^\n]+)", content
+        )
+    )
+
+
+def _has_described_contingency(content: str) -> bool:
+    """Exige condição e encaminhamento, não apenas 'Se necessário'."""
+
+    clauses = re.split(r"(?<=[.!?])\s+|\n", content)
+    return any(
+        _ACTIVITY_CONTINGENCY.search(clause)
+        and _has_minimum_context(clause, 4)
+        for clause in clauses
+    )
+
+
+def _ambiguous_laboratory_paths(content: str) -> list[str]:
+    """Retorna caminhos de laboratório que perderam a raiz do clone."""
+
+    without_rooted_paths = _ACTIVITY_ROOT_PATH.sub("", content)
+    return [
+        match.group(0)
+        for match in _AMBIGUOUS_LABORATORY_PATH.finditer(without_rooted_paths)
+    ]
+
+
+def _requires_rooted_laboratory_paths(location: str) -> bool:
+    return location.startswith(("modulo-5-eventos/", "modulo-6-nuvem/"))
 
 
 @dataclass(frozen=True)
@@ -240,19 +285,33 @@ def self_contained_activity_errors(text: str, location: str) -> list[str]:
             errors.append(
                 f"{location}: {level}: artefato deve identificar um caminho"
             )
-        if not _ACTIVITY_INITIAL_STATE.search(preparation):
+        if _requires_rooted_laboratory_paths(location):
+            for ambiguous_path in _ambiguous_laboratory_paths(
+                "\n".join(fields.values())
+            ):
+                errors.append(
+                    f"{location}: {level}: artefato não pode usar caminho relativo "
+                    f"ambíguo: {ambiguous_path}"
+                )
+        if (
+            not _ACTIVITY_INITIAL_STATE.search(preparation)
+            or not _has_minimum_context(preparation, 4)
+        ):
             errors.append(
                 f"{location}: {level}: preparação deve declarar um estado inicial verificável"
             )
-        if not _ACTIVITY_ACTION.search(action):
+        if not _has_concrete_action(action):
             errors.append(
                 f"{location}: {level}: ação deve listar uma manipulação ou execução concreta"
             )
-        if not _ACTIVITY_EVIDENCE.search(evidence):
+        if (
+            not _ACTIVITY_EVIDENCE.search(evidence)
+            or not _has_minimum_context(evidence, 4)
+        ):
             errors.append(
                 f"{location}: {level}: evidência deve indicar uma saída ou observação verificável"
             )
-        if not _ACTIVITY_CONTINGENCY.search("\n".join(fields.values())):
+        if not _has_described_contingency("\n".join(fields.values())):
             errors.append(
                 f"{location}: {level}: atividade deve informar uma contingência"
             )

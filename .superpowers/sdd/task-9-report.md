@@ -14,9 +14,22 @@
 - A oficina do módulo 3 substitui as repetições de “Antes deste Compose” por
   uma tabela de transição que preserva estado, evidência e contingência.
 
+## Correção da re-revisão
+
+- O contrato operacional agora exige contexto mínimo além do marcador: estado
+  inicial com contexto verificável, ação enumerada com conteúdo, evidência descrita
+  e contingência com condição e encaminhamento. Regressões para “Confirme.”,
+  “- Faça.”, “Registro.” e “Se necessário.” garantem que tokens isolados não
+  sejam aceitos.
+- Nas quatro atividades avançadas de cada um dos módulos 5 e 6, caminhos de
+  `src/`, `tests/` e `infra/` usam a raiz explícita
+  `<raiz-do-clone>/laboratorios/plataforma-hospitalar/...`. A validação rejeita
+  esses caminhos quando relativos nesses dois módulos e os testes verificam as
+  oito atividades publicadas.
+
 ## Verificação
 
-Executados após as alterações:
+Executados após a correção da re-revisão:
 
 | Comando | Resultado |
 | --- | --- |

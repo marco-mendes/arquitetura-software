@@ -140,15 +140,15 @@ A plataforma precisa atualizar projeção administrativa quando um resultado fic
 
 **Seu papel**
 
-Você desenha contrato e reação mínima para a capacidade.
+Você desenha contrato e reação mínima.
 
 **Artefato que você irá usar**
 
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml`, `src/hospital/eventos/publicador.py` e `src/hospital/eventos/consumidor.py`. Eles nomeiam `hospital.events`, `billing.resultados.v1`, `ResultadoLaboratorialDisponibilizado.v1` e o store idempotente.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/publicador.py` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py`; definem contrato, filas e deduplicação.
 
 **Antes de executar**
 
-Crie `<raiz-do-clone>/entregas/modulo-5/`. O estado inicial é Compose parado e laboratório imutável. Confirme exchange, fila e `event_id`; use Markdown e dados sintéticos.
+Crie `<raiz-do-clone>/entregas/modulo-5/`. O estado inicial é Compose parado e laboratório imutável; confirme exchange, fila e `event_id`.
 
 **O que fazer**
 
@@ -195,7 +195,7 @@ Você analisa causas plausíveis sem concluir além das evidências.
 
 **Artefato que você irá usar**
 
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml` para `billing.resultados.v1` e `.dlq`, e `src/hospital/eventos/consumidor.py` para validação e tentativas. Registre métricas e schema `v1` em `<raiz-do-clone>/entregas/modulo-5/analisar-fila-crescente.md`.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml` para `billing.resultados.v1` e `.dlq`, e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py` para validação e tentativas. Registre métricas e schema `v1` em `<raiz-do-clone>/entregas/modulo-5/analisar-fila-crescente.md`.
 
 **Antes de executar**
 
@@ -297,7 +297,7 @@ Você cria um plano de evolução e convivência entre consumidores.
 
 **Artefato que você irá usar**
 
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/publicador.py`, `src/hospital/eventos/consumidor.py` e `tests/test_event_idempotency.py`. Escreva em `<raiz-do-clone>/entregas/modulo-5/criar-evolucao-v2.md`.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/publicador.py`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/tests/test_event_idempotency.py`. Escreva em `<raiz-do-clone>/entregas/modulo-5/criar-evolucao-v2.md`.
 
 **Antes de executar**
 

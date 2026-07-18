@@ -128,7 +128,7 @@ Você produz o roteiro operacional mínimo.
 
 **Artefato que você irá usar**
 
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/Dockerfile`, `infra/kind/cluster.yaml`, `infra/k8s/deployment.yaml` e `infra/k8s/service.yaml`. Eles definem imagem, cluster, réplicas e probes.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/Dockerfile`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/service.yaml`. Eles definem imagem, cluster, réplicas e probes.
 
 **Antes de executar**
 
@@ -137,7 +137,7 @@ O estado inicial não usa `hospital-local`, não aplicou manifests e mira `kind-
 **O que fazer**
 
 1. Registre no roteiro as versões e o contexto esperado `kind-hospital-local`.
-2. Em `<raiz-do-clone>/laboratorios/plataforma-hospitalar`, construa `hospital-api:1.0.0`, crie `hospital-local` por `infra/kind/cluster.yaml` e carregue a imagem.
+2. Em `<raiz-do-clone>/laboratorios/plataforma-hospitalar`, construa `hospital-api:1.0.0`, crie `hospital-local` por `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml` e carregue a imagem.
 3. Faça dry-run, aplique namespace/manifests e acompanhe rollout.
 4. Faça port-forward para `127.0.0.1:18080`, consulte `/health/ready` e guarde pods/endpoints com duas réplicas.
 5. Salve em `<raiz-do-clone>/entregas/modulo-6/aplicar-implantacao-local.md` e remova o cluster.
@@ -180,7 +180,7 @@ Você conduz a análise sem assumir que cada erro é “Kubernetes”.
 
 **Artefato que você irá usar**
 
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml` e `infra/kind/cluster.yaml`. Registre pods, describe e histórico em `<raiz-do-clone>/entregas/modulo-6/analisar-rollout-bloqueado.md`.
+Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml`. Registre pods, describe e histórico em `<raiz-do-clone>/entregas/modulo-6/analisar-rollout-bloqueado.md`.
 
 **Antes de executar**
 
