@@ -44,7 +44,7 @@ flowchart TB
 
 **Texto alternativo:** uma aplicação de plataforma encaminha interfaces autorizadas aos módulos Agenda, Triagem e Faturamento dentro de um monólito modular; os módulos registram fatos em Auditoria, e Triagem e Faturamento usam um adaptador da operadora.
 
-*Figura 8 — Monólito modular com estilos internos por capacidade hospitalar. Fonte: curso.*
+*Figura 18 — Monólito modular com estilos internos por capacidade hospitalar. Fonte: curso.*
 
 **Leitura textual da figura:** as Interfaces autorizadas chegam à Aplicação da plataforma, que encaminha para Agenda, Triagem ou Faturamento dentro de um monólito modular. Agenda usa camadas, Triagem usa microkernel e Faturamento usa pipes e filtros; Triagem e Faturamento acessam o Adaptador da operadora. Os módulos enviam fatos mínimos para Auditoria, sem entregar a ela o controle das regras de negócio.
 
@@ -73,7 +73,7 @@ sequenceDiagram
 
 **Texto alternativo:** sequência em que a Equipe administrativa pede um horário pela Interface; Agenda reserva de modo atômico e registra em Auditoria tanto a confirmação quanto o conflito antes de devolver um resultado explícito.
 
-*Figura 9 — Reserva de agenda com confirmação ou conflito explícito. Fonte: curso.*
+*Figura 19 — Reserva de agenda com confirmação ou conflito explícito. Fonte: curso.*
 
 **Leitura textual da figura:** a Equipe administrativa solicita um horário pela Interface, que chama Agenda com o horário e a correlação. Agenda verifica e registra a reserva de modo atômico. Se houver horário, registra a confirmação em Auditoria; se houver conflito, registra a tentativa rejeitada. Em ambos os casos, a Interface devolve um resultado explícito à equipe.
 
