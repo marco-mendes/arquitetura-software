@@ -173,9 +173,12 @@ class ModuleOneTest(unittest.TestCase):
             "Camadas",
             "Pipes and Filters",
             "Microkernel",
-            "Monólito modular",
         ):
             self.assertIn(f"## {style}", text)
+        self.assertRegex(
+            text,
+            r"(?m)^### Monólito modular: uma implantação, capacidades com autonomia interna$",
+        )
         for label in (
             "Responsabilidade",
             "Conectores",
