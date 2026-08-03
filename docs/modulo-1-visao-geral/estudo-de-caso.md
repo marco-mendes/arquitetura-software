@@ -8,22 +8,22 @@ Antes de escolher estruturas, separe capacidades e ritmos de mudança. Agenda re
 
 ## Como trabalhar esta página
 
-O caso está organizado em quatro exercícios de quinze minutos, que somam uma hora de trabalho. A saída de um é a entrada do seguinte: cenários alimentam a matriz de estilos, a matriz sustenta a estrutura, e a estrutura sustenta a decisão registrada. Trabalhe em dupla, com relógio visível, e prefira um artefato curto e completo a um texto longo interrompido pelo tempo.
+O caso está organizado em quatro exercícios curtos e encadeados. A saída de um é a entrada do seguinte: cenários alimentam a matriz de estilos, a matriz sustenta a estrutura, e a estrutura sustenta a decisão registrada. Trabalhe em dupla e prefira um artefato curto e completo a um texto longo pela metade. O ritmo de cada exercício é definido em aula.
 
 No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/estudo-de-caso/` antes de começar. Cada exercício grava um arquivo nessa pasta.
 
-| Exercício | Foco | Entregável | Tempo |
-| --- | --- | --- | ---: |
-| 1 | Cenários mensuráveis por capacidade | `cenarios.md` | 15 min |
-| 2 | Matriz de estilos por capacidade | `matriz-estilos.md` | 15 min |
-| 3 | Estrutura inicial e diagrama | `estrutura.md` | 15 min |
-| 4 | Consequências e decisão registrada | `ADR-001-estrutura-inicial.md` | 15 min |
+| Exercício | Foco | Entregável |
+| --- | --- | --- |
+| 1 | Cenários mensuráveis por capacidade | `cenarios.md` |
+| 2 | Matriz de estilos por capacidade | `matriz-estilos.md` |
+| 3 | Estrutura inicial e diagrama | `estrutura.md` |
+| 4 | Consequências e decisão registrada | `ADR-001-estrutura-inicial.md` |
 
-Cada exercício declara **onde aprender a fazer** — a página e a seção que ensinam o método — e a **forma do artefato**, com o esqueleto que você completa. Quinze minutos não bastam para descobrir o formato e produzir o conteúdo ao mesmo tempo; o formato vem pronto para que o tempo seja gasto na decisão.
+Cada exercício declara **onde aprender a fazer** — a página e a seção que ensinam o método — e a **forma do artefato**, com o esqueleto que você completa. Descobrir o formato e produzir o conteúdo ao mesmo tempo consome o encontro inteiro; o formato vem pronto para que o esforço seja gasto na decisão.
 
-Cada exercício termina com uma **Referência do curso**: uma resposta possível, elaborada pelo material, para comparação depois da sua tentativa. Ela não é gabarito. Um grupo pode divergir sempre que comparar as mesmas forças, assumir as consequências e oferecer evidência reproduzível. Leia a referência só quando o seu tempo acabar; ler antes elimina o exercício.
+Cada exercício termina com uma **Referência do curso**: uma resposta possível, elaborada pelo material, para comparação depois da sua tentativa. Ela não é gabarito. Um grupo pode divergir sempre que comparar as mesmas forças, assumir as consequências e oferecer evidência reproduzível. Leia a referência só depois de encerrar a sua versão; ler antes elimina o exercício.
 
-## Exercício 1 — Cenários por capacidade (15 minutos)
+## Exercício 1 — Cenários por capacidade
 
 **Enunciado**
 
@@ -52,9 +52,9 @@ Três sinais de cenário fraco: a resposta é um adjetivo ("o sistema fica está
 
 **Como conduzir**
 
-1. Nos primeiros três minutos, nomeie a força dominante de cada capacidade em uma palavra e registre-a: por exemplo consistência, extensibilidade ou throughput.
-2. Nos nove minutos seguintes, escreva os três cenários com as seis partes. Use valores plausíveis; a origem do número entra como suposição declarada, não como dado de produção.
-3. Nos três minutos finais, elimine adjetivos: troque "rápido", "fácil de manter" e "confiável" por número, unidade e condição de observação.
+1. Nomeie a força dominante de cada capacidade em uma palavra e registre-a: por exemplo consistência, extensibilidade ou throughput.
+2. Escreva os três cenários com as seis partes. Use valores plausíveis; a origem do número entra como suposição declarada, não como dado de produção.
+3. Elimine adjetivos ao revisar: troque "rápido", "fácil de manter" e "confiável" por número, unidade e condição de observação.
 
 **Entregável**
 
@@ -67,7 +67,7 @@ Três sinais de cenário fraco: a resposta é um adjetivo ("o sistema fica está
 - Cada cenário aponta uma forma de coleta que a turma consegue executar em laboratório.
 - As suposições de valor estão marcadas como suposições.
 
-**Se o tempo acabar**
+**Se precisar reduzir o escopo**
 
 Entregue dois cenários completos em vez de três incompletos. Registre a capacidade que ficou de fora e a razão; o exercício 2 continuará com o que existir.
 
@@ -81,7 +81,7 @@ Para o **faturamento**: ao receber um lote de dez mil registros, o fluxo deve va
 
 Esses cenários não são compromissos definitivos de produção. São hipóteses iniciais que tornam as alternativas comparáveis. A turma pode ajustar valores, desde que preserve fonte, estímulo, ambiente, resposta e medida.
 
-## Exercício 2 — Matriz de estilos por capacidade (15 minutos)
+## Exercício 2 — Matriz de estilos por capacidade
 
 **Enunciado**
 
@@ -105,9 +105,9 @@ Célula útil: "isola cada etapa de validação, ao custo de manter contrato e c
 
 **Como conduzir**
 
-1. Reproduza a tabela vazia com as quatro linhas e as quatro colunas nos dois primeiros minutos.
-2. Complete célula a célula em dez minutos, escrevendo o que o estilo faz por aquela capacidade — não se ele "é bom".
-3. Nos três minutos finais, escreva o limite de cada estilo e marque as duas células em que a evidência disponível hoje é insuficiente para decidir.
+1. Reproduza a tabela vazia com as quatro linhas e as quatro colunas.
+2. Complete célula a célula, escrevendo o que o estilo faz por aquela capacidade — não se ele "é bom".
+3. Escreva o limite de cada estilo e marque as duas células em que a evidência disponível hoje é insuficiente para decidir.
 
 **Entregável**
 
@@ -120,7 +120,7 @@ Célula útil: "isola cada etapa de validação, ao custo de manter contrato e c
 - Duas células estão marcadas como carentes de evidência, com a medição que resolveria a dúvida.
 - Nenhuma célula usa o nome do domínio como argumento: "é hospitalar" não é força.
 
-**Se o tempo acabar**
+**Se precisar reduzir o escopo**
 
 Complete a coluna da capacidade escolhida como mais crítica no exercício 1 e deixe as demais colunas explicitamente vazias, para que o exercício 3 saiba o que não foi examinado.
 
@@ -135,7 +135,7 @@ Complete a coluna da capacidade escolhida como mais crítica no exercício 1 e d
 
 A matriz não elege sozinha um estilo. Ela mostra que a agenda separa mais as alternativas: reserva concorrente favorece consistência local, enquanto faturamento admite tanto camadas quanto fluxo.
 
-## Exercício 3 — Estrutura inicial e diagrama (15 minutos)
+## Exercício 3 — Estrutura inicial e diagrama
 
 **Enunciado**
 
@@ -164,10 +164,10 @@ Depois do diagrama, escreva as três partes textuais: o **texto alternativo** de
 
 **Como conduzir**
 
-1. Em três minutos, escreva a frase da estrutura escolhida: "uma implantação com módulos X, Y e Z" ou a alternativa que preferir defender.
-2. Em sete minutos, desenhe o diagrama com módulos, conectores, adaptadores externos e o registro de auditoria.
-3. Em três minutos, escreva a leitura textual da figura.
-4. Nos dois minutos finais, ligue cada módulo à força que o justifica, citando o cenário correspondente.
+1. Escreva a frase da estrutura escolhida: "uma implantação com módulos X, Y e Z" ou a alternativa que preferir defender.
+2. Desenhe o diagrama com módulos, conectores, adaptadores externos e o registro de auditoria.
+3. Escreva a leitura textual da figura.
+4. Ligue cada módulo à força que o justifica, citando o cenário correspondente.
 
 **Entregável**
 
@@ -180,7 +180,7 @@ Depois do diagrama, escreva as três partes textuais: o **texto alternativo** de
 - Cada módulo aparece ligado a um cenário do exercício 1.
 - O que é externo à plataforma está marcado como externo.
 
-**Se o tempo acabar**
+**Se precisar reduzir o escopo**
 
 Entregue o diagrama sem os estilos internos, mas com a leitura textual completa. Uma figura sem equivalente textual não é entregável, porque deixa de ser legível para parte da turma.
 
@@ -215,7 +215,7 @@ O núcleo da triagem conhece identidade da jornada, estados permitidos, autoriza
 
 O faturamento recebe registros administrativos, valida campos obrigatórios, normaliza identificadores, correlaciona autorizações e produz uma saída por parceiro. Cada filtro gera resultado explícito. Rejeições não desaparecem: contêm correlação, etapa e motivo apropriado para a equipe autorizada. Throughput não pode ser inferido do diagrama; um teste usa massa sintética, ambiente registrado e medição repetível.
 
-## Exercício 4 — Consequências e ADR-001 (15 minutos)
+## Exercício 4 — Consequências e ADR-001
 
 **Enunciado**
 
@@ -266,10 +266,10 @@ Uma alternativa listada apenas pelo nome não foi comparada. Uma consequência s
 
 **Como conduzir**
 
-1. Em três minutos, leia a sequência e escreva uma consequência favorável e uma desfavorável que ela evidencia.
-2. Em dois minutos, copie o template para `ADR-001-estrutura-inicial.md`.
-3. Em sete minutos, registre contexto, forças, ao menos duas alternativas descartadas, decisão e consequências dos dois sinais.
-4. Nos três minutos finais, escreva evidências e gatilho de revisão: que medida, observada quando, obrigaria a turma a reabrir esta decisão.
+1. Leia a sequência e escreva uma consequência favorável e uma desfavorável que ela evidencia.
+2. Copie o template para `ADR-001-estrutura-inicial.md`.
+3. Registre contexto, forças, ao menos duas alternativas descartadas, decisão e consequências dos dois sinais.
+4. Escreva evidências e gatilho de revisão: que medida, observada quando, obrigaria a turma a reabrir esta decisão.
 
 **Entregável**
 
@@ -282,7 +282,7 @@ Uma alternativa listada apenas pelo nome não foi comparada. Uma consequência s
 - Cada evidência informa onde pode ser reproduzida.
 - O gatilho de revisão descreve uma observação, não uma data vaga.
 
-**Se o tempo acabar**
+**Se precisar reduzir o escopo**
 
 Registre o ADR com estado "proposta" e liste em uma seção final os campos que faltaram. Um registro incompleto e honesto continua utilizável; um registro completo por invenção contamina os encontros seguintes.
 
@@ -296,6 +296,6 @@ As evidências incluem `test_estilos.py`, teste de fronteiras futuro, extensão 
 
 ## Fecho dos quatro exercícios
 
-Ao final da hora, a pasta `entregas/unidade-1/estudo-de-caso/` reúne uma cadeia legível: cenário mensurável, comparação simétrica, estrutura desenhada e decisão revisável. Essa cadeia é a primeira baseline do [incremento 1](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) e será revisitada nos módulos seguintes, quando APIs, serviços, eventos e nuvem alterarem as forças examinadas aqui.
+Ao final da sequência, a pasta `entregas/unidade-1/estudo-de-caso/` reúne uma cadeia legível: cenário mensurável, comparação simétrica, estrutura desenhada e decisão revisável. Essa cadeia é a primeira baseline do [incremento 1](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) e será revisitada nos módulos seguintes, quando APIs, serviços, eventos e nuvem alterarem as forças examinadas aqui.
 
 Nenhum dos quatro artefatos prova sozinho que a arquitetura é adequada. Em conjunto, eles mostram como a decisão foi formulada e onde a turma pode contestá-la. O objetivo arquitetural é tornar a diferença examinável.
