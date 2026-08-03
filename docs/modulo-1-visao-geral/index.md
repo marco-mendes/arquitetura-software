@@ -33,7 +33,7 @@ Consulte o [glossário compartilhado](../referencia/glossario.md) sempre que um 
 2. **Conceitos:** apresenta o que é um estilo arquitetural e o mapa das quatro famílias de decisão.
 3. **Padrões e decisões:** aprofunda Camadas, Pipes and Filters, Microkernel e Monólito modular, com figuras, características e anti-padrões, e apresenta o ADR.
 4. **Exemplo arquitetural:** aplica os estilos ao caso hospitalar, da reserva em camadas ao pipeline de faturamento.
-5. **Estudo de caso:** compara alternativas para a plataforma hospitalar com forças e evidências.
+5. **Estudo de caso:** conduz quatro exercícios de quinze minutos sobre a plataforma hospitalar, de cenários mensuráveis ao ADR-001.
 6. **Oficina de ferramentas:** executa os três exemplos de estilos e captura evidências de comportamento.
 7. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
 8. **Síntese e referências:** consolida o método e aponta fontes públicas.
