@@ -121,6 +121,9 @@ class RepositorioProduto(ABC):
     def salvar(self, nome: str, preco: float) -> None: ...
 
     @abstractmethod
+    def buscar_por_nome(self, nome: str) -> dict | None: ...
+
+    @abstractmethod
     def listar(self) -> list[dict]: ...
 
 class MySQLRepositorioProduto(RepositorioProduto):
@@ -130,20 +133,39 @@ class MySQLRepositorioProduto(RepositorioProduto):
     def salvar(self, nome: str, preco: float) -> None:
         self._produtos.append({"nome": nome, "preco": preco})
 
+    def buscar_por_nome(self, nome: str) -> dict | None:
+        return next((p for p in self._produtos if p["nome"] == nome), None)
+
     def listar(self) -> list[dict]:
         return self._produtos
 
+class ProdutoDuplicadoError(Exception):
+    pass
+
+class MargemInsuficienteError(Exception):
+    pass
+
 class ProdutoServico:
-    """Camada de negócios: depende da abstração, não da implementação."""
+    """Camada de negócios: decide antes de persistir e depende da abstração."""
+
+    MARGEM_MINIMA = 1.15
 
     def __init__(self, repositorio: RepositorioProduto):
         self._repositorio = repositorio
 
-    def adicionar_produto(self, nome: str, preco: float) -> None:
+    def adicionar_produto(self, nome: str, preco: float, custo: float) -> None:
+        if self._repositorio.buscar_por_nome(nome):
+            raise ProdutoDuplicadoError(f"Produto já cadastrado: {nome}")
+        if preco < custo * self.MARGEM_MINIMA:
+            raise MargemInsuficienteError(
+                f"Preço {preco:.2f} não cobre a margem mínima sobre o custo {custo:.2f}"
+            )
         self._repositorio.salvar(nome, preco)
 ```
 
-Um exemplo executável completo do estilo está em `codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`, explorado na [oficina de ferramentas](oficina-de-ferramentas.md).
+Repare no que o serviço faz **antes** de chamar `salvar`: recusa nome duplicado e verifica a margem mínima sobre o custo. Essas duas decisões justificam a existência da camada. Se `adicionar_produto` apenas repassasse os argumentos ao repositório, a camada de negócios não decidiria nada — seria o sumidouro da figura 6, cobrando uma chamada extra sem devolver benefício. A diferença é verificável: a regra de margem pode ser testada com um repositório dublê, sem banco algum.
+
+Um exemplo executável completo do estilo está em `codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`, explorado na [oficina de ferramentas](oficina-de-ferramentas.md). Lá a invariante equivalente é o conflito de horário: o serviço consulta a agenda do médico e recusa a sobreposição antes de persistir.
 
 ### Variações no backend: MVC e DDD
 
