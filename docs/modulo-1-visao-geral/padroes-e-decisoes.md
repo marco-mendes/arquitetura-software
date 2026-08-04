@@ -115,57 +115,60 @@ O **OCP** (*Open-Closed Principle*) aplicado à fronteira entre camadas signific
 
 ```python
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import date, datetime
 
-class RepositorioProduto(ABC):
+@dataclass(frozen=True)
+class Horario:
+    inicio: datetime
+    fim: datetime
+
+    def conflita_com(self, outro: "Horario") -> bool:
+        return self.inicio < outro.fim and self.fim > outro.inicio
+
+class RepositorioConsulta(ABC):
     @abstractmethod
-    def salvar(self, nome: str, preco: float) -> None: ...
+    def salvar(self, medico_id: int, horario: Horario) -> None: ...
 
     @abstractmethod
-    def buscar_por_nome(self, nome: str) -> dict | None: ...
+    def listar_do_dia(self, medico_id: int, dia: date) -> list[Horario]: ...
 
-    @abstractmethod
-    def listar(self) -> list[dict]: ...
+class EmMemoriaRepositorioConsulta(RepositorioConsulta):
+    """Em produção, um PostgresRepositorioConsulta ocupa este lugar."""
 
-class MySQLRepositorioProduto(RepositorioProduto):
     def __init__(self):
-        self._produtos: list[dict] = []
+        self._consultas: dict[int, list[Horario]] = {}
 
-    def salvar(self, nome: str, preco: float) -> None:
-        self._produtos.append({"nome": nome, "preco": preco})
+    def salvar(self, medico_id: int, horario: Horario) -> None:
+        self._consultas.setdefault(medico_id, []).append(horario)
 
-    def buscar_por_nome(self, nome: str) -> dict | None:
-        return next((p for p in self._produtos if p["nome"] == nome), None)
+    def listar_do_dia(self, medico_id: int, dia: date) -> list[Horario]:
+        return [
+            h for h in self._consultas.get(medico_id, [])
+            if h.inicio.date() == dia
+        ]
 
-    def listar(self) -> list[dict]:
-        return self._produtos
-
-class ProdutoDuplicadoError(Exception):
+class ConflitoDeAgendaError(Exception):
     pass
 
-class MargemInsuficienteError(Exception):
-    pass
-
-class ProdutoServico:
+class AgendamentoServico:
     """Camada de negócios: decide antes de persistir e depende da abstração."""
 
-    MARGEM_MINIMA = 1.15
-
-    def __init__(self, repositorio: RepositorioProduto):
+    def __init__(self, repositorio: RepositorioConsulta):
         self._repositorio = repositorio
 
-    def adicionar_produto(self, nome: str, preco: float, custo: float) -> None:
-        if self._repositorio.buscar_por_nome(nome):
-            raise ProdutoDuplicadoError(f"Produto já cadastrado: {nome}")
-        if preco < custo * self.MARGEM_MINIMA:
-            raise MargemInsuficienteError(
-                f"Preço {preco:.2f} não cobre a margem mínima sobre o custo {custo:.2f}"
+    def agendar(self, medico_id: int, horario: Horario) -> None:
+        ocupados = self._repositorio.listar_do_dia(medico_id, horario.inicio.date())
+        if any(horario.conflita_com(h) for h in ocupados):
+            raise ConflitoDeAgendaError(
+                f"Médico {medico_id} já tem consulta sobreposta nesse intervalo"
             )
-        self._repositorio.salvar(nome, preco)
+        self._repositorio.salvar(medico_id, horario)
 ```
 
-Repare no que o serviço faz **antes** de chamar `salvar`: recusa nome duplicado e verifica a margem mínima sobre o custo. Essas duas decisões justificam a existência da camada. Se `adicionar_produto` apenas repassasse os argumentos ao repositório, a camada de negócios não decidiria nada — seria o sumidouro da figura 6, cobrando uma chamada extra sem devolver benefício. A diferença é verificável: a regra de margem pode ser testada com um repositório dublê, sem banco algum.
+Repare no que o serviço faz **antes** de chamar `salvar`: consulta a agenda do dia e recusa a sobreposição. Essa decisão justifica a existência da camada. Se `agendar` apenas repassasse os argumentos ao repositório, a camada de negócios não decidiria nada — seria o sumidouro da figura 6, cobrando uma chamada extra sem devolver benefício. A regra de conflito pode ser testada com um repositório dublê, sem banco algum.
 
-Um exemplo executável completo do estilo está em `codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`, explorado na [oficina de ferramentas](oficina-de-ferramentas.md). Lá a invariante equivalente é o conflito de horário: o serviço consulta a agenda do médico e recusa a sobreposição antes de persistir.
+O exemplo executável completo está em `codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`, explorado na [oficina de ferramentas](oficina-de-ferramentas.md), com a mesma invariante e um controller HTTP que devolve `409` no conflito.
 
 ### Variações no backend: MVC e DDD
 

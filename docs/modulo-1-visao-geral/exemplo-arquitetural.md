@@ -2,7 +2,7 @@
 
 ## O que este exemplo aplica
 
-Esta página não apresenta conceito novo. Ela mostra em uso o vocabulário das duas páginas anteriores, na ordem em que um arquiteto o usaria. Se algum termo da tabela ainda parecer vago, abra o link antes de continuar: sem o vocabulário, os desenhos viram figuras bonitas sem consequência.
+Esta página não apresenta conceito novo. Ela mostra em uso o vocabulário das duas páginas anteriores, na ordem em que um arquiteto o usaria. Se algum termo da tabela ainda parecer vago, abra o link antes de continuar.
 
 | Conceito | Onde foi definido | Onde ele aparece nesta página |
 | --- | --- | --- |
@@ -15,15 +15,9 @@ Esta página não apresenta conceito novo. Ela mostra em uso o vocabulário das 
 | Núcleo, contrato de extensão e core creep | [Microkernel](padroes-e-decisoes.md#microkernel) | figura 22 |
 | ADR como decisão revisável | [ADR](padroes-e-decisoes.md#adr-o-mecanismo-para-escolher-estilos) | seção "Decisão provisória" |
 
-A ordem das seções também é conteúdo: ela repete a cadeia de raciocínio da unidade.
+A ordem das seções é a cadeia de raciocínio da unidade: o contexto e a força priorizada vêm antes de qualquer caixa desenhada; as alternativas, antes da escolha; a evidência, antes da decisão — que por sua vez registra o custo aceito e o gatilho de revisão.
 
-1. **Contexto e força priorizada** — "Contexto antes da estrutura" declara volume, ritmo de mudança e equipe antes de desenhar.
-2. **Alternativas** — "Alternativas comparadas" examina os quatro estilos com o mesmo critério.
-3. **Consequências** — as três estruturas mostram o que cada escolha permite e o que ela proíbe.
-4. **Evidência** — "Do cenário à evidência" descreve como medir o que foi prometido.
-5. **Decisão revisável** — "Decisão provisória" registra escolha, custo assumido e gatilho de revisão.
-
-Ler os desenhos fora dessa ordem produz o erro mais comum de quem começa em arquitetura: escolher a figura preferida e procurar depois uma justificativa para ela.
+Quem lê de trás para frente escolhe a figura de que gostou e procura a justificativa depois. Isso é decoração, não arquitetura.
 
 ## Contexto antes da estrutura
 
@@ -37,15 +31,15 @@ Os dois parágrafos acima são um cenário de atributo de qualidade escrito em p
 
 Camadas separariam entrada, aplicação, regra e infraestrutura. Isso ajuda a testar validações, mas não torna a sequência de transformações explícita. Microkernel isolaria leitores por formato, porém não organiza sozinho as etapas comuns. Monólito modular manteria implantação simples e limites por capacidade. Pipes and filters modelaria diretamente o fluxo e permitiria medir cada transformação.
 
-Esse parágrafo não é preferência pessoal: cada estilo foi lido pela mesma grade de [padrões e decisões](padroes-e-decisoes.md) — a tabela de características avaliadas de 1 a 5 e os blocos "quando usar" e "quando não usar" de cada estilo. Camadas não perdem por serem antigas; perdem porque a grade mostra que elas não tornam a sequência de transformações visível, e é isso que a força priorizada exige. Se a força priorizada fosse outra, o resultado mudaria — comparar com a mesma grade é o que torna a divergência discutível.
+A comparação usou a mesma grade para os quatro: a tabela de características avaliadas de 1 a 5 e os blocos "quando usar" e "quando não usar" de [padrões e decisões](padroes-e-decisoes.md). Camadas saem atrás aqui porque não tornam visível a sequência de transformações, que é o que a força priorizada exige. Priorize outra força e o resultado muda.
 
-A escolha inicial combina um monólito modular como limite de implantação, pipes and filters na capacidade de processamento e pequenos adapters para os formatos. Combinar estilos é aceitável quando cada um resolve uma escala declarada. O risco seria usar muitos nomes sem restrições verificáveis.
+A escolha inicial combina um monólito modular como limite de implantação, pipes and filters na capacidade de processamento e pequenos adapters para os formatos. Combinar estilos é aceitável quando cada um resolve uma escala declarada. O risco é usar muitos nomes sem restrições verificáveis.
 
 ## A mesma plataforma, três estruturas deliberadas
 
 A plataforma de remessas tem quatro capacidades. **Submissão** recebe e aceita ou recusa a remessa de um parceiro; **Processamento** transforma os documentos de uma remessa aceita; **Leitores de formato** interpretam JSON, CSV e XML e variam por parceiro; **Trilha** recebe fatos mínimos para rastreabilidade. Não há integração real: os nomes permitem enxergar a responsabilidade de cada fronteira.
 
-Cada capacidade recebe o estilo cuja força corresponde à sua: consistência na submissão, fluxo no processamento, variação nos leitores. Nenhuma delas muda de estilo por preferência estética.
+Cada capacidade recebe o estilo cuja força corresponde à sua: consistência na submissão, fluxo no processamento, variação nos leitores.
 
 ### Submissão em camadas: uma remessa não pula a regra
 
@@ -68,7 +62,7 @@ flowchart TB
 
 Esse arranjo favorece consistência local e teste das regras sem banco. Se quase toda leitura apenas atravessar todas as camadas sem validação ou decisão, a equipe mede o custo e registra um caminho de leitura justificado; não cria atalhos silenciosos.
 
-**Conceito aplicado:** a ligação pontilhada é a definição de *camada fechada* em funcionamento — a interface não pula a camada seguinte para consultar dados. O parágrafo acima descreve o anti-padrão do *sumidouro*: quando quase toda requisição apenas atravessa camadas sem decidir nada, o estilo cobra latência sem devolver benefício. Os dois termos foram definidos em [Camadas](padroes-e-decisoes.md#camadas); aqui eles deixam de ser definição e viram restrição desenhada, que o teste de dependências pode verificar. Repare que a camada de negócios decide — recusa remessa fora da janela e remessa repetida —, e é isso que a distingue de um repasse.
+**Conceito aplicado:** a ligação pontilhada é a *camada fechada* de [Camadas](padroes-e-decisoes.md#camadas) — a interface não pula a camada seguinte para ler dados. A camada de negócios decide: recusa remessa fora da janela contratada e remessa repetida. Sem essas duas decisões o desenho cairia no *sumidouro* da figura 6, cobrando uma chamada extra sem devolver nada.
 
 [Aprofundar Camadas](padroes-e-decisoes.md#camadas)
 
@@ -93,7 +87,7 @@ flowchart LR
 
 As setas nomeiam o contrato de cada pipe. Cada filtro recebe um valor e devolve sucesso com um novo valor ou rejeição com identificador, etapa e causa. Os filtros não consultam o estado interno uns dos outros. Essa restrição permite testar cada etapa e compor o fluxo.
 
-**Conceito aplicado:** os elementos do desenho são os quatro tipos canônicos de filtro apresentados em [Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters). O adaptador de entrada é o *producer*; validar é um *tester*, porque avalia e pode descartar; normalizar e enriquecer são *transformers*, porque transformam sem descartar; publicar é o *consumer*. A ausência de estado compartilhado, que lá aparece como premissa do estilo, aqui vira a proibição visível de um filtro consultar o estado interno de outro — e é essa proibição que permite reordenar ou substituir uma etapa sem reescrever as demais.
+**Conceito aplicado:** cada caixa é um dos quatro tipos canônicos de filtro de [Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters). O adaptador de entrada é o *producer*, validar é um *tester*, normalizar e enriquecer são *transformers*, publicar é o *consumer*. A premissa de ausência de estado compartilhado vira aqui a proibição de um filtro ler o estado de outro; é ela que permite trocar uma etapa sem reescrever as demais.
 
 [Aprofundar Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters)
 
@@ -144,13 +138,13 @@ flowchart LR
 
 Essa é a capacidade em que a mudança chega: um formato novo entra poucas vezes por ano, mas entra sempre pela mesma fronteira. Para a estrutura ser honesta, o contrato deve especificar entrada, resultado, erros e versão. Se um plugin precisa editar tabelas internas ou se o núcleo conhece regras particulares de todos os plugins, a equipe encontrou core creep e deve revisar a fronteira em vez de chamar o acoplamento de extensibilidade.
 
-**Conceito aplicado:** núcleo, contrato de extensão e *core creep* vêm de [Microkernel](padroes-e-decisoes.md#microkernel). O desenho torna verificável o que a definição diz em uma frase: as ligações pontilhadas são a fronteira que separa uma extensão de verdade — adicionável, testável e desabilitável pelo contrato — de um acoplamento com nome bonito. Um plugin que precisa do banco do núcleo continua sendo parte do núcleo, ainda que resida em outra pasta.
+**Conceito aplicado:** núcleo, contrato de extensão e *core creep* vêm de [Microkernel](padroes-e-decisoes.md#microkernel). Um plugin que precisa do banco do núcleo continua sendo parte do núcleo, ainda que resida em outra pasta.
 
 [Aprofundar Microkernel](padroes-e-decisoes.md#microkernel)
 
 ## Do cenário à evidência
 
-Cada teste desta seção devolve uma parte do cenário declarado no início da página; é assim que a promessa vira evidência em vez de intenção. Um teste funcional usa exemplos pequenos para verificar ordem e transformação. Um teste de desempenho usa lote representativo, mede duração total e calcula throughput. Um teste de falha injeta um documento sem referência de enriquecimento e verifica etapa e correlação. O resultado precisa informar ambiente e massa utilizada; um número sem condições não pode sustentar a decisão.
+Cada teste desta seção devolve uma parte do cenário declarado no início da página. O teste funcional usa exemplos pequenos para verificar ordem e transformação; o de desempenho mede a duração de um lote representativo e calcula throughput; o de falha injeta um documento sem referência de enriquecimento e verifica etapa e correlação. O resultado precisa informar ambiente e massa utilizada — um número sem condições não sustenta decisão.
 
 Também há limites não resolvidos. Se o enriquecimento depender de um serviço remoto lento, o filtro pode dominar toda a vazão. Paralelizar exige decidir ordenação e concorrência. Persistir resultados intermediários melhora recuperação, mas acrescenta estado. Esses aspectos viram forças de um ADR posterior, em vez de serem ocultados pelo desenho inicial.
 
@@ -193,6 +187,6 @@ Uma árvore não prova isolamento: teste imports proibidos e substitua um filtro
 
 O ADR deste exemplo aceitaria pipes and filters para explicitar transformações e manteria uma implantação única. Registraria o custo de contratos intermediários, correlação e eventual controle de concorrência. A evidência inicial seria o teste de throughput e rejeição. O gatilho de revisão seria a entrada de uma etapa com escala ou disponibilidade muito diferente das demais.
 
-O exemplo demonstra o método sem depender do domínio hospitalar: começar pelo cenário, comparar alternativas, desenhar restrições, observar comportamento e declarar limites. Nenhuma etapa aqui foi inventada nesta página — todas vieram das definições de [conceitos](conceitos.md) e de [padrões e decisões](padroes-e-decisoes.md), aplicadas a um problema concreto.
+O exemplo demonstra o método sem depender do domínio hospitalar: começar pelo cenário, comparar alternativas, desenhar restrições, observar comportamento e declarar limites. Nada aqui foi inventado nesta página; tudo veio de [conceitos](conceitos.md) e de [padrões e decisões](padroes-e-decisoes.md).
 
-No [estudo de caso](estudo-de-caso.md) você percorre essa mesma sequência, na mesma ordem, produzindo os artefatos em vez de lê-los prontos. A plataforma hospitalar de lá tem forças diferentes das da plataforma de remessas — o que se transfere é o método, não o desenho.
+No [estudo de caso](estudo-de-caso.md) você percorre a mesma sequência produzindo os artefatos. Não copie os módulos desta página para lá: as forças da plataforma hospitalar são outras.
