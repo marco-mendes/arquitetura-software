@@ -85,7 +85,7 @@ Esses cenários não são compromissos definitivos de produção. São hipótese
 
 **Enunciado**
 
-Compare os quatro estilos estudados — camadas, pipes and filters, microkernel e monólito modular — contra as três capacidades, usando os cenários do exercício 1 como critério. Uma linha por estilo, uma coluna por capacidade e uma coluna final para o limite mais relevante daquele estilo. A comparação só é simétrica se cada estilo receber uma força e um limite; um estilo sem limite indica análise incompleta, não superioridade.
+Compare os quatro estilos estudados — camadas, pipes and filters, microkernel e monólito modular — contra as três capacidades, usando os cenários do exercício 1 como critério. Uma linha por estilo, uma coluna por capacidade e uma coluna final para o limite mais relevante daquele estilo. A comparação só é simétrica se cada estilo receber uma força e um limite. Um estilo que aparece sem limite significa que a análise dele ficou incompleta.
 
 **Onde aprender a fazer**
 
@@ -143,7 +143,7 @@ Escolha uma estrutura geral para a plataforma e represente-a em um diagrama. O d
 
 **Onde aprender a fazer**
 
-O vocabulário do desenho está em [como ler uma arquitetura](../referencia/como-ler-uma-arquitetura.md#componentes-conectores-e-configuracao): componente concentra responsabilidade, conector descreve colaboração e configuração é o arranjo dos dois. O [exemplo arquitetural](exemplo-arquitetural.md#a-mesma-plataforma-tres-estruturas-deliberadas) mostra três estruturas desenhadas em outro domínio, com o nível de detalhe esperado aqui — copie a forma do desenho, não os nomes dos módulos, que são de outra plataforma. A convenção de acessibilidade usada em todas as figuras do curso aparece nas figuras 23 e 24 desta página: bloco Mermaid, texto alternativo, legenda numerada e leitura textual.
+O vocabulário do desenho está em [como ler uma arquitetura](../referencia/como-ler-uma-arquitetura.md#componentes-conectores-e-configuracao): componente concentra responsabilidade, conector descreve colaboração e configuração é o arranjo dos dois. O [exemplo arquitetural](exemplo-arquitetural.md#a-mesma-plataforma-tres-estruturas-deliberadas) mostra três estruturas com o nível de detalhe esperado aqui. Os módulos de lá pertencem a outra plataforma; aproveite a forma do desenho e nomeie os seus. A convenção de acessibilidade usada em todas as figuras do curso aparece nas figuras 23 e 24 desta página: bloco Mermaid, texto alternativo, legenda numerada e leitura textual.
 
 **Forma do artefato**
 

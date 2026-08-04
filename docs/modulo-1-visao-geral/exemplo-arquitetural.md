@@ -17,7 +17,7 @@ Esta página não apresenta conceito novo. Ela mostra em uso o vocabulário das 
 
 A ordem das seções é a cadeia de raciocínio da unidade: o contexto e a força priorizada vêm antes de qualquer caixa desenhada; as alternativas, antes da escolha; a evidência, antes da decisão — que por sua vez registra o custo aceito e o gatilho de revisão.
 
-Quem lê de trás para frente escolhe a figura de que gostou e procura a justificativa depois. Isso é decoração, não arquitetura.
+Quem lê de trás para frente escolhe a figura de que gostou e procura a justificativa depois.
 
 ## Contexto antes da estrutura
 
