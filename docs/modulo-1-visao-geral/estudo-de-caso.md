@@ -19,7 +19,7 @@ No terminal aberto na raiz do repositório `arquitetura-software`, crie `entrega
 | 3 | Estrutura inicial e diagrama | `estrutura.md` |
 | 4 | Consequências e decisão registrada | `ADR-001-estrutura-inicial.md` |
 
-Cada exercício declara **onde aprender a fazer** — a página e a seção que ensinam o método — e a **forma do artefato**, com o esqueleto que você completa. Descobrir o formato e produzir o conteúdo ao mesmo tempo consome o encontro inteiro; o formato vem pronto para que o esforço seja gasto na decisão.
+Cada exercício indica **onde aprender a fazer**, com a página e a seção que ensinam o método, e a **forma do artefato**, com o esqueleto que você completa. O formato vem pronto para que o esforço seja gasto na decisão.
 
 Cada exercício termina com uma **Referência do curso**: uma resposta possível, elaborada pelo material, para comparação depois da sua tentativa. Ela não é gabarito. Um grupo pode divergir sempre que comparar as mesmas forças, assumir as consequências e oferecer evidência reproduzível. Leia a referência só depois de encerrar a sua versão; ler antes elimina o exercício.
 
@@ -27,11 +27,11 @@ Cada exercício termina com uma **Referência do curso**: uma resposta possível
 
 **Enunciado**
 
-Agenda, triagem administrativa e faturamento pertencem à mesma plataforma e têm forças diferentes. Escreva um cenário mensurável para cada capacidade, de modo que duas alternativas estruturais possam ser comparadas pela mesma medida. Um cenário é mensurável quando declara fonte, estímulo, ambiente, artefato, resposta e medida, e quando outra pessoa consegue julgar se ele foi atendido sem conversar com quem o escreveu.
+Agenda, triagem administrativa e faturamento pertencem à mesma plataforma e têm forças diferentes. Escreva um cenário mensurável para cada capacidade, de modo que duas alternativas estruturais possam ser comparadas pela mesma medida. Um cenário é mensurável quando declara fonte, estímulo, ambiente, artefato, resposta e medida. O teste é simples: outra pessoa consegue julgar se ele foi atendido sem conversar com quem o escreveu.
 
 **Onde aprender a fazer**
 
-O método está em [atributos de qualidade](../referencia/atributos-de-qualidade.md#como-usar-na-decisao): a tabela liga cada atributo a uma pergunta de projeto e a um exemplo de medida — use a coluna de medida para escolher a unidade em vez de inventá-la. A distinção entre restrição, premissa e atributo está em [como ler uma arquitetura](../referencia/como-ler-uma-arquitetura.md#restricoes-premissas-e-atributos-de-qualidade); ela evita transformar uma decisão já tomada em cenário. Termos que aparecerem sem definição estão no [glossário](../referencia/glossario.md). Nenhum código precisa ser executado.
+O método está em [atributos de qualidade](../referencia/atributos-de-qualidade.md#como-usar-na-decisao). A tabela de lá liga cada atributo a uma pergunta de projeto e a um exemplo de medida; tire dali a unidade que você vai usar. Se estiver na dúvida entre restrição, premissa e atributo, a diferença está em [como ler uma arquitetura](../referencia/como-ler-uma-arquitetura.md#restricoes-premissas-e-atributos-de-qualidade). Termos novos estão no [glossário](../referencia/glossario.md). Nenhum código precisa ser executado.
 
 **Forma do artefato**
 
@@ -46,15 +46,24 @@ Resposta: <o que o sistema faz de observável>
 Medida: <número, unidade e janela de observação>
 ```
 
-Um exemplo em outro domínio, para não antecipar o caso hospitalar: *fonte* dois atendentes; *estímulo* duas confirmações do mesmo exemplar em menos de um segundo; *ambiente* operação normal; *artefato* módulo de empréstimo; *resposta* uma confirmação e uma recusa explícita com motivo; *medida* nenhum empréstimo duplicado em quinhentas tentativas concorrentes registradas em log.
+Um cenário pronto, na plataforma de remessas do [exemplo arquitetural](exemplo-arquitetural.md):
 
-Três sinais de cenário fraco: a resposta é um adjetivo ("o sistema fica estável"), a medida não diz em quanto tempo se observa, e o ambiente está ausente — sem ele, a mesma medida vale para operação normal e para um pico de carga.
+```text
+Fonte do estímulo: dois sistemas parceiros
+Estímulo: a mesma remessa enviada duas vezes em menos de um segundo
+Ambiente: operação normal
+Artefato: módulo de submissão
+Resposta: uma remessa aceita e uma recusa com o protocolo da primeira
+Medida: nenhuma remessa duplicada em quinhentos envios concorrentes, no log
+```
+
+Um cenário fraco costuma falhar na resposta ou na medida. "O sistema fica estável" não é resposta observável. "Responde rápido" não é medida enquanto não disser em quanto tempo e sob qual carga.
 
 **Como conduzir**
 
 1. Nomeie a força dominante de cada capacidade em uma palavra e registre-a: por exemplo consistência, extensibilidade ou throughput.
-2. Escreva os três cenários com as seis partes. Use valores plausíveis; a origem do número entra como suposição declarada, não como dado de produção.
-3. Elimine adjetivos ao revisar: troque "rápido", "fácil de manter" e "confiável" por número, unidade e condição de observação.
+2. Escreva os três cenários com as seis partes. Use valores plausíveis e marque cada um como suposição.
+3. Na revisão, troque cada adjetivo por número, unidade e condição de observação.
 
 **Entregável**
 
@@ -85,11 +94,11 @@ Esses cenários não são compromissos definitivos de produção. São hipótese
 
 **Enunciado**
 
-Compare os quatro estilos estudados — camadas, pipes and filters, microkernel e monólito modular — contra as três capacidades, usando os cenários do exercício 1 como critério. Uma linha por estilo, uma coluna por capacidade e uma coluna final para o limite mais relevante daquele estilo. A comparação só é simétrica se cada estilo receber uma força e um limite. Um estilo que aparece sem limite significa que a análise dele ficou incompleta.
+Compare os quatro estilos contra as três capacidades, usando os cenários do exercício 1 como critério. Uma linha por estilo, uma coluna por capacidade e uma coluna final para o limite mais relevante. Cada estilo precisa sair da matriz com uma força e um limite. Um estilo que aparece sem limite significa que a análise dele ficou incompleta.
 
 **Onde aprender a fazer**
 
-Cada estilo já traz, em [padrões e decisões](padroes-e-decisoes.md), uma tabela de características avaliadas de 1 a 5 por Richards e Ford — custo, simplicidade, escalabilidade, elasticidade, implantabilidade, testabilidade, desempenho, modularidade e confiabilidade — seguida de um bloco "quando usar" e "quando não usar". São essas duas partes que alimentam a matriz: [camadas](padroes-e-decisoes.md#camadas), [pipes and filters](padroes-e-decisoes.md#pipes-and-filters), [microkernel](padroes-e-decisoes.md#microkernel) e [monólito modular](padroes-e-decisoes.md#monolito-modular-uma-implantacao-capacidades-com-autonomia-interna). O [catálogo de padrões](../referencia/catalogo-de-padroes.md) situa cada nome no percurso da disciplina, sem substituir a análise.
+Em [padrões e decisões](padroes-e-decisoes.md), cada estilo traz uma tabela de características avaliadas de 1 a 5 por Richards e Ford e um bloco "quando usar" e "quando não usar". São essas duas partes que alimentam a matriz: [camadas](padroes-e-decisoes.md#camadas), [pipes and filters](padroes-e-decisoes.md#pipes-and-filters), [microkernel](padroes-e-decisoes.md#microkernel) e [monólito modular](padroes-e-decisoes.md#monolito-modular-uma-implantacao-capacidades-com-autonomia-interna).
 
 **Forma do artefato**
 
@@ -101,12 +110,12 @@ Cada célula é uma frase com verbo, ligando estilo, capacidade e custo:
 | <estilo> | <o que o estilo faz por esta capacidade> | ... | ... | <o que ele não resolve> |
 ```
 
-Célula útil: "isola cada etapa de validação, ao custo de manter contrato e correlação entre elas". Célula inútil: "é o mais indicado". A primeira pode ser contestada por medição; a segunda só pode ser repetida.
+Uma célula útil se parece com isto: "isola cada etapa de validação, ao custo de manter contrato e correlação entre elas". Alguém pode contestá-la com uma medição. Já "é o mais indicado" só pode ser repetido.
 
 **Como conduzir**
 
 1. Reproduza a tabela vazia com as quatro linhas e as quatro colunas.
-2. Complete célula a célula, escrevendo o que o estilo faz por aquela capacidade — não se ele "é bom".
+2. Complete célula a célula, escrevendo o que o estilo faz por aquela capacidade.
 3. Escreva o limite de cada estilo e marque as duas células em que a evidência disponível hoje é insuficiente para decidir.
 
 **Entregável**
@@ -122,7 +131,7 @@ Célula útil: "isola cada etapa de validação, ao custo de manter contrato e c
 
 **Se precisar reduzir o escopo**
 
-Complete a coluna da capacidade escolhida como mais crítica no exercício 1 e deixe as demais colunas explicitamente vazias, para que o exercício 3 saiba o que não foi examinado.
+Complete a coluna da capacidade mais crítica e deixe as outras vazias. O exercício 3 precisa saber o que não foi examinado.
 
 **Referência do curso**
 
@@ -160,7 +169,13 @@ flowchart TB
     <módulo B> --> <adaptador externo>
 ```
 
-Depois do diagrama, escreva as três partes textuais: o **texto alternativo** descreve a figura para quem não a vê; a **legenda** numera e credita; a **leitura textual** percorre as mesmas relações do desenho com os mesmos nomes. Se a leitura textual mencionar uma seta que não existe no diagrama, o desenho está incompleto ou a prosa está adiantada.
+Depois do diagrama vêm as três partes textuais:
+
+- **texto alternativo** — descreve a figura para quem não a vê;
+- **legenda** — numera e credita;
+- **leitura textual** — percorre as relações do desenho com os mesmos nomes.
+
+Se a leitura textual mencionar uma seta que não existe no diagrama, o desenho está incompleto ou a prosa se adiantou.
 
 **Como conduzir**
 
@@ -219,7 +234,7 @@ O faturamento recebe registros administrativos, valida campos obrigatórios, nor
 
 **Enunciado**
 
-A estrutura do exercício 3 é uma hipótese. Transforme-a em um registro contestável. A sequência abaixo já modela a reserva concorrente da agenda dentro da estrutura escolhida — use-a como evidência de uma consequência favorável e de uma restrição que a estrutura impõe. Em seguida, registre o ADR-001 com contexto, alternativas descartadas, decisão, consequências, evidências e gatilho de revisão.
+A estrutura do exercício 3 é uma hipótese. Transforme-a em um registro contestável. A sequência abaixo modela a reserva concorrente da agenda dentro dessa estrutura. Extraia dela uma consequência favorável e uma restrição que a estrutura impõe, e registre o ADR-001 seguindo o template.
 
 ```mermaid
 sequenceDiagram
@@ -262,7 +277,7 @@ Consequência desfavorável: aceitamos <custo> enquanto <condição> permanecer 
 Gatilho de revisão: se <medida> ultrapassar <valor> em <janela>, este registro é reaberto.
 ```
 
-Uma alternativa listada apenas pelo nome não foi comparada. Uma consequência só favorável indica que o custo não foi procurado. Um gatilho como "revisar no futuro" não obriga ninguém a nada.
+Alternativa listada só pelo nome não foi comparada. E um gatilho como "revisar no futuro" não obriga ninguém a nada.
 
 **Como conduzir**
 
