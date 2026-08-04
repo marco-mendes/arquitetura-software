@@ -54,7 +54,7 @@ Estímulo: a mesma remessa enviada duas vezes em menos de um segundo
 Ambiente: operação normal
 Artefato: módulo de submissão
 Resposta: uma remessa aceita e uma recusa com o protocolo da primeira
-Medida: nenhuma remessa duplicada em quinhentos envios concorrentes, no log
+Medida: nenhuma duplicada em quinhentos envios concorrentes
 ```
 
 Um cenário fraco costuma falhar na resposta ou na medida. "O sistema fica estável" não é resposta observável. "Responde rápido" não é medida enquanto não disser em quanto tempo e sob qual carga.
@@ -105,9 +105,9 @@ Em [padrões e decisões](padroes-e-decisoes.md), cada estilo traz uma tabela de
 Cada célula é uma frase com verbo, ligando estilo, capacidade e custo:
 
 ```text
-| Estilo | <capacidade 1> | <capacidade 2> | <capacidade 3> | Limite relevante |
+| Estilo | <capacidade> | <capacidade> | <capacidade> | Limite |
 | --- | --- | --- | --- | --- |
-| <estilo> | <o que o estilo faz por esta capacidade> | ... | ... | <o que ele não resolve> |
+| camadas | <o que faz por ela> | ... | ... | <o que não resolve> |
 ```
 
 Uma célula útil se parece com isto: "isola cada etapa de validação, ao custo de manter contrato e correlação entre elas". Alguém pode contestá-la com uma medição. Já "é o mais indicado" só pode ser repetido.
@@ -273,8 +273,10 @@ Os quatro campos que costumam sair fracos têm frase-modelo:
 Alternativa descartada: <nome> atenderia <força>, mas traria <risco>;
   foi descartada porque <evidência disponível ou ausência dela>.
 Consequência favorável: <efeito> observável em <onde se observa>.
-Consequência desfavorável: aceitamos <custo> enquanto <condição> permanecer verdadeira.
-Gatilho de revisão: se <medida> ultrapassar <valor> em <janela>, este registro é reaberto.
+Consequência desfavorável: aceitamos <custo> enquanto
+  <condição> permanecer verdadeira.
+Gatilho de revisão: se <medida> ultrapassar <valor> em
+  <janela>, este registro é reaberto.
 ```
 
 Alternativa listada só pelo nome não foi comparada. E um gatilho como "revisar no futuro" não obriga ninguém a nada.
