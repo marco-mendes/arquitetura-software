@@ -132,13 +132,33 @@ Entregue dois cenários completos em vez de três incompletos. Registre a capaci
 <details markdown="1">
 <summary>Referência do curso — abra só depois de fechar a sua versão</summary>
 
-Para a **agenda**: quando duas solicitações concorrentes tentarem reservar o mesmo horário em operação normal, apenas uma confirmação deve ser registrada e a outra deve receber resposta explícita; regras de remarcação devem mudar em um único módulo.
+Cada capacidade tem uma **força dominante**, mas costuma ter mais de um atributo de qualidade que vale medir. Abaixo, três por capacidade, cada um com uma medida concreta. (Glossário rápido: *p95* é o tempo abaixo do qual ficam 95% das respostas; *escala horizontal* é atender mais carga adicionando instâncias, em vez de trocar por uma máquina maior.)
 
-Para a **triagem administrativa**: quando uma unidade adotar uma nova etapa de coleta, em período de evolução, a equipe deve incluí-la sem alterar o núcleo de identificação, autorização e auditoria; os testes das extensões devem continuar isolados.
+**Agenda** — força dominante: consistência
 
-Para o **faturamento**: ao receber um lote de dez mil registros, o fluxo deve validar, normalizar, correlacionar e produzir a saída com identificação de rejeições por etapa; a medição deve informar itens por segundo e quantidade de rejeições.
+| Atributo de qualidade | Cenário e medida concreta |
+| --- | --- |
+| Consistência sob concorrência | 50 solicitações disputam o mesmo horário em operação normal: exatamente 1 confirmação e 49 conflitos explícitos. Medida: 0 reservas duplicadas em 1.000 tentativas concorrentes. |
+| Latência | Confirmar ou recusar uma reserva sob carga de 100 reservas/s. Medida: *p95* ≤ 300 ms. |
+| Escalabilidade | No pico das 8h a carga dobra para 200 reservas concorrentes por minuto. Medida: *p95* permanece ≤ 500 ms ao adicionar 1 instância (*escala horizontal*). |
 
-Esses cenários não são compromissos definitivos de produção. São hipóteses iniciais que tornam as alternativas comparáveis. A turma pode ajustar valores, desde que preserve fonte, estímulo, ambiente, resposta e medida.
+**Triagem administrativa** — força dominante: extensibilidade
+
+| Atributo de qualidade | Cenário e medida concreta |
+| --- | --- |
+| Extensibilidade | Uma unidade acrescenta uma nova etapa de coleta em período de evolução. Medida: 0 arquivos do núcleo alterados; a extensão liga e desliga por configuração; os testes do núcleo seguem passando. |
+| Latência | Encaminhamento completo da triagem (identificação → elegibilidade → autorização) com os serviços externos disponíveis. Medida: *p95* ≤ 800 ms. |
+| Disponibilidade (modo degradado) | A operadora não responde em 2 s: a triagem enfileira a autorização e segue o fluxo. Medida: disponibilidade da capacidade ≥ 99,5% no mês, mesmo com a operadora fora do ar. |
+
+**Faturamento** — força dominante: vazão (*throughput*)
+
+| Atributo de qualidade | Cenário e medida concreta |
+| --- | --- |
+| Vazão (*throughput*) | Lote de 10.000 registros validado, normalizado e correlacionado. Medida: ≥ 500 registros/s, com rejeições identificadas por etapa. |
+| Escalabilidade | O volume dobra para 20.000 registros. Medida: *throughput* ≥ 400 registros/s ao adicionar 1 instância de processamento (*escala horizontal*). |
+| Latência de janela | Fechamento do lote diário de 50.000 registros. Medida: concluído em ≤ 5 min, reportando registros/s e número de rejeições. |
+
+Esses valores não são compromissos de produção. São hipóteses iniciais que tornam as alternativas comparáveis; a turma pode ajustá-los, desde que a medida preserve número, unidade e condição de observação.
 
 </details>
 
@@ -163,11 +183,12 @@ Em [padrões e decisões](padroes-e-decisoes.md), cada estilo traz uma tabela de
 
 Cada célula é uma frase com verbo, ligando estilo, capacidade e custo:
 
-```text
-| Estilo | <capacidade> | <capacidade> | <capacidade> |
+| Estilo | Agenda | Triagem administrativa | Faturamento |
 | --- | --- | --- | --- |
-| camadas | <o que faz por ela> | ... | ... |
-```
+| Camadas |  |  |  |
+| Pipes and filters |  |  |  |
+| Microkernel |  |  |  |
+| Monólito modular |  |  |  |
 
 Uma célula útil se parece com isto: "isola cada etapa de validação, ao custo de manter contrato e correlação entre elas". Alguém pode contestá-la com uma medição. Já "é o mais indicado" só pode ser repetido.
 
@@ -306,7 +327,7 @@ A estrutura do exercício 3 é uma aposta, não uma verdade. Aqui você a transf
 
 > É como anotar uma decisão importante num caderno: "escolhi o plano X porque Y; se o preço passar de Z, reavalio". Meses depois, qualquer um entende a escolha e sabe quando ela deixou de valer.
 
-O diagrama de sequência abaixo mostra dois pedidos concorrentes tentando reservar na agenda dentro dessa estrutura. A partir dele, tire uma consequência **favorável** e uma **restrição** que a estrutura impõe, e registre o `ADR-001` seguindo o template.
+O diagrama de sequência abaixo mostra o momento mais delicado da agenda: dois pedidos concorrentes disputando o mesmo horário, dentro da estrutura que você desenhou no exercício 3.
 
 ```mermaid
 sequenceDiagram
@@ -333,6 +354,17 @@ sequenceDiagram
 
 **Leitura textual da figura:** a Equipe administrativa solicita um horário pela Interface, que chama Agenda com o horário e a correlação. Agenda verifica e registra a reserva de modo atômico. Se houver horário, registra a confirmação em Auditoria; se houver conflito, registra a tentativa rejeitada. Em ambos os casos, a Interface devolve um resultado explícito à equipe.
 
+**O que o diagrama te diz — e por que o monólito modular ajuda aqui**
+
+Repare no passo em que a Agenda "verifica e registra de forma atômica". Como Agenda, Triagem e Faturamento vivem numa **única implantação, com um só banco de dados**, reservar um horário é uma **transação local**: o próprio banco garante que, entre dois pedidos ao mesmo tempo, só um consegue gravar. É como um caixa único com um só caderno de reservas — duas pessoas não escrevem na mesma linha ao mesmo tempo. Não é preciso coordenar serviços separados nem criar um protocolo entre eles.
+
+Essa é a **consequência favorável** que o ADR vai registrar. Toda escolha cobra um preço, e aqui está a **restrição**: como tudo roda no mesmo processo, um lote pesado de faturamento disputa recursos com a agenda — escala e falha ficam compartilhadas.
+
+Você já tem as duas peças. Use estas frases no ADR (pode copiar ou reescrever com suas palavras):
+
+- **Consequência favorável:** garantir "nunca duas reservas no mesmo horário" é simples, porque a reserva é uma transação local em um único banco — sem coordenar serviços distribuídos.
+- **Restrição aceita:** enquanto tudo estiver numa só implantação, agenda e faturamento dividem processo, escala e falha; se o faturamento precisar escalar sozinho, o módulo terá de ser extraído.
+
 **Onde aprender a fazer**
 
 O que é um ADR e por que ele registra hipótese em vez de sentença está em [ADR: o mecanismo para escolher estilos](padroes-e-decisoes.md#adr-o-mecanismo-para-escolher-estilos). A estrutura de seções e o que entra em cada uma está no [template de ADR](../referencia/template-adr.md). Um registro curto já escrito, para comparar tamanho e tom, é a [decisão provisória](exemplo-arquitetural.md#decisao-provisoria) do exemplo arquitetural. O [incremento 1](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) informa o destino do artefato.
@@ -355,10 +387,10 @@ Alternativa listada só pelo nome não foi comparada. E um gatilho como "revisar
 
 **Como conduzir**
 
-1. Leia a sequência e escreva uma consequência favorável e uma desfavorável que ela evidencia.
-2. Copie o template para `ADR-001-estrutura-inicial.md`.
-3. Registre contexto, forças, ao menos duas alternativas descartadas, decisão e consequências dos dois sinais.
-4. Escreva evidências e gatilho de revisão: que medida, observada quando, obrigaria a turma a reabrir esta decisão.
+1. Copie o template para `ADR-001-estrutura-inicial.md` e registre a decisão: **monólito modular** como estrutura inicial.
+2. Cole as duas frases prontas do enunciado — a consequência favorável e a restrição — ou reescreva com suas palavras.
+3. Acrescente **uma** alternativa que você descartou, com a força que ela atenderia e o risco que traria (ex.: "separar cada capacidade em um serviço desde já atenderia escala independente, mas traria coordenação distribuída sem evidência de que precisamos dela agora").
+4. Escreva o gatilho de revisão: a medida que, se acontecer, reabre a decisão (ex.: "se o faturamento precisar de escala própria comprovada, reabrir o ADR").
 
 **Entregável**
 
