@@ -4,11 +4,11 @@ Para o vocabulário de leitura de diagramas, decisões, restrições e cenários
 
 ## Estilos arquiteturais
 
-Um **estilo arquitetural** nomeia organizações com elementos, conectores e restrições comuns. Oferece vocabulário, não receita: duas soluções em camadas podem ter tecnologias distintas e ainda restringir dependências por responsabilidade.
+Um **estilo arquitetural** é um jeito conhecido de organizar as partes de um sistema — as peças (*elementos*), as ligações entre elas (*conectores*) e as regras sobre o que pode depender de quê (*restrições*). Pense nos estilos de planta de casa: sobrado, casa térrea, loft. Cada um arruma os mesmos cômodos de um jeito, com vantagens e limites já conhecidos. O estilo dá vocabulário, não receita: duas soluções em camadas podem usar tecnologias diferentes e ainda assim organizar as dependências por responsabilidade.
 
 ## Um mapa antes da escolha
 
-Antes de comparar implementações, localize o problema. O mapa não é sequência de evolução nem lista de tecnologias; evita usar microsserviços para uma regra local ou Kubernetes para uma fronteira ainda desconhecida.
+Antes de comparar soluções, descubra que problema você tem. Este mapa não é uma escada de evolução nem uma lista de tecnologias: ele serve para evitar erros comuns, como usar microsserviços para uma regra simples ou Kubernetes para uma fronteira que ainda nem está clara.
 
 ![Diagrama em quatro cartões: organização interna pergunta como responsabilidades colaboram; decomposição por domínio reúne DDD, microsserviços e macrosserviços; integração e comunicação pergunta qual contrato atravessa a fronteira; execução e operação reúne nuvem, contêineres, orquestração e serverless.](../assets/images/m01-familias-arquiteturais.svg)
 

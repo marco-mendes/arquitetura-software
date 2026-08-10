@@ -134,8 +134,6 @@ Exemplos de tais soluções API incluem wearables inteligentes, carros inteligen
 
 ---
 
-Estas ferramentas abrangem o desenvolvimento, execução e engajamento de APIs, oferecendo soluções robustas para cada etapa do ciclo de vida de uma API.
-
 ## Resumo - A Agenda do Arquiteto para APIs
 
 ![A agenda do arquiteto para APIs em seis frentes: desenhar, implementar e testar, documentar, definir tecnologias, gerenciar e reutilizar APIs, com etapas conduzidas junto com o time.](https://github.com/user-attachments/assets/cf10adc2-d2a1-4a37-b95f-57d59151afaf)

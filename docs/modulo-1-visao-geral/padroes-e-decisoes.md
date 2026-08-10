@@ -13,9 +13,11 @@ Vamos examinar aqui nessa seção alguns estilos arquiteturais que nos ajudam a 
 
 ## Camadas {#camadas}
 
-Camadas é uma regra de dependência, não somente caixas empilhadas. A apresentação traduz interação e formato; a aplicação coordena casos de uso; o domínio preserva regras e invariantes; a infraestrutura oferece banco, mensageria e outros adaptadores. Cada chamada atravessa uma fronteira conhecida, para que a regra de negócio possa ser exercitada sem iniciar HTTP ou banco.
+> Pense nos andares de um prédio: cada andar conversa só com o vizinho, sem pular direto para outro.
 
-O estilo em camadas (*layered architecture*) é o mais difundido da engenharia de software por um motivo simples: ele emerge naturalmente da estrutura da maioria das equipes. Mark Richards e Neal Ford descrevem esse fenômeno em *Fundamentals of Software Architecture* como *architecture by implication* — o estilo surge por inércia, não por decisão deliberada. A **Lei de Conway** explica o porquê: organizações produzem arquiteturas que espelham sua estrutura de comunicação, e uma equipe dividida em frontend, backend e banco de dados tende a produzir um sistema em três camadas — apresentação, negócios e dados —, independentemente de o arquiteto ter planejado isso. A forma apresentada nesta página refina a camada de negócios em aplicação e domínio.
+Camadas é uma regra de dependência, não somente caixas empilhadas. A apresentação traduz interação e formato; a aplicação coordena casos de uso; o domínio preserva as regras e **invariantes** (condições que precisam valer sempre, como um saldo que nunca pode ficar negativo); a infraestrutura oferece banco, mensageria e outros adaptadores. Cada chamada atravessa uma fronteira conhecida, para que a regra de negócio possa ser exercitada sem iniciar HTTP ou banco.
+
+O estilo em camadas (*layered architecture*) é o mais difundido da engenharia de software por um motivo simples: ele emerge naturalmente da estrutura da maioria das equipes. Mark Richards e Neal Ford descrevem esse fenômeno em *Fundamentals of Software Architecture* como *architecture by implication* — o estilo surge por inércia, não por decisão deliberada. A **Lei de Conway** explica o porquê: organizações produzem arquiteturas que espelham sua estrutura de comunicação. Uma equipe dividida em frontend, backend e banco de dados tende a produzir um sistema em três camadas — apresentação, negócios e dados —, mesmo que o arquiteto não tenha planejado isso. A forma apresentada nesta página refina a camada de negócios em aplicação e domínio.
 
 ```mermaid
 flowchart TB
@@ -202,7 +204,7 @@ O estilo foi consolidado em frameworks amplamente adotados:
 | Model e negócios | .NET Core, Spring Boot, Node.js (Express), FastAPI      |
 | Dados            | Entity Framework, Hibernate, ActiveRecord, SQLAlchemy   |
 
-**DDD** (*Domain-Driven Design*) organiza a camada de negócios por conceitos do domínio em vez de tipo técnico. Enquanto o MVC separa model, view e controller, o DDD separa Pedido, Pagamento e Cliente — e protege as regras de negócio de cada conceito dentro de seu próprio **agregado**. Num exemplo de vendas, o agregado `Pedido` contém entidades `ItemPedido`, usa o objeto de valor `Dinheiro` para preservar invariantes monetárias e é salvo e recuperado por um repositório `PedidoRepositorio`. Prefira DDD a camadas simples quando as regras de negócio são complexas, mudam com frequência e o risco dominante é o mal-entendido entre o time técnico e os especialistas de negócio — tema retomado na [Unidade 3](../modulo-3-servicos/index.md).
+**DDD** (*Domain-Driven Design*) organiza a camada de negócios por conceitos do domínio em vez de tipo técnico. Enquanto o MVC separa model, view e controller, o DDD separa Pedido, Pagamento e Cliente — e protege as regras de negócio de cada conceito dentro de seu próprio **agregado** (um grupo de objetos tratado como uma unidade, com uma raiz que controla o acesso ao conjunto). Num exemplo de vendas, o agregado `Pedido` contém entidades `ItemPedido`, usa o objeto de valor `Dinheiro` para preservar invariantes monetárias e é salvo e recuperado por um repositório `PedidoRepositorio`. Prefira DDD a camadas simples quando as regras de negócio são complexas, mudam com frequência e o risco dominante é o mal-entendido entre o time técnico e os especialistas de negócio — tema retomado na [Unidade 3](../modulo-3-servicos/index.md).
 
 ```mermaid
 flowchart TD
@@ -304,13 +306,15 @@ Distribuir camadas fisicamente não resolve acoplamento lógico mal definido: um
 
 ### Quando usar — e quando não usar
 
-**Use camadas quando:** o sistema tem escopo e regras de negócio bem definidos; a equipe é pequena e o orçamento é limitado; velocidade de desenvolvimento inicial importa mais que escalabilidade; o sistema é predominantemente CRUD com lógica de negócio moderada.
+**Use camadas quando:** o sistema tem escopo e regras de negócio bem definidos; a equipe é pequena e o orçamento é limitado; velocidade de desenvolvimento inicial importa mais que escalabilidade; o sistema é predominantemente **CRUD** — as quatro operações básicas sobre dados: criar, ler, atualizar e remover — com lógica de negócio moderada.
 
 **Não use camadas quando:** alta escalabilidade ou elasticidade são requisitos não negociáveis; mais de 80% das requisições são sumidouros — o estilo acrescenta latência sem valor; times independentes precisam implantar partes do sistema autonomamente; o problema central é processamento de dados em etapas — compare com [Pipes and Filters](#pipes-and-filters); ou a extensibilidade do produto para diferentes mercados é o driver central — compare com [Microkernel](#microkernel).
 
 A discussão do estilo acompanha Richards e Ford (*Fundamentals of Software Architecture*, 2ª ed., O'Reilly, 2022, cap. 10), Fowler (*Patterns of Enterprise Application Architecture*, Addison-Wesley, 2002) e Evans (*Domain-Driven Design*, Addison-Wesley, 2003).
 
 ## Pipes and Filters {#pipes-and-filters}
+
+> Pense numa esteira de fábrica: cada etapa faz uma coisa e passa o resultado adiante.
 
 Pipes and Filters decompõe uma transformação em filtros ligados por pipes. Cada filtro recebe um valor contratual e devolve novo valor ou **rejeição** explícita; o pipe transporta o resultado sem expor detalhes internos. O contrato nomeia formato, correlação, campos preservados, motivo e destino da rejeição, permitindo testar e observar cada etapa.
 
@@ -362,7 +366,7 @@ class FiltroTransformador:
         return {**dado, "valor_normalizado": dado["valor"] / 100}
 ```
 
-As forças são composição, reuso, diagnóstico e controle de **throughput** por filtro; os limites são contratos intermediários, latência, estado e recuperação parcial. Use quando a sequência de dados e as entradas e saídas são claras; evite interação rica que exige consistência imediata.
+As forças são composição, reuso, diagnóstico e controle de **throughput** (a vazão de itens processados por unidade de tempo) por filtro; os limites são contratos intermediários, latência, estado e recuperação parcial. Use quando a sequência de dados e as entradas e saídas são claras; evite interação rica que exige consistência imediata.
 
 No **Faturamento** hospitalar, validar, normalizar códigos, enriquecer dados do convênio e publicar formam um pipeline verificável. A rejeição preserva lote, etapa e causa; a decisão exige medir throughput em ambiente representativo e declarar a ordenação de documentos do mesmo atendimento.
 
@@ -441,13 +445,15 @@ O acervo do curso traz ainda um segundo exemplo, que processa linhas de log e ma
 
 ### Quando usar Pipes and Filters — e quando não usar
 
-**Use Pipes and Filters quando:** o problema é um fluxo de transformações de dados, como ETL, validação em múltiplas etapas ou processamento de logs; a testabilidade isolada de cada etapa é crítica; equipes diferentes desenvolvem etapas de forma independente; ou o pipeline precisa ser composto e recomposto dinamicamente.
+**Use Pipes and Filters quando:** o problema é um fluxo de transformações de dados, como **ETL** (extrair, transformar e carregar dados de uma origem para um destino), validação em múltiplas etapas ou processamento de logs; a testabilidade isolada de cada etapa é crítica; equipes diferentes desenvolvem etapas de forma independente; ou o pipeline precisa ser composto e recomposto dinamicamente.
 
 **Não use Pipes and Filters quando:** o sistema tem forte lógica de negócio hierárquica — compare com [Camadas](#camadas) e DDD; as etapas precisam compartilhar estado mútuo, o que destrói a independência dos filtros; a latência acumulada das etapas é inaceitável para o caso de uso; ou o fluxo é não linear e requer orquestração complexa — tema das arquiteturas de eventos na [Unidade 5](../modulo-5-eventos/index.md).
 
 A discussão do estilo acompanha Richards e Ford (*Fundamentals of Software Architecture*, 2ª ed., O'Reilly, 2022, cap. 11), Hohpe e Woolf (*Enterprise Integration Patterns*, Addison-Wesley, 2003) e Shaw e Garlan (*Software Architecture: Perspectives on an Emerging Discipline*, Prentice Hall, 1996).
 
 ## Microkernel {#microkernel}
+
+> Pense num videogame com cartuchos: o núcleo é fixo e os encaixes são opcionais.
 
 Microkernel separa um núcleo invariável das extensões. O núcleo preserva identidade, autorização, ciclo de vida e orquestração; o **registro** descobre extensões e seleciona a apropriada. Um **plugin** conhece apenas capacidades públicas, nunca tabelas ou objetos internos.
 
@@ -608,7 +614,9 @@ A discussão do estilo acompanha Richards e Ford (*Fundamentals of Software Arch
 
 ### Monólito modular: uma implantação, capacidades com autonomia interna
 
-Há uma implantação, mas Agenda, Triagem, Faturamento e Auditoria mantêm modelos e interfaces próprias. Pasta não cria fronteira: evite consulta direta, imports internos e contratos sem revisão. Reavalie quando escala, falha ou implantação independente forem medidos.
+> Pense numa casa com cômodos bem separados: um só teto, paredes claras entre os cômodos.
+
+Há uma implantação, mas Agenda, Triagem, Faturamento e Auditoria mantêm modelos e interfaces próprias. Uma pasta separada não cria, sozinha, uma fronteira de verdade: evite consulta direta, imports internos e contratos sem revisão. Reavalie quando escala, falha ou implantação independente forem medidos.
 
 Um monólito é apenas um sistema com exatamente uma unidade de implantação — a definição, de Kamil Grzybek, separa a decisão de implantação da decisão de organização interna. O **monólito modular** explora essa separação: uma única unidade implantável, organizada em módulos alinhados ao domínio, em **fatias verticais** que reúnem API, casos de uso, regras e persistência de uma capacidade de negócio — em vez de camadas técnicas horizontais. Cada módulo é dono do próprio comportamento e dos próprios dados, atrás de um contrato estável; o restante fica encapsulado. Richards e Ford dedicam um capítulo ao estilo na 2ª edição de *Fundamentals of Software Architecture*, e Simon Brown popularizou a provocação que o acompanha: se você não consegue construir um monólito bem estruturado, o que faz pensar que microsserviços são a resposta?
 
