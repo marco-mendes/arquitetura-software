@@ -2,15 +2,60 @@
 
 ## Delimitação do caso
 
-O [contexto hospitalar compartilhado](../projeto-integrador/contexto-hospitalar.md) descreve uma operação administrativa simplificada. A plataforma coordena cadastro, agenda, elegibilidade, autorização, exames, faturamento, notificações e auditoria. Não recomenda tratamento nem interpreta resultados. Informações sensíveis devem circular com autorização, significado e rastreabilidade.
+O [contexto hospitalar compartilhado](../projeto-integrador/contexto-hospitalar.md) descreve uma operação administrativa simplificada. A plataforma coordena a jornada do paciente sem recomendar tratamento nem interpretar resultados; informação sensível circula com autorização, significado e rastreabilidade.
 
-Antes de escolher estruturas, separe capacidades e ritmos de mudança. Agenda recebe muitas interações curtas e precisa evitar conflitos. Triagem administrativa reúne dados necessários para encaminhar a jornada e pode variar conforme unidade. Faturamento consolida registros de origens distintas, valida, transforma e encaminha lotes. As três capacidades pertencem à mesma plataforma, mas suas forças não são idênticas.
+### O que é uma capacidade
+
+Uma **capacidade** é uma coisa que o negócio precisa que seja feita — um trabalho com valor próprio, como *marcar uma consulta* ou *fechar a conta com a operadora*. Ela diz **o quê** se entrega, não **como** se faz. "Marcar uma consulta" é a mesma capacidade quer seja feita por uma recepcionista com uma agenda de papel, quer por um aplicativo. A tecnologia é o *como* e pode mudar; a capacidade é o *quê* e permanece.
+
+> Pense no balcão de uma clínica. Há um guichê para marcar horário, outro para conferir o convênio, outro para pagar. Cada guichê é uma capacidade: um serviço com começo, fim e responsabilidade claros. Trocar o computador do guichê não muda o que ele faz.
+
+Essa distinção importa porque **a mesma capacidade pode ser construída de várias formas**, e escolher entre essas formas é o trabalho de arquitetura que este caso pratica. Para comparar as opções sem se perder, descreva cada capacidade por quatro traços simples:
+
+- **Resultado** — o que ela entrega quando dá certo.
+- **Força dominante** — a exigência que mais pesa sobre ela (por exemplo: não aceitar duas reservas no mesmo horário, ou dar conta de muitos registros de uma vez).
+- **Ritmo de mudança** — com que frequência as regras dela mudam.
+- **Fronteira** — onde ela termina e a vizinha começa.
+
+### Capacidades em escopo
+
+O caso trabalha oito capacidades, detalhadas no [contexto compartilhado](../projeto-integrador/contexto-hospitalar.md#capacidades-em-escopo). Na coluna de força dominante, a palavra em negrito é o termo técnico (você o reencontra em [atributos de qualidade](../referencia/atributos-de-qualidade.md)) e o resto é o que ele significa aqui. É uma hipótese inicial, não um veredito — os exercícios existem para medi-la.
+
+| Capacidade | Resultado que entrega | Força dominante (hipótese) |
+| --- | --- | --- |
+| Cadastro | identificar paciente e profissional e manter dados administrativos | **integridade**: cada pessoa tem um registro correto e único |
+| Agenda | consultar, solicitar, confirmar, remarcar e cancelar atendimento | **consistência**: nunca confirmar duas reservas para o mesmo horário |
+| Elegibilidade | verificar se o vínculo com o plano está apto para a solicitação | **disponibilidade**: responder mesmo quando a operadora demora ou cai |
+| Autorização | enviar solicitação à operadora e acompanhar a decisão | **rastreabilidade**: guardar o que foi pedido e o que foi respondido |
+| Exames e resultados | encaminhar pedido, acompanhar estado e receber resultado protegido | **privacidade**: proteger o resultado e ligá-lo ao pedido certo |
+| Faturamento | consolidar registros administrativos do ciclo financeiro | **vazão** (*throughput*): dar conta de muitos registros de uma vez |
+| Notificações | informar mudanças sem expor dado sensível desnecessário | **pertinência**: avisar só o necessário, sem vazar dado sensível |
+| Auditoria | registrar ações e correlações suficientes para prestação de contas | **rastreabilidade**: reconstruir quem fez o quê e quando |
+
+### As três capacidades que os exercícios aprofundam
+
+Trabalhar as oito com a mesma profundidade seria demais para começar. Os quatro exercícios escolhem **três** e as usam do início ao fim, porque elas puxam para lados opostos.
+
+- **Agenda** — muitas ações curtas e o risco de marcar o mesmo horário duas vezes. Sua força é a **consistência**: como quando duas pessoas tentam comprar a mesma poltrona do cinema ao mesmo tempo e só uma pode levar.
+- **Triagem administrativa** — reúne cadastro, elegibilidade e autorização para encaminhar o paciente, e cada unidade do hospital pode ter uma etapa a mais. Sua força é a **extensibilidade**: acrescentar uma etapa nova sem mexer no que já funciona, como encaixar mais uma peça de Lego.
+- **Faturamento** — junta registros de várias origens, confere, ajusta e envia em lotes. Sua força é a **vazão** (*throughput*): dar conta de um grande volume de uma vez, como uma esteira que separa milhares de cartas por hora.
+
+As três vivem na mesma plataforma, mas pedem coisas diferentes — e essa diferença é o que o exercício 2 vai deixar comparável.
+
+Sobre o nome: **triagem administrativa** é como o caso chama o conjunto das etapas de pré-atendimento — cadastro, elegibilidade e autorização — quando olhamos para elas como um bloco só: um núcleo estável no meio e encaixes opcionais por unidade em volta.
 
 ## Como trabalhar esta página
 
-O caso está organizado em quatro exercícios curtos e encadeados. A saída de um é a entrada do seguinte: cenários alimentam a matriz de estilos, a matriz sustenta a estrutura, e a estrutura sustenta a decisão registrada. Trabalhe em dupla e prefira um artefato curto e completo a um texto longo pela metade. O ritmo de cada exercício é definido em aula.
+São quatro exercícios curtos, e cada um usa o resultado do anterior. Pense numa decisão comum, como escolher onde morar: primeiro você lista o que importa (perto do trabalho, silêncio, preço), depois compara as opções por esses critérios, então desenha a planta do lugar escolhido e, por fim, anota por que decidiu assim — e o que faria você mudar de ideia. Os exercícios seguem essa mesma ordem:
 
-No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/estudo-de-caso/` antes de começar. Cada exercício grava um arquivo nessa pasta.
+1. Os **cenários** dizem o que importa, de um jeito que dá para medir.
+2. A **matriz** compara os estilos usando esses cenários como critério.
+3. A **estrutura** desenha a opção escolhida.
+4. O **ADR** registra a decisão e a condição que a faria ser revista.
+
+Como a saída de um é a entrada do próximo, vale mais um artefato curto e completo do que um texto longo pela metade. Trabalhe em dupla; o ritmo de cada exercício é combinado em aula.
+
+No terminal aberto na raiz do repositório `arquitetura-software`, crie a pasta `entregas/unidade-1/estudo-de-caso/` antes de começar. Cada exercício grava um arquivo nela.
 
 | Exercício | Foco | Entregável |
 | --- | --- | --- |
@@ -19,15 +64,19 @@ No terminal aberto na raiz do repositório `arquitetura-software`, crie `entrega
 | 3 | Estrutura inicial e diagrama | `estrutura.md` |
 | 4 | Consequências e decisão registrada | `ADR-001-estrutura-inicial.md` |
 
-Cada exercício indica **onde aprender a fazer**, com a página e a seção que ensinam o método, e a **forma do artefato**, com o esqueleto que você completa. O formato vem pronto para que o esforço seja gasto na decisão.
+Cada exercício mostra **onde aprender a fazer** (a página e a seção que ensinam o método) e a **forma do artefato** (um esqueleto pronto para você completar). O esqueleto já vem montado de propósito: assim seu esforço vai para a decisão, não para a formatação.
 
-Cada exercício termina com uma **Referência do curso**: uma resposta possível, elaborada pelo material, para comparação depois da sua tentativa. Ela não é gabarito. Um grupo pode divergir sempre que comparar as mesmas forças, assumir as consequências e oferecer evidência reproduzível. Leia a referência só depois de encerrar a sua versão; ler antes elimina o exercício.
+Cada exercício termina com uma **Referência do curso** recolhida — uma resposta possível, escrita pelo material, para você comparar **depois** de tentar. Não é gabarito: seu grupo pode chegar a outra resposta, desde que compare as mesmas forças, assuma as consequências e mostre uma evidência que outra pessoa consiga repetir. Abra o bloco só depois de fechar a sua versão; ver antes tira o valor do exercício.
 
 ## Exercício 1 — Cenários por capacidade
 
 **Enunciado**
 
-Agenda, triagem administrativa e faturamento pertencem à mesma plataforma e têm forças diferentes. Escreva um cenário mensurável para cada capacidade, de modo que duas alternativas estruturais possam ser comparadas pela mesma medida. Um cenário é mensurável quando declara fonte, estímulo, ambiente, artefato, resposta e medida. O teste é simples: outra pessoa consegue julgar se ele foi atendido sem conversar com quem o escreveu.
+Agenda, triagem administrativa e faturamento vivem na mesma plataforma, mas pedem coisas diferentes. Para cada uma, escreva um **cenário mensurável**: uma frase de teste tão clara que duas soluções possam ser comparadas pela mesma régua.
+
+> É a diferença entre uma receita que diz "asse por 20 minutos a 180°C" e outra que diz "asse até ficar bom". Só a primeira pode ser conferida por qualquer pessoa.
+
+Um cenário é mensurável quando diz seis coisas — fonte, estímulo, ambiente, artefato, resposta e medida (o esqueleto abaixo explica cada uma). O teste de qualidade é simples: outra pessoa consegue dizer se o cenário foi atendido **sem precisar te perguntar nada**.
 
 **Onde aprender a fazer**
 
@@ -61,7 +110,7 @@ Um cenário fraco costuma falhar na resposta ou na medida. "O sistema fica está
 
 **Como conduzir**
 
-1. Nomeie a força dominante de cada capacidade em uma palavra e registre-a: por exemplo consistência, extensibilidade ou throughput.
+1. Nomeie a força dominante de cada capacidade em uma palavra e registre-a: por exemplo consistência, extensibilidade ou vazão.
 2. Escreva os três cenários com as seis partes. Use valores plausíveis e marque cada um como suposição.
 3. Na revisão, troque cada adjetivo por número, unidade e condição de observação.
 
@@ -80,7 +129,8 @@ Um cenário fraco costuma falhar na resposta ou na medida. "O sistema fica está
 
 Entregue dois cenários completos em vez de três incompletos. Registre a capacidade que ficou de fora e a razão; o exercício 2 continuará com o que existir.
 
-**Referência do curso**
+<details markdown="1">
+<summary>Referência do curso — abra só depois de fechar a sua versão</summary>
 
 Para a **agenda**: quando duas solicitações concorrentes tentarem reservar o mesmo horário em operação normal, apenas uma confirmação deve ser registrada e a outra deve receber resposta explícita; regras de remarcação devem mudar em um único módulo.
 
@@ -90,11 +140,20 @@ Para o **faturamento**: ao receber um lote de dez mil registros, o fluxo deve va
 
 Esses cenários não são compromissos definitivos de produção. São hipóteses iniciais que tornam as alternativas comparáveis. A turma pode ajustar valores, desde que preserve fonte, estímulo, ambiente, resposta e medida.
 
+</details>
+
 ## Exercício 2 — Matriz de estilos por capacidade
 
 **Enunciado**
 
-Compare os quatro estilos contra as três capacidades, usando os cenários do exercício 1 como critério. Uma linha por estilo, uma coluna por capacidade e uma coluna final para o limite mais relevante. Cada estilo precisa sair da matriz com uma força e um limite. Um estilo que aparece sem limite significa que a análise dele ficou incompleta.
+Um **estilo arquitetural** é um jeito conhecido de organizar as partes de um sistema — como plantas de casa que já vêm com vantagens e desvantagens conhecidas. Você vai comparar quatro:
+
+- **Camadas** — separa o sistema em níveis, cada um falando só com o vizinho, como os andares de um prédio.
+- **Pipes and filters** (canos e filtros) — passa o trabalho por etapas em sequência, como uma esteira de fábrica: cada etapa faz uma coisa e entrega para a próxima.
+- **Microkernel** (núcleo e plugins) — um miolo fixo com encaixes opcionais, como um videogame que roda cartuchos diferentes sem trocar o console.
+- **Monólito modular** — um único programa dividido em cômodos bem separados, como uma casa com paredes claras: tudo sob o mesmo teto, cada cômodo com sua função.
+
+Monte uma tabela — a **matriz** — com uma linha por estilo e uma coluna por capacidade. É a mesma ideia de comparar celulares numa tabela: os modelos nas linhas, o que importa nas colunas. Use os cenários do exercício 1 como régua. Em cada célula, escreva o que aquele estilo faz por aquela capacidade.
 
 **Onde aprender a fazer**
 
@@ -105,18 +164,18 @@ Em [padrões e decisões](padroes-e-decisoes.md), cada estilo traz uma tabela de
 Cada célula é uma frase com verbo, ligando estilo, capacidade e custo:
 
 ```text
-| Estilo | <capacidade> | <capacidade> | <capacidade> | Limite |
-| --- | --- | --- | --- | --- |
-| camadas | <o que faz por ela> | ... | ... | <o que não resolve> |
+| Estilo | <capacidade> | <capacidade> | <capacidade> |
+| --- | --- | --- | --- |
+| camadas | <o que faz por ela> | ... | ... |
 ```
 
 Uma célula útil se parece com isto: "isola cada etapa de validação, ao custo de manter contrato e correlação entre elas". Alguém pode contestá-la com uma medição. Já "é o mais indicado" só pode ser repetido.
 
 **Como conduzir**
 
-1. Reproduza a tabela vazia com as quatro linhas e as quatro colunas.
+1. Reproduza a tabela vazia: uma linha para cada um dos quatro estilos e uma coluna para cada uma das três capacidades.
 2. Complete célula a célula, escrevendo o que o estilo faz por aquela capacidade.
-3. Escreva o limite de cada estilo e marque as duas células em que a evidência disponível hoje é insuficiente para decidir.
+3. Marque as duas células em que a evidência disponível hoje é insuficiente para decidir.
 
 **Entregável**
 
@@ -125,7 +184,6 @@ Uma célula útil se parece com isto: "isola cada etapa de validação, ao custo
 **Critério de pronto**
 
 - As doze células de estilo por capacidade estão escritas, inclusive as combinações desfavoráveis.
-- Cada estilo tem um limite nomeado.
 - Duas células estão marcadas como carentes de evidência, com a medição que resolveria a dúvida.
 - Nenhuma célula usa o nome do domínio como argumento: "é hospitalar" não é força.
 
@@ -133,22 +191,29 @@ Uma célula útil se parece com isto: "isola cada etapa de validação, ao custo
 
 Complete a coluna da capacidade mais crítica e deixe as outras vazias. O exercício 3 precisa saber o que não foi examinado.
 
-**Referência do curso**
+<details markdown="1">
+<summary>Referência do curso — abra só depois de fechar a sua versão</summary>
 
-| Estilo | Agenda | Triagem administrativa | Faturamento | Limite relevante |
-| --- | --- | --- | --- | --- |
-| Camadas | separa interface, aplicação, regras e persistência | separa coleta, regra e integração | testa transformações sem infraestrutura | não representa sozinho extensões ou fluxo |
-| Pipes and filters | pouco natural para reserva interativa | pode organizar etapas lineares | corresponde a validação e transformação em lote | contratos e correlação entre filtros |
-| Microkernel | útil apenas se regras variarem muito | favorece etapas opcionais por unidade | pode isolar layouts de parceiros | compatibilidade entre núcleo e plugins |
-| Monólito modular | preserva consistência local e fronteira de agenda | separa capacidade sem nova implantação | mantém módulos próximos com contratos internos | escala e falha permanecem no mesmo processo |
+| Estilo | Agenda | Triagem administrativa | Faturamento |
+| --- | --- | --- | --- |
+| Camadas | separa interface, aplicação, regras e persistência | separa coleta, regra e integração | testa transformações sem infraestrutura |
+| Pipes and filters | pouco natural para reserva interativa | pode organizar etapas lineares | corresponde a validação e transformação em lote |
+| Microkernel | útil apenas se regras variarem muito | favorece etapas opcionais por unidade | pode isolar layouts de parceiros |
+| Monólito modular | preserva consistência local e fronteira de agenda | separa capacidade sem nova implantação | mantém módulos próximos com contratos internos |
 
 A matriz não elege sozinha um estilo. Ela mostra que a agenda separa mais as alternativas: reserva concorrente favorece consistência local, enquanto faturamento admite tanto camadas quanto fluxo.
+
+</details>
 
 ## Exercício 3 — Estrutura inicial e diagrama
 
 **Enunciado**
 
-Escolha uma estrutura geral para a plataforma e represente-a em um diagrama. O desenho deve nomear os módulos, os conectores entre eles, o que atravessa a fronteira do sistema e onde cada estilo interno atua. Toda figura precisa de texto alternativo e leitura textual: se a explicação em prosa não coincidir com o desenho, o desenho ainda não está pronto.
+Agora escolha **uma estrutura** para a plataforma inteira e desenhe-a. Estrutura, aqui, é a planta baixa do sistema: quais são as partes (os **módulos**), como elas se falam (os **conectores**), o que entra e sai por fora (a **fronteira**) e qual estilo organiza cada parte por dentro.
+
+> É como a planta de uma casa: mostra os cômodos, as portas entre eles e a porta da rua. Quem olha entende a casa sem precisar andar por ela.
+
+O desenho precisa **nomear** as partes — nada de caixas genéricas — e vir com duas descrições em texto: o **texto alternativo**, para quem não enxerga a figura, e a **leitura textual**, que percorre o desenho em palavras. Se a descrição em texto não bater com o desenho, o desenho ainda não está pronto.
 
 **Onde aprender a fazer**
 
@@ -199,7 +264,8 @@ Se a leitura textual mencionar uma seta que não existe no diagrama, o desenho e
 
 Entregue o diagrama sem os estilos internos, mas com a leitura textual completa. Uma figura sem equivalente textual não é entregável, porque deixa de ser legível para parte da turma.
 
-**Referência do curso**
+<details markdown="1">
+<summary>Referência do curso — abra só depois de fechar a sua versão</summary>
 
 Uma alternativa inicial é usar monólito modular como estrutura geral. Os módulos `agenda`, `triagem`, `faturamento` e `auditoria` possuem interfaces explícitas e uma unidade de implantação. Dentro de triagem, um microkernel organiza extensões administrativas. Dentro de faturamento, pipes and filters organiza o lote. Camadas podem estruturar a agenda para separar entrada, aplicação, regra e persistência.
 
@@ -228,13 +294,19 @@ O desenho não significa que todos os módulos podem acessar todos os dados. Cad
 
 O núcleo da triagem conhece identidade da jornada, estados permitidos, autorização de ações e emissão de fatos auditáveis. Plugins implementam etapas opcionais, como um questionário administrativo específico de uma unidade ou uma validação de integração. O contrato recebe contexto mínimo e devolve estado, pendências e evidências, sem acesso irrestrito ao banco do núcleo. Uma extensão só é útil se puder ser adicionada, testada e desabilitada pelo contrato; se plugins precisam coordenar transações entre si ou alterar tabelas internas, o limite deve ser revisto.
 
-O faturamento recebe registros administrativos, valida campos obrigatórios, normaliza identificadores, correlaciona autorizações e produz uma saída por parceiro. Cada filtro gera resultado explícito. Rejeições não desaparecem: contêm correlação, etapa e motivo apropriado para a equipe autorizada. Throughput não pode ser inferido do diagrama; um teste usa massa sintética, ambiente registrado e medição repetível.
+O faturamento recebe registros administrativos, valida campos obrigatórios, normaliza identificadores, correlaciona autorizações e produz uma saída por parceiro. Cada filtro gera resultado explícito. Rejeições não desaparecem: contêm correlação, etapa e motivo apropriado para a equipe autorizada. A vazão não pode ser inferida do diagrama; um teste usa massa sintética, ambiente registrado e medição repetível.
+
+</details>
 
 ## Exercício 4 — Consequências e ADR-001
 
 **Enunciado**
 
-A estrutura do exercício 3 é uma hipótese. Transforme-a em um registro contestável. A sequência abaixo modela a reserva concorrente da agenda dentro dessa estrutura. Extraia dela uma consequência favorável e uma restrição que a estrutura impõe, e registre o ADR-001 seguindo o template.
+A estrutura do exercício 3 é uma aposta, não uma verdade. Aqui você a transforma num registro que outra pessoa pode questionar: um **ADR** (do inglês *Architecture Decision Record*, "registro de decisão de arquitetura"). Um ADR anota três coisas — o que você decidiu, por que decidiu e o que faria você voltar atrás.
+
+> É como anotar uma decisão importante num caderno: "escolhi o plano X porque Y; se o preço passar de Z, reavalio". Meses depois, qualquer um entende a escolha e sabe quando ela deixou de valer.
+
+O diagrama de sequência abaixo mostra dois pedidos concorrentes tentando reservar na agenda dentro dessa estrutura. A partir dele, tire uma consequência **favorável** e uma **restrição** que a estrutura impõe, e registre o `ADR-001` seguindo o template.
 
 ```mermaid
 sequenceDiagram
@@ -303,7 +375,8 @@ Alternativa listada só pelo nome não foi comparada. E um gatilho como "revisar
 
 Registre o ADR com estado "proposta" e liste em uma seção final os campos que faltaram. Um registro incompleto e honesto continua utilizável; um registro completo por invenção contamina os encontros seguintes.
 
-**Referência do curso**
+<details markdown="1">
+<summary>Referência do curso — abra só depois de fechar a sua versão</summary>
 
 O primeiro ADR pode escolher um monólito modular como estrutura inicial, com estilos internos onde as forças os justificam. As alternativas seriam um único conjunto sem módulos, microkernel como estrutura global e implantação independente por capacidade. As consequências favoráveis são operação inicial simples, transações locais na agenda e fronteiras por capacidade. As desfavoráveis são processo compartilhado, escala conjunta e necessidade de verificar dependências internas.
 
@@ -311,8 +384,10 @@ A sequência da agenda revela uma necessidade de consistência local. Transform�
 
 As evidências incluem `test_estilos.py`, teste de fronteiras futuro, extensão piloto da triagem, fluxo sintético de faturamento e revisão do diagrama. O gatilho de revisão é uma necessidade comprovada de escala, disponibilidade ou cadência de implantação independente.
 
+</details>
+
 ## Fecho dos quatro exercícios
 
-Ao final da sequência, a pasta `entregas/unidade-1/estudo-de-caso/` reúne uma cadeia legível: cenário mensurável, comparação simétrica, estrutura desenhada e decisão revisável. Essa cadeia é a primeira baseline do [incremento 1](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) e será revisitada nos módulos seguintes, quando APIs, serviços, eventos e nuvem alterarem as forças examinadas aqui.
+Ao final, a pasta `entregas/unidade-1/estudo-de-caso/` guarda uma sequência que se lê de ponta a ponta: um cenário que dá para medir, uma comparação justa entre estilos, uma estrutura desenhada e uma decisão que pode ser revista. Essa sequência é a primeira versão do [incremento 1](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) e vai ser retomada nos próximos módulos, quando APIs, serviços, eventos e nuvem mudarem as forças que você examinou aqui.
 
-Nenhum dos quatro artefatos prova sozinho que a arquitetura é adequada. Em conjunto, eles mostram como a decisão foi formulada e onde a turma pode contestá-la. O objetivo arquitetural é tornar a diferença examinável.
+Nenhum dos quatro artefatos, sozinho, prova que a arquitetura está certa. Juntos, eles mostram **como** a decisão foi tomada e **onde** ela pode ser contestada. Esse é o objetivo: deixar a diferença entre as opções visível o bastante para ser discutida.
