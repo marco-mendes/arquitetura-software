@@ -242,17 +242,36 @@ O vocabulário do desenho está em [como ler uma arquitetura](../referencia/como
 
 **Forma do artefato**
 
-Comece pelo esqueleto abaixo, trocando os nomes e mantendo a sintaxe Mermaid; o que estiver fora do `subgraph` é externo à plataforma:
+Use o modelo abaixo como base. A figura mostra a forma que o seu desenho deve ter; logo depois vem o código Mermaid para você copiar e adaptar. O que estiver fora do quadro `subgraph` é externo à plataforma.
+
+```mermaid
+flowchart TB
+    entrada["entrada"] --> app["aplicação"]
+    subgraph estrutura["estrutura escolhida"]
+        app --> moduloA["módulo A — estilo interno"]
+        app --> moduloB["módulo B — estilo interno"]
+        moduloA --> registro["registro auditável"]
+    end
+    moduloB --> externo["adaptador externo"]
+```
+
+**Texto alternativo:** modelo genérico em que uma entrada leva à aplicação; dentro do quadro "estrutura escolhida", a aplicação encaminha para os módulos A e B, o módulo A grava num registro auditável, e o módulo B fala com um adaptador externo, fora do quadro.
+
+*Modelo — estrutura genérica para adaptar; troque os nomes pelos seus. Fonte: curso.*
+
+**Leitura textual da figura:** a entrada chega à aplicação. Dentro do quadro "estrutura escolhida", a aplicação encaminha para o módulo A e para o módulo B, e o módulo A grava um registro auditável. Fora do quadro, o módulo B conversa com um adaptador externo. Ao montar a sua, troque cada nome genérico pelo componente real da plataforma hospitalar.
+
+Código Mermaid do modelo, para copiar e adaptar:
 
 ```text
 flowchart TB
-    <entrada> --> <aplicação>
-    subgraph <estrutura escolhida>
-        <aplicação> --> <módulo A — estilo interno>
-        <aplicação> --> <módulo B — estilo interno>
-        <módulo A> --> <registro auditável>
+    entrada["entrada"] --> app["aplicação"]
+    subgraph estrutura["estrutura escolhida"]
+        app --> moduloA["módulo A — estilo interno"]
+        app --> moduloB["módulo B — estilo interno"]
+        moduloA --> registro["registro auditável"]
     end
-    <módulo B> --> <adaptador externo>
+    moduloB --> externo["adaptador externo"]
 ```
 
 Depois do diagrama vêm as três partes textuais:
