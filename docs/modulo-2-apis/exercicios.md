@@ -4,49 +4,49 @@ Responda primeiro e abra “Ver resposta” somente depois da tentativa. Nas ati
 
 ## Recordar
 
-1. O que diferencia interface, contrato e implementação em uma API?
+1\. Toda API tem três camadas fáceis de confundir: a **interface** (a porta oferecida), o **contrato** (as promessas observáveis) e a **implementação** (como elas são cumpridas). O que diferencia essas três?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 Interface é a fronteira oferecida; contrato torna explícitas as promessas observáveis; implementação é o mecanismo que as cumpre. Um consumidor deveria depender do contrato, e não do framework ou banco usados internamente.
 </details>
 
-2. Qual status HTTP comunica que um pedido foi aceito, mas que o processamento ainda pode não ter terminado?
+2\. Uma API aceitou um pedido, mas o processamento ainda pode não ter terminado. Qual status HTTP comunica exatamente isso?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 `202 Accepted`. Ele comunica aceitação; não é uma confirmação de que uma operadora já decidiu a elegibilidade.
 </details>
 
-3. Qual cabeçalho pode indicar onde acompanhar um recurso aceito?
+3\. Uma API aceitou um pedido e criou um recurso para acompanhamento. Qual **cabeçalho HTTP** costuma indicar o endereço onde acompanhá-lo?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 `Location`. Seu valor deve indicar o recurso relevante para acompanhamento, por exemplo `/elegibilidades/{protocolo}`.
 </details>
 
-4. O que significa dizer que uma operação é idempotente?
+4\. Em integrações, a mesma chamada às vezes chega repetida. O que significa dizer que uma operação é **idempotente**?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 Repetir a mesma intenção produz o mesmo efeito pretendido no servidor. Isso não exige que cada resposta seja idêntica nem cria deduplicação automática em uma integração distribuída.
 </details>
 
-5. Que artefato descreve paths, operações, schemas, exemplos e respostas de uma API HTTP?
+5\. Existe um formato padrão para descrever por escrito os paths, operações, schemas, exemplos e respostas de uma API HTTP. Que artefato é esse?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 Um documento OpenAPI. No laboratório, o contrato explícito está em `laboratorios/plataforma-hospitalar/contratos/openapi.yaml`.
 </details>
 
-6. Cite duas responsabilidades adequadas a um API gateway.
+6\. Um **API gateway** fica na borda, entre os consumidores e as APIs internas. Cite duas responsabilidades técnicas adequadas a ele — e uma que **não** deveria ficar nele.
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 Roteamento, terminação TLS, autenticação técnica, limite de tráfego, correlação e telemetria são responsabilidades possíveis. Tradução de vocabulário do laboratório e regras de elegibilidade não devem ser despejadas no gateway.
@@ -54,49 +54,49 @@ Roteamento, terminação TLS, autenticação técnica, limite de tráfego, corre
 
 ## Compreender
 
-1. “A resposta de aceitação usa `202` e inclui `Location`.” Isso é contrato, implementação, evidência ou força do contexto?
+1\. Classifique a frase a seguir como **contrato**, **implementação**, **evidência** ou **força do contexto**, e justifique: "A resposta de aceitação usa `202` e inclui `Location`."
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 É uma decisão de contrato, porque o consumidor observa o status e o cabeçalho.
 </details>
 
-2. “O servidor guarda protocolos em um dicionário Python.” Como classificar essa frase?
+2\. Usando as mesmas quatro categorias — contrato, implementação, evidência ou força do contexto —, como você classifica a frase "O servidor guarda protocolos em um dicionário Python"? E que limite ela impõe?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 É detalhe de implementação enquanto o comportamento público prometido não muda. Ele também é um limite relevante: reiniciar o processo apaga os protocolos.
 </details>
 
-3. Por que `POST /aprovarAutomaticamente` pode ser RPC coerente, mas não deve ser chamado de REST apenas porque usa JSON e HTTP?
+3\. Uma operação `POST /aprovarAutomaticamente` usa JSON e HTTP. Por que ela pode ser um RPC coerente, mas não deve ser chamada de REST só por causa disso?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 RPC organiza a colaboração por operações nomeadas. REST requer restrições e semântica de recursos, representações e mensagens HTTP; uma URL com HTTP não comprova essas propriedades.
 </details>
 
-4. Quando GraphQL pode ajudar mais que uma API de leitura fixa?
+4\. Comparado a uma API de leitura com campos fixos, quando o GraphQL tende a ajudar mais?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 Quando consumidores precisam de combinações de campos e relações muito variáveis. Ainda é necessário controlar custo das consultas, autorização por campo e cache; não é a escolha automática para qualquer tela móvel.
 </details>
 
-5. O que WebSocket resolve e o que ele não resolve sozinho?
+5\. O **WebSocket** mantém um canal aberto entre cliente e servidor. O que ele resolve, e o que ele não resolve sozinho?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 Ele mantém um canal bidirecional persistente para atualização em tempo real. Não garante entrega durável, reprocessamento, ordenação de negócio ou recuperação após desconexão; essas políticas precisam ser projetadas.
 </details>
 
-6. Por que um adaptador é mais apropriado que o gateway para traduzir SOAP/TISS do laboratório para o vocabulário hospitalar?
+6\. O laboratório fala **SOAP/TISS** (o padrão de troca das operadoras) e a plataforma usa o próprio vocabulário. Por que traduzir entre os dois é mais apropriado num **adaptador** do que no **gateway**?
 
-<details>
+<details markdown="1">
 <summary>Ver resposta</summary>
 
 Porque a tradução contém conhecimento da dependência e de seus significados. O gateway pode aplicar políticas técnicas; o adaptador isola mudanças externas e protege o domínio interno da plataforma.
