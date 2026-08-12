@@ -12,20 +12,20 @@ Responda primeiro e abra “Ver resposta” somente depois da tentativa. Nas ati
 Interface é a fronteira oferecida; contrato torna explícitas as promessas observáveis; implementação é o mecanismo que as cumpre. Um consumidor deveria depender do contrato, e não do framework ou banco usados internamente.
 </details>
 
-2\. Uma API aceitou um pedido, mas o processamento ainda pode não ter terminado. Qual status HTTP comunica exatamente isso?
+2\. Os métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`...) têm papéis diferentes por convenção. Qual é a diferença fundamental de propósito entre `GET` e `POST`?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-`202 Accepted`. Ele comunica aceitação; não é uma confirmação de que uma operadora já decidiu a elegibilidade.
+`GET` solicita a representação atual de um recurso, sem a intenção de alterar estado no servidor. `POST` normalmente cria algo novo ou dispara um processamento, alterando o estado do servidor.
 </details>
 
-3\. Uma API aceitou um pedido e criou um recurso para acompanhamento. Qual **cabeçalho HTTP** costuma indicar o endereço onde acompanhá-lo?
+3\. Por que uma API REST evita colocar o nome da ação na própria URL — como `/criarPedido` ou `/listarPedidos` — e prefere algo como `POST /pedidos` e `GET /pedidos`?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-`Location`. Seu valor deve indicar o recurso relevante para acompanhamento, por exemplo `/elegibilidades/{protocolo}`.
+Porque REST organiza a API em torno de **recursos** (substantivos) e deixa a ação a cargo do **verbo HTTP**. Repetir a ação na URL duplica a semântica e quebra a uniformidade que permite tratamento genérico por ferramentas, cache e roteamento.
 </details>
 
 4\. Em integrações, a mesma chamada às vezes chega repetida. O que significa dizer que uma operação é **idempotente**?
