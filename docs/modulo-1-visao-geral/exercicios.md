@@ -4,7 +4,7 @@ Responda antes de abrir “Ver resposta”. Nas atividades seguintes, siga o rot
 
 ## Recordar
 
-1. O que diferencia um componente de um conector?
+1\. O que diferencia um componente de um conector?
 
 <details>
 <summary>Ver resposta</summary>
@@ -12,7 +12,7 @@ Responda antes de abrir “Ver resposta”. Nas atividades seguintes, siga o rot
 Componente concentra responsabilidade; conector descreve colaboração, como chamada HTTP, mensagem ou acesso a dados.
 </details>
 
-2. Quais são os quatro estilos aprofundados nesta unidade?
+2\. Quais são os quatro estilos aprofundados nesta unidade?
 
 <details>
 <summary>Ver resposta</summary>
@@ -20,7 +20,7 @@ Componente concentra responsabilidade; conector descreve colaboração, como cha
 Camadas, Pipes and Filters, Microkernel e Monólito modular.
 </details>
 
-3. Qual nome recebe uma condição assumida como verdadeira, mas que ainda pode precisar de revisão?
+3\. Qual nome recebe uma condição assumida como verdadeira, mas que ainda pode precisar de revisão?
 
 <details>
 <summary>Ver resposta</summary>
@@ -28,7 +28,7 @@ Camadas, Pipes and Filters, Microkernel e Monólito modular.
 Premissa; uma restrição já limita alternativas conhecidas.
 </details>
 
-4. Quais seis partes tornam um cenário de atributo de qualidade observável?
+4\. Quais seis partes tornam um cenário de atributo de qualidade observável?
 
 <details>
 <summary>Ver resposta</summary>
@@ -36,7 +36,7 @@ Premissa; uma restrição já limita alternativas conhecidas.
 Fonte, estímulo, ambiente, artefato, resposta e medida.
 </details>
 
-5. Qual estilo organiza transformações independentes encadeadas por um fluxo de dados?
+5\. Qual estilo organiza transformações independentes encadeadas por um fluxo de dados?
 
 <details>
 <summary>Ver resposta</summary>
@@ -44,7 +44,7 @@ Fonte, estímulo, ambiente, artefato, resposta e medida.
 Pipes and Filters: filtro transforma; pipe transporta a saída ou rejeição.
 </details>
 
-6. O que um ADR registra além da alternativa escolhida?
+6\. O que um ADR registra além da alternativa escolhida?
 
 <details>
 <summary>Ver resposta</summary>
@@ -54,7 +54,7 @@ Contexto, forças, alternativas, consequências, evidências e gatilho de revis�
 
 ## Compreender
 
-1. “A aplicação será executada em Python 3.12.” Isso descreve estilo, padrão ou tecnologia?
+1\. “A aplicação será executada em Python 3.12.” Isso descreve estilo, padrão ou tecnologia?
 
 <details>
 <summary>Ver resposta</summary>
@@ -62,15 +62,15 @@ Contexto, forças, alternativas, consequências, evidências e gatilho de revis�
 Tecnologia; ela não define responsabilidades ou conectores.
 </details>
 
-2. “As regras de negócio não podem importar adaptadores de persistência.” O que a frase declara?
+2\. A frase “as regras de negócio não podem importar adaptadores de persistência” impõe uma direção permitida de dependência entre módulos. Que nome se dá a esse tipo de regra, e qual estilo — Camadas ou Hexagonal — foi pensado para sustentá-la e permitir testá-la automaticamente?
 
 <details>
 <summary>Ver resposta</summary>
 
-Uma regra de dependência que Camadas ou Hexagonal pode sustentar e testar.
+É uma regra de dependência: módulos de mais alto nível (negócio) não podem depender de detalhes de baixo nível (persistência). Tanto Camadas quanto Hexagonal foram desenhados para sustentar essa direção e permitir verificá-la de forma automatizada.
 </details>
 
-3. Por que MVC não é simplesmente outro nome para qualquer aplicação web?
+3\. Por que MVC não é simplesmente outro nome para qualquer aplicação web?
 
 <details>
 <summary>Ver resposta</summary>
@@ -78,7 +78,7 @@ Uma regra de dependência que Camadas ou Hexagonal pode sustentar e testar.
 MVC organiza requisição-resposta em controller, model e view; não resolve por si só domínio, eventos ou implantação.
 </details>
 
-4. Quando uma camada é chamada de fechada?
+4\. Quando uma camada é chamada de fechada?
 
 <details>
 <summary>Ver resposta</summary>
@@ -86,15 +86,15 @@ MVC organiza requisição-resposta em controller, model e view; não resolve por
 Quando a interação atravessa a camada imediatamente abaixo, sem atalho.
 </details>
 
-5. O que torna um filtro com estado mais delicado que um filtro sem estado?
+5\. Um filtro sem estado trata cada item de forma independente. Um filtro com estado guarda informação de itens anteriores. Que problema esse segundo tipo introduz, que o primeiro não tem?
 
 <details>
 <summary>Ver resposta</summary>
 
-Ele depende de contexto entre itens; declare onde o estado vive, como recupera e como trata concorrência.
+Ele passa a depender do que aconteceu antes, então é preciso declarar onde esse estado fica guardado, o que acontece se o processo reiniciar e como ele se comporta se dois itens chegarem ao mesmo tempo (concorrência).
 </details>
 
-6. Por que um plugin que lê tabelas internas do núcleo não demonstra bem um microkernel?
+6\. Por que um plugin que lê tabelas internas do núcleo não demonstra bem um microkernel?
 
 <details>
 <summary>Ver resposta</summary>

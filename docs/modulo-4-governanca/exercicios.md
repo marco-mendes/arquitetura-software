@@ -4,7 +4,7 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas, os nove
 
 ## Recordar
 
-1. Defina governança de serviços em uma frase.
+1\. Defina governança de serviços em uma frase.
 
 <details>
 <summary>Ver resposta</summary>
@@ -12,7 +12,7 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas, os nove
 É o conjunto de contratos, responsabilidades e políticas verificáveis que torna uma decisão repetível e revisável.
 </details>
 
-2. O que uma política de rate limiting protege e o que ela não decide?
+2\. O que uma política de rate limiting protege e o que ela não decide?
 
 <details>
 <summary>Ver resposta</summary>
@@ -20,7 +20,7 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas, os nove
 Protege a capacidade da borda contra volume excessivo; não decide autorização ou regra clínica do domínio.
 </details>
 
-3. Diferencie `correlation_id` de trace ID.
+3\. Diferencie `correlation_id` de trace ID.
 
 <details>
 <summary>Ver resposta</summary>
@@ -28,7 +28,7 @@ Protege a capacidade da borda contra volume excessivo; não decide autorização
 `correlation_id` facilita a busca humana entre resposta e logs; trace ID identifica a árvore técnica de spans distribuídos.
 </details>
 
-4. Nomeie o arquivo da política de rota local.
+4\. Nomeie o arquivo da política de rota local.
 
 <details>
 <summary>Ver resposta</summary>
@@ -36,7 +36,7 @@ Protege a capacidade da borda contra volume excessivo; não decide autorização
 `laboratorios/plataforma-hospitalar/infra/kong/kong.yml`.
 </details>
 
-5. Que saída comprova o limite da oficina?
+5\. Que saída comprova o limite da oficina?
 
 <details>
 <summary>Ver resposta</summary>
@@ -46,7 +46,7 @@ Uma resposta HTTP `429 Too Many Requests` depois de mais chamadas que o limiar d
 
 ## Compreender
 
-1. Explique por que Kong não é sinônimo de governança.
+1\. Explique por que Kong não é sinônimo de governança.
 
 <details>
 <summary>Ver resposta</summary>
@@ -54,7 +54,7 @@ Uma resposta HTTP `429 Too Many Requests` depois de mais chamadas que o limiar d
 Kong implementa localmente políticas de borda; governança também inclui contrato, owner, versão, evidência e revisão, que sobrevivem à troca da ferramenta.
 </details>
 
-2. Por que uma regra de plano vencido deve permanecer em Elegibilidade?
+2\. Por que uma regra de plano vencido deve permanecer em Elegibilidade?
 
 <details>
 <summary>Ver resposta</summary>
@@ -62,7 +62,7 @@ Kong implementa localmente políticas de borda; governança também inclui contr
 Ela depende de estado e exceções do domínio, que pertencem ao serviço; o gateway só medeia controles comuns de entrada.
 </details>
 
-3. Compare uma resposta `200` direta e uma `200` pelo gateway.
+3\. Compare uma resposta `200` direta e uma `200` pelo gateway.
 
 <details>
 <summary>Ver resposta</summary>
@@ -70,7 +70,7 @@ Ela depende de estado e exceções do domínio, que pertencem ao serviço; o gat
 A direta prova serviço e dado didático; a governada também prova a rota e a aplicação da política de borda, mas não autorização clínica.
 </details>
 
-4. Por que o trace não substitui um log estruturado?
+4\. Por que o trace não substitui um log estruturado?
 
 <details>
 <summary>Ver resposta</summary>
@@ -78,7 +78,7 @@ A direta prova serviço e dado didático; a governada também prova a rota e a a
 O trace mostra caminho e tempo causal; o log descreve evento e campos seguros. A investigação usa ambos com a mesma correlação.
 </details>
 
-5. O que a rastreabilidade permite afirmar com segurança?
+5\. O que a rastreabilidade permite afirmar com segurança?
 
 <details>
 <summary>Ver resposta</summary>

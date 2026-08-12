@@ -4,7 +4,7 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas não há
 
 ## Recordar
 
-1. Defina capacidade de negócio e dê um exemplo hospitalar.
+1\. Defina capacidade de negócio e dê um exemplo hospitalar.
 
 <details>
 <summary>Ver resposta</summary>
@@ -12,7 +12,7 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas não há
 É um resultado que a organização sabe produzir, como verificar elegibilidade.
 </details>
 
-2. Diferencie bounded context de microsserviço em duas frases.
+2\. Diferencie bounded context de microsserviço em duas frases.
 
 <details>
 <summary>Ver resposta</summary>
@@ -20,7 +20,7 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas não há
 Bounded context delimita significado. Microsserviço é uma possível implantação física dessa fronteira.
 </details>
 
-3. Liste quatro formas de acoplamento apresentadas no módulo.
+3\. Liste quatro formas de acoplamento apresentadas no módulo.
 
 <details>
 <summary>Ver resposta</summary>
@@ -28,7 +28,7 @@ Bounded context delimita significado. Microsserviço é uma possível implantaç
 Contrato, tempo, dados, implantação e organização.
 </details>
 
-4. Explique o que banco por serviço proíbe.
+4\. Explique o que banco por serviço proíbe.
 
 <details>
 <summary>Ver resposta</summary>
@@ -36,7 +36,7 @@ Contrato, tempo, dados, implantação e organização.
 Proíbe acesso direto de outro serviço; a integração usa contrato, evento ou cópia projetada.
 </details>
 
-5. Nomeie as três formas de implantação comparadas.
+5\. Nomeie as três formas de implantação comparadas.
 
 <details>
 <summary>Ver resposta</summary>
@@ -44,7 +44,7 @@ Proíbe acesso direto de outro serviço; a integração usa contrato, evento ou 
 Monólito modular, macrosserviço e microsserviço.
 </details>
 
-6. Defina falha parcial.
+6\. Defina falha parcial.
 
 <details>
 <summary>Ver resposta</summary>
@@ -52,7 +52,7 @@ Monólito modular, macrosserviço e microsserviço.
 Uma parte segue saudável enquanto outra indisponibilidade impede uma capacidade.
 </details>
 
-7. Indique o papel de timeout em uma chamada síncrona.
+7\. Indique o papel de timeout em uma chamada síncrona.
 
 <details>
 <summary>Ver resposta</summary>
@@ -60,7 +60,7 @@ Uma parte segue saudável enquanto outra indisponibilidade impede uma capacidade
 Limita a espera pela dependência e impede que a lentidão se espalhe.
 </details>
 
-8. Declare a condição em que CAP força uma escolha.
+8\. Declare a condição em que CAP força uma escolha.
 
 <details>
 <summary>Ver resposta</summary>
@@ -68,7 +68,7 @@ Limita a espera pela dependência e impede que a lentidão se espalhe.
 Durante uma partição: preservar consistência ou responder aceitando divergência.
 </details>
 
-9. Resuma SAGA sem usar a expressão “rollback global”.
+9\. Resuma SAGA sem usar a expressão “rollback global”.
 
 <details>
 <summary>Ver resposta</summary>
@@ -76,7 +76,7 @@ Durante uma partição: preservar consistência ou responder aceitando divergên
 Coordena transações locais e pode exigir compensações para efeitos confirmados.
 </details>
 
-10. Resuma CQRS sem pressupor bancos separados.
+10\. Resuma CQRS sem pressupor bancos separados.
 
 <details>
 <summary>Ver resposta</summary>
@@ -86,7 +86,7 @@ Separa comando e consulta quando suas necessidades diferem; pode começar no mes
 
 ## Compreender
 
-1. Explique por que mover duas funções para processos diferentes não reduz automaticamente acoplamento.
+1\. Explique por que mover duas funções para processos diferentes não reduz automaticamente acoplamento.
 
 <details>
 <summary>Ver resposta</summary>
@@ -94,7 +94,7 @@ Separa comando e consulta quando suas necessidades diferem; pode começar no mes
 A chamada vira contrato e rede; se mudanças continuam conjuntas, o acoplamento só mudou de forma.
 </details>
 
-2. Descreva como alta coesão pode ser prejudicada por serviços pequenos demais.
+2\. Descreva como alta coesão pode ser prejudicada por serviços pequenos demais.
 
 <details>
 <summary>Ver resposta</summary>
@@ -102,7 +102,7 @@ A chamada vira contrato e rede; se mudanças continuam conjuntas, o acoplamento 
 Regras que mudam juntas passam a exigir contratos e implantações coordenadas.
 </details>
 
-3. Compare propriedade de dados com localização física do banco.
+3\. Compare propriedade de dados com localização física do banco.
 
 <details>
 <summary>Ver resposta</summary>
@@ -110,7 +110,7 @@ Regras que mudam juntas passam a exigir contratos e implantações coordenadas.
 Propriedade define autoridade; localização pode ser schema, instância ou servidor e só protege com permissões reais.
 </details>
 
-4. Explique por que `503 dependencia_indisponivel` comunica melhor a falha do laboratório do que um `500` genérico.
+4\. Explique por que `503 dependencia_indisponivel` comunica melhor a falha do laboratório do que um `500` genérico.
 
 <details>
 <summary>Ver resposta</summary>
@@ -118,7 +118,7 @@ Propriedade define autoridade; localização pode ser schema, instância ou serv
 Expõe uma dependência indisponível sem atribuir a Exames um erro interno genérico.
 </details>
 
-5. Mostre por que consistência eventual ainda exige regras de convergência.
+5\. Mostre por que consistência eventual ainda exige regras de convergência.
 
 <details>
 <summary>Ver resposta</summary>
@@ -126,7 +126,7 @@ Expõe uma dependência indisponível sem atribuir a Exames um erro interno gen�
 Exige identidade, ordenação quando necessária, idempotência, repetição e reconciliação para convergir.
 </details>
 
-6. Dê um cenário em que monólito modular seja preferível e outro em que implantação independente seja necessária.
+6\. Dê um cenário em que monólito modular seja preferível e outro em que implantação independente seja necessária.
 
 <details>
 <summary>Ver resposta</summary>
@@ -134,7 +134,7 @@ Exige identidade, ordenação quando necessária, idempotência, repetição e r
 Mudanças conjuntas e transação comum favorecem módulos; equipes e cargas independentes podem justificar serviços.
 </details>
 
-7. Explique por que uma compensação de SAGA não apaga fatos já observados.
+7\. Explique por que uma compensação de SAGA não apaga fatos já observados.
 
 <details>
 <summary>Ver resposta</summary>
@@ -142,7 +142,7 @@ Mudanças conjuntas e transação comum favorecem módulos; equipes e cargas ind
 O efeito pode ter sido observado; compensar cria outro fato, não apaga o anterior.
 </details>
 
-8. Descreva a diferença de propósito entre SAGA e CQRS.
+8\. Descreva a diferença de propósito entre SAGA e CQRS.
 
 <details>
 <summary>Ver resposta</summary>

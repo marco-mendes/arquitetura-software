@@ -39,7 +39,7 @@ Ao final da preparação, a condição inicial verificável será: existe uma pa
 | Node.js e npx | executar Spectral localmente | relatório de lint |
 | Spectral CLI 6.16.1 | verificar regras do documento | contrato válido e falha deliberada |
 
-Bruno ajuda a executar exemplos, mas uma execução manual não substitui regressão. Spectral encontra problemas estruturais e de estilo, mas não prova que o servidor obedece ao documento. `TestClient` verifica o comportamento da implementação, mas não substitui a revisão semântica. Use as três perspectivas.
+Bruno ajuda a executar exemplos, mas uma execução manual não substitui regressão. Spectral encontra problemas estruturais e de estilo sem provar que o servidor obedece ao documento. Já o `TestClient` verifica o comportamento da implementação; a revisão semântica do contrato continua sendo trabalho humano. Use as três perspectivas.
 
 ## Pré-requisitos
 

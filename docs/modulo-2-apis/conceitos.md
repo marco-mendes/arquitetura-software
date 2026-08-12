@@ -28,7 +28,7 @@ Uma **interface de programação de aplicações** (API) permite que aplicação
 | Contrato      | Que promessa é observável?            | campos obrigatórios, `202`, `Location`, `422` e schemas publicados |
 | Implementação | Como a promessa é cumprida hoje?      | FastAPI, Pydantic e armazenamento em memória                       |
 
-O **consumidor** depende do contrato, não do código ou banco. Trocar biblioteca ou armazenamento pode ser interno; renomear campo, mudar status ou remover operação pede transição. Contrato, governança e evidência — não apenas a URL — tornam a API reutilizável.
+O **consumidor** depende do contrato, não do código ou banco. Trocar biblioteca ou armazenamento pode ser interno; renomear campo, mudar status ou remover operação pede transição. Contrato, governança e evidência tornam a API reutilizável.
 
 ## Consumidores diferentes, necessidades diferentes
 
@@ -94,7 +94,7 @@ flowchart LR
 | WebSocket   | atualização bidirecional em tempo real   | reconexão, ordenação e pressão de consumo  |
 | SOAP/XML    | contrato de parceiro legado              | isolar tradução do domínio                 |
 
-GraphQL exige schema e política para consultas caras. gRPC não garante baixo tempo de resposta se a dependência externa continua lenta. WebSocket não substitui evento durável ou mensageria. SOAP não exige que a plataforma moderna use XML. Em cada caso, o arquiteto registra a força que levou à escolha e a evidência que poderá revisá-la.
+GraphQL exige schema e política para consultas caras. Se a dependência externa continua lenta, gRPC não resolve isso por si só. WebSocket mantém o canal aberto, mas durabilidade de evento ou mensageria pede outro mecanismo. Usar SOAP com o parceiro não obriga a plataforma moderna a adotar XML internamente. Em cada caso, o arquiteto registra a força que levou à escolha e a evidência que poderá revisá-la.
 
 ## O contrato verificável e a sua evolução
 

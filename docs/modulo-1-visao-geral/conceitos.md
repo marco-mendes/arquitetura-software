@@ -69,7 +69,7 @@ Antes de comparar soluções, descubra que problema você tem. Este mapa não é
 
 **Limite:** infraestrutura sofisticada não compensa fronteiras mal definidas e pode criar operação desproporcional ao problema.
 
-O mapa não é escada de maturidade: um monólito modular pode usar APIs, faturamento pode usar Pipes and Filters e nuvem pode ter um processo. Decida por forças e evidências, não pelo nome.
+Um monólito modular pode usar APIs, faturamento pode usar Pipes and Filters e nuvem pode ter um processo: decida por forças e evidências, não pelo nome.
 
 ![Mapa comparativo de quatro estilos arquiteturais: camadas, pipes e filtros, microkernel e monólito modular, com as forças de mudabilidade, vazão e extensibilidade.](../assets/images/m01-mapa-estilos.png)
 

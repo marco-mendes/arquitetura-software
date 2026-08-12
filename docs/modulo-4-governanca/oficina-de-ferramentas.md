@@ -16,7 +16,7 @@ Antes dos comandos, observe `docker compose -f infra/compose.governanca.yml ps`;
 | Jaeger all-in-one 1.62 | consultar trace local | `GET /api/traces/{id}` |
 | Python 3.11 ou superior | executar integração | `test_gateway_policy.py` |
 
-Compose reproduz estudo, não produção. O limite de três chamadas por segundo é local; múltiplas réplicas pedem armazenamento compartilhado. Jaeger não recebe dados sensíveis. Métricas são um sinal conceitual; esta oficina não coleta nem consulta métricas. Evidências: cabeçalhos, `429`, `correlation_id` em log seguro e traces Jaeger.
+Compose reproduz estudo; não é produção. O limite de três chamadas por segundo é local; múltiplas réplicas pedem armazenamento compartilhado. Jaeger não recebe dados sensíveis. Métricas são um sinal conceitual; esta oficina não coleta nem consulta métricas. Evidências: cabeçalhos, `429`, `correlation_id` em log seguro e traces Jaeger.
 
 ## Pré-requisitos
 
@@ -181,7 +181,7 @@ Uma pessoa descreve o que ocorre na borda; a outra descreve os spans. Troquem de
 
 **Observe**
 
-Gateway aplica limite e correlação; Elegibilidade mantém consulta e banco. Collector transporta telemetria, não regra clínica.
+Gateway aplica limite e correlação; Elegibilidade mantém consulta e banco. Collector transporta telemetria; regra clínica não passa por ele.
 
 **Compare**
 
@@ -208,7 +208,7 @@ Escreva hipótese, responsável, efeito sobre consumidor, métrica e condição 
 
 **Observe**
 
-Uma alteração numérica é mudança de política, não mero detalhe.
+Uma alteração numérica é mudança de política, ainda que pareça um detalhe menor.
 
 **Compare**
 

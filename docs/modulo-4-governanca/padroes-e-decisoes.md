@@ -44,4 +44,4 @@ Logs, métricas e traces também têm custo e risco. Defina retenção, amostrag
 
 ## Registro de decisão enxuto
 
-Para cada política, registre contexto, alternativa, decisão, consequência e gatilho de revisão. A decisão do laboratório é “usar Kong DB-less para políticas públicas locais”. A alternativa de configurar por API administrativa foi rejeitada para a oficina porque esconderia estado fora do repositório. A consequência é reiniciar Kong após editar arquivo; o gatilho de revisão é necessidade de mudança coordenada em múltiplas instâncias. Esse texto torna explícito o que o Compose faz e, principalmente, o que ele ainda não prova.
+Para cada política, registre contexto, alternativa, decisão, consequência e gatilho de revisão. A decisão do laboratório é “usar Kong DB-less para políticas públicas locais”. A alternativa de configurar por API administrativa foi rejeitada para a oficina porque esconderia estado fora do repositório. A consequência é reiniciar Kong após editar arquivo; o gatilho de revisão é necessidade de mudança coordenada em múltiplas instâncias. Esse texto torna explícito o que o Compose faz e o que ele ainda não prova.

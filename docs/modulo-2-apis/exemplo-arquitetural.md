@@ -2,7 +2,7 @@
 
 ## O que vamos construir
 
-A equipe administrativa precisa consultar a elegibilidade de um paciente no plano de saúde. A operadora externa é lenta e nem sempre está disponível. Neste incremento ainda **não** falamos com a operadora: a API só **recebe** o pedido, guarda um protocolo e deixa consultar o estado depois. É o menor passo que já exercita um contrato HTTP de verdade.
+A equipe administrativa precisa consultar a elegibilidade de um paciente no plano de saúde. A operadora externa é lenta e nem sempre está disponível. Neste incremento ainda **não** falamos com a operadora: a API só **recebe** o pedido, guarda um protocolo e deixa consultar o estado depois. É o menor passo que já exercita um contrato HTTP.
 
 Antes de olhar qualquer código, veja a interação inteira de uma vez.
 
@@ -30,7 +30,7 @@ sequenceDiagram
 
 **Leitura textual:** o consumidor envia pedido; a API valida, guarda estado efêmero e responde `202` com endereço de consulta. O uso do endereço devolve `200` e a representação aceita.
 
-Leia o diagrama assim: o consumidor manda um `POST`; a API valida o corpo, guarda um protocolo com estado `recebida` e responde `202` com um endereço (`Location`); depois, um `GET` nesse endereço devolve `200` com a mesma representação. `recebida` não quer dizer "aprovada" — significa apenas que a plataforma aceitou o pedido.
+`recebida` não quer dizer "aprovada": significa apenas que a plataforma aceitou o pedido.
 
 Agora vamos construir isso em quatro passos. O código é **FastAPI** (um framework Python para APIs HTTP) com **Pydantic** (uma biblioteca que valida dados a partir das anotações de tipo). Os trechos abaixo são esqueletos, para mostrar a forma; o código completo está no laboratório, em `src/hospital/api/`.
 
@@ -106,7 +106,7 @@ Location: /elegibilidades/550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
-O `202` (em vez de `200` ou `201`) diz "aceitei, ainda não decidi" — um vocabulário honesto para um passo que nem fala com a operadora. Guardar num dicionário em memória é uma decisão de implementação: reiniciar o processo apaga tudo. Isso é um limite a declarar, não a esconder.
+O `202` (em vez de `200` ou `201`) diz "aceitei, ainda não decidi" — um vocabulário honesto para um passo que nem fala com a operadora. Guardar num dicionário em memória é uma decisão de implementação: reiniciar o processo apaga tudo — um limite que precisa ficar declarado para quem consome a API.
 
 ## Passo 3 — A rota que recupera
 
@@ -163,7 +163,7 @@ O corpo do erro que o consumidor recebe:
 
 ## O contrato explícito e o contrato gerado
 
-Existem duas descrições da mesma API. `contratos/openapi.yaml` é o contrato **explícito**, escrito à mão; o FastAPI ainda **gera** um `/openapi.json` a partir do código. Os testes comparam operações, campos e exemplos entre os dois — uma sentinela contra divergência, não uma prova de equivalência total. Esses testes usam `TestClient(app)` para exercer o HTTP dentro do processo (status, cabeçalho, serialização, roteamento), sem precisar subir um servidor.
+Existem duas descrições da mesma API. `contratos/openapi.yaml` é o contrato **explícito**, escrito à mão; o FastAPI ainda **gera** um `/openapi.json` a partir do código. Os testes comparam operações, campos e exemplos entre os dois: pegam divergência pontual, mas não garantem equivalência completa. Esses testes usam `TestClient(app)` para exercer o HTTP dentro do processo (status, cabeçalho, serialização, roteamento), sem precisar subir um servidor.
 
 ## Onde termina o gateway e começa a tradução
 
@@ -182,10 +182,10 @@ flowchart LR
 
 *Figura 6 — Uma evolução possível: políticas técnicas na borda, tradução no adaptador e estado na plataforma. Fonte: curso.*
 
-**Leitura textual:** gateway aplica políticas; adaptador traduz vocabulário e protocolo da operadora; o estado pertence à API. É hipótese de evolução, não componente do laboratório.
+**Leitura textual:** gateway aplica políticas; adaptador traduz vocabulário e protocolo da operadora; o estado pertence à API — uma hipótese de evolução, sem componente correspondente no laboratório.
 
 O gateway pode autenticar, limitar tráfego e rotear. Ele **não** deve converter `beneficiaryKey` da operadora em `matricula_plano` nem decidir que um estado desconhecido significa `negada` — isso é responsabilidade do **adaptador**, onde a diferença semântica pode ser testada e observada. Assim, SOAP/XML e regras externas não vazam para os consumidores internos.
 
 ## Equivalências em Java e .NET
 
-O mecanismo muda de uma linguagem para outra; a decisão de arquitetura, não. Em **Spring Boot**, `@RestController`, `ResponseEntity.accepted()`, Springdoc e MockMvc cumprem os mesmos papéis. Em **ASP.NET Core**, `MapPost`/`MapGet`, `Results.Accepted()`, OpenAPI e `WebApplicationFactory` fazem o mesmo. Python, Java e C# variam no *como*; a decisão preserva recurso, HTTP, schema, erro e evidência.
+Em **Spring Boot**, `@RestController`, `ResponseEntity.accepted()`, Springdoc e MockMvc cumprem os mesmos papéis. Em **ASP.NET Core**, `MapPost`/`MapGet`, `Results.Accepted()`, OpenAPI e `WebApplicationFactory` fazem o mesmo. Python, Java e C# variam no *como*; a decisão preserva recurso, HTTP, schema, erro e evidência.

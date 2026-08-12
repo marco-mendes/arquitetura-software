@@ -20,7 +20,7 @@ As páginas do módulo e os manifests do laboratório.
 
 **Como conduzir**
 
-1. Defina IaaS, PaaS, SaaS e on-premise.
+1\. Defina IaaS, PaaS, SaaS e on-premise.
 
 <details>
 <summary>Ver resposta</summary>
@@ -28,7 +28,7 @@ As páginas do módulo e os manifests do laboratório.
 IaaS entrega infraestrutura virtualizada; PaaS entrega runtime operado; SaaS entrega produto configurável; on-premise mantém infraestrutura sob maior responsabilidade interna. Nenhum modelo elimina o owner de dados, configuração e continuidade.
 </details>
 
-2. Diferencie região, zona, contêiner, imagem e orquestração.
+2\. Diferencie região, zona, contêiner, imagem e orquestração.
 
 <details>
 <summary>Ver resposta</summary>
@@ -36,7 +36,7 @@ IaaS entrega infraestrutura virtualizada; PaaS entrega runtime operado; SaaS ent
 Região e zona delimitam localização e falha; imagem é o pacote versionado; contêiner é sua execução; orquestração reconcilia execuções com o estado declarado.
 </details>
 
-3. Explique readiness, liveness, elasticidade, resiliência e rollback. Para cada termo, relacione uma decisão ou arquivo do caso.
+3\. Explique readiness, liveness, elasticidade, resiliência e rollback. Para cada termo, relacione uma decisão ou arquivo do caso.
 
 <details>
 <summary>Ver resposta</summary>
@@ -74,7 +74,7 @@ Os endpoints `/health/live` e `/health/ready`, a definição de Service e o Depl
 
 **Como conduzir**
 
-1. Descreva o que acontece quando readiness falha.
+1\. Descreva o que acontece quando readiness falha.
 
 <details>
 <summary>Ver resposta</summary>
@@ -82,7 +82,7 @@ Os endpoints `/health/live` e `/health/ready`, a definição de Service e o Depl
 O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a ele; isso não confirma que a regra de negócio está correta.
 </details>
 
-2. Descreva o que acontece quando liveness falha e quando a dependência compartilhada está indisponível.
+2\. Descreva o que acontece quando liveness falha e quando a dependência compartilhada está indisponível.
 
 <details>
 <summary>Ver resposta</summary>
@@ -90,7 +90,7 @@ O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a
 Falha de liveness permite reinício do contêiner. Se uma dependência remota cai, usá-la como liveness pode reiniciar todas as réplicas e ampliar o incidente; ela deve orientar readiness ou degradação conforme o contrato.
 </details>
 
-3. Diferencie processo vivo, pronto para tráfego e resposta de negócio correta. Explique por que reiniciar todas as réplicas pode piorar o incidente.
+3\. Diferencie processo vivo, pronto para tráfego e resposta de negócio correta. Explique por que reiniciar todas as réplicas pode piorar o incidente.
 
 <details>
 <summary>Ver resposta</summary>

@@ -2,11 +2,11 @@
 
 ## Síntese para revisão
 
-Eventos conectam capacidades por fatos, não por chamadas em cadeia. Um evento bem nomeado afirma passado; um comando pede ação; mensagem é o envelope técnico. Broker distribui e retém conforme sua tecnologia; mediator coordena uma conversa e assume decisão explícita. Fila serve bem para trabalho pendente; tópico distribui para interesses independentes; log distribuído adiciona retenção e posições de leitura. Nenhum desses conceitos torna as regras de domínio responsabilidade da infraestrutura.
+Eventos conectam capacidades por fatos em vez de chamadas em cadeia. Um evento bem nomeado afirma passado; um comando pede ação; mensagem é o envelope técnico. Broker distribui e retém conforme sua tecnologia; mediator coordena uma conversa e assume decisão explícita. Fila serve bem para trabalho pendente; tópico distribui para interesses independentes; log distribuído adiciona retenção e posições de leitura. Nenhum desses conceitos torna as regras de domínio responsabilidade da infraestrutura.
 
-Uma integração robusta declara entrega pelo menos uma vez e responde com idempotência. A identidade da ocorrência, a transação local do consumidor e uma chave única para o efeito são mais úteis que uma promessa ampla de ausência de repetição. Ordem precisa de escopo e chave; consistência eventual precisa de uma experiência e um tempo de convergência aceitáveis. Schema e evolução tornam o contrato verificável; DLQ conserva uma falha para análise, não é solução automática.
+Uma integração robusta declara entrega pelo menos uma vez e responde com idempotência. A identidade da ocorrência, a transação local do consumidor e uma chave única para o efeito são mais úteis que uma promessa ampla de ausência de repetição. Ordem precisa de escopo e chave; consistência eventual precisa de uma experiência e um tempo de convergência aceitáveis. Schema e evolução tornam o contrato verificável; DLQ conserva uma falha para análise sem resolvê-la automaticamente.
 
-RabbitMQ e Kafka não são degraus de maturidade. RabbitMQ oferece exchanges, filas e confirmações que atendem bem ao laboratório de Faturamento. Kafka organiza logs particionados, retenção e offsets, úteis quando replay e múltiplas leituras independentes são requisitos reais. Ambos pedem operação, segurança, observabilidade e testes. A decisão começa pelo problema e pelas evidências, não por uma taxa genérica ou uma promessa de exactly-once.
+RabbitMQ e Kafka não são degraus de maturidade. RabbitMQ oferece exchanges, filas e confirmações que atendem bem ao laboratório de Faturamento. Kafka organiza logs particionados, retenção e offsets, úteis quando replay e múltiplas leituras independentes são requisitos reais. Ambos pedem operação, segurança, observabilidade e testes. A decisão começa pelo problema e pelas evidências; taxa genérica e promessa de exactly-once não bastam.
 
 ## Equivalências em Java e .NET
 

@@ -20,7 +20,7 @@ As páginas do módulo, o código do laboratório e a topologia RabbitMQ local.
 
 **Como conduzir**
 
-1. Defina evento, comando, mensagem, broker, mediator, fila, tópico e log distribuído.
+1\. Defina evento, comando, mensagem, broker, mediator, fila, tópico e log distribuído.
 
 <details>
 <summary>Ver resposta</summary>
@@ -28,7 +28,7 @@ As páginas do módulo, o código do laboratório e a topologia RabbitMQ local.
 Evento afirma fato; comando pede ação; mensagem transporta. Broker distribui; mediator coordena. Fila reparte trabalho; tópico copia; log retém leituras.
 </details>
 
-2. Relacione cada nome da situação a uma definição.
+2\. Relacione cada nome da situação a uma definição.
 
 <details>
 <summary>Ver resposta</summary>
@@ -36,7 +36,7 @@ Evento afirma fato; comando pede ação; mensagem transporta. Broker distribui; 
 `ResultadoLaboratorialDisponibilizado.v1` é evento; `GerarCobranca`, comando. A exchange publica; a fila trabalha; DLX e DLQ recebem rejeições.
 </details>
 
-3. Defina entrega pelo menos uma vez, idempotência, ordenação e dead-letter queue.
+3\. Defina entrega pelo menos uma vez, idempotência, ordenação e dead-letter queue.
 
 <details>
 <summary>Ver resposta</summary>
@@ -44,7 +44,7 @@ Evento afirma fato; comando pede ação; mensagem transporta. Broker distribui; 
 Entrega pode repetir; idempotência contém o efeito. Ordem exige chave e fronteira. DLQ guarda rejeições para decisão controlada.
 </details>
 
-4. Dê um exemplo de consequência se dois termos forem confundidos.
+4\. Dê um exemplo de consequência se dois termos forem confundidos.
 
 <details>
 <summary>Ver resposta</summary>
@@ -82,7 +82,7 @@ O diagrama de sequência do módulo, o store SQLite e os conceitos de confirmaç
 
 **Como conduzir**
 
-1. Descreva uma queda entre escrita local e confirmação ao broker.
+1\. Descreva uma queda entre escrita local e confirmação ao broker.
 
 <details>
 <summary>Ver resposta</summary>
@@ -90,7 +90,7 @@ O diagrama de sequência do módulo, o store SQLite e os conceitos de confirmaç
 O consumidor grava no SQLite, cai antes do ack e recebe o mesmo `event_id` novamente.
 </details>
 
-2. Explique por que a repetição protege contra perda em vez de ser sempre defeito.
+2\. Explique por que a repetição protege contra perda em vez de ser sempre defeito.
 
 <details>
 <summary>Ver resposta</summary>
@@ -98,7 +98,7 @@ O consumidor grava no SQLite, cai antes do ack e recebe o mesmo `event_id` novam
 Sem reentrega, confirmação perdida pode virar trabalho perdido; idempotência contém a repetição.
 </details>
 
-3. Diferencie tentativa, confirmação e efeito de negócio.
+3\. Diferencie tentativa, confirmação e efeito de negócio.
 
 <details>
 <summary>Ver resposta</summary>
@@ -106,7 +106,7 @@ Sem reentrega, confirmação perdida pode virar trabalho perdido; idempotência 
 Tentativa é processamento visto; ack encerra entrega; cobrança é efeito. Duas tentativas podem produzir uma cobrança.
 </details>
 
-4. Explique por que `event_id` e uma restrição durável ajudam.
+4\. Explique por que `event_id` e uma restrição durável ajudam.
 
 <details>
 <summary>Ver resposta</summary>

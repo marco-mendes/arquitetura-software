@@ -25,14 +25,6 @@ A pergunta do encontro não é operacional — “como implemento um endpoint?�
 
 O laboratório materializa esse raciocínio num recorte mínimo de duas operações de elegibilidade, suficiente para observar contrato, semântica e verificação sem esconder o argumento sob um domínio extenso.
 
-## Mapa do encontro
-
-1. O estilo de APIs, os fundamentos da web e a semântica HTTP.
-2. Tipos de APIs conforme o contexto e estilos de interação além do HTTP.
-3. Contrato verificável: OpenAPI, erros, paginação, idempotência e versionamento.
-4. Gateway, adaptador, plataforma de APIs e a agenda do arquiteto.
-5. Evidências com FastAPI, Bruno, Spectral, testes automatizados e o gateway Ocelot.
-
 ## Objetivos de aprendizagem
 
 Ao concluir o percurso, você será capaz de:

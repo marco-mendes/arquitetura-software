@@ -451,4 +451,4 @@ Compare esta limpeza limitada com comandos globais do Docker: somente a primeira
 
 ## Evidência a entregar
 
-Entregue uma nota com: configuração validada; saídas `processed=True attempts=1` e `processed=False attempts=2`; consulta de um efeito; mensagem na DLQ; e a explicação de por que há entrega pelo menos uma vez com idempotência, não exactly-once. Use IDs sintéticos. Indique quando Kafka seria extensão, não substituição automática.
+Entregue uma nota com: configuração validada; saídas `processed=True attempts=1` e `processed=False attempts=2`; consulta de um efeito; mensagem na DLQ; e a explicação de por que há entrega pelo menos uma vez com idempotência, não exactly-once. Use IDs sintéticos. Indique em que cenário Kafka valeria como extensão do desenho atual, sem substituí-lo automaticamente.

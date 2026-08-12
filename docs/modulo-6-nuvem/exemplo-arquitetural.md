@@ -30,7 +30,7 @@ flowchart TB
 
 Requests e limits tornam a hipótese de capacidade visível: cada Pod pede `100m` e `128Mi`, podendo usar até `250m` e `256Mi`. Não são números universais. A equipe mede a API sob carga sintética e revisa valores junto com o limite de conexões e o comportamento de dependências. `hpa.yaml` usa `autoscaling/v2`, aponta para `hospital-api`, começa com duas réplicas e permite no máximo cinco. Sem Metrics Server, o objeto continua válido, mas a métrica pode aparecer como `<unknown>`; isso é evidência de dependência operacional ausente, não razão para fingir que houve autoscaling.
 
-Readiness consulta `/health/ready` cedo e frequentemente. Enquanto falhar, o Pod pode existir, mas não vira endpoint do Service. Liveness consulta `/health/live` com atraso maior; sua função é detectar processo travado, não medir disponibilidade de banco. Ambos têm timeout e failure threshold explícitos. A separação permite evoluir readiness para testar a condição mínima de servir tráfego sem transformar uma indisponibilidade remota em reinício coletivo.
+Readiness consulta `/health/ready` cedo e frequentemente. Enquanto falhar, o Pod pode existir, mas não vira endpoint do Service. Liveness consulta `/health/live` com atraso maior, com uma função específica: detectar processo travado. Medir disponibilidade de banco cabe a outra verificação. Ambos têm timeout e failure threshold explícitos. A separação permite evoluir readiness para testar a condição mínima de servir tráfego sem transformar uma indisponibilidade remota em reinício coletivo.
 
 ## Atualização controlada
 

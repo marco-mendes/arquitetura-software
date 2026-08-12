@@ -37,7 +37,7 @@ flowchart LR
 
 ## O que não será presumido
 
-Microsserviços não são objetivo em si. Um limite de domínio pode existir dentro de um único processo. Um serviço não precisa usar tecnologia diferente dos vizinhos. Uma chamada REST não elimina acoplamento. Um banco por serviço não obriga persistência poliglota. Consistência eventual não resolve automaticamente transações distribuídas. SAGA e CQRS são opções com custos, não etapas obrigatórias de uma arquitetura moderna.
+Microsserviços não são objetivo em si — um limite de domínio pode existir dentro de um único processo. A tecnologia de um serviço pode ser a mesma dos vizinhos, sem prejuízo à fronteira. Trocar uma chamada local por REST desloca o acoplamento; não o remove. Banco por serviço é uma decisão de propriedade, e não implica persistência poliglota. Consistência eventual atenua alguns riscos, mas sozinha não resolve uma transação distribuída. SAGA e CQRS entram como opções com custo, nunca como etapa obrigatória de uma arquitetura moderna.
 
 O laboratório usa duas aplicações pequenas para tornar a fronteira visível, não para afirmar que esse seja o desenho ideal de qualquer hospital. Em produção, segurança, privacidade, autorização, observabilidade, recuperação e gestão de segredos exigiriam decisões adicionais. Aqui, dados sintéticos e credenciais estritamente locais mantêm o foco na arquitetura.
 

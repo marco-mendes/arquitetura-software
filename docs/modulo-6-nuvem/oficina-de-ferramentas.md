@@ -285,7 +285,7 @@ Ao fim, o namespace `hospital` foi criado antes de ConfigMap, Deployment, Servic
 
 ## Interpretação
 
-O Deployment demonstrou reconciliação e atualização gradual; o Service demonstrou descoberta por labels; probes demonstraram separação de receber tráfego e manter processo. A tag ausente demonstrou que Kubernetes não conserta uma imagem inválida. Rollback é procedimento de contenção quando a revisão anterior é compatível. Para produção, some autenticação, políticas de rede, secrets, registro de imagem, backup e exercícios de falha ao desenho.
+O Deployment mostrou reconciliação e atualização gradual; o Service, descoberta por labels; as probes, a separação entre receber tráfego e manter o processo vivo. A tag ausente confirmou que Kubernetes não conserta uma imagem inválida por conta própria. Rollback é procedimento de contenção quando a revisão anterior é compatível. Para produção, some autenticação, políticas de rede, secrets, registro de imagem, backup e exercícios de falha ao desenho.
 
 ## Limpeza e contingência
 

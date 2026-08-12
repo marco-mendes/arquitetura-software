@@ -16,17 +16,17 @@ Em Kafka, a ordem é normalmente por partição; escolher `exam_id` como chave p
 
 ## Esquema, compatibilidade e evolução
 
-O contrato é uma interface pública entre capacidades, mesmo quando todas estão no mesmo repositório. Um esquema explícito especifica campos, tipos, semântica, campos obrigatórios e versão. A validação Pydantic da oficina recusa payload sem `result_reference` antes do ack. O nome `ResultadoLaboratorialDisponibilizado.v1` torna a versão visível e a configuração `extra="forbid"` impede que o consumidor aceite em silêncio campos desconhecidos no exercício. Em produção, a tolerância a campos adicionais é uma escolha consciente de compatibilidade, não um padrão universal.
+O contrato é uma interface pública entre capacidades, mesmo quando todas estão no mesmo repositório. Um esquema explícito especifica campos, tipos, semântica, campos obrigatórios e versão. A validação Pydantic da oficina recusa payload sem `result_reference` antes do ack. O nome `ResultadoLaboratorialDisponibilizado.v1` torna a versão visível e a configuração `extra="forbid"` impede que o consumidor aceite em silêncio campos desconhecidos no exercício. Não existe padrão universal aqui: em produção, a tolerância a campos adicionais é uma escolha consciente de compatibilidade que cada equipe assume.
 
 Evoluir não é apenas alterar JSON. Adicionar um campo opcional pode ser compatível para consumidores que o ignoram; tornar campo obrigatório ou mudar seu significado pode quebrar leitura. Trocar unidade, fuso, identificador ou classificação de dado pode quebrar negócio sem quebrar parse. Uma estratégia usual é publicar leitura compatível durante transição, documentar data e owner, e retirar apenas quando consumidores confirmarem a migração. Uma nova versão no nome é mais clara quando a semântica se rompe; produzir duas versões temporariamente pode reduzir risco, ao custo de observabilidade e prazo explícito.
 
-Schema Registry, JSON Schema, Avro, Protobuf e validação de modelos são mecanismos possíveis, não substitutos da conversa de contrato. A questão é descobrir incompatibilidade antes de uma mensagem parada em produção. Testes de contrato, exemplos sintéticos e uma política de depreciação verificável fazem essa descoberta mais barata.
+Schema Registry, JSON Schema, Avro, Protobuf e validação de modelos são mecanismos possíveis; nenhum deles substitui a conversa de contrato. A questão é descobrir incompatibilidade antes de uma mensagem parada em produção. Testes de contrato, exemplos sintéticos e uma política de depreciação verificável fazem essa descoberta mais barata.
 
 ## Dead-letter queue como evidência, não depósito
 
 Uma **dead-letter queue** (DLQ) recebe mensagens que não puderam seguir a política normal: rejeição sem requeue, expiração ou limite de tentativas, conforme configuração. Na oficina, `billing.resultados.v1` declara `hospital.events.dlx` como dead-letter exchange e `billing.resultados.v1.dlq` recebe mensagens rejeitadas. A mensagem inválida não deve ser confirmada como se tivesse sido faturada; ela fica disponível para inspeção com o erro, a versão e a decisão de recuperação.
 
-DLQ não corrige schema automaticamente nem é trilha de auditoria clínica. Sem owner, alerta e procedimento de decisão, ela vira armazenamento silencioso de falhas. A equipe define quais erros são transitórios e merecem retry, quais são permanentes e vão à DLQ, como proteger dados ali presentes e como evitar reprocessar em loop. Corrigir o produtor, criar evento de compensação ou descartar uma mensagem sintética são decisões diferentes; a fila preserva evidência para fazê-las, não escolhe por nós.
+DLQ não corrige schema automaticamente nem é trilha de auditoria clínica. Sem owner, alerta e procedimento de decisão, ela vira armazenamento silencioso de falhas. A equipe define quais erros são transitórios e merecem retry, quais são permanentes e vão à DLQ, como proteger dados ali presentes e como evitar reprocessar em loop. Corrigir o produtor, criar evento de compensação ou descartar uma mensagem sintética são decisões diferentes; a fila só preserva a evidência para tomá-las, e quem decide é a equipe.
 
 ```mermaid
 sequenceDiagram
@@ -54,7 +54,7 @@ sequenceDiagram
 
 Publicar diretamente após uma transação de domínio cria o problema de dupla escrita: o resultado pode ser salvo sem evento se o processo falhar antes de publicar; ou o evento pode sair quando a transação local falha. O padrão **outbox** grava a mudança e uma intenção de publicação na mesma transação local. Um publicador separado envia a outbox ao broker e marca o avanço. Ainda há repetição possível, portanto o destinatário usa uma **inbox** ou deduplicação pelo `event_id`.
 
-O laboratório mostra a metade consumidora da ideia: a tabela de mensagens processadas é uma inbox didática. Não implementa outbox porque o foco é observar a repetição, mas a decisão de produção deve considerar os dois lados. Se a origem tem banco transacional, outbox costuma ser mais confiável do que tentar coordenar banco e broker com uma transação distribuída. Se a origem é um fluxo de log, a estratégia pode ser diferente. A obrigação é documentar a janela de falha e a recuperação, não invocar “exactly-once” para escondê-la.
+O laboratório mostra a metade consumidora da ideia: a tabela de mensagens processadas é uma inbox didática. Não implementa outbox porque o foco é observar a repetição, mas a decisão de produção deve considerar os dois lados. Se a origem tem banco transacional, outbox costuma ser mais confiável do que tentar coordenar banco e broker com uma transação distribuída. Se a origem é um fluxo de log, a estratégia pode ser diferente. A obrigação é documentar a janela de falha e a recuperação em vez de invocar “exactly-once” para escondê-la.
 
 ## RabbitMQ, Kafka ou ActiveMQ: matriz de perguntas
 

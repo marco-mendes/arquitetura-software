@@ -21,7 +21,7 @@ Uma decisão responsável compara alternativas pelas mesmas forças, aceita cons
 - Atributos de qualidade foram escritos como cenários mensuráveis?
 - Todas as alternativas foram comparadas pelas mesmas forças?
 - Consequências desfavoráveis e premissas estão explícitas?
-- A evidência realmente observa a promessa feita?
+- A evidência observa a promessa feita?
 - O ADR possui gatilho de revisão?
 - Diagramas, testes e decisão contam uma história consistente?
 

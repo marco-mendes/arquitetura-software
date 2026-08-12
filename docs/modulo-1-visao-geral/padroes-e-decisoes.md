@@ -1,6 +1,6 @@
 ## Padrões, tecnologias e decisões
 
-Vamos examinar aqui nessa seção alguns estilos arquiteturais que nos ajudam a organizar softwares complexos.
+Esta seção examina estilos arquiteturais que ajudam a organizar softwares complexos.
 
 ## Quatro organizações, quatro tipos de fronteira
 
@@ -616,7 +616,7 @@ A discussão do estilo acompanha Richards e Ford (*Fundamentals of Software Arch
 
 > Pense numa casa com cômodos bem separados: um só teto, paredes claras entre os cômodos.
 
-Há uma implantação, mas Agenda, Triagem, Faturamento e Auditoria mantêm modelos e interfaces próprias. Uma pasta separada não cria, sozinha, uma fronteira de verdade: evite consulta direta, imports internos e contratos sem revisão. Reavalie quando escala, falha ou implantação independente forem medidos.
+Há uma implantação, mas Agenda, Triagem, Faturamento e Auditoria mantêm modelos e interfaces próprias. Uma pasta separada não cria, sozinha, uma fronteira efetiva: evite consulta direta, imports internos e contratos sem revisão. Reavalie quando escala, falha ou implantação independente forem medidos.
 
 Um monólito é apenas um sistema com exatamente uma unidade de implantação — a definição, de Kamil Grzybek, separa a decisão de implantação da decisão de organização interna. O **monólito modular** explora essa separação: uma única unidade implantável, organizada em módulos alinhados ao domínio, em **fatias verticais** que reúnem API, casos de uso, regras e persistência de uma capacidade de negócio — em vez de camadas técnicas horizontais. Cada módulo é dono do próprio comportamento e dos próprios dados, atrás de um contrato estável; o restante fica encapsulado. Richards e Ford dedicam um capítulo ao estilo na 2ª edição de *Fundamentals of Software Architecture*, e Simon Brown popularizou a provocação que o acompanha: se você não consegue construir um monólito bem estruturado, o que faz pensar que microsserviços são a resposta?
 
