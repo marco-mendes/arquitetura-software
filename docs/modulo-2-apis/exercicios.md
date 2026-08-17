@@ -54,23 +54,7 @@ Roteamento, terminação TLS, autenticação técnica, limite de tráfego, corre
 
 ## Compreender
 
-1\. Classifique a frase a seguir como **contrato**, **implementação**, **evidência** ou **força do contexto**, e justifique: "A resposta de aceitação usa `202` e inclui `Location`."
-
-<details markdown="1">
-<summary>Ver resposta</summary>
-
-É uma decisão de contrato, porque o consumidor observa o status e o cabeçalho.
-</details>
-
-2\. Usando as mesmas quatro categorias — contrato, implementação, evidência ou força do contexto —, como você classifica a frase "O servidor guarda protocolos em um dicionário Python"? E que limite ela impõe?
-
-<details markdown="1">
-<summary>Ver resposta</summary>
-
-É detalhe de implementação enquanto o comportamento público prometido não muda. Ele também é um limite relevante: reiniciar o processo apaga os protocolos.
-</details>
-
-3\. Uma operação `POST /aprovarAutomaticamente` usa JSON e HTTP. Por que ela pode ser um RPC coerente, mas não deve ser chamada de REST só por causa disso?
+1\. Uma operação `POST /aprovarAutomaticamente` usa JSON e HTTP. Por que ela pode ser um RPC coerente, mas não deve ser chamada de REST só por causa disso?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
@@ -78,7 +62,7 @@ Roteamento, terminação TLS, autenticação técnica, limite de tráfego, corre
 RPC organiza a colaboração por operações nomeadas. REST requer restrições e semântica de recursos, representações e mensagens HTTP; uma URL com HTTP não comprova essas propriedades.
 </details>
 
-4\. Comparado a uma API de leitura com campos fixos, quando o GraphQL tende a ajudar mais?
+2\. Comparado a uma API de leitura com campos fixos, quando o GraphQL tende a ajudar mais?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
@@ -86,7 +70,7 @@ RPC organiza a colaboração por operações nomeadas. REST requer restrições 
 Quando consumidores precisam de combinações de campos e relações muito variáveis. Ainda é necessário controlar custo das consultas, autorização por campo e cache; não é a escolha automática para qualquer tela móvel.
 </details>
 
-5\. O **WebSocket** mantém um canal aberto entre cliente e servidor. O que ele resolve, e o que ele não resolve sozinho?
+3\. O **WebSocket** mantém um canal aberto entre cliente e servidor. O que ele resolve, e o que ele não resolve sozinho?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
@@ -94,7 +78,7 @@ Quando consumidores precisam de combinações de campos e relações muito vari�
 Ele mantém um canal bidirecional persistente para atualização em tempo real. Não garante entrega durável, reprocessamento, ordenação de negócio ou recuperação após desconexão; essas políticas precisam ser projetadas.
 </details>
 
-6\. O laboratório fala **SOAP/TISS** (o padrão de troca das operadoras) e a plataforma usa o próprio vocabulário. Por que traduzir entre os dois é mais apropriado num **adaptador** do que no **gateway**?
+4\. O laboratório fala **SOAP/TISS** (o padrão de troca das operadoras) e a plataforma usa o próprio vocabulário. Por que traduzir entre os dois é mais apropriado num **adaptador** do que no **gateway**?
 
 <details markdown="1">
 <summary>Ver resposta</summary>

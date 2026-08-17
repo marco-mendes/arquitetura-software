@@ -4,76 +4,76 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas não há
 
 ## Recordar
 
-1\. Defina capacidade de negócio e dê um exemplo hospitalar.
+1\. Uma capacidade de negócio descreve algo que a organização sabe fazer para produzir um resultado. "Verificar elegibilidade" é uma capacidade; "salvar no PostgreSQL" não é. Por quê? Dê outro exemplo hospitalar de capacidade e um de mecanismo técnico.
 
 <details>
 <summary>Ver resposta</summary>
 
-É um resultado que a organização sabe produzir, como verificar elegibilidade.
+Capacidade de negócio é definida pelo resultado que ela produz para alguém, independentemente da tecnologia usada para produzi-lo; "salvar no PostgreSQL" descreve como um dado é persistido, não que resultado a organização entrega. Exemplos de capacidade: "agendar atendimento", "solicitar exame". Exemplo de mecanismo técnico: "enviar JSON", "consultar cache" — eles podem mudar sem que a capacidade que servem mude de nome.
 </details>
 
-2\. Diferencie bounded context de microsserviço em duas frases.
+2\. Uma equipe decide que, como Elegibilidade e Exames são bounded contexts diferentes, cada um precisa virar um microsserviço imediatamente. Que erro de raciocínio essa equipe está cometendo?
 
 <details>
 <summary>Ver resposta</summary>
 
-Bounded context delimita significado. Microsserviço é uma possível implantação física dessa fronteira.
+A equipe está confundindo fronteira semântica com topologia física. Bounded context delimita onde um modelo e sua linguagem têm significado consistente — é uma decisão sobre significado, não sobre implantação. Um bounded context pode viver como módulo dentro de um monólito, como parte de um macrosserviço ou como um serviço implantável; a extração física só se justifica quando há necessidade comprovada de autonomia, escala ou falha independentes. Tratar toda fronteira lógica como um serviço separado cria processos, redes e operação antes de existir qualquer benefício demonstrado.
 </details>
 
-3\. Liste quatro formas de acoplamento apresentadas no módulo.
+3\. O módulo descreve cinco formas de acoplamento entre serviços: de contrato, temporal, de dados, de implantação e organizacional. Escolha duas delas e explique, com um exemplo, o que cada uma faz um serviço depender do outro.
 
 <details>
 <summary>Ver resposta</summary>
 
-Contrato, tempo, dados, implantação e organização.
+São cinco: acoplamento de contrato (o consumidor depende de campos, semântica e códigos de resposta expostos pelo provedor — mudar um campo pode quebrar quem consome); acoplamento temporal (o consumidor precisa que o provedor esteja disponível no momento da chamada, como numa chamada síncrona); acoplamento de dados (duas unidades dependem da mesma estrutura de armazenamento ou alteram a mesma informação); acoplamento de implantação (uma mudança obriga a publicar várias unidades juntas); e acoplamento organizacional (equipes precisam negociar continuamente para entregar uma única capacidade). Exemplo do laboratório: Exames aceita acoplamento temporal com Elegibilidade — espera uma resposta síncrona —, mas evita acoplamento de dados, porque não lê a tabela do outro serviço diretamente.
 </details>
 
-4\. Explique o que banco por serviço proíbe.
+4\. Uma pessoa desenvolvedora de Faturamento precisa de um relatório e decide fazer uma consulta SQL direta nas tabelas do banco de Elegibilidade, sem passar pelo contrato de API. Qual regra de propriedade de dados essa consulta viola, e que acoplamento oculto ela cria?
 
 <details>
 <summary>Ver resposta</summary>
 
-Proíbe acesso direto de outro serviço; a integração usa contrato, evento ou cópia projetada.
+Ela viola banco por serviço: a regra de que somente o serviço proprietário acessa diretamente o próprio armazenamento, e qualquer outro consumidor deve passar por contrato, evento ou réplica projetada. A consulta direta cria um acoplamento de dados oculto — Faturamento passa a depender da estrutura interna das tabelas de Elegibilidade, que nenhum contrato declara e ninguém revisa. Uma mudança de coluna feita por Elegibilidade, sem saber que Faturamento a lê, pode quebrar o relatório sem aviso; o proprietário perde o controle sobre a evolução do próprio esquema.
 </details>
 
-5\. Nomeie as três formas de implantação comparadas.
+5\. O módulo compara monólito modular, macrosserviço e microsserviço como formas de implantação. O que muda entre elas não é o tamanho do código — é outra coisa. O que é?
 
 <details>
 <summary>Ver resposta</summary>
 
-Monólito modular, macrosserviço e microsserviço.
+O que muda é a autonomia física de implantação e de falha, não o volume de linhas ou de pessoas. No monólito modular, os módulos têm fronteiras lógicas claras, mas publicam e falham juntos, numa única unidade implantável. No macrosserviço, algumas fronteiras já viram processos separados, mas ainda agrupam mais de uma capacidade por unidade. No microsserviço, cada unidade implantável está alinhada a uma única responsabilidade de negócio e é dona do próprio estado, podendo publicar e falhar de forma independente das demais. "Micro" não é uma medida de tamanho: é um sinal de autonomia com coesão.
 </details>
 
-6\. Defina falha parcial.
+6\. Exames continua respondendo consultas ao próprio banco, mas passa a recusar novas solicitações porque Elegibilidade está fora do ar. Que nome se dá a essa situação, e por que ela não deveria ser tratada apenas como "o sistema caiu"?
 
 <details>
 <summary>Ver resposta</summary>
 
-Uma parte segue saudável enquanto outra indisponibilidade impede uma capacidade.
+Chama-se falha parcial: uma parte do sistema distribuído continua saudável enquanto outra parte, indisponível, impede que uma capacidade específica seja concluída. Tratar isso como "o sistema caiu" esconde informação que o consumidor precisa para agir — ele não sabe se pode tentar de novo, se deve esperar ou se o problema é seu. Por isso a resposta deveria expor a causa real, como um `503` com o código `dependencia_indisponivel`, em vez de um `500` genérico que trata falha de dependência como se fosse erro interno do próprio Exames.
 </details>
 
-7\. Indique o papel de timeout em uma chamada síncrona.
+7\. Uma chamada síncrona sem timeout está esperando a resposta de Elegibilidade, que ficou lenta. O que acontece com Exames enquanto essa espera não tem limite, e que papel um timeout cumpre nessa situação?
 
 <details>
 <summary>Ver resposta</summary>
 
-Limita a espera pela dependência e impede que a lentidão se espalhe.
+Sem timeout, a requisição de Exames fica presa esperando indefinidamente a resposta de Elegibilidade — a thread, conexão ou recurso alocado para essa chamada continua ocupado, e se isso se repetir em várias solicitações simultâneas, a lentidão de Elegibilidade se propaga e pode esgotar os recursos de Exames também. Um timeout limita quanto tempo Exames espera antes de desistir e tratar a chamada como falha, contendo o problema em vez de deixar que a lentidão de uma dependência derrube quem depende dela.
 </details>
 
-8\. Declare a condição em que CAP força uma escolha.
+8\. CAP não é uma escolha livre entre duas de três letras que um produto faz a qualquer momento. Em que condição específica CAP de fato obriga um sistema distribuído a escolher entre consistência e disponibilidade?
 
 <details>
 <summary>Ver resposta</summary>
 
-Durante uma partição: preservar consistência ou responder aceitando divergência.
+Apenas durante uma partição de rede — quando mensagens entre nós ou grupos de nós são perdidas ou atrasadas. Nesse momento, o sistema precisa decidir entre recusar ou atrasar operações para preservar uma visão única e atual dos dados (consistência), ou continuar respondendo aceitando o risco de divergência entre réplicas (disponibilidade). Fora de uma partição, CAP não está em jogo: latência e consistência ainda existem como decisões, mas são descritas por outros modelos, não por CAP. CAP também não serve para justificar qualquer dado desatualizado numa integração comum — é preciso nomear o mecanismo e a promessa reais.
 </details>
 
-9\. Resuma SAGA sem usar a expressão “rollback global”.
+9\. Resuma SAGA sem usar a expressão "rollback global".
 
 <details>
 <summary>Ver resposta</summary>
 
-Coordena transações locais e pode exigir compensações para efeitos confirmados.
+Uma SAGA coordena uma sequência de transações locais, cada uma confirmando seu próprio estado; a coordenação pode ser coreografada por eventos ou orquestrada por um componente que conhece toda a sequência. Se uma etapa posterior falha, o mecanismo aciona ações compensatórias, semanticamente adequadas ao domínio, para neutralizar o efeito das etapas anteriores — mas essa compensação não apaga o que já aconteceu: uma solicitação cancelada não vira uma solicitação que nunca existiu, e outros participantes podem já ter observado o estado intermediário.
 </details>
 
 10\. Resuma CQRS sem pressupor bancos separados.
@@ -81,7 +81,7 @@ Coordena transações locais e pode exigir compensações para efeitos confirmad
 <details>
 <summary>Ver resposta</summary>
 
-Separa comando e consulta quando suas necessidades diferem; pode começar no mesmo processo.
+CQRS separa os modelos de comando e de consulta quando eles têm necessidades realmente diferentes: comandos expressam intenção e precisam preservar invariantes de negócio; consultas existem para oferecer uma projeção adequada a quem lê. Essa separação pode começar apenas como objetos e interfaces distintos dentro do mesmo processo e do mesmo banco — nada obriga a existência de dois bancos, de mensageria ou de Event Sourcing. Só vale introduzir um modelo de leitura materializado, com sua própria defasagem e reconstrução, quando a assimetria entre leitura e escrita ou a escala realmente justificarem esse custo adicional.
 </details>
 
 ## Compreender
@@ -91,7 +91,7 @@ Separa comando e consulta quando suas necessidades diferem; pode começar no mes
 <details>
 <summary>Ver resposta</summary>
 
-A chamada vira contrato e rede; se mudanças continuam conjuntas, o acoplamento só mudou de forma.
+Separar duas funções em processos diferentes não elimina a dependência entre elas — ela só muda de forma: o que antes era uma chamada de função na memória vira um contrato de rede, com serialização, latência e disponibilidade envolvidas. Se as duas partes continuam mudando pelas mesmas razões e precisam ser implantadas juntas para uma alteração funcionar, o acoplamento de contrato, temporal e de implantação continua alto — só que agora com o custo adicional de rede e coordenação remota, sem o benefício de autonomia que a distribuição prometia.
 </details>
 
 2\. Descreva como alta coesão pode ser prejudicada por serviços pequenos demais.
@@ -99,15 +99,15 @@ A chamada vira contrato e rede; se mudanças continuam conjuntas, o acoplamento 
 <details>
 <summary>Ver resposta</summary>
 
-Regras que mudam juntas passam a exigir contratos e implantações coordenadas.
+Coesão é o grau em que os elementos de uma unidade contribuem para uma mesma responsabilidade; regras que mudam pelo mesmo motivo tendem a pertencer junto. Quando um serviço é fatiado em pedaços menores que essas regras relacionadas, uma alteração simples de negócio passa a exigir mudar vários serviços ao mesmo tempo — cada um com seu próprio contrato, pipeline de implantação e possibilidade de falha isolada. O resultado é o oposto da autonomia que a distribuição buscava: mais coordenação, mais superfícies de falha e mais contexto mental para entender o que deveria ser uma única mudança coesa.
 </details>
 
-3\. Compare propriedade de dados com localização física do banco.
+3\. Dois serviços do laboratório usam dois PostgreSQL diferentes, um para cada um. Isso já garante, por si só, que a propriedade dos dados está protegida? O que mais precisa ser verdade além da separação física?
 
 <details>
 <summary>Ver resposta</summary>
 
-Propriedade define autoridade; localização pode ser schema, instância ou servidor e só protege com permissões reais.
+Não garante sozinho. Propriedade responde quem tem autoridade para interpretar e alterar uma informação — é uma regra de acesso e de responsabilidade, não uma questão de onde o arquivo do banco está gravado. A separação física (bancos, schemas ou instâncias distintas) só protege a propriedade quando vem acompanhada de isolamento de rede e de credenciais que realmente impedem o outro serviço de conectar diretamente — como no laboratório, em que a credencial de Exames só conhece o banco `exames`, e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões reais, dois bancos fisicamente separados ainda podem ser acessados livremente por qualquer serviço que descubra a string de conexão, e a propriedade continua sendo apenas uma convenção não aplicada.
 </details>
 
 4\. Explique por que `503 dependencia_indisponivel` comunica melhor a falha do laboratório do que um `500` genérico.
@@ -115,7 +115,7 @@ Propriedade define autoridade; localização pode ser schema, instância ou serv
 <details>
 <summary>Ver resposta</summary>
 
-Expõe uma dependência indisponível sem atribuir a Exames um erro interno genérico.
+Um `500` genérico trata qualquer erro do mesmo jeito, inclusive um bug interno de Exames — o consumidor não consegue distinguir se o problema é dele, de Exames ou de uma dependência externa, nem decidir se vale a pena tentar de novo. Um `503` com o código `dependencia_indisponivel` expõe exatamente o que aconteceu: Exames está saudável, mas não consegue completar a operação porque Elegibilidade está indisponível — uma falha parcial, não uma falha de Exames. Essa distinção é o que permite ao consumidor decidir entre esperar, repetir com backoff ou escalar o problema para quem realmente precisa agir.
 </details>
 
 5\. Mostre por que consistência eventual ainda exige regras de convergência.
@@ -123,7 +123,7 @@ Expõe uma dependência indisponível sem atribuir a Exames um erro interno gen�
 <details>
 <summary>Ver resposta</summary>
 
-Exige identidade, ordenação quando necessária, idempotência, repetição e reconciliação para convergir.
+Consistência eventual promete que, sem novas escritas, todas as réplicas convergem para o mesmo estado — mas não diz como nem quando isso acontece, e sozinha não resolve nada. É preciso declarar um identificador que amarre eventos ao mesmo registro; uma ordenação, quando a ordem de aplicação importar para o resultado; operações idempotentes, para que uma mensagem repetida não produza o efeito duas vezes; uma política de repetição para mensagens perdidas ou atrasadas; e um mecanismo de reconciliação para os casos em que a divergência precisa ser detectada e corrigida manualmente. Sem essas regras explícitas, "eventual" pode significar "nunca", ou pior, convergir para um estado que ninguém decidiu que estava correto.
 </details>
 
 6\. Dê um cenário em que monólito modular seja preferível e outro em que implantação independente seja necessária.
@@ -131,7 +131,7 @@ Exige identidade, ordenação quando necessária, idempotência, repetição e r
 <details>
 <summary>Ver resposta</summary>
 
-Mudanças conjuntas e transação comum favorecem módulos; equipes e cargas independentes podem justificar serviços.
+Monólito modular tende a ser preferível quando as mudanças em duas capacidades costumam acontecer juntas e compartilham uma mesma transação — por exemplo, assinar um laudo e publicá-lo, que precisam ser consistentes no mesmo instante e são alteradas pela mesma equipe. Implantação independente passa a ser necessária quando duas capacidades têm equipes diferentes, cargas de trabalho muito distintas ou ciclos de mudança e de risco que não deveriam bloquear um ao outro — por exemplo, Agenda, que recebe picos e muda com frequência, e Preparo de Sala, de outra equipe, que tolera alguns minutos de atraso e não deveria ser redeployada toda vez que Agenda muda.
 </details>
 
 7\. Explique por que uma compensação de SAGA não apaga fatos já observados.
@@ -139,15 +139,15 @@ Mudanças conjuntas e transação comum favorecem módulos; equipes e cargas ind
 <details>
 <summary>Ver resposta</summary>
 
-O efeito pode ter sido observado; compensar cria outro fato, não apaga o anterior.
+Uma compensação de SAGA cria um novo fato que neutraliza o efeito de negócio de uma etapa anterior — ela não volta o tempo nem apaga o que já foi observado por outras partes do sistema. Se uma solicitação de exame já foi confirmada e notificada, cancelá-la depois não significa que ela nunca existiu: quem recebeu a confirmação já pode ter agido com base nela, e mensagens de cancelamento podem chegar duplicadas ou fora de ordem. É por isso que o desenho de uma SAGA precisa declarar estados explícitos, comandos idempotentes e uma trilha de auditoria — a compensação é mais um evento na história, não um apagador dela.
 </details>
 
-8\. Descreva a diferença de propósito entre SAGA e CQRS.
+8\. Uma equipe quer introduzir tanto SAGA quanto CQRS no fluxo de Agendamento só porque "qualquer sistema distribuído sério usa os dois". Que problema real cada um resolveria, e por que adotar um não implica precisar do outro?
 
 <details>
 <summary>Ver resposta</summary>
 
-SAGA coordena mudança distribuída; CQRS separa leitura e escrita. Um não exige o outro.
+SAGA resolveria o problema de coordenar uma mudança que atravessa múltiplas transações locais — por exemplo, reservar horário, autorizar procedimento e preparar um recurso, em que uma falha numa etapa posterior exige compensar as anteriores. CQRS resolveria um problema diferente: a assimetria entre como o sistema escreve (comandos, que precisam preservar invariantes) e como ele lê (consultas, que podem exigir uma projeção otimizada e de alto volume). Um fluxo pode precisar de SAGA sem nenhuma necessidade de separar leitura e escrita, e pode precisar de CQRS sem nenhuma coordenação distribuída entre transações — adotar os dois por hábito, sem uma necessidade concreta demonstrada para cada um, só adiciona componentes, estados e novas formas de falhar que ninguém pediu.
 </details>
 
 ## Aplicar

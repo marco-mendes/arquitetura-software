@@ -4,9 +4,68 @@ O laboratório concretiza dois bounded contexts em processos FastAPI independent
 
 ## Componentes
 
-O serviço **Elegibilidade** oferece `GET /elegibilidades/{beneficiario_id}`. Seu schema contém beneficiários sintéticos e a decisão booleana. O serviço **Exames** oferece `POST /exames`, consulta o primeiro serviço e, se a resposta for positiva, registra uma solicitação no próprio schema.
+O serviço **Elegibilidade** oferece `GET /elegibilidades/{beneficiario_id}`. Seu schema contém beneficiários sintéticos e a decisão booleana. Cada processo é uma aplicação FastAPI própria, com sua própria conexão PostgreSQL — não há import nem chamada de função entre os dois códigos, só HTTP.
 
-Ambos oferecem `GET /health`. O health check comprova conexão com seu banco local; ele não declara toda dependência remota saudável. Essa escolha permite ver uma falha parcial: Exames continua com processo e banco ativos, embora uma operação que depende de Elegibilidade retorne `503`.
+```python
+# hospital/servicos/elegibilidade.py
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://elegibilidade:elegibilidade@localhost:5433/elegibilidade",
+)
+app = FastAPI(title="Serviço de elegibilidade", version="1.0.0")
+
+def abrir_conexao():
+    return psycopg.connect(DATABASE_URL)
+
+@app.get("/elegibilidades/{beneficiario_id}")
+def consultar_elegibilidade(beneficiario_id: str):
+    with abrir_conexao() as connection:
+        row = connection.execute(
+            "SELECT elegivel FROM elegibilidade.beneficiarios WHERE id = %s",
+            (beneficiario_id,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"codigo": "beneficiario_nao_encontrado"},
+        )
+    return {"beneficiario_id": beneficiario_id, "elegivel": row[0]}
+```
+
+O serviço **Exames** oferece `POST /exames`, consulta o primeiro serviço por HTTP e, se a resposta for positiva, registra uma solicitação no próprio schema. O contrato de entrada e saída é declarado em Pydantic, como no exemplo do módulo 2:
+
+```python
+# hospital/servicos/exames.py
+class PedidoExame(BaseModel):
+    beneficiario_id: str = Field(min_length=1)
+    codigo_exame: str = Field(min_length=1)
+
+class ExameSolicitado(PedidoExame):
+    solicitacao_id: int
+    situacao: str
+
+def obter_cliente_elegibilidade():
+    with httpx.Client(base_url=ELIGIBILIDADE_URL, timeout=2.0) as client:
+        yield client
+```
+
+`ELIGIBILIDADE_URL` é a única informação que Exames recebe sobre o outro serviço: um endereço HTTP, injetado por variável de ambiente. Nenhuma URL de banco alheio é passada a Exames — é essa ausência, não uma regra de código, que impede o acesso direto.
+
+Ambos oferecem `GET /health`. O health check comprova conexão com seu banco local; ele não declara nenhuma dependência remota saudável. Essa escolha permite ver uma falha parcial: Exames continua com processo e banco ativos, embora uma operação que depende de Elegibilidade retorne `503`.
+
+```python
+@app.get("/health")
+def health():
+    try:
+        with abrir_conexao() as connection:
+            connection.execute("SELECT 1")
+    except psycopg.Error as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"codigo": "banco_indisponivel"},
+        ) from error
+    return {"status": "ok", "servico": "exames"}
+```
 
 ```mermaid
 flowchart LR
@@ -34,7 +93,47 @@ O consumidor envia:
 }
 ```
 
-Exames valida a forma do pedido. Em seguida chama `GET /elegibilidades/paciente-001`. Elegibilidade executa uma consulta parametrizada em `elegibilidade.beneficiarios` e responde:
+O Pydantic valida a forma do pedido antes de a rota rodar (o mesmo mecanismo do módulo 2). Dentro da rota, Exames chama `GET /elegibilidades/paciente-001` pelo cliente HTTP injetado, sem conhecer nenhum detalhe interno de Elegibilidade além do contrato:
+
+```python
+# hospital/servicos/exames.py
+@app.post("/exames", response_model=ExameSolicitado, status_code=status.HTTP_201_CREATED)
+def solicitar_exame(
+    pedido: PedidoExame,
+    cliente: Annotated[httpx.Client, Depends(obter_cliente_elegibilidade)],
+):
+    response = cliente.get(f"/elegibilidades/{pedido.beneficiario_id}")
+    # ... validação da resposta (ver "Fluxos alternativos") ...
+    elegibilidade = response.json()
+    if not elegibilidade["elegivel"]:
+        raise HTTPException(status_code=422, detail={"codigo": "beneficiario_inelegivel"})
+    solicitacao_id = registrar_solicitacao(pedido.beneficiario_id, pedido.codigo_exame)
+    return ExameSolicitado(
+        solicitacao_id=solicitacao_id,
+        beneficiario_id=pedido.beneficiario_id,
+        codigo_exame=pedido.codigo_exame,
+        situacao="solicitado",
+    )
+```
+
+`registrar_solicitacao` é a única função de Exames que toca seu próprio banco — e só o seu:
+
+```python
+def registrar_solicitacao(beneficiario_id: str, codigo_exame: str) -> int:
+    with abrir_conexao() as connection:
+        row = connection.execute(
+            """
+            INSERT INTO exames.solicitacoes (beneficiario_id, codigo_exame)
+            VALUES (%s, %s)
+            RETURNING id
+            """,
+            (beneficiario_id, codigo_exame),
+        ).fetchone()
+    assert row is not None
+    return row[0]
+```
+
+Do lado de Elegibilidade, a mesma chamada executa uma consulta parametrizada em `elegibilidade.beneficiarios` e responde:
 
 ```json
 {
@@ -43,7 +142,7 @@ Exames valida a forma do pedido. Em seguida chama `GET /elegibilidades/paciente-
 }
 ```
 
-Exames valida status e estrutura, grava em `exames.solicitacoes` e retorna `201 Created`:
+Exames aceita a decisão, chama `registrar_solicitacao` (mostrado acima) e retorna `201 Created`:
 
 ```json
 {
@@ -58,9 +157,48 @@ O identificador pode aumentar em nova execução. Depois de `down -v`, o volume 
 
 ## Fluxos alternativos
 
-Se `paciente-002` for consultado, Elegibilidade responde `200` com `elegivel: false`; Exames traduz a decisão para `422` e `beneficiario_inelegivel`. Se o identificador não existir, a resposta do provedor é `404` e Exames usa `beneficiario_desconhecido`. Se o provedor devolver estrutura incompatível, Exames retorna `502` e `contrato_invalido`.
+Cada linha do parágrafo anterior sobre falhas é, no código, uma verificação explícita antes do caminho feliz. É a mesma rota `solicitar_exame`, agora com os trechos que a versão resumida do fluxo nominal ocultou:
 
-Se a conexão falhar ou o provedor responder erro de servidor, Exames retorna `503`:
+```python
+# hospital/servicos/exames.py
+try:
+    response = cliente.get(f"/elegibilidades/{pedido.beneficiario_id}")
+except httpx.HTTPError as error:
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={"codigo": "dependencia_indisponivel"},
+    ) from error
+if response.status_code >= 500:
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={"codigo": "dependencia_indisponivel"},
+    )
+if response.status_code == 404:
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail={"codigo": "beneficiario_desconhecido"},
+    )
+try:
+    response.raise_for_status()
+    elegibilidade = response.json()
+except (httpx.HTTPError, ValueError) as error:
+    raise HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        detail={"codigo": "contrato_invalido"},
+    ) from error
+if not isinstance(elegibilidade.get("elegivel"), bool):
+    raise HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        detail={"codigo": "contrato_invalido"},
+    )
+if not elegibilidade["elegivel"]:
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail={"codigo": "beneficiario_inelegivel"},
+    )
+```
+
+Cada `raise` corresponde a um dos casos do parágrafo anterior: `paciente-002` cai no último bloco (`200` com `elegivel: false` → `422 beneficiario_inelegivel`); um identificador inexistente cai no bloco de `404` (`404 beneficiario_desconhecido`); uma estrutura incompatível na resposta cai no bloco de `contrato_invalido`; e uma conexão que falha (`httpx.HTTPError`, por exemplo um timeout) ou um erro `5xx` do próprio provedor caem nos dois blocos de `dependencia_indisponivel`, produzindo:
 
 ```json
 {
@@ -70,15 +208,63 @@ Se a conexão falhar ou o provedor responder erro de servidor, Exames retorna `5
 }
 ```
 
-Essa resposta não afirma que o processo de Exames parou. Ela comunica que a capacidade solicitada não pode ser concluída enquanto uma dependência necessária está indisponível.
+Essa resposta não afirma que o processo de Exames parou. Ela comunica que a capacidade solicitada não pode ser concluída enquanto uma dependência necessária está indisponível — o teste `test_exames_makes_partial_failure_observable_when_dependency_is_down` simula exatamente essa queda de conexão e verifica o `503` com esse código.
 
 ## Fronteira de dados executável
 
-O arquivo Compose cria dois servidores PostgreSQL. No primeiro existe somente o schema `elegibilidade`; no segundo, somente `exames`. Cada banco usa rede interna e alias próprio; cada aplicação recebe apenas sua URL e só participa da rede do banco que possui. A rede de aplicação é separada e serve ao HTTP entre serviços. Não há porta de banco publicada para a máquina durante a oficina, reduzindo caminhos acidentais.
+O arquivo Compose cria dois servidores PostgreSQL. No primeiro existe somente o schema `elegibilidade`; no segundo, somente `exames`. O script de inicialização cria uma credencial própria para cada schema e a usa para criá-lo, de modo que cada aplicação só enxerga sua própria autoridade sobre os dados:
 
-O teste `test_exames_source_cannot_access_eligibility_table_directly` funciona como uma guarda simples. Ele rejeita referências SQL conhecidas à tabela alheia e ao host do banco vizinho. Guardas textuais não substituem permissões: a separação física e as credenciais oferecem a proteção efetiva. O teste documenta a intenção e detecta regressões óbvias.
+```sql
+-- infra/postgres/init.sql (executado uma vez, contra o banco "elegibilidade")
+CREATE ROLE elegibilidade LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD 'elegibilidade';
+CREATE SCHEMA AUTHORIZATION elegibilidade;
+SET ROLE elegibilidade;
+CREATE TABLE elegibilidade.beneficiarios (
+    id text PRIMARY KEY,
+    elegivel boolean NOT NULL
+);
+INSERT INTO elegibilidade.beneficiarios (id, elegivel)
+VALUES ('paciente-001', true), ('paciente-002', false);
+```
 
-O teste de contrato usa um transporte HTTP controlado para responder como Elegibilidade, mas importa somente `hospital.servicos.exames`. Assim ele avalia o que o consumidor espera do contrato, sem chamar função interna nem instanciar repositório do provedor. Se a implementação de Elegibilidade mudar mantendo status e corpo, o teste do consumidor permanece válido.
+O mesmo script, contra o banco `exames`, cria a role `exames` e a tabela `exames.solicitacoes`, sem nenhuma referência ao schema `elegibilidade`. Cada banco usa rede interna e alias próprio; cada aplicação recebe apenas sua URL e só participa da rede do banco que possui. A rede de aplicação é separada e serve ao HTTP entre serviços. Não há porta de banco publicada para a máquina durante a oficina, reduzindo caminhos acidentais.
+
+O teste `test_exames_source_cannot_access_eligibility_table_directly` funciona como uma guarda simples: ele lê o próprio arquivo-fonte de Exames como texto e procura referências que não deveriam existir.
+
+```python
+# tests/test_service_boundaries.py
+def test_exames_source_cannot_access_eligibility_table_directly():
+    source = EXAMES_SOURCE.read_text(encoding="utf-8").casefold()
+
+    assert "elegibilidade.beneficiarios" not in source
+    assert "from elegibilidade" not in source
+    assert "join elegibilidade" not in source
+    assert "db_elegibilidade" not in source
+```
+
+Guardas textuais não substituem permissões: a separação física e as credenciais oferecem a proteção efetiva; este teste só documenta a intenção e detecta regressões óbvias, como alguém colar um `SELECT` direto na tabela alheia.
+
+O teste de contrato usa um transporte HTTP controlado (`httpx.MockTransport`) para responder como Elegibilidade, mas importa somente `hospital.servicos.exames` — nunca o código do provedor:
+
+```python
+# tests/test_service_boundaries.py
+def test_exames_consumes_eligibility_only_through_http_contract(monkeypatch):
+    monkeypatch.setattr(exames, "registrar_solicitacao", lambda *_: 41)
+    eligibility_response = httpx.Response(
+        200,
+        json={"beneficiario_id": "paciente-001", "elegivel": True},
+    )
+
+    response = _client_for_eligibility(eligibility_response).post(
+        "/exames",
+        json={"beneficiario_id": "paciente-001", "codigo_exame": "HEM-001"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["solicitacao_id"] == 41
+```
+
+`_client_for_eligibility` troca, via `dependency_overrides`, o cliente HTTP real por um que responde com o payload controlado acima — Exames nunca percebe a diferença, porque só enxerga o contrato. Assim o teste avalia o que o consumidor espera do contrato, sem chamar função interna nem instanciar repositório do provedor. Se a implementação de Elegibilidade mudar mantendo status e corpo, o teste do consumidor permanece válido.
 
 ## O que o exemplo deliberadamente não inclui
 

@@ -1,12 +1,10 @@
 # Exemplo arquitetural: aceitar uma elegibilidade
 
-## O que vamos construir
+## O que este exemplo mostra
 
-A equipe administrativa precisa consultar a elegibilidade de um paciente no plano de saúde. A operadora externa é lenta e nem sempre está disponível. Neste incremento ainda **não** falamos com a operadora: a API só **recebe** o pedido, guarda um protocolo e deixa consultar o estado depois. É o menor passo que já exercita um contrato HTTP.
+A equipe administrativa precisa consultar a elegibilidade de um paciente no plano de saúde. A operadora externa é lenta e nem sempre está disponível. Neste incremento a API ainda **não** fala com a operadora: ela só **recebe** o pedido, guarda um protocolo e deixa consultar o estado depois. É o menor passo possível que já exercita um contrato HTTP.
 
-Antes de olhar qualquer código, veja a interação inteira de uma vez.
-
-## Primeiro, a sequência
+## A sequência completa
 
 ```mermaid
 sequenceDiagram
@@ -32,7 +30,7 @@ sequenceDiagram
 
 `recebida` não quer dizer "aprovada": significa apenas que a plataforma aceitou o pedido.
 
-Agora vamos construir isso em quatro passos. O código é **FastAPI** (um framework Python para APIs HTTP) com **Pydantic** (uma biblioteca que valida dados a partir das anotações de tipo). Os trechos abaixo são esqueletos, para mostrar a forma; o código completo está no laboratório, em `src/hospital/api/`.
+O código a seguir está dividido em quatro passos, escrito em **FastAPI** (um framework Python para construir APIs HTTP) com **Pydantic** (uma biblioteca que usa o tipo declarado em cada campo para validar os dados automaticamente). Os trechos abaixo são esqueletos, só para mostrar a forma; o código completo está no laboratório, em `src/hospital/api/`.
 
 ## Passo 1 — O contrato vira classes
 
@@ -46,7 +44,7 @@ O consumidor envia três campos:
 }
 ```
 
-Em `models.py`, esse contrato vira classes Pydantic. O tipo de cada campo **é** a regra de validação: se o corpo não bater, o FastAPI recusa antes de a sua lógica rodar.
+Em `models.py`, esse contrato vira classes Pydantic. O tipo de cada campo já funciona como regra de validação: se o corpo da requisição não bater com o tipo esperado, o FastAPI recusa o pedido antes mesmo de a sua lógica rodar.
 
 ```python
 # models.py
@@ -106,7 +104,7 @@ Location: /elegibilidades/550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
-O `202` (em vez de `200` ou `201`) diz "aceitei, ainda não decidi" — um vocabulário honesto para um passo que nem fala com a operadora. Guardar num dicionário em memória é uma decisão de implementação: reiniciar o processo apaga tudo — um limite que precisa ficar declarado para quem consome a API.
+O código usa `202` — não `200` nem `201` — porque a API só aceitou o pedido; ela ainda não decidiu nada. Guardar os dados num dicionário em memória é uma decisão simples de implementação: funciona enquanto o processo está rodando, mas tudo se perde se ele reiniciar. Esse limite precisa ficar declarado para quem consome a API.
 
 ## Passo 3 — A rota que recupera
 
@@ -163,11 +161,13 @@ O corpo do erro que o consumidor recebe:
 
 ## O contrato explícito e o contrato gerado
 
-Existem duas descrições da mesma API. `contratos/openapi.yaml` é o contrato **explícito**, escrito à mão; o FastAPI ainda **gera** um `/openapi.json` a partir do código. Os testes comparam operações, campos e exemplos entre os dois: pegam divergência pontual, mas não garantem equivalência completa. Esses testes usam `TestClient(app)` para exercer o HTTP dentro do processo (status, cabeçalho, serialização, roteamento), sem precisar subir um servidor.
+Existem duas descrições da mesma API. O arquivo `contratos/openapi.yaml` é o contrato **explícito**: alguém escreveu esse arquivo à mão. O FastAPI também **gera** sozinho um `/openapi.json`, a partir do código. Os testes comparam os dois — operações, campos, exemplos — e conseguem pegar divergências pontuais, mas não garantem que os dois documentos sejam idênticos em tudo.
 
-## Onde termina o gateway e começa a tradução
+Esses testes usam `TestClient(app)`, uma ferramenta que simula requisições HTTP dentro do próprio processo de teste, sem precisar ligar um servidor separado. Assim dá para checar status, cabeçalho e formato da resposta rapidamente.
 
-O laboratório roda uma FastAPI única em `http://127.0.0.1:8000`, sem gateway. Quando a plataforma cresce e ganha várias capacidades, a borda pública e a integração externa passam a ter responsabilidades diferentes:
+## Gateway e adaptador de operadora
+
+O laboratório roda apenas uma FastAPI, em `http://127.0.0.1:8000`, sem gateway. Mas quando a plataforma cresce e ganha várias capacidades, a porta de entrada (borda pública) e a integração com sistemas externos passam a ter responsabilidades diferentes:
 
 ```mermaid
 flowchart LR
@@ -184,7 +184,7 @@ flowchart LR
 
 **Leitura textual:** gateway aplica políticas; adaptador traduz vocabulário e protocolo da operadora; o estado pertence à API — uma hipótese de evolução, sem componente correspondente no laboratório.
 
-O gateway pode autenticar, limitar tráfego e rotear. Ele **não** deve converter `beneficiaryKey` da operadora em `matricula_plano` nem decidir que um estado desconhecido significa `negada` — isso é responsabilidade do **adaptador**, onde a diferença semântica pode ser testada e observada. Assim, SOAP/XML e regras externas não vazam para os consumidores internos.
+O gateway pode autenticar, limitar tráfego e rotear as chamadas. O que ele **não** deve fazer é traduzir `beneficiaryKey` da operadora para `matricula_plano`, nem decidir que um estado desconhecido significa `negada`. Essas traduções são responsabilidade do **adaptador**, onde podem ser testadas e observadas de forma isolada. Assim, o formato SOAP/XML da operadora e suas regras específicas não vazam para o resto da plataforma.
 
 ## Equivalências em Java e .NET
 

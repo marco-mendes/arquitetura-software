@@ -23,7 +23,7 @@ flowchart LR
 ## Mapa de interações antes da escolha técnica
 
 | Interação | Resultado que o consumidor precisa | Necessidade temporal | Risco que não pode ficar implícito |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | Consultar horários | opções de agenda ordenadas | resposta rápida para escolher | páginas mudam enquanto se navega |
 | Pedir elegibilidade | confirmação de recebimento e acompanhamento | aceitação rápida; decisão pode demorar | repetição após perda de resposta |
 | Solicitar autorização | estado atual e histórico da solicitação | processo externo variável | estado externo diverge do interno |
@@ -108,3 +108,15 @@ A API mínima prova somente `202`, `Location`, consulta e validação. Arquitetu
 ## Baseline recomendada e limites honestos
 
 Baseline: uma aplicação, REST/HTTP interno, `202`, `Location`, OpenAPI e adaptador planejado. Gateway e entrega assíncrona permanecem condicionais. ADR-002 registra contrato validado, exemplos, testes, sequência, alternativas, limites e gatilhos.
+
+## O que fazer com este caso
+
+Leia as cinco decisões e responda por escrito, com uma frase de justificativa para cada uma:
+
+1. Para o pedido ao laboratório, você escolheria acesso direto, contrato oficial por adaptador ou mensageria? Que evidência mudaria essa escolha?
+2. A tradução entre SOAP/TISS e o vocabulário da plataforma deveria ficar no gateway ou no adaptador? Por quê?
+3. O mapeamento entre `matricula_plano` e o identificador da operadora pertence à plataforma ou à operadora?
+4. Para avisar que um exame ficou pronto, você escolheria polling, polling adaptativo ou webhook? Qual risco você aceita explicitamente com essa escolha?
+5. Que identificador de negócio, retenção e comportamento de duplicidade o ADR-002 precisa registrar antes de introduzir mensageria com idempotência?
+
+Essas respostas alimentam diretamente o `ADR-002` do [incremento 2 do projeto integrador](../projeto-integrador/incrementos.md#incremento-2-contratos-de-apis-e-integracoes-externas): cada decisão tomada aqui deve aparecer lá como alternativa registrada, com consequência e gatilho de revisão.
