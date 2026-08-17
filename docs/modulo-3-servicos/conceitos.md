@@ -24,6 +24,12 @@ Um bom limite permite responder:
 - qual contrato é oferecido a consumidores;
 - quais mudanças deveriam ocorrer sem coordenação externa.
 
+![Três capacidades de negócio — Elegibilidade, Exames e Agendamento — cada uma com seu próprio vocabulário, regras e dados autoritativos; setas de tradução intencional ligam os contextos, nunca tabelas compartilhadas.](../assets/images/m03-capacidades-contextos.png)
+
+*Figura 1 — De capacidades de negócio a bounded contexts. Fonte: curso.*
+
+**Leitura textual da figura:** Elegibilidade, Exames e Agendamento são capacidades de negócio, cada uma resumida por seu vocabulário central (vínculo/vigência/regras; solicitação/códigos/estados; horários/profissionais/confirmação). Cada uma também é um bounded context: vocabulário próprio, regras próprias e dados autoritativos próprios. Entre contextos vizinhos existe apenas tradução intencional, nunca uma tabela compartilhada. Na base, a figura reforça que capacidade de negócio não é tecnologia: JSON, PostgreSQL e um controller são mecanismos, não o resultado que a organização entrega.
+
 ## Coesão
 
 **Coesão** é o grau em que elementos de uma unidade contribuem para uma responsabilidade relacionada. Regras que mudam pelo mesmo motivo tendem a ficar juntas. Em Elegibilidade, calcular vigência e interpretar categoria do plano possuem alta coesão. Colocar ali o preparo de uma amostra laboratorial mistura razões de mudança.
@@ -44,24 +50,21 @@ Heurísticas úteis incluem observar vocabulário compartilhado, invariantes tra
 
 Uma dependência explícita e estável pode ser saudável. O problema é o acoplamento que impede evolução ou torna falhas imprevisíveis. No laboratório, Exames aceita acoplamento temporal com Elegibilidade: a solicitação espera uma resposta síncrona. Em compensação, evita acoplamento de dados: Exames não lê a tabela do outro serviço.
 
+![À esquerda, três regras de Elegibilidade (vigência, plano, regras) com alta coesão porque mudam pelo mesmo motivo. À direita, Exames com quatro setas de acoplamento — contrato, temporal, dados e implantação — apontando para Elegibilidade.](../assets/images/m03-coesao-acoplamento.png)
+
+*Figura 2 — Coesão dentro de uma capacidade, acoplamento entre capacidades. Fonte: curso.*
+
+**Leitura textual da figura:** dentro de Elegibilidade, vigência, plano e regras têm alta coesão porque mudam pelo mesmo motivo. Entre Exames e Elegibilidade existem quatro formas de acoplamento — de contrato, temporal, de dados e de implantação —, cada uma representada por uma seta própria. A figura fecha com um espectro entre "coeso" e "fragmentado": uma dependência explícita e estável pode ser saudável; o risco cresce quando o desenho se aproxima do extremo fragmentado, com muitos processos pequenos dependendo uns dos outros.
+
 ## Fronteira lógica e fronteira física
 
 Uma fronteira lógica controla referências, linguagem e propriedade. Uma fronteira física acrescenta processo, rede, implantação e falha independentes. A progressão mais segura costuma ser:
 
-```mermaid
-flowchart TD
-    A[Regras misturadas] --> B[Módulos com interfaces]
-    B --> C[Dados com proprietário definido]
-    C --> D{Autonomia física é necessária?}
-    D -- Não --> E[Manter implantação conjunta]
-    D -- Sim --> F[Extrair processo e contrato remoto]
-```
+![Quatro passos: regras misturadas viram módulos com interfaces, depois dados com proprietário definido; só então uma decisão pergunta se autonomia física é necessária, levando a manter implantação conjunta ou extrair processo e contrato remoto.](../assets/images/m03-fronteira-logica-fisica.png)
 
-**Texto alternativo:** sequência de decisão que separa regras em módulos e dados com proprietário antes de decidir se a autonomia física justifica um contrato remoto.
+*Figura 3 — Da fronteira lógica à fronteira física. Fonte: curso.*
 
-*Figura 1 — Da fronteira lógica à fronteira física. Fonte: curso.*
-
-**Leitura textual da figura:** primeiro separam-se módulos e proprietários dos dados; só quando existe necessidade comprovada de autonomia física um limite vira processo remoto, caso contrário a implantação permanece conjunta.
+**Leitura textual da figura:** regras misturadas (1) são separadas em módulos com interfaces (2), cujos dados recebem um proprietário definido (3). Só depois disso a figura chega a uma decisão — "autonomia física é necessária?" — que, se não, mantém a implantação conjunta, e, se sim, extrai um processo próprio com contrato remoto (API) entre serviço e serviço, cada um com seu próprio banco. A frase final resume o critério: a extração física só vale quando sua autonomia paga o custo operacional.
 
 Extrair cedo demais adiciona latência, serialização, autenticação entre serviços, descoberta, telemetria e recuperação. Extrair tarde demais pode manter equipes e ciclos de entrega presos. A arquitetura evolutiva mantém opções: módulos com APIs internas e testes de fronteira tornam uma futura extração menos traumática.
 
@@ -75,11 +78,11 @@ Independência é uma propriedade exigente. Se toda alteração requer publicaç
 
 Propriedade responde quem é autoridade para interpretar e alterar uma informação. **Banco por serviço** significa que somente o serviço proprietário acessa diretamente seu armazenamento. Consumidores usam contratos, eventos ou réplicas explicitamente projetadas. Não significa obrigatoriamente um servidor físico para cada processo. Bancos, schemas ou credenciais podem oferecer graus diferentes de isolamento.
 
-![Fronteiras de serviços na plataforma hospitalar: Elegibilidade e Exames possuem contratos de API e bancos próprios; uma tentativa de acesso direto ao banco de outro serviço é proibida.](../assets/images/m03-fronteiras-servicos.png)
+![Elegibilidade e Exames, cada um com seu contrato de API e seu banco protegido por um cadeado; uma seta tracejada de acesso direto entre os bancos aparece bloqueada.](../assets/images/m03-propriedade-dados.png)
 
 *Figura 4 — Fronteiras, contratos e dados. Fonte: curso.*
 
-**Leitura textual da figura:** Elegibilidade e Exames são capacidades distintas da plataforma hospitalar. Cada uma oferece contrato de API e mantém armazenamento próprio. A interação permitida passa pelo contrato; a seta de acesso direto de um serviço ao banco do outro aparece bloqueada porque violaria a propriedade dos dados e criaria acoplamento oculto.
+**Leitura textual da figura:** Elegibilidade e Exames são capacidades distintas da plataforma hospitalar. Cada uma oferece um contrato de API e mantém seu próprio banco protegido; a seta tracejada que ligaria diretamente os dois bancos aparece bloqueada, porque o acesso direto violaria a propriedade dos dados. A única interação permitida passa pelo contrato HTTP ou por evento. Quando uma leitura precisa cruzar as duas capacidades, as opções listadas são composição por API, eventos, réplica analítica ou um modelo de leitura próprio — nunca uma consulta direta ao banco alheio. A frase final resume a regra: cada serviço é autoridade sobre a informação que interpreta e altera.
 
 No laboratório, dois PostgreSQL deixam a regra visível: a credencial de Exames conhece apenas o banco `exames`; Elegibilidade conhece apenas `elegibilidade`. Cada banco fica em uma rede interna própria; ambos os processos compartilham somente a rede de aplicação necessária ao HTTP. Portanto, mesmo que Exames descubra o alias `elegibilidade-db`, ele não consegue resolvê-lo pela sua rede. Em ambientes maiores, isolamento lógico no mesmo cluster pode equilibrar custo e proteção, desde que permissões e responsabilidade sejam reais.
 
