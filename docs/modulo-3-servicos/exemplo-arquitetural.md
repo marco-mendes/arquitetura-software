@@ -2,6 +2,35 @@
 
 O laboratório concretiza dois bounded contexts em processos FastAPI independentes. Cada processo possui um PostgreSQL e uma credencial própria. O objetivo não é simular toda uma plataforma hospitalar, mas expor um limite verificável: Exames conhece o contrato HTTP de Elegibilidade e não conhece sua tabela.
 
+## Onde está o bounded context
+
+Como [conceitos](conceitos.md) define, um bounded context delimita onde um modelo e sua linguagem têm significado consistente — é uma fronteira semântica, não uma obrigação de processo separado. Neste laboratório, cada bounded context também virou um processo (um microsserviço): essa é uma escolha de implantação feita para tornar a fronteira observável, não uma regra geral.
+
+Dentro de cada contexto existe um vocabulário próprio que o outro lado não precisa conhecer. Em Elegibilidade, `elegivel` resume vínculo, vigência e regra da operadora — um cálculo que pode mudar por completo sem que nada além do campo booleano seja exposto. Em Exames, `situacao` descreve uma etapa do fluxo clínico da solicitação, sem relação com o vocabulário de Elegibilidade. A única tradução entre os dois modelos acontece no contrato HTTP; nenhum dos dois enxerga o schema, a tabela ou o código interno do outro.
+
+```mermaid
+flowchart LR
+    subgraph Elegibilidade[Bounded context: Elegibilidade]
+      AE[elegibilidade.py\nGET /elegibilidades/id]
+      DE[(PostgreSQL elegibilidade)]
+      AE --> DE
+    end
+    subgraph Exames[Bounded context: Exames]
+      AX[exames.py\nPOST /exames]
+      DX[(PostgreSQL exames)]
+      AX --> DX
+    end
+    AX -->|único contrato entre os dois| AE
+```
+
+**Texto alternativo:** dois bounded contexts lado a lado, Elegibilidade e Exames, cada um com seu próprio código-fonte e seu próprio PostgreSQL; a única ligação entre eles é a chamada HTTP do contrato.
+
+*Figura 1 — Os dois bounded contexts do laboratório e o código de cada um. Fonte: curso.*
+
+**Leitura textual da figura:** o bounded context Elegibilidade contém `elegibilidade.py` e seu próprio PostgreSQL; o bounded context Exames contém `exames.py` e seu próprio PostgreSQL; a única seta entre os dois contextos é a chamada HTTP do contrato, sem acesso direto a banco ou código interno.
+
+As seções a seguir mostram o código de cada lado desta figura: primeiro os componentes, depois o fluxo entre eles.
+
 ## Componentes
 
 O serviço **Elegibilidade** oferece `GET /elegibilidades/{beneficiario_id}`. Seu schema contém beneficiários sintéticos e a decisão booleana. Cada processo é uma aplicação FastAPI própria, com sua própria conexão PostgreSQL — não há import nem chamada de função entre os dois códigos, só HTTP.
@@ -78,7 +107,7 @@ flowchart LR
 
 **Texto alternativo:** o consumidor solicita exames; Exames consulta Elegibilidade por HTTP e cada serviço acessa exclusivamente seu próprio banco PostgreSQL.
 
-*Figura 1 — Contrato entre serviços e propriedade de dados. Fonte: curso.*
+*Figura 2 — Contrato entre serviços e propriedade de dados. Fonte: curso.*
 
 **Leitura textual da figura:** o consumidor chama Exames; Exames consulta Elegibilidade por HTTP; cada serviço acessa apenas seu PostgreSQL, e o caminho direto entre Exames e o banco de Elegibilidade é explicitamente proibido.
 
