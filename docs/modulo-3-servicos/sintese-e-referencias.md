@@ -6,7 +6,7 @@ Monólito modular, macrosserviço e microsserviço são alternativas legítimas.
 
 Banco por serviço protege a autoridade sobre dados. Consumidores integram por contrato, evento ou projeção projetada, nunca por tabela alheia. Chamada síncrona é apropriada quando a resposta é necessária imediatamente, mas cria acoplamento temporal. Timeout e erro explícito tornam falhas parciais controláveis; repetição, fallback e circuit breaker dependem da semântica.
 
-Consistência entre serviços requer estados intermediários e reconciliação. CAP explica a escolha de comportamento durante partições, não um rótulo universal. SAGA coordena transações locais com compensações imperfeitas. CQRS separa modelos de comando e consulta quando a assimetria justifica. Nenhum dos dois é requisito de microsserviços.
+Consistência entre serviços requer estados intermediários e reconciliação. CAP explica a escolha de comportamento durante partições, não um rótulo universal: a pergunta útil sobre um armazenamento é o que ele faz quando os nós param de se falar, e a resposta do fornecedor vira restrição do seu desenho. Quando a escolha é continuar respondendo, alguém precisa resolver conflitos — por carimbo de tempo, por estrutura que converge sozinha ou por regra de mesclagem do domínio. SAGA coordena transações locais com compensações imperfeitas, declarando passos, compensações e coordenação por coreografia ou orquestração. CQRS separa modelos de comando e consulta quando a assimetria justifica. Nenhum dos dois é requisito de microsserviços.
 
 ## Checklist de decisão
 
@@ -27,6 +27,9 @@ Consistência entre serviços requer estados intermediários e reconciliação. 
 - Microsoft Azure Architecture Center, [CQRS pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) e [Saga pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga) — descrições, forças e limitações.
 - AWS Prescriptive Guidance, [Database per service](https://docs.aws.amazon.com/prescriptive-guidance/latest/modernization-data-persistence/database-per-service.html) — propriedade e alternativas de persistência.
 - Seth Gilbert e Nancy Lynch, [Brewer's conjecture and the feasibility of consistent, available, partition-tolerant web services](https://dl.acm.org/doi/10.1145/564585.564601) — formulação e prova formal relacionadas a CAP.
+- Eric Brewer, [CAP twelve years later: how the "rules" have changed](https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/) — o próprio autor desmontando a leitura de "duas de três letras" e situando CAP no intervalo da partição.
+- Chris Richardson, [Saga pattern](https://microservices.io/patterns/data/saga.html) — passos, compensações e a comparação entre coreografia e orquestração.
+- Marc Shapiro et al., [Conflict-free replicated data types](https://inria.hal.science/inria-00609399) — fundamento das estruturas que convergem independentemente da ordem de aplicação.
 - PostgreSQL, [documentação atual](https://www.postgresql.org/docs/current/) — schemas, roles, transações e operação.
 - Docker, [Compose file reference](https://docs.docker.com/reference/compose-file/) e [control startup order](https://docs.docker.com/compose/how-tos/startup-order/) — definição oficial de serviços, dependências e health checks.
 - FastAPI, [documentação oficial](https://fastapi.tiangolo.com/) — aplicações, dependências e testes HTTP.

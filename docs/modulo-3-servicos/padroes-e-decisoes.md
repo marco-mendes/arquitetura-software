@@ -39,9 +39,36 @@ Consistência forte é útil quando uma leitura precisa refletir a escrita mais 
 
 ## CAP sem o triângulo simplista
 
-O teorema CAP trata um armazenamento distribuído quando existe partição de comunicação. Consistência, nesse modelo, aproxima-se de uma visão única e atual; disponibilidade exige resposta de cada nó não falho; tolerância à partição reconhece mensagens perdidas ou atrasadas entre grupos. Em uma rede sujeita a partições, o sistema precisa decidir entre recusar ou atrasar operações para preservar consistência, ou responder aceitando possível divergência.
+O teorema CAP, formulado por Eric Brewer, trata um armazenamento distribuído quando existe partição de comunicação. Consistência, nesse modelo, aproxima-se de uma visão única e atual; disponibilidade exige resposta de cada nó não falho; tolerância à partição reconhece mensagens perdidas ou atrasadas entre grupos. Em uma rede sujeita a partições, o sistema precisa decidir entre recusar ou atrasar operações para preservar consistência, ou responder aceitando possível divergência.
 
 Portanto, **CAP se torna uma decisão durante uma partição**, não uma classificação cotidiana em que um produto escolhe livremente duas letras. Fora da partição, latência e consistência ainda geram decisões descritas por outros modelos. Também não devemos usar CAP para justificar qualquer dado desatualizado em uma integração: é necessário especificar mecanismo e promessa.
+
+A leitura "escolha duas das três letras" falha justamente onde mais se confia nela. Num sistema distribuído real, a partição não é uma opção que a equipe descarta — ela é propriedade da rede, e vai acontecer. Por isso a combinação "consistência mais disponibilidade" não descreve um sistema distribuído que resolveu o problema: descreve um sistema que não é distribuído, ou que simplesmente deixa de responder quando o enlace cai. O que a equipe escolhe, de fato, é o comportamento durante a partição.
+
+### O que os armazenamentos conhecidos fazem durante uma partição
+
+A pergunta útil sobre um armazenamento não é "que duas letras ele tem", e sim "o que ele faz quando os nós param de se falar":
+
+| Armazenamento | Comportamento durante a partição | O que isso custa |
+| --- | --- | --- |
+| Google Spanner | Recusa ou atrasa operações do lado que não consegue formar quórum, para preservar uma visão única e ordenada; usa relógios sincronizados globalmente (TrueTime) para ordenar transações com garantia temporal | Parte da disponibilidade: durante a partição, algumas requisições falham em vez de responder com dado incerto |
+| Amazon DynamoDB | Aceita escritas e reconcilia depois; consistência eventual é o comportamento padrão, com leitura fortemente consistente disponível como opção explícita | Divergência temporária, e a necessidade de resolver conflitos entre versões concorrentes |
+| Apache Cassandra | Continua atendendo, com o nível de consistência ajustável por operação (quórum configurável na chamada) | A promessa muda de chamada para chamada, e a equipe precisa saber qual delas pediu |
+| MongoDB | Permite configurar a garantia, da escrita confirmada por maioria à leitura em réplica secundária possivelmente atrasada | A garantia efetiva depende da configuração escolhida, não do nome do produto |
+
+Nenhuma dessas linhas é recomendação. Elas mostram que a mesma decisão — o que fazer quando a rede falha — foi resolvida de formas diferentes, e que a resposta escolhida pelo fornecedor passa a ser uma restrição do seu desenho. Vale notar que o padrão de banco por serviço, visto acima, coloca essa decisão na mesa mesmo sem nenhum banco replicado globalmente: dados relacionados que vivem em serviços diferentes já levam tempo para se alinhar.
+
+### Quando a escolha foi continuar respondendo
+
+Se o sistema segue aceitando escritas durante a partição, ele admite que duas réplicas recebam alterações concorrentes sobre a mesma informação. Alguém precisa decidir qual delas vale. As três estratégias usuais são:
+
+- **última escrita vence** (*last write wins*): escolhe a atualização com o carimbo de tempo mais recente. É a mais simples de implementar e a mais fácil de errar, porque descarta a outra alteração em silêncio — e carimbos de tempo de máquinas diferentes não são confiáveis;
+- **tipos de dados que convergem por construção** (*CRDTs*): estruturas definidas de modo que a ordem de aplicação das operações não altere o resultado final. Servem bem para contadores, conjuntos e listas; não resolvem uma regra de negócio que precise julgar qual versão está correta;
+- **função de mesclagem do domínio**: a própria aplicação decide, com regra explícita — por exemplo, preferir a alteração registrada na unidade onde o paciente foi atendido. É a mais trabalhosa e a única capaz de acertar quando o critério é clínico ou contratual.
+
+Daí a frase que vale guardar: consistência eventual não é bagunça eventual. Ela é uma promessa com prazo e com regras — identidade, ordem quando necessária, idempotência, repetição e reconciliação, como visto acima —, não uma licença para réplicas divergirem sem plano.
+
+No estudo de caso deste módulo, a equipe não precisou de nenhuma dessas estratégias para decidir elegibilidade: ao reunir as regras fortemente relacionadas num único macrosserviço, recuperou uma transação local e, com ela, consistência forte dentro do processo. A consistência eventual ficou onde a defasagem era aceitável e observável — na projeção do painel gerencial.
 
 ## SAGA
 
@@ -49,7 +76,51 @@ Uma **SAGA** coordena uma sequência de transações locais. Cada etapa confirma
 
 **SAGA não é uma transação ACID distribuída**. Uma compensação não apaga o passado e pode falhar. Cancelar uma solicitação não equivale a ela nunca ter existido; mensagens podem duplicar; outros participantes podem ter observado estados intermediários. O desenho precisa declarar estados, comandos idempotentes, políticas de repetição, intervenção operacional e trilha de auditoria.
 
-No caso hospitalar, uma SAGA poderia coordenar reservar agenda, autorizar procedimento e preparar recurso. Ela não é necessária para o laboratório de dois passos: Exames consulta Elegibilidade antes de gravar localmente. Introduzir um orquestrador ali aumentaria componentes sem demonstrar benefício.
+### Os três elementos que toda SAGA declara
+
+Uma SAGA se descreve por três elementos, e a ausência de qualquer um deles é o defeito mais comum das primeiras tentativas:
+
+| Elemento | O que é | Erro frequente |
+| --- | --- | --- |
+| Passos | Cada transação local, executada e confirmada por um serviço no próprio banco | Tratar o passo como parte de uma transação maior que alguém ainda poderia abortar |
+| Operações compensatórias | A ação de negócio que neutraliza o efeito de um passo já confirmado | Escrever "desfazer" sem definir o que desfazer significa naquele domínio |
+| Coordenação | O mecanismo que decide qual passo vem depois e o que fazer na falha: eventos ou um orquestrador | Deixar a sequência implícita no código de cada serviço, sem lugar único que a descreva |
+
+### Coreografia e orquestração
+
+Na **coreografia**, cada serviço executa seu passo, publica um evento, e os seguintes reagem a ele. Não existe componente central: a sequência emerge das assinaturas.
+
+```mermaid
+flowchart LR
+    A[Agenda: reserva horário] -->|HorarioReservado| B[Autorização: autoriza procedimento]
+    B -->|ProcedimentoAutorizado| C[Preparo de Sala: reserva recurso]
+    C -->|PreparoRecusado| B2[Autorização: cancela autorização]
+    B2 -->|AutorizacaoCancelada| A2[Agenda: libera horário]
+```
+
+Na **orquestração**, um componente conhece toda a sequência, chama cada serviço e, na falha, aciona as compensações em ordem inversa.
+
+```mermaid
+flowchart TB
+    O[Orquestrador de agendamento] --> A[Agenda: reserva horário]
+    O --> B[Autorização: autoriza procedimento]
+    O --> C[Preparo de Sala: reserva recurso]
+    C -.falha.-> O
+    O -.compensa.-> B
+    O -.compensa.-> A
+```
+
+A escolha entre as duas não é de estilo. A coreografia distribui a lógica e dispensa um componente central, mas ninguém sabe, olhando um lugar só, em que estado está um agendamento — e um ciclo de eventos entre serviços é fácil de criar sem perceber. A orquestração concentra a sequência num lugar auditável, ao custo de um componente que precisa ser mantido, implantado e que se torna dependência de todos os passos. Fluxos curtos e estáveis toleram coreografia; fluxos com muitas ramificações e necessidade de suporte operacional costumam pedir orquestração.
+
+### O que a SAGA cobra
+
+| Ganho | Custo correspondente |
+| --- | --- |
+| Cada serviço mantém o próprio banco e a própria autoridade, sem transação distribuída | É preciso escrever e testar uma compensação de negócio para cada passo — e ela também pode falhar |
+| O fluxo continua avançando mesmo com um participante lento | Existe uma janela em que o estado é legítimo, mas intermediário, e alguém pode observá-lo |
+| Passos evoluem e escalam de forma independente | Diagnosticar um fluxo travado exige correlação entre serviços: sem identificador propagado e trilha de auditoria, a investigação vira arqueologia |
+
+No caso hospitalar, uma SAGA poderia coordenar reservar agenda, autorizar procedimento e preparar recurso. Ela não é necessária para o laboratório de dois passos: Exames consulta Elegibilidade antes de gravar localmente. Introduzir um orquestrador ali aumentaria componentes sem demonstrar benefício. O critério é o mesmo do resto do módulo: a SAGA se justifica quando a mudança atravessa mais de um dono de dados e não há como reuni-los. Se a alternativa for consolidar os passos num único serviço com transação local — como fez o estudo de caso —, ela é mais barata e deve ser avaliada primeiro.
 
 ## CQRS
 
