@@ -28,7 +28,7 @@ Um exemplo contrastante ajuda. Depois do evento de resultado, Faturamento pode c
 
 Uma **fila** representa trabalho pendente para uma capacidade. Mensagens ficam disponíveis até um consumidor confirmar; várias réplicas podem repartir trabalho. A fila `billing.resultados.v1` é uma fila de Faturamento: uma cópia de cada evento roteado para ela é tratada pelo grupo de trabalho desse domínio. A confirmação ocorre depois da validação e do efeito local. Se o processo cair antes da confirmação, a mensagem pode voltar e a duplicação deve ser esperada.
 
-Um **tópico** é um canal de publicação com critérios de assinatura. Uma mesma publicação pode alcançar filas distintas: Faturamento recebe uma cópia, Notificação outra e Auditoria, se existir, uma terceira. Em AMQP, a exchange do tipo topic e as chaves de roteamento realizam isso; o tópico não torna todos os consumidores uma única equipe nem lhes dá o mesmo banco. Ele é uma relação de distribuição.
+Um **tópico** é um canal de publicação com critérios de assinatura. Uma mesma publicação pode alcançar filas distintas: Faturamento recebe uma cópia, Notificações outra e Auditoria uma terceira. Em AMQP, a exchange do tipo topic e as chaves de roteamento realizam isso; o tópico não torna todos os consumidores uma única equipe nem lhes dá o mesmo banco. Ele é uma relação de distribuição.
 
 Um **log distribuído** é um registro ordenado por partição, retido por política. Consumidores guardam offsets e podem ler a mesma sequência em ritmos diferentes ou voltar a uma posição permitida pela retenção. Kafka é conhecido por esse modelo. O log favorece replay e múltiplas leituras independentes, mas não torna a ordem global: a garantia comum é por partição, sob uma chave e configuração específicas. Retenção também é uma decisão de custo, privacidade e recuperação, não “histórico infinito”.
 
@@ -36,7 +36,7 @@ Um **log distribuído** é um registro ordenado por partição, retido por polí
 flowchart TB
     P[Produtor] --> X[Exchange ou tópico]
     X --> Q1[Fila de Faturamento]
-    X --> Q2[Fila de Notificação]
+    X --> Q2[Fila de Notificações]
     L[Log particionado] --> G1[Grupo A: offsets]
     L --> G2[Grupo B: offsets]
 ```

@@ -60,28 +60,28 @@ Chama-se falha parcial: uma parte do sistema distribuído continua saudável enq
 Sem timeout, a requisição de Exames fica presa esperando indefinidamente a resposta de Elegibilidade — a thread, conexão ou recurso alocado para essa chamada continua ocupado, e se isso se repetir em várias solicitações simultâneas, a lentidão de Elegibilidade se propaga e pode esgotar os recursos de Exames também. Um timeout limita quanto tempo Exames espera antes de desistir e tratar a chamada como falha, contendo o problema em vez de deixar que a lentidão de uma dependência derrube quem depende dela.
 </details>
 
-8\. CAP não é uma escolha livre entre duas de três letras que um produto faz a qualquer momento. Em que condição específica CAP de fato obriga um sistema distribuído a escolher entre consistência e disponibilidade?
+8\. O banco de Elegibilidade está replicado em dois data centers da rede hospitalar. O enlace entre eles cai por três minutos: as duas réplicas continuam de pé e atendendo, mas param de conversar entre si. Nesse intervalo, o sistema pode recusar escritas para manter uma visão única e atual do dado, ou seguir aceitando escritas nas duas pontas correndo o risco de divergir. Que nome o teorema CAP dá a essa interrupção de comunicação, e entre quais duas propriedades ela obriga a escolher?
 
 <details>
 <summary>Ver resposta</summary>
 
-Apenas durante uma partição de rede — quando mensagens entre nós ou grupos de nós são perdidas ou atrasadas. Nesse momento, o sistema precisa decidir entre recusar ou atrasar operações para preservar uma visão única e atual dos dados (consistência), ou continuar respondendo aceitando o risco de divergência entre réplicas (disponibilidade). Fora de uma partição, CAP não está em jogo: latência e consistência ainda existem como decisões, mas são descritas por outros modelos, não por CAP. CAP também não serve para justificar qualquer dado desatualizado numa integração comum — é preciso nomear o mecanismo e a promessa reais.
+O nome é partição — o CAP trata de um armazenamento distribuído justamente quando mensagens entre nós ou grupos de nós são perdidas ou atrasadas. Durante os três minutos de partição, a escolha é entre consistência (recusar ou atrasar operações para preservar uma visão única e atual) e disponibilidade (cada réplica não falha continua respondendo, aceitando possível divergência). Restabelecido o enlace, CAP deixa de estar em jogo: latência e consistência continuam gerando decisões, mas descritas por outros modelos. Por isso CAP não é uma escolha livre entre duas de três letras que um produto faz a qualquer momento, nem serve para justificar qualquer dado desatualizado numa integração comum — ali é preciso nomear o mecanismo e a promessa reais.
 </details>
 
-9\. Resuma SAGA sem usar a expressão "rollback global".
+9\. O fluxo de Agendamento tem três etapas, cada uma gravando no próprio banco, em transações locais separadas: reservar o horário na Agenda, autorizar o procedimento e pedir o preparo da sala. As duas primeiras confirmam; a terceira falha. Não existe nenhuma transação abrangente capaz de desfazer as duas que já foram confirmadas. Como se chama a ação que uma SAGA aciona para neutralizar o efeito dessas etapas anteriores, e quais são as duas formas de coordenar a sequência descritas no módulo?
 
 <details>
 <summary>Ver resposta</summary>
 
-Uma SAGA coordena uma sequência de transações locais, cada uma confirmando seu próprio estado; a coordenação pode ser coreografada por eventos ou orquestrada por um componente que conhece toda a sequência. Se uma etapa posterior falha, o mecanismo aciona ações compensatórias, semanticamente adequadas ao domínio, para neutralizar o efeito das etapas anteriores — mas essa compensação não apaga o que já aconteceu: uma solicitação cancelada não vira uma solicitação que nunca existiu, e outros participantes podem já ter observado o estado intermediário.
+A ação é a compensação: ações compensatórias, semanticamente adequadas ao domínio, que neutralizam o efeito das etapas já confirmadas — liberar o horário reservado e cancelar a autorização, neste exemplo. As duas formas de coordenação são a coreografia, em que cada participante reage aos eventos que os outros publicam, e a orquestração, em que um componente conhece toda a sequência e a conduz. Compensar não é desfazer: a compensação é um novo fato na história, pode ela mesma falhar, e outros participantes podem já ter observado o estado intermediário — por isso o desenho precisa declarar estados explícitos, comandos idempotentes, política de repetição e trilha de auditoria.
 </details>
 
-10\. Resuma CQRS sem pressupor bancos separados.
+10\. Em Laudos, assinar um laudo exige validar regras clínicas antes de gravar; já a tela que lista os laudos do mês só precisa de uma lista pronta para leitura. A equipe separou as duas coisas em classes e interfaces distintas, mas ambas continuam no mesmo processo e no mesmo banco PostgreSQL. Quais são os dois modelos que o CQRS separa, e uma separação feita assim, dentro de um único banco, já conta como CQRS?
 
 <details>
 <summary>Ver resposta</summary>
 
-CQRS separa os modelos de comando e de consulta quando eles têm necessidades realmente diferentes: comandos expressam intenção e precisam preservar invariantes de negócio; consultas existem para oferecer uma projeção adequada a quem lê. Essa separação pode começar apenas como objetos e interfaces distintos dentro do mesmo processo e do mesmo banco — nada obriga a existência de dois bancos, de mensageria ou de Event Sourcing. Só vale introduzir um modelo de leitura materializado, com sua própria defasagem e reconstrução, quando a assimetria entre leitura e escrita ou a escala realmente justificarem esse custo adicional.
+Os dois modelos são o de comando e o de consulta: comandos expressam intenção e precisam preservar invariantes de negócio; consultas existem para oferecer uma projeção adequada a quem lê. E sim, a separação de Laudos já conta como CQRS — o padrão não exige dois bancos, nem mensageria, nem Event Sourcing, e pode começar exatamente assim, como objetos e interfaces distintos dentro do mesmo processo e do mesmo banco. O que cobra caro é o passo seguinte: um modelo de leitura materializado atende consultas de alto volume, mas traz atualização, defasagem, reconstrução e monitoramento. Só vale introduzi-lo quando a assimetria entre leitura e escrita, a complexidade dos modelos ou a escala justificarem esse custo.
 </details>
 
 ## Compreender
@@ -110,31 +110,27 @@ Coesão é o grau em que os elementos de uma unidade contribuem para uma mesma r
 Não garante sozinho. Propriedade responde quem tem autoridade para interpretar e alterar uma informação — é uma regra de acesso e de responsabilidade, não uma questão de onde o arquivo do banco está gravado. A separação física (bancos, schemas ou instâncias distintas) só protege a propriedade quando vem acompanhada de isolamento de rede e de credenciais que realmente impedem o outro serviço de conectar diretamente — como no laboratório, em que a credencial de Exames só conhece o banco `exames`, e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões reais, dois bancos fisicamente separados ainda podem ser acessados livremente por qualquer serviço que descubra a string de conexão, e a propriedade continua sendo apenas uma convenção não aplicada.
 </details>
 
-4\. Explique por que `503 dependencia_indisponivel` comunica melhor a falha do laboratório do que um `500` genérico.
+4\. Faturamento mantém uma réplica projetada do dado de Elegibilidade, alimentada pelos eventos que Elegibilidade publica. A promessa é de consistência eventual: sem novas escritas, a réplica acaba chegando ao mesmo estado da origem. Só que essa promessa não diz como nem quando isso acontece — quem faz acontecer são as **regras de convergência**, um conjunto de decisões explícitas de desenho: o identificador que amarra cada evento ao mesmo registro; a ordenação, quando a ordem de aplicação altera o resultado; a idempotência, para que o mesmo evento aplicado duas vezes não produza o efeito duas vezes; a política de repetição, para mensagens perdidas ou atrasadas; e a reconciliação, para detectar e corrigir a divergência que sobrar. Escolha três dessas regras e diga, para cada uma, o que acontece com a réplica de Faturamento se ela faltar.
 
 <details>
 <summary>Ver resposta</summary>
 
-Um `500` genérico trata qualquer erro do mesmo jeito, inclusive um bug interno de Exames — o consumidor não consegue distinguir se o problema é dele, de Exames ou de uma dependência externa, nem decidir se vale a pena tentar de novo. Um `503` com o código `dependencia_indisponivel` expõe exatamente o que aconteceu: Exames está saudável, mas não consegue completar a operação porque Elegibilidade está indisponível — uma falha parcial, não uma falha de Exames. Essa distinção é o que permite ao consumidor decidir entre esperar, repetir com backoff ou escalar o problema para quem realmente precisa agir.
+Sem identificador, os eventos não podem ser amarrados ao mesmo registro: a réplica cria linhas duplicadas para a mesma pessoa, ou atualiza a linha errada, e não há como saber qual é a versão corrente. Sem ordenação, um evento antigo que chega atrasado sobrescreve um mais recente — uma elegibilidade cancelada volta a aparecer como válida. Sem idempotência, a mesma mensagem reentregue aplica o efeito duas vezes, e a réplica acumula um estado que nunca existiu na origem. Sem política de repetição, uma mensagem perdida simplesmente nunca chega, e a réplica fica defasada para sempre — "eventual" passa a significar "nunca". Sem reconciliação, nenhuma das divergências acima é detectada: Faturamento segue operando sobre dado errado sem sinal nenhum. O que as cinco têm em comum é revelar que consistência eventual, sozinha, não resolve nada: ela nomeia o resultado desejado, e as regras de convergência são o que o produz.
 </details>
 
-5\. Mostre por que consistência eventual ainda exige regras de convergência.
+5\. Dê um cenário da plataforma hospitalar em que o monólito modular seja a forma preferível, e outro em que microsserviços, com implantação independente, sejam realmente necessários. Em cada cenário, diga qual fato decide a escolha — lembrando que não é o tamanho do código.
 
 <details>
 <summary>Ver resposta</summary>
 
-Consistência eventual promete que, sem novas escritas, todas as réplicas convergem para o mesmo estado — mas não diz como nem quando isso acontece, e sozinha não resolve nada. É preciso declarar um identificador que amarre eventos ao mesmo registro; uma ordenação, quando a ordem de aplicação importar para o resultado; operações idempotentes, para que uma mensagem repetida não produza o efeito duas vezes; uma política de repetição para mensagens perdidas ou atrasadas; e um mecanismo de reconciliação para os casos em que a divergência precisa ser detectada e corrigida manualmente. Sem essas regras explícitas, "eventual" pode significar "nunca", ou pior, convergir para um estado que ninguém decidiu que estava correto.
+Monólito modular tende a ser preferível quando as mudanças em duas capacidades costumam acontecer juntas e compartilham uma mesma transação — por exemplo, assinar um laudo e publicá-lo, que precisam ser consistentes no mesmo instante e são alteradas pela mesma equipe. Aqui as fronteiras lógicas valem a pena, mas separar em processos só acrescentaria rede e coordenação.
+
+Microsserviços, com implantação e falha independentes, passam a se justificar quando duas capacidades têm equipes diferentes, cargas de trabalho muito distintas ou ciclos de mudança e de risco que não deveriam bloquear um ao outro — por exemplo, Agenda, que recebe picos e muda com frequência, e Preparo de Sala, de outra equipe, que tolera alguns minutos de atraso e não deveria ser publicada de novo toda vez que Agenda muda.
+
+Em ambos os casos, o que decide é a autonomia necessária de implantação e de falha, mais o padrão de coevolução entre as capacidades — nunca o volume de linhas.
 </details>
 
-6\. Dê um cenário em que monólito modular seja preferível e outro em que implantação independente seja necessária.
-
-<details>
-<summary>Ver resposta</summary>
-
-Monólito modular tende a ser preferível quando as mudanças em duas capacidades costumam acontecer juntas e compartilham uma mesma transação — por exemplo, assinar um laudo e publicá-lo, que precisam ser consistentes no mesmo instante e são alteradas pela mesma equipe. Implantação independente passa a ser necessária quando duas capacidades têm equipes diferentes, cargas de trabalho muito distintas ou ciclos de mudança e de risco que não deveriam bloquear um ao outro — por exemplo, Agenda, que recebe picos e muda com frequência, e Preparo de Sala, de outra equipe, que tolera alguns minutos de atraso e não deveria ser redeployada toda vez que Agenda muda.
-</details>
-
-7\. Explique por que uma compensação de SAGA não apaga fatos já observados.
+6\. Explique por que uma compensação de SAGA não apaga fatos já observados.
 
 <details>
 <summary>Ver resposta</summary>
@@ -142,7 +138,7 @@ Monólito modular tende a ser preferível quando as mudanças em duas capacidade
 Uma compensação de SAGA cria um novo fato que neutraliza o efeito de negócio de uma etapa anterior — ela não volta o tempo nem apaga o que já foi observado por outras partes do sistema. Se uma solicitação de exame já foi confirmada e notificada, cancelá-la depois não significa que ela nunca existiu: quem recebeu a confirmação já pode ter agido com base nela, e mensagens de cancelamento podem chegar duplicadas ou fora de ordem. É por isso que o desenho de uma SAGA precisa declarar estados explícitos, comandos idempotentes e uma trilha de auditoria — a compensação é mais um evento na história, não um apagador dela.
 </details>
 
-8\. Uma equipe quer introduzir tanto SAGA quanto CQRS no fluxo de Agendamento só porque "qualquer sistema distribuído sério usa os dois". Que problema real cada um resolveria, e por que adotar um não implica precisar do outro?
+7\. Uma equipe quer introduzir tanto SAGA quanto CQRS no fluxo de Agendamento só porque "qualquer sistema distribuído sério usa os dois". Que problema real cada um resolveria, e por que adotar um não implica precisar do outro?
 
 <details>
 <summary>Ver resposta</summary>

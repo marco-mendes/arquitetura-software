@@ -55,13 +55,70 @@ Use os dois casos como perguntas de consequência, não como modelo a copiar: qu
 
 ## Perguntas para revisar o caso
 
-Responda antes de seguir para os exercícios do módulo:
+Cada pergunta abaixo recapitula o conceito de que você precisa e indica onde ele foi apresentado, para que você possa responder sem sair da página. Responda antes de seguir para os exercícios do módulo.
 
-1. Qual das quatro formas de acoplamento (implantação, temporal, contrato, organizacional) você acha que mais atrasava a equipe no dia a dia, e por quê?
-2. O mapa de capacidades encontrou três bounded contexts (Elegibilidade, Autorização, Auditoria) dentro de onze processos. O que, no texto, permitiu à equipe enxergar esses três limites em vez de simplesmente contar processos?
-3. Por que consolidar vínculo, vigência, categoria de plano e regra contratual num único macrosserviço não é o mesmo que reunir Elegibilidade, Autorização e Auditoria inteiras num único processo?
-4. A equipe só introduziu eventos para Auditoria depois de definir identificador, retenção e comportamento de repetição. O que aconteceria se ela tivesse introduzido mensageria sem essas três decisões?
-5. Escolha um dos quatro sinais de revisão listados no final do caso. Que dado, especificamente, a equipe precisaria observar para saber que esse sinal apareceu?
+### 1. Qual forma de acoplamento mais atrasava a equipe?
+
+**Acoplamento** é a dependência entre unidades. Ele não desaparece quando uma chamada de função vira uma chamada HTTP — apenas muda de forma ([conceitos, "Acoplamento"](conceitos.md#acoplamento)). O desenho de onze processos apresentava quatro formas ao mesmo tempo:
+
+| Forma | O que ela faz uma unidade depender da outra | Como apareceu neste caso |
+| --- | --- | --- |
+| De implantação | Uma mudança exige publicar várias unidades em conjunto | Uma nova regra de autorização obrigava a implantar seis processos na mesma janela |
+| Temporal | O consumidor precisa que o provedor esteja disponível agora | A tela de atendimento fazia oito chamadas sequenciais e mostrava erro se qualquer uma atrasasse |
+| De contrato | O consumidor depende de campos, semântica e códigos de resposta do provedor | Cada processo expunha uma fatia do mesmo assunto, e uma regra nova mexia no contrato de quatro deles |
+| Organizacional | Equipes precisam negociar continuamente para entregar uma capacidade | Uma única equipe mantinha os onze processos e negociava consigo mesma sem parar |
+
+Escolha a forma que, na sua leitura, mais atrasava o dia a dia da equipe e justifique com o sintoma da coluna da direita.
+
+### 2. Qual critério revelou que quatro processos eram um único bounded context?
+
+Um **bounded context** é o limite dentro do qual um modelo e sua linguagem têm significado consistente ([conceitos, "Bounded context"](conceitos.md#bounded-context)). Contar processos não revela esse limite: onze processos escondiam três contextos. Para encontrá-los, a equipe examinou quatro coisas em cada processo:
+
+| Critério observado | Pergunta que ele responde |
+| --- | --- |
+| Linguagem | Os mesmos termos significam a mesma coisa aqui e ali? |
+| Regras | As regras mudam sob a mesma política? |
+| Mudanças conjuntas | Quando um processo muda, o outro tende a mudar junto? |
+| Propriedade dos dados | Quem tem autoridade para interpretar e alterar esta informação? |
+
+Releia a seção "Diagnóstico por capacidades". Qual desses quatro critérios mostrou de forma mais direta que vínculo, vigência, categoria de plano e regra contratual formavam um único bounded context? Copie a frase do caso que sustenta sua escolha.
+
+### 3. Por que uma consolidação preserva as fronteiras e a outra não?
+
+Um **macrosserviço** é uma unidade implantável própria que ainda agrupa mais de uma capacidade, organizada em módulos internos — fica entre o monólito modular e o microsserviço ([padrões e decisões](padroes-e-decisoes.md#monolito-modular-macrosservicos-e-microsservicos)). A equipe tinha diante de si duas consolidações que parecem semelhantes, mas reúnem coisas de naturezas diferentes:
+
+| Alternativa | O que ela reúne |
+| --- | --- |
+| A escolhida | Vínculo, vigência, categoria de plano e regra contratual — quatro partes que pertencem ao **mesmo** bounded context, Elegibilidade |
+| A descartada | Elegibilidade, Autorização e Auditoria inteiras — **três** bounded contexts diferentes, cada um com autoridade sobre a própria decisão |
+
+Com essa diferença em mãos, responda em uma ou duas frases: por que a primeira preserva os limites que o mapa de capacidades encontrou, e o que exatamente a segunda misturaria que deveria continuar separado?
+
+### 4. Por que definir as três regras antes de ligar a mensageria?
+
+Auditoria passou a receber os fatos por eventos, em vez de ser chamada dentro do atendimento. Mas consistência eventual não significa ausência de regras: ela exige identidade, ordem quando necessária, idempotência, repetição e reconciliação ([padrões e decisões](padroes-e-decisoes.md#consistencia-local-e-consistencia-entre-servicos)). As três decisões que a equipe tomou antes de ligar a mensageria vinham dessa lista:
+
+| Decisão tomada antes | O que ela garante |
+| --- | --- |
+| Identificador de negócio | Cada evento pode ser amarrado ao atendimento certo, mesmo chegando fora de ordem |
+| Prazo de retenção | Há uma resposta para até quando o fato precisa ficar disponível e quando pode ser descartado |
+| Comportamento de repetição | A mesma mensagem entregue duas vezes não produz o efeito duas vezes |
+
+Escolha uma das três decisões e descreva o que a trilha de auditoria passaria a mostrar se a equipe tivesse ligado a mensageria sem ela.
+
+### 5. Que dado tornaria visível um sinal de revisão?
+
+O caso afirma que uma boa decisão arquitetural carrega dentro de si os sinais que a tornariam obsoleta. Os cinco sinais declarados são:
+
+1. equipes diferentes passam a ser donas de partes do macrosserviço;
+2. uma das regras passa a precisar de um ciclo de implantação isolado;
+3. as cargas de vínculo/vigência e de regra contratual divergem de forma relevante;
+4. a unidade volta a impedir entregas independentes;
+5. a projeção do painel gerencial deixa de atender ao prazo de que o negócio precisa.
+
+Um sinal só serve para algo se alguém conseguir observá-lo em um dado concreto. O sinal 3, por exemplo, apareceria na comparação de requisições por minuto entre os módulos, acompanhada por algumas semanas. Escolha outro sinal da lista e diga qual dado a equipe precisaria acompanhar para saber que ele apareceu.
+
+Essas respostas preparam o `ADR-003` do [incremento 3 do projeto integrador](../projeto-integrador/incrementos.md#incremento-3-limites-de-servicos-dados-e-coordenacao): a mesma pergunta — consolidar ou distribuir, e sob qual evidência — reaparece lá como decisão registrável, não apenas como discussão.
 
 ## Equivalências em Java e .NET
 

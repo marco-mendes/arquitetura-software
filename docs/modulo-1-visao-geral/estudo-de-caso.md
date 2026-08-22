@@ -34,15 +34,13 @@ O caso trabalha oito capacidades, detalhadas no [contexto compartilhado](../proj
 
 ### As três capacidades que os exercícios aprofundam
 
-Trabalhar as oito com a mesma profundidade seria demais para começar. Os quatro exercícios escolhem **três** e as usam do início ao fim, porque elas puxam para lados opostos.
+Trabalhar as oito com a mesma profundidade seria demais para começar. Os quatro exercícios escolhem **três** e as usam do início ao fim, porque elas puxam para lados opostos. Uma delas, "triagem administrativa", não é uma nona capacidade nem substitui as do [contexto compartilhado](../projeto-integrador/contexto-hospitalar.md#capacidades-em-escopo): é como este caso chama o conjunto das etapas de pré-atendimento — **Cadastro**, **Elegibilidade** e **Autorização**, três linhas da tabela acima — quando olhamos para elas como um bloco só, com um núcleo estável no meio e encaixes opcionais por unidade em volta.
 
 - **Agenda** — muitas ações curtas e o risco de marcar o mesmo horário duas vezes. Sua força é a **consistência**: como quando duas pessoas tentam comprar a mesma poltrona do cinema ao mesmo tempo e só uma pode levar.
-- **Triagem administrativa** — reúne cadastro, elegibilidade e autorização para encaminhar o paciente, e cada unidade do hospital pode ter uma etapa a mais. Sua força é a **extensibilidade**: acrescentar uma etapa nova sem mexer no que já funciona, como encaixar mais uma peça de Lego.
+- **Triagem administrativa** (Cadastro + Elegibilidade + Autorização) — reúne essas três etapas para encaminhar o paciente, e cada unidade do hospital pode ter uma etapa a mais. Sua força é a **extensibilidade**: acrescentar uma etapa nova sem mexer no que já funciona, como encaixar mais uma peça de Lego.
 - **Faturamento** — junta registros de várias origens, confere, ajusta e envia em lotes. Sua força é a **vazão** (*throughput*): dar conta de um grande volume de uma vez, como uma esteira que separa milhares de cartas por hora.
 
-As três vivem na mesma plataforma, mas pedem coisas diferentes — e essa diferença é o que o exercício 2 vai deixar comparável.
-
-Sobre o nome: **triagem administrativa** é como o caso chama o conjunto das etapas de pré-atendimento — cadastro, elegibilidade e autorização — quando olhamos para elas como um bloco só: um núcleo estável no meio e encaixes opcionais por unidade em volta.
+As três vivem na mesma plataforma, mas pedem coisas diferentes — e essa diferença é o que o exercício 2 vai deixar comparável. As outras três capacidades do contexto compartilhado (Exames e resultados, Notificações, Auditoria) permanecem fora do aprofundamento dos exercícios por escolha de escopo, não porque tenham deixado de existir — quem quiser pode estendê-las com o mesmo método.
 
 ## Como trabalhar esta página
 

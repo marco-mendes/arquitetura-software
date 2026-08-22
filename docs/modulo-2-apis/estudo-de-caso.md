@@ -61,25 +61,27 @@ sequenceDiagram
     actor Administrativo as Sistema administrativo
     participant API as API da plataforma
     participant Estado as Estado do pedido
-    participant Adaptador as Adaptador da operadora
-    participant Operadora
-    Administrativo->>API: POST /elegibilidades
+    participant Adaptador as Adaptador do laboratório
+    participant Laboratorio as Laboratório
+    Administrativo->>API: POST /exames
     API->>Estado: registrar protocolo e situação recebida
     API-->>Administrativo: 202 + protocolo + Location
-    API->>Adaptador: solicitar verificação na linguagem interna
-    Adaptador->>Operadora: traduzir e consultar contrato externo
-    Operadora--xAdaptador: timeout
+    API->>Adaptador: traduzir pedido para o vocabulário SOAP/TISS
+    Adaptador->>Laboratorio: enviar pedido traduzido
+    Laboratorio--xAdaptador: timeout
     Adaptador->>Estado: registrar falha temporária correlacionada
-    Administrativo->>API: GET /elegibilidades/{protocolo}
+    Administrativo->>API: GET /exames/{protocolo}
     API->>Estado: consultar situação atual
     API-->>Administrativo: estado explícito, sem fingir decisão final
 ```
 
-**Texto alternativo:** o sistema envia elegibilidade; a API cria protocolo e responde `202` com `Location`. O adaptador recebe timeout da operadora e registra falha temporária; consulta posterior devolve estado conhecido.
+**Texto alternativo:** o sistema envia um pedido de exame; a API cria protocolo e responde `202` com `Location`. O adaptador traduz o pedido para SOAP/TISS, recebe timeout do laboratório e registra falha temporária; consulta posterior devolve estado conhecido.
 
-*Figura 8 — A plataforma registra o pedido antes de consultar a operadora e preserva o estado conhecido após um timeout. Fonte: curso.*
+*Figura 8 — A plataforma registra o pedido antes de consultar o laboratório e preserva o estado conhecido após um timeout. Fonte: curso.*
 
-**Leitura textual:** a plataforma cria protocolo antes da chamada externa; o adaptador encontra timeout; consulta posterior devolve estado conhecido, não decisão da operadora.
+**Leitura textual:** a plataforma cria protocolo antes da chamada externa; o adaptador traduz para SOAP/TISS e encontra timeout no laboratório; consulta posterior devolve estado conhecido, não decisão do laboratório.
+
+O mesmo formato — protocolo registrado antes da chamada externa, adaptador isolando a tradução, estado explícito em vez de decisão presumida — se aplica à operadora quando ela também exigir um protocolo diferente de REST/JSON; só muda o parceiro e o vocabulário traduzido.
 
 ## Decisão 3: gateway é política de fronteira, ACL é proteção do domínio
 

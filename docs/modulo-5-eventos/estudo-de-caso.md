@@ -2,7 +2,7 @@
 
 ## Situação
 
-Inicialmente, ao disponibilizar um resultado, Laboratório chamava Faturamento, que chamava Notificação. Lentidão na cobrança atrasava o fluxo clínico; falha transitória fazia parecer que o resultado não existia; repetição manual produziu cobrança duplicada. Responsabilidades e falhas estavam na mesma cadeia.
+Inicialmente, ao receber um resultado do Laboratório, a capacidade Resultados chamava Faturamento diretamente, que chamava Notificações. Lentidão na cobrança atrasava o fluxo clínico; falha transitória fazia parecer que o resultado não existia; repetição manual produziu cobrança duplicada. Responsabilidades e falhas estavam na mesma cadeia.
 
 “Kafka para tudo” não respondia sobre contrato, ordem, dados ou operação. A primeira decisão foi RabbitMQ com uma fila de Faturamento: a necessidade comprovada era rotear uma unidade de trabalho, observar confirmações e DLQ; replay para muitos consumidores ainda era hipótese. Não é ranking: ActiveMQ, RabbitMQ ou Kafka só fazem sentido contra necessidades, topologia e capacidade operacional medidas.
 
@@ -26,8 +26,8 @@ Para acrescentar referência administrativa, a equipe escolhe campo opcional ou 
 
 ## Quando Kafka vira extensão plausível
 
-Se Analytics, Qualidade e novos consumidores precisarem de replay independente por retenção definida, Kafka passa a ser alternativa: tópicos, chave de partição, grupos, retenção e classificação de dados entram na decisão. Faturamento ainda deduplica efeito externo e escolhe ordem por exame ou conta. Um desenho híbrido de log para integração e fila para trabalho também exige owner, observabilidade e recuperação em cada ponte.
+Se Auditoria e outras capacidades futuras precisarem de replay independente por retenção definida — por exemplo, reconstruir a sequência completa de um caso para prestação de contas —, Kafka passa a ser alternativa: tópicos, chave de partição, grupos, retenção e classificação de dados entram na decisão. Faturamento ainda deduplica efeito externo e escolhe ordem por exame ou conta. Um desenho híbrido de log para integração e fila para trabalho também exige owner, observabilidade e recuperação em cada ponte.
 
 ## Perguntas para a decisão
 
-Que atraso o usuário vê? Qual payload mínimo e qual efeito é único? O que acontece fora de ordem? Quem acompanha a DLQ e em quanto tempo? Responder transforma escolha de broker em arquitetura verificável.
+Que atraso o usuário vê? Qual payload mínimo e qual efeito é único? O que acontece fora de ordem? Quem acompanha a DLQ e em quanto tempo? Responder transforma escolha de broker em arquitetura verificável — é exatamente o que o `ADR-005` do [incremento 5 do projeto integrador](../projeto-integrador/incrementos.md#incremento-5-colaboracao-orientada-por-eventos) precisa registrar sobre a mensageria escolhida.

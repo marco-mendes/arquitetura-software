@@ -1,6 +1,6 @@
 # Estudo de caso: governar sem criar uma central de bloqueio
 
-A rede hospitalar Aurora cresceu de uma API única para oito serviços. Para “padronizar”, criou uma equipe de gateway que exigia abertura de solicitação para qualquer rota, cabeçalho e mudança de limite. O catálogo era uma planilha sem dono; a equipe de gateway passou a copiar regras de negócio como “exame de alto risco precisa de autorização” para scripts de proxy. Em incidentes, cada serviço registrava um identificador diferente e o dashboard só mostrava média de latência. A intenção era previsibilidade, mas o resultado foi fila, duplicação e investigação lenta.
+Este caso usa a mesma plataforma hospitalar do resto do curso, numa fase em que ela cresceu de uma API única para oito serviços. Para “padronizar”, formou-se uma equipe de gateway que exigia abertura de solicitação para qualquer rota, cabeçalho e mudança de limite. O catálogo era uma planilha sem dono; a equipe de gateway passou a copiar regras de negócio como “exame de alto risco precisa de autorização” para scripts de proxy. Em incidentes, cada serviço registrava um identificador diferente e o dashboard só mostrava média de latência. A intenção era previsibilidade, mas o resultado foi fila, duplicação e investigação lenta.
 
 O problema não é existir gateway. Roteamento, TLS, proteção de volume, autenticação técnica e correlação são candidatas fortes a uma política comum. O problema é confundir centralização de plataforma com centralização de conhecimento. A regra de exame depende do estado de autorização, de exceções clínicas e de evolução do vocabulário; deve ser propriedade de uma capacidade de domínio. Quando está no proxy, a equipe responsável pelo domínio precisa negociar uma alteração de código que não controla, enquanto o proxy passa a conhecer informações que não deveria interpretar.
 
@@ -32,7 +32,7 @@ flowchart TB
 
 ## Decisões avaliadas
 
-A Aurora considerou limitar por IP, usuário autenticado ou aplicação cliente. IP é simples para uma oficina, mas pode agrupar muitos usuários atrás de um proxy. Usuário pode ser mais justo, mas exige autenticação confiável; aplicação cliente exige credencial e rotação. A política inicial adotou uma chave por aplicação em rotas autenticadas e IP para entrada anônima, documentando consequências. Também separou limite de proteção de quota contratual: quota exige contexto de produto e ciclo de cobrança; não deve ser fingida por uma configuração de segundos.
+A equipe considerou limitar por IP, usuário autenticado ou aplicação cliente. IP é simples para uma oficina, mas pode agrupar muitos usuários atrás de um proxy. Usuário pode ser mais justo, mas exige autenticação confiável; aplicação cliente exige credencial e rotação. A política inicial adotou uma chave por aplicação em rotas autenticadas e IP para entrada anônima, documentando consequências. Também separou limite de proteção de quota contratual: quota exige contexto de produto e ciclo de cobrança; não deve ser fingida por uma configuração de segundos.
 
 Para versionamento, o catálogo passou a marcar a versão ativa e a fase de retirada. Uma mudança que remove campo não era liberada apenas porque o gateway conseguia rotear. A equipe observava uso da versão anterior, comunicava data e mantinha uma janela. A telemetria não decide quando remover sozinha, mas produz evidência para conversa com consumidores.
 
@@ -45,3 +45,5 @@ O laboratório é deliberadamente pequeno. Não demonstra gestão de identidades
 ## Equivalências em Java e .NET
 
 Uma organização Java pode registrar metadados no catálogo e testar políticas com Spring Boot Test, Testcontainers e chamadas HTTP reais. Uma organização .NET pode combinar ASP.NET Core, OpenTelemetry e testes de integração com `WebApplicationFactory`; YARP pode ler rotas de arquivo ou configuração versionada. Em ambas, o controle de entrada não deve absorver regras que exigem o modelo clínico. A evidência precisa continuar sendo reproduzível por código e por API, não por memória de uma pessoa.
+
+As políticas mínimas, a estratégia de evolução de contratos e a correlação propagada entre plataforma, operadora e laboratório discutidas aqui são exatamente o que o `ADR-004` do [incremento 4 do projeto integrador](../projeto-integrador/incrementos.md#incremento-4-governanca-e-operacao-consistente) precisa registrar — com responsável, exceção e prazo de revisão, não apenas como prática recomendada.
