@@ -16,9 +16,10 @@ Ao final, você será capaz de justificar uma fronteira de serviço, comparar mo
 2. Em [Padrões e decisões](padroes-e-decisoes.md), comparamos unidades de implantação, propriedade de dados, CAP, SAGA e CQRS.
 3. Em [Exemplo arquitetural](exemplo-arquitetural.md), acompanhamos uma solicitação de exame pelos dois serviços.
 4. Em [Estudo de caso](estudo-de-caso.md), avaliamos uma decomposição excessiva e uma consolidação responsável.
-5. Na [Oficina de ferramentas](oficina-de-ferramentas.md), executamos, interrompemos e limpamos o ambiente.
-6. Em [Exercícios](exercicios.md), avançamos pelos seis níveis da Taxonomia de Bloom.
-7. Em [Síntese e referências](sintese-e-referencias.md), consolidamos heurísticas e fontes públicas.
+5. Em [Casos reais](casos-reais.md), lemos a reconstrução da Netflix na nuvem a partir de material publicado pela empresa.
+6. Na [Oficina de ferramentas](oficina-de-ferramentas.md), executamos, interrompemos e limpamos o ambiente.
+7. Em [Exercícios](exercicios.md), avançamos pelos seis níveis da Taxonomia de Bloom.
+8. Em [Síntese e referências](sintese-e-referencias.md), consolidamos heurísticas e fontes públicas.
 
 ```mermaid
 flowchart LR

@@ -22,7 +22,15 @@ ADVANCED_LABELS = (
     "Critérios de avaliação",
 )
 
-_ALLOWED_ACTIONS = {"integrar", "consolidar", "substituir figura", "referenciar"}
+_ALLOWED_ACTIONS = {
+    "integrar",
+    "consolidar",
+    "substituir figura",
+    "referenciar",
+    # Destino da seção Casos Reais: o texto legado deixa de ser fonte e passa a
+    # ser objeto de verificação contra material publicado pela própria empresa.
+    "reconstruir com fonte primária",
+}
 _ALLOWED_FIGURE_DECISIONS = (
     "manter",
     "recriar em Mermaid",

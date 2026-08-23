@@ -18,9 +18,10 @@ Ao final, você será capaz de distinguir governança em design-time de governan
 2. Em [Padrões e decisões](padroes-e-decisoes.md), separamos controles de gateway de regras de serviço e domínio.
 3. Em [Exemplo arquitetural](exemplo-arquitetural.md), seguimos uma consulta por correlação e trace.
 4. Em [Estudo de caso](estudo-de-caso.md), corrigimos governança que criou centralização improdutiva.
-5. Na [Oficina de ferramentas](oficina-de-ferramentas.md), usamos Kong, Collector e Jaeger localmente.
-6. Em [Exercícios](exercicios.md), aplicamos os níveis da Taxonomia de Bloom a decisões auditáveis.
-7. Em [Síntese e referências](sintese-e-referencias.md), consolidamos perguntas de revisão e fontes públicas.
+5. Em [Casos reais](casos-reais.md), examinamos as diretrizes de API da Zalando como artefato público de governança.
+6. Na [Oficina de ferramentas](oficina-de-ferramentas.md), usamos Kong, Collector e Jaeger localmente.
+7. Em [Exercícios](exercicios.md), aplicamos os níveis da Taxonomia de Bloom a decisões auditáveis.
+8. Em [Síntese e referências](sintese-e-referencias.md), consolidamos perguntas de revisão e fontes públicas.
 
 ```mermaid
 flowchart LR

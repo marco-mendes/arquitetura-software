@@ -36,16 +36,17 @@ Ao concluir o percurso, você será capaz de:
 5. explicar gateway, adaptador e as capacidades de uma plataforma de APIs;
 6. produzir evidência com FastAPI, `TestClient`, Bruno, Spectral e Ocelot.
 
-## Percurso em oito páginas
+## Percurso em nove páginas
 
 1. **Visão geral:** delimita problema, resultado e contrato do encontro.
 2. **Conceitos:** do estilo de APIs e dos fundamentos da web às restrições REST de Fielding e à evolução do contrato.
 3. **Padrões e decisões:** tipos de APIs por contexto, a lente da plataforma e a agenda do arquiteto.
 4. **Exemplo arquitetural:** percorre o contrato de elegibilidade de ponta a ponta.
 5. **Estudo de caso:** aplica as decisões à plataforma hospitalar e às integrações externas.
-6. **Oficina de ferramentas:** executa FastAPI, OpenAPI, Bruno, Spectral, testes automatizados e a extensão com o gateway Ocelot.
-7. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
-8. **Síntese e referências:** consolida o método e aponta fontes públicas.
+6. **[Casos reais](casos-reais.md):** examina como a Stripe evolui um contrato público sem quebrar integrações antigas.
+7. **Oficina de ferramentas:** executa FastAPI, OpenAPI, Bruno, Spectral, testes automatizados e a extensão com o gateway Ocelot.
+8. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
+9. **Síntese e referências:** consolida o método e aponta fontes públicas.
 
 ## Entregas do encontro
 

@@ -31,6 +31,7 @@ PAGES = (
     "padroes-e-decisoes.md",
     "exemplo-arquitetural.md",
     "estudo-de-caso.md",
+    "casos-reais.md",
     "oficina-de-ferramentas.md",
     "exercicios.md",
     "sintese-e-referencias.md",

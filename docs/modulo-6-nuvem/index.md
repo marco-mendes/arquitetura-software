@@ -18,9 +18,10 @@ Uma resposta começa separando capacidade de produto. Um provedor pode tornar ha
 2. Em [Padrões e decisões](padroes-e-decisoes.md), avaliamos stateless e stateful, doze fatores, elasticidade, resiliência, custo e lock-in.
 3. Em [Exemplo arquitetural](exemplo-arquitetural.md), lemos a implantação de elegibilidade e suas garantias reais.
 4. Em [Estudo de caso](estudo-de-caso.md), comparamos alternativas para uma janela de agendamento hospitalar.
-5. Na [Oficina de ferramentas](oficina-de-ferramentas.md), criamos um cluster kind, carregamos uma imagem local, observamos rollout e fazemos rollback seguro.
-6. Em [Exercícios](exercicios.md), usamos os seis níveis da Taxonomia de Bloom para defender decisões e evidências.
-7. Em [Síntese e referências](sintese-e-referencias.md), consolidamos equivalências em Java e .NET e fontes públicas.
+5. Em [Casos reais](casos-reais.md), comparamos a elasticidade gerenciada do iFood com a adoção de serverless na Taco Bell.
+6. Na [Oficina de ferramentas](oficina-de-ferramentas.md), criamos um cluster kind, carregamos uma imagem local, observamos rollout e fazemos rollback seguro.
+7. Em [Exercícios](exercicios.md), usamos os seis níveis da Taxonomia de Bloom para defender decisões e evidências.
+8. Em [Síntese e referências](sintese-e-referencias.md), consolidamos equivalências em Java e .NET e fontes públicas.
 
 **Texto alternativo:** clientes chegam a um Service, que distribui somente para dois Pods prontos; o Deployment os mantém e o HPA pode mudar a quantidade quando houver métrica.
 

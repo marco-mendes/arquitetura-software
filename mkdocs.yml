@@ -42,6 +42,7 @@ nav:
       - Padrões e decisões: modulo-1-visao-geral/padroes-e-decisoes.md
       - Exemplo arquitetural: modulo-1-visao-geral/exemplo-arquitetural.md
       - Estudo de caso: modulo-1-visao-geral/estudo-de-caso.md
+      - Casos reais: modulo-1-visao-geral/casos-reais.md
       - Oficina de ferramentas: modulo-1-visao-geral/oficina-de-ferramentas.md
       - Exercícios: modulo-1-visao-geral/exercicios.md
       - Síntese e referências: modulo-1-visao-geral/sintese-e-referencias.md
@@ -51,6 +52,7 @@ nav:
       - Padrões e decisões: modulo-2-apis/padroes-e-decisoes.md
       - Exemplo arquitetural: modulo-2-apis/exemplo-arquitetural.md
       - Estudo de caso: modulo-2-apis/estudo-de-caso.md
+      - Casos reais: modulo-2-apis/casos-reais.md
       - Oficina de ferramentas: modulo-2-apis/oficina-de-ferramentas.md
       - Exercícios: modulo-2-apis/exercicios.md
       - Síntese e referências: modulo-2-apis/sintese-e-referencias.md
@@ -60,6 +62,7 @@ nav:
       - Padrões e decisões: modulo-3-servicos/padroes-e-decisoes.md
       - Exemplo arquitetural: modulo-3-servicos/exemplo-arquitetural.md
       - Estudo de caso: modulo-3-servicos/estudo-de-caso.md
+      - Casos reais: modulo-3-servicos/casos-reais.md
       - Oficina de ferramentas: modulo-3-servicos/oficina-de-ferramentas.md
       - Exercícios: modulo-3-servicos/exercicios.md
       - Síntese e referências: modulo-3-servicos/sintese-e-referencias.md
@@ -69,6 +72,7 @@ nav:
       - Padrões e decisões: modulo-4-governanca/padroes-e-decisoes.md
       - Exemplo arquitetural: modulo-4-governanca/exemplo-arquitetural.md
       - Estudo de caso: modulo-4-governanca/estudo-de-caso.md
+      - Casos reais: modulo-4-governanca/casos-reais.md
       - Oficina de ferramentas: modulo-4-governanca/oficina-de-ferramentas.md
       - Exercícios: modulo-4-governanca/exercicios.md
       - Síntese e referências: modulo-4-governanca/sintese-e-referencias.md
@@ -78,6 +82,7 @@ nav:
       - Padrões e decisões: modulo-5-eventos/padroes-e-decisoes.md
       - Exemplo arquitetural: modulo-5-eventos/exemplo-arquitetural.md
       - Estudo de caso: modulo-5-eventos/estudo-de-caso.md
+      - Casos reais: modulo-5-eventos/casos-reais.md
       - Oficina de ferramentas: modulo-5-eventos/oficina-de-ferramentas.md
       - Exercícios: modulo-5-eventos/exercicios.md
       - Síntese e referências: modulo-5-eventos/sintese-e-referencias.md
@@ -87,6 +92,7 @@ nav:
       - Padrões e decisões: modulo-6-nuvem/padroes-e-decisoes.md
       - Exemplo arquitetural: modulo-6-nuvem/exemplo-arquitetural.md
       - Estudo de caso: modulo-6-nuvem/estudo-de-caso.md
+      - Casos reais: modulo-6-nuvem/casos-reais.md
       - Oficina de ferramentas: modulo-6-nuvem/oficina-de-ferramentas.md
       - Exercícios: modulo-6-nuvem/exercicios.md
       - Síntese e referências: modulo-6-nuvem/sintese-e-referencias.md
@@ -100,6 +106,7 @@ nav:
   - Referência:
       - Glossário: referencia/glossario.md
       - Como ler uma arquitetura: referencia/como-ler-uma-arquitetura.md
+      - Como ler um caso público: referencia/como-ler-um-caso-publico.md
       - Atributos de qualidade: referencia/atributos-de-qualidade.md
       - Catálogo de padrões: referencia/catalogo-de-padroes.md
       - Guia de ferramentas: referencia/guia-de-ferramentas.md

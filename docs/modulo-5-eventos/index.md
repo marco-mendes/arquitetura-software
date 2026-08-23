@@ -18,9 +18,10 @@ Evento afirma passado; comando pede ação; mensagem é envelope técnico. Confu
 2. [Padrões e decisões](padroes-e-decisoes.md): entrega, idempotência, ordem, schema, evolução e DLQ.
 3. [Exemplo arquitetural](exemplo-arquitetural.md): resultado, faturamento e duas tentativas.
 4. [Estudo de caso](estudo-de-caso.md): decisão hospitalar e consequências.
-5. [Oficina](oficina-de-ferramentas.md): RabbitMQ local, repetição e fila de descarte.
-6. [Exercícios](exercicios.md): decisões pelos níveis de Bloom.
-7. [Síntese e referências](sintese-e-referencias.md): heurísticas e fontes.
+5. [Casos reais](casos-reais.md): o LinkedIn, do monólito Leo ao log distribuído que virou Apache Kafka.
+6. [Oficina](oficina-de-ferramentas.md): RabbitMQ local, repetição e fila de descarte.
+7. [Exercícios](exercicios.md): decisões pelos níveis de Bloom.
+8. [Síntese e referências](sintese-e-referencias.md): heurísticas e fontes.
 
 ```mermaid
 flowchart LR

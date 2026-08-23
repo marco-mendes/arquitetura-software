@@ -78,13 +78,14 @@ class ModuleSixTest(unittest.TestCase):
             ),
         )
 
-    def test_module_has_eight_pages_navigation_and_accessible_diagrams(self):
+    def test_module_has_nine_pages_navigation_and_accessible_diagrams(self):
         self.assertEqual(
             sorted(path.name for path in MODULE.glob("*.md")),
             sorted(
                 (
                     "index.md", "conceitos.md", "padroes-e-decisoes.md",
                     "exemplo-arquitetural.md", "estudo-de-caso.md",
+                    "casos-reais.md",
                     "oficina-de-ferramentas.md", "exercicios.md",
                     "sintese-e-referencias.md",
                 )

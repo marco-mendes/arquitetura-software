@@ -30,9 +30,9 @@ class ContentContractTest(unittest.TestCase):
         self.assertIn("referencia/como-ler-uma-arquitetura.md", navigation)
         for module in MODULES:
             pages = [path for path in navigation.splitlines() if f"{module}/" in path]
-            self.assertEqual(8, len(pages), module)
+            self.assertEqual(9, len(pages), module)
 
-    def test_course_has_six_modules_and_eight_page_contract(self):
+    def test_course_has_six_modules_and_nine_page_contract(self):
         expected_modules = (
             ("modulo-1-visao-geral", "Visão geral de estilos"),
             ("modulo-2-apis", "Arquitetura de APIs"),
@@ -49,6 +49,7 @@ class ContentContractTest(unittest.TestCase):
                 "padroes-e-decisoes.md",
                 "exemplo-arquitetural.md",
                 "estudo-de-caso.md",
+                "casos-reais.md",
                 "oficina-de-ferramentas.md",
                 "exercicios.md",
                 "sintese-e-referencias.md",

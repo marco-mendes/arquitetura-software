@@ -27,16 +27,17 @@ Não existe resposta baseada apenas no nome do domínio. Uma alternativa é adeq
 
 Consulte o [glossário compartilhado](../referencia/glossario.md) sempre que um termo novo aparecer. Para transformar expressões vagas como “rápido” ou “fácil de manter” em cenários, use a página de [atributos de qualidade](../referencia/atributos-de-qualidade.md). O registro final segue o [template de ADR](../referencia/template-adr.md), usado também no projeto integrador.
 
-## Percurso em oito páginas
+## Percurso em nove páginas
 
 1. **Visão geral:** delimita problema, resultado e contrato do encontro.
 2. **Conceitos:** apresenta o que é um estilo arquitetural e o mapa das quatro famílias de decisão.
 3. **Padrões e decisões:** aprofunda Camadas, Pipes and Filters, Microkernel e Monólito modular, com figuras, características e anti-padrões, e apresenta o ADR.
 4. **Exemplo arquitetural:** aplica os estilos ao caso hospitalar, da reserva em camadas ao pipeline de faturamento.
 5. **Estudo de caso:** conduz quatro exercícios encadeados sobre a plataforma hospitalar, de cenários mensuráveis ao ADR-001.
-6. **Oficina de ferramentas:** executa os três exemplos de estilos e captura evidências de comportamento.
-7. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
-8. **Síntese e referências:** consolida o método e aponta fontes públicas.
+6. **[Casos reais](casos-reais.md):** examina o monólito modular da Shopify a partir do relato de engenharia da própria empresa.
+7. **Oficina de ferramentas:** executa os três exemplos de estilos e captura evidências de comportamento.
+8. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
+9. **Síntese e referências:** consolida o método e aponta fontes públicas.
 
 ## Como estudar
 
