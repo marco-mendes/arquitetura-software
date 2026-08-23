@@ -6,7 +6,7 @@ Cada módulo desta disciplina tem uma página de casos reais. Elas descrevem arq
 
 Relatos de arquitetura são publicados por quem venceu. A empresa conta a decisão que deu certo, raramente as tentativas anteriores, e quase nunca o custo organizacional de sustentar o resultado. O fornecedor de nuvem que assina o estudo tem interesse comercial no desfecho. O engenheiro que apresenta em conferência descreve o estado final de uma migração de anos como se fosse escolha tomada numa reunião.
 
-Some-se o efeito de reescrita. À medida que um caso circula em blogs, vídeos e resumos, ganha números arredondados, citações que ninguém consegue rastrear e nomes de sistemas que a empresa nunca usou. A página de [casos reais do Módulo 3](../modulo-3-servicos/casos-reais.md#o-que-circula-sem-fonte-verificavel) registra exemplos concretos disso.
+Some-se o efeito de reescrita. À medida que um caso circula em blogs, vídeos e resumos, ganha números arredondados, citações que ninguém consegue rastrear e nomes de sistemas que a empresa nunca usou. As páginas de casos reais desta disciplina descartam esse material: uma afirmação sem fonte publicada simplesmente não entra.
 
 Um caso público serve para reconhecer uma força em ação e formular perguntas melhores sobre o próprio sistema. Ele não transfere a decisão, porque a decisão dependia de restrições que você não tem.
 

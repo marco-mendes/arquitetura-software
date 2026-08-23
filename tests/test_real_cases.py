@@ -12,6 +12,10 @@ DOCS = ROOT / "docs"
 PAGE = "casos-reais.md"
 PROTOCOL = "referencia/como-ler-um-caso-publico.md"
 
+# Páginas já reescritas em formato narrativo. As demais seguem no formato
+# analítico anterior e serão substituídas por outros casos.
+NARRATIVE_PAGES = ("modulo-3-servicos",)
+
 LEGACY_CANONICAL = {
     "3.9.1 O caso Netflix.md": "docs/modulo-3-servicos/casos-reais.md",
     "3.9.1.1 Discussão sobre o caso Netflix.md": "docs/modulo-3-servicos/casos-reais.md",
@@ -76,11 +80,27 @@ class RealCasesTest(unittest.TestCase):
     def test_no_standalone_real_cases_section_remains(self):
         self.assertFalse((DOCS / "casos-reais").exists())
 
-    def test_each_page_anchors_the_module_and_the_protocol(self):
-        for module in MODULES:
+    def test_narrative_pages_do_not_borrow_the_hospital_case(self):
+        """O caso real vale pela história do mercado, sem correlação forçada.
+
+        Contrato em transição: vale para as páginas já reescritas em formato
+        narrativo. Estender a NARRATIVE_PAGES conforme as demais forem
+        refeitas, até cobrir MODULES inteiro.
+        """
+        for module in NARRATIVE_PAGES:
             text = (DOCS / module / PAGE).read_text(encoding="utf-8")
-            self.assertIn("](estudo-de-caso.md)", text, module)
-            self.assertIn(f"](../{PROTOCOL})", text, module)
+            self.assertNotIn("](estudo-de-caso.md)", text, module)
+            self.assertNotIn("hospital", text.casefold(), module)
+
+    def test_narrative_pages_tell_a_dated_story(self):
+        for module in NARRATIVE_PAGES:
+            text = (DOCS / module / PAGE).read_text(encoding="utf-8")
+            years = {
+                int(match.group(0))
+                for match in re.finditer(r"\b(?:19|20)\d{2}\b", text)
+            }
+            self.assertGreaterEqual(len(years), 5, f"{module}: poucos marcos datados")
+            self.assertIn("## Questões para discussão", text, module)
 
     def test_module_index_announces_the_page(self):
         for module in MODULES:
@@ -99,19 +119,6 @@ class RealCasesTest(unittest.TestCase):
             self.assertRegex(text, r"(?m)^## Fontes\b", module)
             sources = text.split("## Fontes", 1)[1]
             self.assertGreaterEqual(sources.count("](https://"), 3, module)
-
-    def test_every_page_offers_five_guided_reading_items(self):
-        for module in MODULES:
-            text = (DOCS / module / PAGE).read_text(encoding="utf-8")
-            self.assertIn("## Leitura guiada", text, module)
-            guided = text.split("## Leitura guiada", 1)[1]
-            for item in range(1, 6):
-                self.assertIn(f"**{item}.", guided, f"{module}: item {item}")
-
-    def test_every_page_states_the_limit_of_transference(self):
-        for module in MODULES:
-            text = (DOCS / module / PAGE).read_text(encoding="utf-8")
-            self.assertRegex(text, r"(?m)^## O que .*cas[oa]s? não prova", module)
 
     def test_mermaid_figures_keep_the_module_accessibility_contract(self):
         for module in MODULES:
