@@ -151,9 +151,3 @@ No laboratório, Exames usa timeout de dois segundos e converte indisponibilidad
 ## Registro de decisão
 
 Uma decisão defensável registra contexto, alternativas, forças, consequência e sinal de revisão. Exemplo: “Manter Elegibilidade e Exames em processos distintos porque possuem propriedade de dados e ritmos de mudança diferentes; aceitar chamada síncrona porque a decisão é necessária antes da escrita; revisar se indisponibilidade conjunta ou volume ultrapassarem metas”. Essa formulação é superior a “usar microsserviços porque escala”.
-
-## Equivalências em Java e .NET
-
-SAGA pode ser implementada com máquinas de estado e mensageria em qualquer ecossistema, mas bibliotecas não removem a necessidade de compensações de domínio. Java oferece Spring Transaction para transações locais, Resilience4j para timeout e circuit breaker e Spring Modulith para reforçar módulos. .NET oferece transações locais, `IHttpClientFactory`, políticas de resiliência e soluções de mensageria compatíveis.
-
-CQRS pode ser apenas a separação entre handlers de comando e serviços de consulta. MediatR é comum em .NET; padrões equivalentes podem ser construídos com interfaces Spring em Java. Em ambos, banco por serviço deve ser protegido por usuários e permissões PostgreSQL, não apenas por convenção de código.

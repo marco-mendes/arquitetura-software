@@ -38,7 +38,3 @@ Para elevar o limite local de três para cinco, altere somente `second: 3` para 
 ## Falhas e decisões pendentes
 
 Se Kong estiver saudável e o serviço responder `503`, a política de borda funcionou, mas a capacidade não. Se Collector estiver ausente, a rota pode continuar respondendo; traces ficam indisponíveis e essa perda deve ser detectada por monitoramento do pipeline. Se Jaeger receber apenas o span do gateway, a propagação no serviço precisa ser investigada: cabeçalho, inicialização do SDK ou exportador podem estar ausentes. A reação não é acrescentar regra clínica no proxy; é localizar o componente que violou a política declarada.
-
-## Equivalências em Java e .NET
-
-Num serviço Java, um filtro Spring ou a instrumentação OpenTelemetry cria spans HTTP e propaga W3C Trace Context; o Collector e Jaeger permanecem os mesmos. Em ASP.NET Core, middleware e `ActivitySource` oferecem uma integração equivalente, e um `DelegatingHandler` propaga contexto em chamadas de saída. Kong continua sendo uma escolha de borda independente da linguagem. Se a organização escolher Spring Cloud Gateway ou YARP, deve manter a mesma pergunta: qual política é comum de borda e qual é regra de serviço?

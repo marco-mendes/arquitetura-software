@@ -185,7 +185,3 @@ flowchart LR
 **Leitura textual:** gateway aplica políticas; adaptador traduz vocabulário e protocolo da operadora; o estado pertence à API — uma hipótese de evolução, sem componente correspondente no laboratório.
 
 O gateway pode autenticar, limitar tráfego e rotear as chamadas. O que ele **não** deve fazer é traduzir `beneficiaryKey` da operadora para `matricula_plano`, nem decidir que um estado desconhecido significa `negada`. Essas traduções são responsabilidade do **adaptador**, onde podem ser testadas e observadas de forma isolada. Assim, o formato SOAP/XML da operadora e suas regras específicas não vazam para o resto da plataforma.
-
-## Equivalências em Java e .NET
-
-Em **Spring Boot**, `@RestController`, `ResponseEntity.accepted()`, Springdoc e MockMvc cumprem os mesmos papéis. Em **ASP.NET Core**, `MapPost`/`MapGet`, `Results.Accepted()`, OpenAPI e `WebApplicationFactory` fazem o mesmo. Python, Java e C# variam no *como*; a decisão preserva recurso, HTTP, schema, erro e evidência.

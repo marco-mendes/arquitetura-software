@@ -42,8 +42,4 @@ Governança leve consegue acelerar quando transforma ambiguidades em padrões f�
 
 O laboratório é deliberadamente pequeno. Não demonstra gestão de identidades corporativa, alta disponibilidade do Collector, retenção legal, multi-região nem limite distribuído. Ele demonstra uma cadeia curta onde a decisão, a configuração e a evidência podem ser lidas juntas. Essa rastreabilidade é suficiente para discutir uma mudança local, mas não substitui auditoria legal ou prova de conformidade em produção.
 
-## Equivalências em Java e .NET
-
-Uma organização Java pode registrar metadados no catálogo e testar políticas com Spring Boot Test, Testcontainers e chamadas HTTP reais. Uma organização .NET pode combinar ASP.NET Core, OpenTelemetry e testes de integração com `WebApplicationFactory`; YARP pode ler rotas de arquivo ou configuração versionada. Em ambas, o controle de entrada não deve absorver regras que exigem o modelo clínico. A evidência precisa continuar sendo reproduzível por código e por API, não por memória de uma pessoa.
-
 As políticas mínimas, a estratégia de evolução de contratos e a correlação propagada entre plataforma, operadora e laboratório discutidas aqui são exatamente o que o `ADR-004` do [incremento 4 do projeto integrador](../projeto-integrador/incrementos.md#incremento-4-governanca-e-operacao-consistente) precisa registrar — com responsável, exceção e prazo de revisão, não apenas como prática recomendada.

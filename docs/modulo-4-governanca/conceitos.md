@@ -47,7 +47,3 @@ flowchart TB
 **Traces** respondem “por onde esta operação passou e onde esperou?”. Um trace contém spans relacionados por contexto. O cabeçalho W3C `traceparent` carrega essa relação; o correlation ID é um identificador de busca compreensível entre logs e resposta. Eles são complementares: um pode existir sem o outro, mas, juntos, reduzem a ambiguidade da investigação.
 
 Um **SLO** declara uma meta operacional baseada num indicador, como proporção de consultas de Elegibilidade concluídas abaixo de 300 ms em uma janela. Ele não é promessa de perfeição nem apenas uma linha de dashboard. Sua utilidade aparece quando orienta capacidade, alerta e decisão: se o orçamento de erro está sendo gasto, priorize confiabilidade antes de acrescentar tráfego ou novas dependências. Evite SLO que mede somente saúde de processo e ignora o resultado que o consumidor percebe.
-
-## Equivalências em Java e .NET
-
-Em Java, Spring Boot Actuator expõe sinais de aplicação e Micrometer pode produzir métricas e traces com OpenTelemetry; políticas de borda podem usar Kong, Spring Cloud Gateway ou um proxy escolhido pela organização. Em .NET, ASP.NET Core e `System.Diagnostics.Activity` integram contexto distribuído; OpenTelemetry .NET exporta para Collector e YARP pode ser uma opção de gateway programável. A equivalência é conceitual: mantenha o contrato, o ownership e as evidências, em vez de traduzir automaticamente cada biblioteca Python para outra plataforma.

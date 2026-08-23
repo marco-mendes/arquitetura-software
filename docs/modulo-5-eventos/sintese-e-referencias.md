@@ -8,18 +8,6 @@ Uma integração robusta declara entrega pelo menos uma vez e responde com idemp
 
 RabbitMQ e Kafka não são degraus de maturidade. RabbitMQ oferece exchanges, filas e confirmações que atendem bem ao laboratório de Faturamento. Kafka organiza logs particionados, retenção e offsets, úteis quando replay e múltiplas leituras independentes são requisitos reais. Ambos pedem operação, segurança, observabilidade e testes. A decisão começa pelo problema e pelas evidências; taxa genérica e promessa de exactly-once não bastam.
 
-## Equivalências em Java e .NET
-
-| Ideia do módulo | Java | .NET |
-| --- | --- | --- |
-| Modelo de evento validado | `record` com Bean Validation, Jackson ou JSON Schema | `record` com validação, `System.Text.Json` ou JSON Schema |
-| RabbitMQ AMQP | [RabbitMQ Java Client](https://www.rabbitmq.com/client-libraries/java-client) ou Spring AMQP | [RabbitMQ .NET Client](https://www.rabbitmq.com/client-libraries/dotnet-client) ou MassTransit |
-| Kafka e consumer group | [Apache Kafka Java client](https://kafka.apache.org/documentation/#consumerapi) ou Spring for Apache Kafka | [Confluent.Kafka](https://docs.confluent.io/kafka-clients/dotnet/current/overview.html) |
-| Inbox idempotente | tabela com índice único e transação JDBC/JPA | tabela com índice único e transação ADO.NET/EF Core |
-| Outbox | transação local e publicador de outbox | transação local e serviço de publicação de outbox |
-
-Os nomes de bibliotecas não substituem os conceitos. Um `record` não torna um evento verdadeiro sem semântica de domínio; uma confirmação de cliente não elimina a janela entre banco e broker; um framework de mensageria não decide política de retenção nem recuperação de DLQ. A equivalência útil é a que preserva responsabilidade e evidência ao mudar de linguagem.
-
 ## Fontes públicas para aprofundar
 
 - [RabbitMQ Tutorials e documentação de consumidores](https://www.rabbitmq.com/tutorials) explicam confirmações, filas e padrões AMQP.

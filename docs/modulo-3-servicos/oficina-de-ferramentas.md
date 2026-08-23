@@ -68,8 +68,6 @@ O estado nominal com a falha parcial.
 
 Qual dependência permanece saudável e qual capacidade deixa de ser concluída?
 
-Modalidades: **Essencial em aula**, **Exploração em dupla** e **Extensão** usam o mesmo roteiro com profundidades diferentes.
-
 ### Roteiro de transição do ambiente
 
 | Etapa | Estado de entrada | Ação e evidência esperada | Contingência |

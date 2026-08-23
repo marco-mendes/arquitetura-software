@@ -41,7 +41,3 @@ No módulo seguinte, eventos introduzirão novas decisões de governança: schem
 - [Jaeger: documentação e API de consulta](https://www.jaegertracing.io/docs/)
 - [Google SRE Book: service level objectives](https://sre.google/sre-book/service-level-objectives/)
 - [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
-
-## Equivalências em Java e .NET
-
-Java pode combinar Spring Boot Actuator, Micrometer e OpenTelemetry Java para produzir sinais, mantendo gateway declarativo ou Spring Cloud Gateway como borda. .NET pode combinar ASP.NET Core, ActivitySource, OpenTelemetry .NET e YARP. As bibliotecas não são a política: owner, versão, controle de domínio, evidência e revisão devem sobreviver à troca de linguagem ou proxy.

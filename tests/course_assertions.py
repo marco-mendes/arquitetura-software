@@ -43,7 +43,6 @@ def assert_module_contract(
     corpus = "\n".join(
         (module / page).read_text(encoding="utf-8") for page in PAGES
     )
-    testcase.assertIn("## Equivalências em Java e .NET", corpus)
     for term in required_terms:
         testcase.assertIn(term.casefold(), corpus.casefold(), term)
     workshop = (module / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
@@ -61,8 +60,6 @@ def assert_module_contract(
         testcase.assertIn(heading, workshop)
     for platform in ("### Windows", "### macOS", "### Linux"):
         testcase.assertIn(platform, workshop)
-    for label in ("Essencial em aula", "Exploração em dupla", "Extensão"):
-        testcase.assertIn(label, workshop)
     for prompt in (
         "**Objetivo**",
         "**Pré-requisito**",

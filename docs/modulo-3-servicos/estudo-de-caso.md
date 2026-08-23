@@ -23,7 +23,7 @@ Esse mapa não obrigava a manter três (ou onze) processos separados. Ele apenas
 
 ## Decisão
 
-A equipe consolidou vínculo, vigência, categoria de plano e regra contratual num único macrosserviço, chamado Elegibilidade. Internamente, módulos e testes de arquitetura (equivalentes ao ArchUnit ou ao Spring Modulith mencionados em [conceitos](conceitos.md#equivalencias-em-java-e-net)) impediram que um módulo acessasse diretamente as tabelas de outro. O banco permaneceu sob uma única credencial do macrosserviço, com schemas internos definidos pela própria equipe. Autorização continuou como outro processo, consumindo Elegibilidade por uma API documentada — nunca acessando essas tabelas diretamente.
+A equipe consolidou vínculo, vigência, categoria de plano e regra contratual num único macrosserviço, chamado Elegibilidade. Internamente, módulos e testes de arquitetura impediram que um módulo acessasse diretamente as tabelas de outro. O banco permaneceu sob uma única credencial do macrosserviço, com schemas internos definidos pela própria equipe. Autorização continuou como outro processo, consumindo Elegibilidade por uma API documentada — nunca acessando essas tabelas diretamente.
 
 Auditoria passou a receber eventos, mas só depois que a equipe definiu identificador de negócio, prazo de retenção e o que fazer com uma mensagem repetida. A mudança não foi feita para "usar eventos" — foi feita para que uma indisponibilidade do lado analítico não bloqueasse o atendimento ao paciente. O fluxo que precisava de decisão imediata (a própria autorização) continuou síncrono.
 
@@ -46,6 +46,8 @@ Um painel gerencial também precisava cruzar autorizações com dados agregados 
 A consolidação deveria ser revista se equipes diferentes passassem a ser donas de partes do macrosserviço, se uma das regras precisasse de um ciclo de implantação isolado, se as cargas de vínculo/vigência e de regra contratual divergissem de forma relevante, ou se a unidade voltasse a impedir entregas independentes. Também deveria ser revista se a projeção do painel gerencial parasse de atender ao prazo que o negócio precisa. Uma boa decisão arquitetural carrega dentro de si os sinais que a tornariam obsoleta.
 
 O caso ensina que consolidar não é fracassar, e distribuir não é modernizar. O objetivo é sempre alinhar coesão do código, propriedade dos dados, padrão de comunicação e desenho das equipes. Um macrosserviço pode ser uma etapa estável ou um estágio de transição; um monólito modular pode ser o destino certo; microsserviços continuam fazendo sentido em fronteiras específicas — como Elegibilidade e Exames continuam sendo dois processos no exemplo deste módulo, porque ali a autonomia observada compensa o custo de rede.
+
+Uma consolidação também precisa preservar os contratos externos durante a migração. Um roteador pode encaminhar chamadas antigas para o novo macrosserviço enquanto os consumidores são atualizados aos poucos. O padrão de estrangulamento é uma estratégia de transição — não uma razão para manter duas fontes de verdade funcionando indefinidamente.
 
 ## Netflix e Uber como consequências, não como receitas
 
@@ -119,9 +121,3 @@ O caso afirma que uma boa decisão arquitetural carrega dentro de si os sinais q
 Um sinal só serve para algo se alguém conseguir observá-lo em um dado concreto. O sinal 3, por exemplo, apareceria na comparação de requisições por minuto entre os módulos, acompanhada por algumas semanas. Escolha outro sinal da lista e diga qual dado a equipe precisaria acompanhar para saber que ele apareceu.
 
 Essas respostas preparam o `ADR-003` do [incremento 3 do projeto integrador](../projeto-integrador/incrementos.md#incremento-3-limites-de-servicos-dados-e-coordenacao): a mesma pergunta — consolidar ou distribuir, e sob qual evidência — reaparece lá como decisão registrável, não apenas como discussão.
-
-## Equivalências em Java e .NET
-
-Uma consolidação em Java pode usar módulos Maven ou Gradle, pacotes organizados por domínio e ArchUnit para impedir referências proibidas entre eles; Spring Modulith acrescenta verificação de módulos e eventos internos. Em .NET, projetos separados por módulo, modificadores de visibilidade e testes de dependência cumprem um papel semelhante.
-
-Em ambos os ecossistemas, a consolidação precisa preservar os contratos externos durante a migração. Um roteador pode encaminhar chamadas antigas para o novo macrosserviço enquanto os consumidores são atualizados aos poucos. O padrão de estrangulamento é uma estratégia de transição — não uma razão para manter duas fontes de verdade funcionando indefinidamente.

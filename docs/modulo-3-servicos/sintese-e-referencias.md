@@ -34,11 +34,8 @@ Consistência entre serviços requer estados intermediários e reconciliação. 
 - Docker, [Compose file reference](https://docs.docker.com/reference/compose-file/) e [control startup order](https://docs.docker.com/compose/how-tos/startup-order/) — definição oficial de serviços, dependências e health checks.
 - FastAPI, [documentação oficial](https://fastapi.tiangolo.com/) — aplicações, dependências e testes HTTP.
 - Python, [guia de ambientes e plataformas](https://docs.python.org/3/using/index.html) — instalação nos sistemas usados na oficina.
-- Spring, [Spring Boot reference](https://docs.spring.io/spring-boot/index.html) e [.NET, ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/) — equivalentes de implementação.
 
-## Equivalências em Java e .NET
-
-Java, .NET e Python podem materializar a mesma arquitetura. Spring Boot, ASP.NET Core e FastAPI oferecem HTTP e injeção de dependência. Drivers PostgreSQL protegem cada conexão com credenciais próprias. Clientes HTTP tratam timeout e respostas. Testes substituem somente a fronteira remota, não chamam internals do provedor.
+## O que não decide a arquitetura
 
 Escolher um framework por familiaridade é aceitável; inferir estilo arquitetural a partir dele não é. A evidência relevante continua sendo a direção das dependências, a propriedade do estado, a autonomia de implantação necessária e o comportamento durante falhas.
 

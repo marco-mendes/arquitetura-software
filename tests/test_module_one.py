@@ -222,7 +222,7 @@ class ModuleOneTest(unittest.TestCase):
         self.assertGreaterEqual(text.count("*Figura "), diagrams)
         self.assertGreaterEqual(text.count("**Leitura textual da figura:**"), diagrams)
 
-    def test_example_preserves_code_responsibilities_and_ecosystem_equivalences(self):
+    def test_example_preserves_code_responsibilities(self):
         text = (MODULE / "exemplo-arquitetural.md").read_text(encoding="utf-8")
         text = re.sub(r"[ \t]+", " ", text)
 
@@ -233,9 +233,6 @@ class ModuleOneTest(unittest.TestCase):
             "filtros/",
             "adaptadores/",
             "`Pipeline`",
-            "| Intenção | Python | Java | .NET |",
-            "| contrato do filtro |",
-            "| regra de dependência |",
         ):
             self.assertIn(fragment, text)
 

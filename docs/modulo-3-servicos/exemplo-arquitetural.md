@@ -307,8 +307,4 @@ Os mesmos limites poderiam existir em uma aplicação: `Elegibilidade` exporia u
 
 A versão distribuída é escolhida aqui para observar propriedades que só aparecem com rede e processos independentes. Não transforma a alternativa modular em desenho inferior.
 
-## Equivalências em Java e .NET
-
-Em Java, seriam duas aplicações Spring Boot, com controllers, `DataSource` próprio e cliente HTTP. Um teste do consumidor poderia usar `MockWebServer` ou WireMock sem importar o serviço provedor. Em .NET, seriam duas aplicações ASP.NET Core, cada uma com Npgsql e `HttpClient`; um `HttpMessageHandler` controlado produziria respostas de contrato.
-
-Dockerfile e Compose mudariam apenas os comandos e artefatos da aplicação. A regra central permaneceria: configuração de Exames recebe a URL HTTP de Elegibilidade e a URL de seu próprio banco, nunca a URL do banco alheio.
+Qualquer que seja a forma escolhida, a regra central permanece: a configuração de Exames recebe a URL HTTP de Elegibilidade e a URL de seu próprio banco, nunca a URL do banco alheio.

@@ -101,9 +101,3 @@ Em uma chamada síncrona, o consumidor espera a resposta. É simples para fluxos
 Uma **falha parcial** ocorre quando uma parte distribuída funciona e outra não. Exames pode estar saudável para consultar seu banco enquanto não consegue aceitar nova solicitação porque Elegibilidade parou. Retornar `503 Service Unavailable` com `dependencia_indisponivel` torna essa condição observável. Devolver `500` genérico ou registrar como se a solicitação tivesse sido concluída esconderia a semântica.
 
 Timeouts limitam espera; repetição pode ajudar falhas transitórias, mas amplia carga e exige idempotência; circuit breaker interrompe tentativas quando a dependência está instável; fallback precisa ser válido para o negócio, não apenas tecnicamente conveniente. No exemplo clínico, presumir elegibilidade positiva seria perigoso. Falhar de forma explícita é a decisão didática.
-
-## Equivalências em Java e .NET
-
-Os conceitos não dependem de FastAPI. Em Java, um processo equivalente pode usar Spring Boot, Spring Web e o driver PostgreSQL; módulos podem ser reforçados com Java Platform Module System, pacotes e testes ArchUnit. Em .NET, ASP.NET Core Minimal APIs ou controllers oferecem HTTP, Npgsql acessa PostgreSQL e projetos separados reforçam referências permitidas. `HttpClient` em .NET e `WebClient` ou clientes declarativos no ecossistema Spring cumprem o papel do `httpx`.
-
-Docker Compose executa os mesmos contêineres independentemente da linguagem. O contrato de fronteira deve verificar requisições, respostas e proibições arquiteturais sem depender da implementação interna do provedor. Essa equivalência é essencial: arquitetura de serviços trata decisões de responsabilidade, estado e falha; frameworks apenas concretizam essas decisões.

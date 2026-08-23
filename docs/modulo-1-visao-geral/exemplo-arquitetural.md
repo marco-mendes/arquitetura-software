@@ -169,19 +169,7 @@ processamento/
     └── xml.py
 ```
 
-## Equivalências em Java e .NET
-
-Em Python, um `Protocol` define o filtro; em Java, uma `interface Filtro`; em .NET, `IFiltro`. A equivalência mantém intenção, não código idêntico:
-
-| Intenção             | Python            | Java            | .NET            |
-| -------------------- | ----------------- | --------------- | --------------- |
-| contrato do filtro   | `typing.Protocol` | `interface`     | `interface`     |
-| resultado explícito  | `dataclass`       | `record`        | `record`        |
-| teste parametrizado  | pytest            | JUnit 5         | xUnit           |
-| regra de dependência | import-linter     | ArchUnit        | NetArchTest     |
-| modelo como código   | Structurizr DSL   | Structurizr DSL | Structurizr DSL |
-
-Uma árvore não prova isolamento: teste imports proibidos e substitua um filtro para verificar composição.
+Uma árvore de diretórios não prova isolamento: teste imports proibidos e substitua um filtro para verificar composição.
 
 ## Decisão provisória
 

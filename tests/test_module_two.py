@@ -78,8 +78,6 @@ class ModuleTwoTest(unittest.TestCase):
                 "FastAPI",
                 "Bruno",
                 "Spectral",
-                "ASP.NET Core",
-                "Spring Boot",
             ),
         )
 

@@ -10,18 +10,6 @@ Elasticidade só existe quando métrica, capacidade e limites suportam ajuste. R
 
 Custo inclui recursos, tráfego, retenção, observabilidade e operação. Lock-in deve ser assumido de modo informado: serviços gerenciados podem reduzir risco com grande valor, desde que contratos, exportação, habilidades e custo de saída sejam conhecidos. A pergunta útil permanece: que atributo queremos melhorar, que decisão o materializa e qual evidência poderá refutá-la?
 
-## Equivalências em Java e .NET
-
-| Ideia do módulo | Java | .NET |
-| --- | --- | --- |
-| Imagem de aplicação | [Jib](https://github.com/GoogleContainerTools/jib) ou Dockerfile para Spring Boot | Dockerfile para ASP.NET Core ou `dotnet publish` em contêiner |
-| Health endpoints | Spring Boot Actuator liveness/readiness | ASP.NET Core Health Checks |
-| Configuração por ambiente | Spring externalized configuration | `IConfiguration` e variáveis de ambiente |
-| Kubernetes client e manifests | Fabric8 Kubernetes Client ou manifests | KubernetesClient ou manifests |
-| Limites e rollout | `Deployment`, `Service`, `HPA` iguais | `Deployment`, `Service`, `HPA` iguais |
-
-O runtime muda, mas as responsabilidades não. Em Java, um endpoint de Actuator ainda precisa de semântica correta; em .NET, Health Checks não escolhem dependências sem uma decisão da equipe. A portabilidade mais importante é preservar contrato, evidência e procedimento de recuperação em qualquer linguagem.
-
 ## Fontes públicas para aprofundar
 
 - [NIST: The NIST Definition of Cloud Computing](https://csrc.nist.gov/pubs/sp/800/145/final) define características e modelos de serviço de nuvem.
