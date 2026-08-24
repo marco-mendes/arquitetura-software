@@ -441,15 +441,14 @@ Definir um contrato.
                 )
             )
 
-    def test_module_validator_enforces_bloom_answers_criteria_and_percentages(self):
+    def test_module_validator_enforces_bloom_sections_and_expandable_answers(self):
         complete_markers = "\n\n".join(
             (
-                "**Situação**\n\nCenário.",
-                "**Seu papel**\n\nArquiteto.",
-                "**Insumos disponíveis**\n\nEvidências.",
-                "**Como conduzir**\n\nCompare.",
-                "**Entrega esperada**\n\nADR.",
-                "**Critérios de avaliação**\n\nCritérios.",
+                "**Objetivo**\n\nRecomendar um caminho.",
+                "**Situação**\n\nCenário com três alternativas.",
+                "**Seu papel**\n\nArquiteto que recomenda.",
+                "**O que fazer**\n\n1. Recomende uma alternativa e diga o custo.",
+                "**Evidência esperada**\n\nA resposta registra ganho e custo de cada uma.",
             )
         )
         exercises = (
@@ -459,11 +458,8 @@ Definir um contrato.
             "## Aplicar\n\n**Resposta:** execução.\n\n"
             "## Analisar\n\n"
             f"{complete_markers}\n\n"
-            "| Critério | Percentual |\n| --- | ---: |\n"
-            "| Evidência | 40% |\n| Decisão | 50% |\n\n"
             "## Avaliar\n\n"
             f"{complete_markers}\n\n"
-            "| Critério | Percentual |\n| --- | ---: |\n| Recomendação | 100% |\n\n"
             "## Criar\n\nProduza um incremento.\n\n"
             "## Recordar\n\nRepetição indevida.\n"
         )
@@ -483,7 +479,6 @@ Definir um contrato.
             for expected in (
                 "bloco de resposta fora de Recordar/Compreender",
                 "Aplicar: marcador obrigatório ausente",
-                "percentuais do instrumento somam 90%",
                 "seção Bloom duplicada: Recordar",
                 "fora da faixa de 5.000–30.000 palavras",
             ):
@@ -519,40 +514,26 @@ Definir um contrato.
             )
             self.assertFalse(any("99.9" in error or "99,9" in error for error in errors))
 
-    def test_criteria_tables_require_evidence_and_insufficiency_per_row(self):
+    def test_criteria_percentages_still_apply_outside_the_exercise_pages(self):
+        """A tabela de critérios saiu dos exercícios e continua valendo no resto."""
+
         with TemporaryDirectory() as temporary:
             docs = Path(temporary)
-            slug = next(iter(MODULES))
-            module = docs / slug
-            module.mkdir()
-            incomplete = (
-                "# Exercícios\n\n"
-                "## Aplicar\n\n"
+            page = docs / "referencia" / "avaliacao.md"
+            page.parent.mkdir(parents=True)
+            page.write_text(
+                "# Avaliação\n\n"
                 "**Critérios de avaliação**\n\n"
-                "| Critério | Percentual | Evidência e insuficiência |\n"
-                "| --- | ---: | --- |\n"
-                "| Decisão | 100% | Evidência: contexto declarado. |\n"
+                "| Critério | Percentual |\n"
+                "| --- | ---: |\n"
+                "| Decisão | 40% |\n| Evidência | 50% |\n",
+                encoding="utf-8",
             )
-            for page_name in PAGES:
-                (module / page_name).write_text(
-                    incomplete if page_name == "exercicios.md" else "# Página\n",
-                    encoding="utf-8",
-                )
 
-            errors = validate_module(slug, docs)
+            errors = validate_document(page, docs)
 
             self.assertTrue(
-                any("critério sem insuficiência explícita" in error for error in errors)
-            )
-
-            complete = incomplete.replace(
-                "Evidência: contexto declarado.",
-                "Evidência: contexto declarado. Insuficiente: falta de contexto.",
-            )
-            (module / "exercicios.md").write_text(complete, encoding="utf-8")
-            errors = validate_module(slug, docs)
-            self.assertFalse(
-                any("critério sem insuficiência explícita" in error for error in errors)
+                any("somam 90%" in error for error in errors), errors
             )
 
     def test_all_validation_skips_internal_superpowers_documents(self):

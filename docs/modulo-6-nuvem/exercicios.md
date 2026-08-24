@@ -14,12 +14,6 @@ Uma equipe usa “nuvem”, “Kubernetes” e “PaaS” como sinônimos ao dis
 
 Você prepara um glossário de revisão.
 
-**Insumos disponíveis**
-
-As páginas do módulo e os manifests do laboratório.
-
-**Como conduzir**
-
 1\. Defina IaaS, PaaS, SaaS e on-premise.
 
 <details>
@@ -44,18 +38,6 @@ Região e zona delimitam localização e falha; imagem é o pacote versionado; c
 Readiness controla tráfego, liveness permite reiniciar processo travado, elasticidade ajusta capacidade, resiliência mede continuidade e rollback retorna uma revisão compatível. Os manifests e a oficina fornecem as evidências locais.
 </details>
 
-**Entrega esperada**
-
-Uma tabela de duas colunas: definição curta e exemplo/limite hospitalar.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Definições precisas | 50% | Evidência: definição e exemplo; insuficiente: termo apenas repetido. |
-| Relação com o caso | 30% | Evidência: exemplo hospitalar; insuficiente: exemplo sem contexto. |
-| Limites explicitados | 20% | Evidência: limite declarado; insuficiente: nuvem tratada como solução total. |
-
 ## Compreender
 
 ### Explicar probes sem analogia enganosa
@@ -67,12 +49,6 @@ Alguém propõe usar a mesma chamada ao banco para liveness e readiness porque �
 **Seu papel**
 
 Você explica o efeito dessa proposta a quem opera o cluster.
-
-**Insumos disponíveis**
-
-Os endpoints `/health/live` e `/health/ready`, a definição de Service e o Deployment.
-
-**Como conduzir**
 
 1\. Descreva o que acontece quando readiness falha.
 
@@ -98,20 +74,7 @@ Falha de liveness permite reinício do contêiner. Se uma dependência remota ca
 Vivo significa processo executando; pronto significa elegível ao tráfego; correto requer validação de negócio. Reinícios coletivos removem capacidade enquanto a dependência externa ainda está indisponível.
 </details>
 
-**Entrega esperada**
-
-Uma sequência de no máximo 400 palavras e um diagrama de estado simples.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Semântica correta de probes | 40% | Evidência: readiness e liveness distintos; insuficiente: probes equivalentes. |
-| Cenário de falha coerente | 35% | Evidência: falha e reação; insuficiente: reinício sem causa. |
-| Limites reconhecidos | 25% | Evidência: dependência externa citada; insuficiente: probe promete recuperação total. |
-
 ## Aplicar
-
 ### Recomendar o modelo de execução para uma carga em rajada
 
 **Objetivo**
@@ -125,18 +88,6 @@ Uma operadora emite a segunda via da carteirinha do beneficiário. O beneficiár
 O uso é concentrado. No primeiro dia útil de cada mês, quando o boleto chega, a procura sobe por cerca de duas horas. No resto do mês, o serviço fica praticamente parado. Hoje ele roda numa máquina virtual ligada o tempo inteiro, dimensionada para o pico, e a conta mensal incomoda a diretoria.
 
 A área de infraestrutura pediu uma recomendação de modelo de execução.
-
-**Seu papel**
-
-Você é a pessoa arquiteta responsável pela recomendação. A equipe de infraestrutura implementa depois, e espera de você a escolha e a restrição que ela encarece.
-
-**Artefato que você irá usar**
-
-Crie `<raiz-do-clone>/entregas/modulo-6/aplicar-modelo-de-execucao.md` e use as comparações de `docs/modulo-6-nuvem/padroes-e-decisoes.md`.
-
-**Antes de executar**
-
-Crie o diretório `<raiz-do-clone>/entregas/modulo-6/`; o estado inicial é sem cluster criado e sem alteração do laboratório.
 
 Seis fatos foram apurados na operadora:
 
@@ -156,193 +107,166 @@ As quatro alternativas em avaliação:
 | **C. Contêineres orquestrados** | A aplicação roda em contêineres num serviço gerenciado de orquestração, com escala por métrica. |
 | **D. Função sob demanda** | Cada emissão executa numa função sem servidor, cobrada por invocação e por tempo de execução. |
 
+**Seu papel**
+
+Você é a pessoa arquiteta responsável pela recomendação. A equipe de infraestrutura implementa depois, e espera de você a escolha e a restrição que ela encarece.
+
 **O que fazer**
 
-1. Recomende **um** dos quatro modelos, em uma frase.
-2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
 
-    | Alternativa | O que resolve | O que cobra | Fato decisivo |
-    | --- | --- | --- | --- |
-    | A. Máquina maior | previsibilidade total de comportamento e de endereço de saída | paga-se o pico durante o mês inteiro, que é exatamente a queixa da diretoria | fato 1, que a torna cara |
-    | B. Grupo com escala automática | | | |
-    | C. Contêineres orquestrados | | | |
-    | D. Função sob demanda | | | |
-
-3. Diga qual fato apurado encarece a sua recomendação e descreva o que precisa ser montado para atendê-lo.
-4. Estabeleça a relação entre o fato 4 e a viabilidade das alternativas B, C e D.
-5. Aponte a alternativa que você descartaria de imediato e nomeie os fatos apurados que a derrubam.
-6. Declare o risco aceito e escreva o sinal observável que levaria a rever a decisão.
-7. Se a alternativa recomendada não puder ser experimentada no laboratório local, registre isso como limite do exercício e nomeie o teste que faltaria.
+1. Recomende um dos quatro modelos, em uma frase.
+2. Sobre cada um dos quatro, escreva duas frases: o que ele resolve do problema descrito e o que ele cobra em troca.
+3. O fato 5 exige endereço fixo de saída. Diga se ele encarece a sua recomendação e o que precisaria ser montado para atendê-lo.
+4. Aponte o modelo que você descartaria de imediato e diga quais fatos o derrubam.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria rever a decisão.
 
 **Evidência esperada**
 
 O artefato traz o quadro comparativo completo, a recomendação em uma frase, o fato que encarece a escolha com o que precisa ser montado, a relação entre ausência de estado local e as alternativas elásticas, a alternativa descartada, o risco aceito e o sinal de revisão observável.
 
-**Entrega esperada**
-
-Envie `<raiz-do-clone>/entregas/modulo-6/aplicar-modelo-de-execucao.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, o custo da restrição de saída, o risco aceito e o sinal de revisão.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Comparação com ganho e custo nas quatro alternativas | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: modelo listado sem custo. |
-| Recomendação sustentada por fato apurado | 25% | Evidência: fato citado pelo número; insuficiente: escolha por moda tecnológica. |
-| Restrição de saída tratada com custo | 20% | Evidência: o que precisa ser montado; insuficiente: exigência de segurança ignorada. |
-| Alternativa descartada com motivo | 15% | Evidência: fatos que a derrubam; insuficiente: descarte sem base. |
-| Risco aceito e sinal de revisão | 10% | Evidência: consequência e condição observável; insuficiente: prazo no calendário. |
-
 ## Analisar
-
 ### Investigar uma atualização que não termina
 
 **Objetivo**
 
-Separar sinal, hipótese e contenção sem tocar em ambiente compartilhado.
+Separar sinal, hipótese e contenção durante um incidente de implantação, sem tocar em ambiente compartilhado.
 
 **Situação**
 
-Após mudança de imagem, há `ImagePullBackOff`, duas réplicas antigas, revisão anterior e readiness; sem alteração de banco.
+Na sexta-feira à tarde, a equipe publicou uma versão nova da API de elegibilidade num cluster gerenciado. Trinta minutos depois, a atualização não terminou.
+
+O painel mostra duas réplicas antigas ainda atendendo normalmente e duas réplicas novas presas num estado de espera, com a mensagem `ImagePullBackOff`. A verificação de prontidão das réplicas antigas continua respondendo com sucesso.
+
+A revisão anterior da aplicação continua registrada e disponível. Nada foi alterado no banco de dados, e o esquema é o mesmo das duas versões.
+
+São 17h30 de sexta-feira. A equipe de plantão termina às 18h.
+
+Cinco fatos valem para a análise:
+
+1. Duas réplicas antigas atendem normalmente; duas novas não iniciam.
+2. A mensagem apresentada é `ImagePullBackOff`.
+3. A revisão anterior continua registrada e pode ser restabelecida.
+4. Nenhuma alteração de banco acompanhou a versão nova.
+5. São 17h30 de sexta-feira e o plantão termina às 18h.
 
 **Seu papel**
 
-Você conduz a análise sem assumir que cada erro é “Kubernetes”.
-
-**Artefato que você irá usar**
-
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml`. Registre pods, describe e histórico em `<raiz-do-clone>/entregas/modulo-6/analisar-rollout-bloqueado.md`.
-
-**Antes de executar**
-
-O estado inicial tem duas réplicas antigas prontas, imagem nova ausente e sem alteração de banco. Use saídas sintéticas ou `kind-hospital-local`; não altere Deployment compartilhado.
+Você conduz a resposta ao incidente. A decisão precisa sair antes das 18h, e ela será revista na segunda-feira.
 
 **O que fazer**
 
-1. Escreva linha do tempo: fatos, inferências e hipóteses.
-2. Compare `ImagePullBackOff`, tag, credencial e readiness.
-3. Relacione `maxUnavailable: 0` a impacto, não correção.
-4. Defina condição e saídas para rollback.
-5. Proponha teste de imagem/manifest no pipeline.
-6. Se sinais não distinguirem causa, preserve revisão e peça saída faltante; não faça rollback.
+Escreva em prosa, uma resposta por item.
+
+1. Explique por que o serviço continua no ar mesmo com metade das réplicas presas, e diga que configuração de atualização produz esse comportamento.
+2. Escreva duas hipóteses diferentes para a mensagem `ImagePullBackOff`, e diga que verificação separaria uma da outra.
+3. O fato 4 elimina uma classe inteira de hipóteses. Diga qual, e por quê.
+4. Escolha entre restabelecer a revisão anterior agora ou investigar antes de agir, e justifique usando o fato 5. Diga o que você perde na opção que descartou.
+5. Descreva a barreira que impediria esse incidente de acontecer de novo, e diga em que momento da esteira ela agiria.
 
 **Evidência esperada**
 
-Linha do tempo, `ImagePullBackOff`, revisão, saídas antes/depois e barreira executável; se insuficiente, registre “rollback não executado”.
-
-**Entrega esperada**
-
-Uma linha do tempo, tabela de hipóteses/evidências e plano de contenção em `<raiz-do-clone>/entregas/modulo-6/analisar-rollout-bloqueado.md`.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Separação entre fato e hipótese | 25% | Evidência: hipótese rotulada; insuficiente: suposição como incidente confirmado. |
-| Diagnóstico diferencial | 25% | Evidência: causas comparadas; insuficiente: primeiro sintoma define causa. |
-| Uso correto de rollout e rollback | 25% | Evidência: estado e retorno; insuficiente: rollback usado sem falha observada. |
-| Prevenção verificável | 25% | Evidência: controle testável; insuficiente: recomendação sem teste. |
-
-<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
+O arquivo entregue explica o mecanismo que manteve o serviço no ar, apresenta duas hipóteses com a verificação que as separa, usa o fato 4 para reduzir o espaço de busca, justifica a decisão de contenção pelo horário e nomeia a barreira preventiva com o momento em que ela age.
 
 ## Avaliar
-
-### Escolher uma plataforma para uma nova capacidade
+### Escolher o modelo de serviço para uma capacidade nova
 
 **Objetivo**
 
-Justificar modelo de serviço por responsabilidade, dados, custo e operação.
+Julgar três modelos de serviço de nuvem contra critérios declarados, incluindo uma exigência regulatória que nenhum deles resolve sozinho.
 
 **Situação**
 
-O hospital criará portal de consultas: poucas APIs, equipe pequena, residência de dados, picos previsíveis e possível SaaS de mensagens; cluster não é competência consolidada.
+O hospital vai lançar um portal de consulta para pacientes. São poucas telas e três APIs: buscar exame, baixar laudo e agendar retorno.
+
+A equipe tem três pessoas. Nenhuma opera cluster hoje, e o hospital não tem nenhuma outra carga que precise de orquestração.
+
+O tráfego é previsível: sobe entre 8h e 10h e entre 18h e 20h, e cai quase a zero de madrugada.
+
+Há uma exigência que não se negocia. Dado de paciente precisa permanecer em território nacional, com comprovação por escrito do provedor, e o jurídico do hospital audita isso uma vez por ano.
+
+Existe também a possibilidade de contratar um serviço pronto de mensagens para o portal, em vez de construir.
+
+Três modelos estão sobre a mesa, e as descrições abaixo bastam para julgá-los.
+
+No primeiro, o hospital aluga máquinas virtuais e opera sistema, atualização e rede por conta própria.
+
+No segundo, o hospital publica a aplicação num ambiente de execução gerenciado, no qual o provedor cuida de sistema e de escala, e a equipe entrega apenas o código.
+
+No terceiro, o hospital contrata um portal pronto de terceiro e configura, sem construir a aplicação.
+
+Cinco fatos valem para a decisão:
+
+1. Três pessoas na equipe, nenhuma com experiência em orquestração.
+2. Nenhuma outra carga do hospital precisa de orquestração hoje.
+3. O tráfego tem dois picos diários previsíveis e cai a quase zero de madrugada.
+4. Dado de paciente precisa ficar em território nacional, com comprovação por escrito.
+5. O jurídico audita a comprovação de residência uma vez por ano.
 
 **Seu papel**
 
-Você recomenda IaaS, PaaS, Kubernetes gerenciado ou integração prioritária com SaaS, com condições de revisão.
-
-**Artefato que você irá usar**
-
-Use `<raiz-do-clone>/docs/modulo-6-nuvem/conceitos.md`, `<raiz-do-clone>/docs/modulo-6-nuvem/padroes-e-decisoes.md` e `<raiz-do-clone>/docs/referencia/template-adr.md`, além da estimativa sintética de picos, requisitos de disponibilidade, contrato de dados, capacidade da equipe e custo mensal. Escreva em `<raiz-do-clone>/entregas/modulo-6/avaliar-plataforma.md`.
-
-**Antes de executar**
-
-O estado inicial não tem provedor/cluster: residência, picos e equipe são fatos. Crie o ADR; AWS, iFood e Taco Bell são apenas comparações.
+Você emite o parecer que a diretoria vai usar para aprovar o orçamento.
 
 **O que fazer**
 
-1. Compare IaaS, PaaS, Kubernetes gerenciado e SaaS por responsabilidade, elasticidade, recuperação, custo e lock-in.
-2. Marque fato/hipótese, região, zonas e exportação.
-3. Registre decisão, consequências e dois gatilhos.
-4. Se residência ou exportação não estiver comprovada, bloqueie a alternativa.
+Escreva em prosa, uma resposta por item.
+
+1. Declare de três a quatro critérios de julgamento e diga qual pesa mais, justificando pela exigência de residência de dado.
+2. Avalie os três modelos contra os seus critérios, um parágrafo por modelo, dizendo o que cada um transfere ao provedor e o que permanece com o hospital.
+3. O fato 4 vale para os três modelos, e nenhum o resolve sozinho. Diga o que o hospital precisa exigir do provedor em cada um deles.
+4. Emita o parecer e descreva o que aconteceria se o hospital precisasse trocar de provedor em dois anos: o que sairia fácil e o que sairia caro.
+5. Escreva o sinal que indicaria que o modelo escolhido deixou de servir.
 
 **Evidência esperada**
 
-O ADR inclui matriz preenchida, estimativa de custo operacional, plano de exportação, domínio de falha e dois gatilhos mensuráveis. A saída nomeia alternativas bloqueadas e a evidência ausente que permitiria reavaliá-las.
-
-**Entrega esperada**
-
-Um ADR com alternativas, decisão, consequências, riscos, custo e sinais de revisão em `<raiz-do-clone>/entregas/modulo-6/avaliar-plataforma.md`.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Comparação contextual | 25% | Evidência: requisito por opção; insuficiente: provedor escolhido por fama. |
-| Responsabilidade e dados | 20% | Evidência: responsabilidade declarada; insuficiente: dado delegado sem controle. |
-| Custo e lock-in | 20% | Evidência: custo e saída; insuficiente: serviço assumido neutro. |
-| Resiliência e operação | 20% | Evidência: falha e operação; insuficiente: réplica tratada como garantia. |
-| Gatilhos mensuráveis | 15% | Evidência: limiar definido; insuficiente: revisão sem medida. |
-
-<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
+O parecer traz critérios escritos antes da escolha, os três modelos julgados com a divisão de responsabilidade explicitada, a exigência de residência tratada modelo a modelo, o custo de saída estimado e o sinal de revisão observável.
 
 ## Criar
-
-### Desenhar evolução resiliente de elegibilidade
+### Propor a evolução resiliente da elegibilidade
 
 **Objetivo**
 
-Projetar evolução com estado, recuperação e limites verificáveis.
+Propor a evolução de um serviço que passa a guardar estado, escolhendo entre três desenhos e declarando o que a proposta promete e o que ela ainda não garante.
 
 **Situação**
 
-A API terá armazenamento e notificação assíncrona; a equipe quer atualização gradual, região inicial e expansão futura sem prometer recuperação não testada.
+A API de elegibilidade do hospital hoje é simples: recebe uma consulta, calcula e responde. Nada é guardado entre uma chamada e outra, e por isso qualquer réplica atende qualquer requisição.
+
+Duas mudanças foram aprovadas. A primeira é guardar o histórico de consultas, para auditoria e para responder mais rápido em casos repetidos. A segunda é avisar o sistema de recepção quando uma elegibilidade muda de situação, sem que ele precise perguntar.
+
+A equipe quer continuar publicando versões novas sem derrubar o serviço, como faz hoje.
+
+O hospital opera numa única região. A diretoria fala em abrir uma segunda região no ano que vem, e ninguém testou recuperação em outra região até agora.
+
+Três desenhos estão sobre a mesa, e as descrições abaixo bastam para escolher.
+
+No primeiro, cada réplica guarda o histórico em disco próprio, e o aviso à recepção é uma chamada direta feita no fim do cálculo.
+
+No segundo, o histórico vai para um banco gerenciado compartilhado pelas réplicas, e o aviso à recepção continua sendo chamada direta.
+
+No terceiro, o histórico vai para o banco gerenciado e o aviso é registrado numa tabela de saída, entregue por um processo separado.
+
+Quatro restrições valem para a proposta:
+
+1. A publicação de versões novas não pode derrubar o serviço.
+2. O hospital opera numa região só hoje, e a segunda é intenção, não projeto.
+3. Recuperação em outra região nunca foi testada.
+4. A recepção tolera até um minuto de atraso no aviso de mudança.
 
 **Seu papel**
 
-Você cria uma proposta arquitetural e operacional.
-
-**Artefato que você irá usar**
-
-Use `<raiz-do-clone>/docs/modulo-6-nuvem/exemplo-arquitetural.md`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/service.yaml` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml`, com requisitos de retenção, SLO proposto e carga sintética. Crie o pacote em `<raiz-do-clone>/entregas/modulo-6/criar-evolucao-resiliente.md`.
-
-**Antes de executar**
-
-O estado inicial não tem dados reais ou backup restaurado. Use kind local, não dependência externa; declare o que rollback não desfaz.
+Você propõe o desenho da evolução. A proposta será lida por quem opera o serviço, e prometer recuperação não testada é o erro mais caro que ela pode conter.
 
 **O que fazer**
 
-1. Desenhe componentes, owner, região/zona e falhas.
-2. Escreva pseudomanifests com fatores, requests/limits e probes.
-3. Defina rollout, rollback, backup/restore e saídas.
-4. Meça elasticidade/custo com carga sintética.
-5. Teste falha só em `kind-hospital-local` e registre aceite/rejeição.
-6. Se backup/restore não for localmente testável, mantenha risco aberto.
+Escreva em prosa, uma resposta por item.
+
+1. Escolha um dos três desenhos e defenda a escolha citando pelo menos duas das quatro restrições.
+2. Explique por que o primeiro desenho entra em conflito com a restrição 1, detalhando o que acontece com o histórico quando uma réplica é substituída.
+3. Sobre o desenho que você não escolheu entre o segundo e o terceiro, escreva duas frases: o que ele ganharia e o que custaria.
+4. Descreva o que acontece com um aviso à recepção quando o sistema dela está fora do ar por dez minutos, na sua proposta.
+5. A restrição 3 diz que recuperação em outra região nunca foi testada. Escreva o que a sua proposta promete hoje sobre isso, e o teste que precisaria existir antes de prometer mais.
 
 **Evidência esperada**
 
-O pacote contém diagrama acessível, ADR, pseudomanifests, saída esperada de rollout e rollback, medição de custo/elasticidade e resultado ou limitação explícita do backup/restore. A evidência precisa mostrar a contingência quando o teste não puder ser executado.
-
-**Entrega esperada**
-
-Um pacote com diagrama, ADR, manifests ou pseudomanifests, plano de evidências e registro de riscos em `<raiz-do-clone>/entregas/modulo-6/criar-evolucao-resiliente.md`.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Fronteiras e estado explícitos | 25% | Evidência: recurso e responsabilidade; insuficiente: estado sem dono. |
-| Resiliência e recuperação testáveis | 25% | Evidência: falha e recuperação; insuficiente: resiliência só declarada. |
-| Operação, custo e segurança | 25% | Evidência: trade-off registrado; insuficiente: operação omitida. |
-| Clareza de evidências e limites | 25% | Evidência: limites e prova; insuficiente: conclusão sem contexto. |
-
-<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
+O arquivo entregue traz o desenho escolhido com duas restrições citadas, o conflito entre estado local e publicação sem interrupção explicado, a alternativa restante avaliada, o comportamento do aviso durante indisponibilidade e a fronteira explícita entre o que é prometido e o que ainda não foi testado.

@@ -87,7 +87,6 @@ Porque a tradução contém conhecimento da dependência e de seus significados.
 </details>
 
 ## Aplicar
-
 ### Recomendar o estilo de entrega do resultado ao parceiro
 
 **Objetivo**
@@ -101,18 +100,6 @@ O hospital precisa entregar o resultado de exames a uma operadora de saúde parc
 Hoje não existe integração. Alguém exporta uma planilha no fim do dia e envia por correio eletrônico. A operadora reclama do atraso e o hospital reclama do retrabalho.
 
 A área de integração pediu uma recomendação de contrato antes de abrir o projeto.
-
-**Seu papel**
-
-Você é a pessoa arquiteta responsável pela recomendação de contrato. A implementação fica com outra equipe, que espera de você a escolha e os riscos declarados.
-
-**Artefato que você irá usar**
-
-Crie `entregas/unidade-2/aplicar-entrega-resultado.md`, a partir da raiz do repositório `arquitetura-software`, e use as comparações de estilos de interação em `docs/modulo-2-apis/conceitos.md`.
-
-**Antes de executar**
-
-Crie o diretório `entregas/unidade-2/`; o estado inicial é sem serviço iniciado e sem alteração do laboratório.
 
 Seis fatos foram apurados nas duas empresas:
 
@@ -132,210 +119,180 @@ As quatro alternativas em avaliação:
 | **C. Chamada de retorno** | Quando o resultado fica pronto, o hospital chama um endereço da operadora e entrega o conteúdo. |
 | **D. Mensageria** | O hospital publica cada resultado num tópico. A operadora consome no próprio ritmo, com reprocessamento possível. |
 
+**Seu papel**
+
+Você é a pessoa arquiteta responsável pela recomendação de contrato. A implementação fica com outra equipe, que espera de você a escolha e os riscos declarados.
+
 **O que fazer**
 
-1. Recomende **uma** das quatro alternativas, em uma frase.
-2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
 
-    | Alternativa | O que resolve | O que cobra | Fato decisivo |
-    | --- | --- | --- | --- |
-    | A. Consulta periódica | funciona sem exigir nada da infraestrutura da operadora | gasta chamadas em vão quase o dia inteiro e o atraso depende do intervalo escolhido | fato 4, que mantém a alternativa viva |
-    | B. Aceitação assíncrona | | | |
-    | C. Chamada de retorno | | | |
-    | D. Mensageria | | | |
-
-3. Escreva o contrato de erro da alternativa recomendada: que resposta o consumidor recebe quando o resultado ainda não existe e quando o identificador é desconhecido.
-4. Diga como a sua recomendação atende ao fato 3, isto é, onde fica a comprovação de entrega.
-5. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
-6. Declare o risco que a sua recomendação aceita e escreva o sinal observável que levaria a trocar de alternativa.
+1. Recomende uma das quatro alternativas, em uma frase.
+2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do problema descrito e o que ela cobra em troca.
+3. Na alternativa recomendada, diga o que a operadora recebe quando o resultado ainda não ficou pronto, e onde fica registrada a comprovação de entrega que o fato 3 exige.
+4. Aponte a alternativa que você descartaria de imediato e diga qual fato a derruba.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria trocar de alternativa.
 
 **Evidência esperada**
 
 O artefato traz o quadro comparativo completo, a recomendação em uma frase, o contrato de erro escrito com código de status e identificador, a resposta sobre comprovação de entrega, a alternativa descartada com o fato que a derruba, o risco aceito e o sinal de revisão observável.
 
-**Entrega esperada**
-
-Envie `entregas/unidade-2/aplicar-entrega-resultado.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, o contrato de erro, o risco aceito e o sinal de revisão.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Comparação com ganho e custo nas quatro alternativas | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: alternativa listada sem custo. |
-| Recomendação sustentada por fato apurado | 25% | Evidência: fato citado pelo número; insuficiente: escolha por moda tecnológica. |
-| Contrato de erro explícito | 20% | Evidência: código de status e identificador; insuficiente: "retorna erro". |
-| Alternativa descartada com motivo | 15% | Evidência: fato que a derruba; insuficiente: descarte sem base. |
-| Risco aceito e sinal de revisão | 10% | Evidência: consequência e condição observável; insuficiente: prazo no calendário. |
-
 ## Analisar
-
 **Objetivo**
 
-Comparar contratos de consulta de agenda e identificar como paginação, estilo de API e adaptadores respondem a mudanças concorrentes sem apresentar uma escolha como automática.
+Explicar por que três contratos de consulta que funcionam isoladamente quebram quando usados juntos, e comparar as saídas possíveis.
 
 **Situação**
 
-Oito unidades consultam três parceiros, com até 40 mil horários futuros. Há inserção, cancelamento e navegação móvel em lotes de vinte. A ordena por data; B não ordena; C usa cursor próprio. A meta é p95 de 800 ms, sem medição atual.
+Um sistema de agendamento hospitalar consulta a agenda de três parceiros diferentes para montar uma lista única de horários livres. São até quarenta mil horários futuros, e o aplicativo do paciente carrega vinte por vez, conforme ele rola a tela.
+
+Os três parceiros paginam de jeitos diferentes. O parceiro A devolve os horários ordenados por data e aceita pular um número de registros. O parceiro B devolve na ordem que quiser, e a ordem muda entre uma chamada e outra. O parceiro C entrega um cursor próprio, uma marca opaca que o consumidor devolve para pedir a página seguinte.
+
+Enquanto o paciente rola a tela, horários são criados e cancelados o tempo inteiro. Pacientes relatam duas coisas: horários que aparecem duas vezes na lista, e horários que existem e nunca aparecem.
+
+Quatro fatos foram apurados:
+
+1. O aplicativo pede vinte horários por vez, e o paciente costuma rolar de cinco a dez páginas.
+2. Criações e cancelamentos acontecem durante a navegação, em média quatro por minuto.
+3. Os três parceiros respondem em menos de trezentos milissegundos.
+4. Nenhum dos três aceita alterar o contrato antes de seis meses.
+
+Três saídas estão sobre a mesa:
+
+#### Saída A
+
+O sistema busca a lista inteira dos três parceiros, monta a página no próprio lado e serve o aplicativo a partir dessa cópia.
+
+#### Saída B
+
+O sistema mantém a paginação de cada parceiro como está e passa a devolver, junto de cada horário, um identificador estável que o aplicativo usa para descartar repetição.
+
+#### Saída C
+
+O sistema adota um cursor próprio para o aplicativo e, por baixo, traduz esse cursor para o mecanismo de cada parceiro, guardando a posição de leitura de cada um.
+
+Os quatro fatos, o comportamento de paginação dos três parceiros e as três saídas, todos descritos nesta página.
 
 **Seu papel**
 
-Você analisa o contrato de leitura e a fronteira de adaptação. Sua entrega deve separar o que o enunciado afirma, o que você supõe e o que precisa ser medido.
-
-**Artefato que você irá usar**
-
-Use o enunciado, [conceitos](conceitos.md), [padrões e decisões](padroes-e-decisoes.md), Mermaid e Markdown. Não há API de agenda: executar significa construir e revisar a análise.
-
-**Insumos disponíveis**
-
-Compare paginação por `offset/limit` e cursor opaco; REST, GraphQL e RPC como formas de interação; e um adaptador por parceiro. Considere limite máximo de cem itens, inserção, cancelamento e itens com mesma data. Não invente medições de latência.
-
-**Antes de executar**
-
-Na raiz do clone `arquitetura-software`, crie `entregas/unidade-2/analise-agenda/` com `forcas.md`, `contratos.md`, `simulacao.md` e `sequencia.md`. A condição inicial verificável é: os quatro arquivos existem, `sequencia.md` pode receber Mermaid e nenhum deles contém uma recomendação pronta.
-
-**Como conduzir**
-
-Comece por forças e incertezas. Os dois contratos e o diagrama devem decorrer dessa análise, não servir para defender antecipadamente uma tecnologia.
+Você conduz a análise antes de qualquer mudança de contrato. Nenhum parceiro será convencido a mudar nesta semana.
 
 **O que fazer**
 
-1. Separe volume, navegação, mudança, interoperabilidade, latência e incerteza.
-2. Modele `offset/limit` e cursor com parâmetros, ordenação, continuação e erro.
-3. Simule cinco páginas; insira e cancele entre elas; marque repetição ou omissão.
-4. Compare REST, GraphQL e RPC por colaboração, descoberta, cache, evolução, risco e evidência.
-5. Desenhe sequência Mermaid com móvel, API, adaptador e parceiro; inclua leitura textual.
-6. Proponha duas medições com amostra, medida e limiar.
+Escreva em prosa, uma resposta por item.
+
+1. Explique por que o parceiro B produz horários repetidos e horários invisíveis, ligando o defeito ao fato 2.
+2. Diga se o mesmo defeito aparece com o parceiro A, e por quê. Depois faça o mesmo para o parceiro C.
+3. Sobre cada uma das três saídas, escreva duas frases: o que ela resolve e o que ela cobra em troca.
+4. Recomende uma das três e cite o fato que mais pesou na escolha.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria revê-la.
 
 **Evidência esperada**
 
-Os arquivos mostram duas propostas comparáveis, efeitos concretos de inserção/cancelamento, um diagrama legível e hipóteses marcadas como hipóteses.
-
-**Entrega esperada**
-
-Entregue `entregas/unidade-2/analise-agenda/` com os quatro arquivos e até 900 palavras. Inclua uma lacuna que impede recomendação definitiva.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Forças e incertezas separadas | 20% | Evidência: hipótese marcada; insuficiência: suposição apresentada como fato. |
-| Contratos completos e comparáveis | 25% | Evidência: campos, semântica e erros; insuficiência: fragmentos sem continuação ou ordenação. |
-| Simulação de mudança concorrente | 20% | Evidência: repetição/omissão localizada; insuficiência: mudança citada sem efeito mostrado. |
-| Comparação simétrica de estilos | 20% | Evidência: mesmos critérios; insuficiência: preferência sem contraste. |
-| Modelo e experimento coerentes | 15% | Evidência: diagrama, leitura e medida se correspondem; insuficiência: seta ou métrica sem propósito. |
+O arquivo entregue explica o mecanismo do defeito em vez de apenas nomeá-lo, distingue o comportamento dos três parceiros, traz ganho e custo das três saídas e registra o sinal de revisão como condição observável.
 
 ## Avaliar
-
 **Objetivo**
 
-Avaliar propostas de autorização com critérios mensuráveis, identificar compromissos ausentes e produzir uma recomendação condicionada à evidência disponível.
+Julgar três propostas de contrato para uma operação lenta e instável, declarando critérios antes de escolher e nomeando o que a evidência não alcança.
 
 **Situação**
 
-No pico há 12 mil autorizações/hora; 5% repetem após dois segundos. A operadora leva 200 ms–25 s e fica indisponível até dez minutos duas vezes ao mês. A mantém chamada aberta; B aceita e devolve protocolo; C usa RPC/gRPC interno e HTTP ao cliente. Nenhuma define idempotência, retenção ou resposta tardia.
+Um hospital consulta a operadora para autorizar procedimentos. No horário de pico chegam doze mil pedidos de autorização por hora.
+
+A operadora é lenta e irregular: responde entre duzentos milissegundos e vinte e cinco segundos, sem padrão. Duas vezes por mês fica indisponível por até dez minutos seguidos.
+
+O comportamento do consumidor piora o quadro. Cinco por cento dos pedidos são repetidos pelo próprio sistema do hospital dois segundos depois, quando a primeira chamada demora.
+
+Três propostas chegaram ao comitê.
+
+#### Proposta A
+
+O hospital mantém a chamada aberta esperando a operadora responder, com um tempo limite de trinta segundos.
+
+#### Proposta B
+
+O hospital aceita o pedido, devolve imediatamente um protocolo e resolve a autorização em segundo plano. O consumidor consulta o protocolo depois.
+
+#### Proposta C
+
+O hospital aceita o pedido e devolve na hora a última decisão conhecida para aquele beneficiário e procedimento, quando existir, marcando a resposta como provisória.
+
+O que se sabe e o que não se sabe:
+
+1. A distribuição de tempo de resposta da operadora foi medida por três meses.
+2. A frequência de indisponibilidade foi medida no mesmo período.
+3. Ninguém mediu quantos pedidos repetidos viram autorização duplicada hoje.
+4. Ninguém mediu por quanto tempo uma decisão anterior continua válida.
+5. A equipe de operação trabalha em horário comercial.
+
+As três propostas, os números de volume e de tempo de resposta, e a lista do que foi medido e do que não foi, todos nesta página.
 
 **Seu papel**
 
-Você participa de uma revisão arquitetural. Pode recomendar uma proposta, combinar elementos, pedir experimento limitado ou adiar a decisão. Você não precisa escolher a alternativa que parece mais moderna.
-
-**Artefato que você irá usar**
-
-Use o enunciado, [conceitos](conceitos.md), [padrões e decisões](padroes-e-decisoes.md) e o [template de ADR](../referencia/template-adr.md). Não há gRPC, broker ou operadora instalada: avalie o parecer, não ferramentas.
-
-**Insumos disponíveis**
-
-Considere amostra de dez mil requisições com 500 repetições, orçamento de resposta inicial de dois segundos e necessidade de rastrear cada pedido por 24 horas. Considere REST/HTTP, RPC/gRPC, chave de idempotência, `202`, `Location`, timeout e reconciliação. Não presuma infraestrutura adicional já disponível.
-
-**Antes de executar**
-
-Na raiz do clone, crie `entregas/unidade-2/avaliacao-autorizacao/parecer.md`. Comece com uma tabela vazia contendo “critério”, “medida”, “evidência disponível”, “lacuna” e “impacto”. A condição inicial verificável é a tabela existir antes de qualquer recomendação.
-
-**Como conduzir**
-
-Preencha critérios e evidências antes de comparar as propostas. Uma recomendação só é útil se sua objeção e seu gatilho de revisão puderem ser verificados depois.
+Você emite o parecer que o comitê vai discutir. Pode aprovar uma proposta, recusar todas ou aprovar com condição.
 
 **O que fazer**
 
-1. Defina critérios de resposta, disponibilidade, repetição, rastreabilidade, evolução e operação.
-2. Modele resposta rápida, lenta, indisponibilidade e repetição para A, B e C.
-3. Liste compromissos ausentes: retenção, idempotência, falha temporária e resposta tardia.
-4. Compare acoplamento temporal, duplicidade, operação e evolução.
-5. Recomende sob condição; proponha dois testes com amostra, medida e limiar.
-6. Registre objeção forte e gatilho de revisão.
+Escreva em prosa, uma resposta por item.
+
+1. Declare de três a cinco critérios de julgamento e diga qual pesa mais neste caso, justificando pelo risco de errar.
+2. Avalie as três propostas contra os seus critérios, um parágrafo por proposta, dizendo o que cada uma protege e o que expõe.
+3. A proposta C depende de uma medida que ninguém tem. Diga qual é, e o que aconteceria se a equipe adotasse C sem ela.
+4. Emita o parecer e escreva o contrato de resposta da proposta que você aprovar: o que o consumidor recebe no caso de sucesso, e o que recebe enquanto a decisão não existe.
+5. Escreva a objeção mais forte contra o seu parecer e responda a ela.
 
 **Evidência esperada**
 
-O parecer mostra critérios anteriores à escolha, uma comparação completa, dois experimentos mensuráveis e uma recomendação que declara incertezas.
-
-**Entrega esperada**
-
-Entregue `entregas/unidade-2/avaliacao-autorizacao/parecer.md` com tabela, análise, recomendação, objeção e gatilho. Cada cálculo deve indicar os dados do enunciado usados.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Critérios antes da recomendação | 20% | Evidência: tabela inicial; insuficiência: critério posterior. |
-| Falhas e repetições no contrato | 25% | Evidência: status e protocolo; insuficiência: “erro” genérico. |
-| Consequências comparadas | 25% | Evidência: ganho e custo; insuficiência: opção sem limite. |
-| Experimentos mensuráveis | 15% | Evidência: amostra e limiar; insuficiência: teste vago. |
-| Recomendação revisável | 15% | Evidência: objeção/gatilho; insuficiência: conclusão absoluta. |
+O parecer traz critérios escritos antes da escolha, as três propostas julgadas contra eles, a medida ausente nomeada com a consequência de ignorá-la, o contrato de resposta descrito e uma objeção respondida.
 
 ## Criar
-
 **Objetivo**
 
-Criar a baseline de contratos do incremento 2 para que outra equipe consiga revisar, executar e evoluir a fronteira hospitalar sem antecipar serviços, broker ou gateway que ainda não foram justificados.
+Propor o contrato inicial de uma capacidade que será consumida por três públicos diferentes, escolhendo entre três esboços e declarando o que fica de fora.
 
 **Situação**
 
-Defina API inicial de agenda e elegibilidade, fronteira com operadora/laboratório e tratamento de resultados posteriores. A equipe ainda opera uma aplicação; parceiros têm contratos próprios, chamadas repetem e respostas podem levar horas.
+O hospital vai expor, pela primeira vez, a consulta de elegibilidade de um beneficiário. Três públicos vão consumir essa capacidade, e eles querem coisas diferentes.
+
+O aplicativo do paciente precisa de uma resposta curta e rápida, porque roda em rede móvel e mostra apenas se o beneficiário está apto.
+
+O sistema interno de recepção precisa da resposta completa, com vigência, categoria do plano e motivo da recusa, para orientar o atendente.
+
+Uma operadora parceira quer receber a mesma informação, e o contrato que ela mantém com outros hospitais usa XML sobre um envelope antigo, que o hospital não usa em lugar nenhum.
+
+A equipe tem quatro pessoas e três meses até a primeira entrega.
+
+Três esboços estão sobre a mesa:
+
+#### Esboço A
+
+Um contrato único, com a resposta completa, servindo os três públicos. Quem precisa de menos ignora os campos que sobram.
+
+#### Esboço B
+
+Dois contratos sobre a mesma capacidade: um enxuto para o aplicativo e um completo para a recepção. A operadora consome o completo.
+
+#### Esboço C
+
+Dois contratos internos, como no esboço B, mais um adaptador dedicado que traduz para o envelope XML da operadora, isolado do resto.
+
+As três necessidades de consumo, a restrição de equipe e prazo e os três esboços, todos nesta página.
 
 **Seu papel**
 
-Você coordena um pacote de contratos e evidências. Sua responsabilidade é manter coerência entre consumidor, operação, schema, erro, diagrama, decisão e limite declarado.
-
-**Artefato que você irá usar**
-
-Use [contexto hospitalar](../projeto-integrador/contexto-hospitalar.md), `laboratorios/plataforma-hospitalar/contratos/openapi.yaml` como referência, OpenAPI, Mermaid, Bruno, Spectral, [template de ADR](../referencia/template-adr.md) e dados sintéticos. O contrato existente é exemplo, não solução para agenda ou laboratório.
-
-**Insumos disponíveis**
-
-Inclua ao menos uma operação de agenda, uma de elegibilidade e uma fronteira de adaptação externa. Compare REST/HTTP, pelo menos mais duas formas de interação ou estratégias de integração, usando as mesmas forças. Considere paginação para coleções e repetição para comandos relevantes.
-
-**Antes de executar**
-
-Na raiz do clone, crie `entregas/unidade-2/baseline-contratos/` com `contratos/`, `diagramas/`, `evidencias/` e `decisoes/`. Crie também um `README.md` com o objetivo do pacote. A condição inicial verificável é: as quatro pastas e o índice existem; os dados de exemplo não identificam pessoas reais; e o grupo consegue localizar o OpenAPI de referência sem alterá-lo.
-
-**Como conduzir**
-
-Produza os artefatos em ordem de dependência: contexto e consumidores antes do contrato; contrato antes do diagrama; validação antes do ADR final. Ao terminar, procure nomes, estados e promessas que divergem entre arquivos.
+Você propõe o contrato inicial. Ele será a fronteira pública do hospital por vários anos, e mudá-lo depois exige combinar com quem já consome.
 
 **O que fazer**
 
-1. No `README.md`, declare consumidor, capacidade, fronteira, resultado e fora de escopo.
-2. Escreva OpenAPI com schemas, exemplos, estados, erros e cabeçalhos.
-3. Declare ordenação/paginação de coleções e idempotência de comandos relevantes.
-4. Modele caminho normal e falha externa em Mermaid, com leitura textual.
-5. Registre alternativas, decisão, consequências, transição, evidências e gatilhos em `ADR-002.md`.
-6. Valide com Spectral, execute exemplos no Bruno quando aplicável e guarde saídas.
-7. Confira nomes, operações, status e responsabilidades em todos os artefatos.
+Escreva em prosa, uma resposta por item.
+
+1. Escolha um dos três esboços e defenda a escolha citando pelo menos duas das necessidades descritas.
+2. Sobre os dois esboços que você não escolheu, escreva duas frases cada: o que ganhariam e o que custariam.
+3. Descreva o que o consumidor recebe em três situações: beneficiário apto, beneficiário sem cobertura para o procedimento e identificador desconhecido. Diga o que muda entre a segunda e a terceira.
+4. A operadora usa um formato que o hospital não usa. Diga onde essa tradução deve morar na sua proposta, e o que aconteceria se ela vazasse para o contrato interno.
+5. Escreva o sinal que indicaria que o contrato escolhido precisa evoluir, e diga como você faria essa evolução sem quebrar quem já consome.
 
 **Evidência esperada**
 
-O pacote mostra uma cadeia legível de consumidor → contrato → exemplo → diagrama → ADR → validação, além de lacunas honestas sobre integração externa, persistência e componentes não instalados.
-
-**Entrega esperada**
-
-Entregue `entregas/unidade-2/baseline-contratos/` com `README.md`, contratos, diagramas, evidências e `ADR-002.md`. Outra equipe deve conseguir identificar o que executar, o que revisar e o que ainda exige experimento.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Fronteiras, consumidores e responsabilidades rastreáveis | 15% | Evidência: ator e responsável explícitos; insuficiência: responsabilidade apenas implícita. |
-| Contratos completos e semanticamente claros | 25% | Evidência: exemplos e erros válidos; insuficiência: campos ou estados sem significado. |
-| Evolução, paginação e repetição contextualizadas | 20% | Evidência: política ligada à necessidade; insuficiência: mecanismo citado sem motivo. |
-| Diagramas, exemplos e contratos coerentes | 15% | Evidência: mesmas operações e estados; insuficiência: diagrama contradiz contrato. |
-| Evidências reproduzíveis e limites explícitos | 15% | Evidência: caminho, comando e condição; insuficiência: saída sem contexto. |
-| ADR revisável | 10% | Evidência: alternativas, consequências e gatilho; insuficiência: decisão sem racional ou revisão. |
+O arquivo entregue traz o esboço escolhido com duas necessidades citadas, os outros dois avaliados, as três situações de resposta descritas com a diferença entre elas explicada, o lugar da tradução justificado e um caminho de evolução compatível.

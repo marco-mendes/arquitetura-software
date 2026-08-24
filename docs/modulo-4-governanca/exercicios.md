@@ -87,7 +87,6 @@ Que uma decisão publicada, sua configuração e uma execução observada podem 
 </details>
 
 ## Aplicar
-
 ### Recomendar onde aplicar a política de limite e correlação
 
 **Objetivo**
@@ -101,18 +100,6 @@ Uma plataforma hospitalar tem seis serviços mantidos por três equipes. A diret
 As políticas estão escritas e ninguém consegue provar que valem. Cada equipe entende a regra de um jeito, dois serviços já implementaram versões diferentes do limite, e o identificador de correlação se perde em algum lugar do meio da cadeia sem que ninguém saiba onde.
 
 A diretoria pediu uma recomendação de onde a política deve morar.
-
-**Seu papel**
-
-Você é a pessoa arquiteta responsável pela recomendação. As três equipes implementam depois, e esperam de você a escolha e o que ela deixa em aberto.
-
-**Artefato que você irá usar**
-
-Crie `entregas/modulo-4/aplicar-onde-mora-a-politica.md`, a partir da raiz do clone, e use as comparações de `docs/modulo-4-governanca/padroes-e-decisoes.md`.
-
-**Antes de executar**
-
-Crie o diretório `entregas/modulo-4/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
 
 Seis fatos foram apurados na plataforma:
 
@@ -132,196 +119,179 @@ As quatro alternativas em avaliação:
 | **C. Gateway de borda** | O gateway que já existe aplica o limite e injeta o identificador de correlação antes de rotear. |
 | **D. Malha de serviços** | Um *sidecar* ao lado de cada serviço aplica a política, fora do código da aplicação. |
 
+**Seu papel**
+
+Você é a pessoa arquiteta responsável pela recomendação. As três equipes implementam depois, e esperam de você a escolha e o que ela deixa em aberto.
+
 **O que fazer**
 
-1. Recomende **uma** das quatro alternativas para a plataforma agora, em uma frase.
-2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
 
-    | Alternativa | O que resolve | O que cobra | Fato decisivo |
-    | --- | --- | --- | --- |
-    | A. Em cada serviço | alcança também as chamadas internas, sem infraestrutura nova | seis implementações para manter e seis provas independentes para a auditoria | fato 4, que multiplica o custo de comprovação |
-    | B. Biblioteca compartilhada | | | |
-    | C. Gateway de borda | | | |
-    | D. Malha de serviços | | | |
-
-3. Nomeie explicitamente o que a sua recomendação **deixa descoberto** em relação ao fato 2, e diga como a auditoria do fato 4 seria atendida mesmo assim.
-4. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
-5. Declare o risco que a sua recomendação aceita e escreva o sinal observável que levaria a rever a decisão.
-6. Se a política recomendada não puder ser verificada com dados sintéticos no laboratório, registre-a como hipótese e nomeie o teste pendente.
+1. Recomende uma das quatro alternativas para a plataforma, em uma frase.
+2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do problema descrito e o que ela cobra em troca.
+3. Nenhuma das quatro cobre tudo com o que a plataforma tem hoje. Diga o que a sua recomendação deixa descoberto e por que você aceita essa lacuna.
+4. Aponte a alternativa que você descartaria de imediato e diga qual fato a derruba.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria rever a decisão.
 
 **Evidência esperada**
 
 O artefato traz o quadro comparativo completo, a recomendação em uma frase, a lacuna declarada em relação às chamadas internas, o caminho de comprovação para a auditoria, a alternativa descartada com o fato que a derruba, o risco aceito e o sinal de revisão observável.
 
-**Entrega esperada**
-
-Envie `entregas/modulo-4/aplicar-onde-mora-a-politica.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, a lacuna declarada, o risco aceito e o sinal de revisão.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Comparação com ganho e custo nas quatro alternativas | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: opção listada sem custo. |
-| Lacuna declarada em vez de escondida | 25% | Evidência: o que fica descoberto, nomeado; insuficiente: recomendação apresentada como cobertura total. |
-| Recomendação sustentada por fato apurado | 20% | Evidência: fato citado pelo número; insuficiente: escolha por preferência de ferramenta. |
-| Caminho de comprovação para a auditoria | 15% | Evidência: onde o registro fica e como é consultado; insuficiente: "os logs mostram". |
-| Risco aceito e sinal de revisão | 10% | Evidência: consequência e condição observável; insuficiente: prazo no calendário. |
-
 ## Analisar
-
-### Diagnosticar uma cadeia sem correlação
+### Investigar uma cadeia sem correlação
 
 **Objetivo**
 
-Separar fatos, inferências e hipóteses ao investigar uma cadeia sem correlação consistente.
+Formar hipóteses sobre um incidente a partir dos sinais disponíveis, sem transformar ausência de dado em conclusão.
 
 **Situação**
 
-Gateway registra `502`, Elegibilidade registra erro de banco e Jaeger contém traces sem nome consistente; a média de latência permanece estável.
+Na terça-feira à tarde, a recepção do hospital reportou que a consulta de elegibilidade estava falhando "às vezes". Ninguém soube dizer com que frequência.
+
+Três lugares registram alguma coisa. O gateway de borda mostra respostas `502` em cerca de dois por cento das chamadas daquele período. O serviço de Elegibilidade registra erros de conexão com o banco, sem carimbo de tempo padronizado. O Jaeger mostra traces, e boa parte deles aparece com nomes de operação diferentes para o que parece ser a mesma rota.
+
+O painel de latência média do gateway não mudou nada durante a tarde inteira.
+
+Nenhum dos três registros carrega um identificador comum que permita seguir uma mesma chamada do começo ao fim.
+
+Quatro fatos valem para a análise:
+
+1. O gateway registrou `502` em cerca de dois por cento das chamadas da tarde.
+2. O serviço de Elegibilidade registrou erros de conexão com o banco no mesmo período.
+3. Os traces existem, e os nomes de operação variam para a mesma rota.
+4. A latência média do gateway ficou estável do começo ao fim do período.
+
+Os quatro fatos, a descrição dos três registros e a ausência de identificador comum, todos nesta página.
 
 **Seu papel**
 
-Você conduz a análise do incidente sem afirmar causalidade além da evidência.
-
-**Artefato que você irá usar**
-
-Crie `<raiz-do-clone>/entregas/modulo-4/analisar-correlacao.md`, usando `docs/modulo-4-governanca/conceitos.md`, `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`.
-
-**Antes de executar**
-
-O estado inicial reúne três logs anonimizados, taxa de `5xx`, traces parciais e a política atual; não inclua dado clínico na entrega.
-
-**Insumos disponíveis**
-
-As amostras do caso e os arquivos declarativos indicados.
+Você conduz a investigação. A diretoria quer saber o que aconteceu, e a equipe quer saber o que medir para não passar por isso de novo.
 
 **O que fazer**
 
-1. Separe fato, inferência e hipótese.
-2. Mapeie lacunas de `correlation_id` e `traceparent`.
-3. Compare duas causas plausíveis e uma mudança mínima.
-4. Declare o dado que confirmaria ou enfraqueceria cada hipótese.
+Escreva em prosa, uma resposta por item.
+
+1. Explique por que a latência média pode ficar estável enquanto dois por cento das chamadas falham, e diga que medida mostraria o problema que a média esconde.
+2. Escreva duas hipóteses diferentes que explicariam os fatos 1 e 2 ao mesmo tempo, e diga o que distinguiria uma da outra.
+3. O fato 3 impede um tipo de verificação. Diga qual, e explique por que nomes de operação inconsistentes atrapalham mais do que nomes feios.
+4. Diga o que faltou para transformar esses três registros numa investigação de dez minutos, e onde esse elemento precisaria ser criado e propagado.
+5. Aponte uma conclusão que os quatro fatos não sustentam, rotule-a como hipótese e diga que dado a confirmaria.
 
 **Evidência esperada**
 
-Política: contexto; artefatos: `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` e `laboratorios/plataforma-hospitalar/src/hospital/telemetria.py`; serviços: Kong e Elegibilidade. Kong extrai e injeta o `traceparent` W3C; o middleware de Elegibilidade extrai o contexto e cria o span filho. `infra/observabilidade/otel-collector.yml` recebe sinais OTLP, processa em lote e exporta ao Jaeger; não propaga `traceparent`. Saída: trace e log correlacionados, ou lacuna registrada.
-
-**Entrega esperada**
-
-Envie o arquivo com linha do tempo, mapa de evidências e plano de investigação seguro.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Separação de fato e hipótese | 25% | Evidência: hipótese rotulada; insuficiente: inferência como fato. |
-| Leitura integrada dos sinais | 25% | Evidência: sinais correlacionados; insuficiente: métrica isolada conclui causa. |
-| Hipóteses alternativas | 20% | Evidência: mais de uma causa; insuficiente: primeira hipótese tratada certa. |
-| Mudança verificável proposta | 20% | Evidência: efeito esperado; insuficiente: mudança sem prova. |
-| Limites da conclusão | 10% | Evidência: limite declarado; insuficiente: diagnóstico definitivo sem dados. |
+O arquivo entregue distingue medida agregada de medida por chamada, apresenta duas hipóteses com o dado que as separa, explica o efeito da inconsistência de nomes e registra a hipótese não sustentada com o dado que a confirmaria.
 
 ## Avaliar
-
 ### Escolher uma política de limite
 
 **Objetivo**
 
-Recomendar uma política temporária que proteja capacidade e explicite seu impacto.
+Julgar quatro políticas de limite de tráfego contra critérios declarados, sabendo que todas prejudicam alguém.
 
 **Situação**
 
-Um portal parceiro atinge 20 chamadas por segundo por cinco minutos; a capacidade atual é oito por segundo e hospitais compartilham proxy.
+Um portal parceiro passou a chamar a API de elegibilidade do hospital vinte vezes por segundo durante cinco minutos, três vezes ao dia. A capacidade atual do serviço é de oito chamadas por segundo antes que a fila comece a crescer.
+
+Durante essas rajadas, o atendimento presencial do próprio hospital fica lento, porque usa a mesma API.
+
+Há uma complicação. Vários hospitais da rede saem pelo mesmo proxy, e portanto pelo mesmo endereço de origem visto pelo gateway. Distinguir quem é quem pelo endereço de rede não funciona.
+
+O parceiro tem contrato assinado e não pode simplesmente ser bloqueado.
+
+Quatro fatos valem para a decisão:
+
+1. Capacidade atual de oito chamadas por segundo; o parceiro pede vinte durante cinco minutos.
+2. O atendimento presencial usa a mesma API e degrada junto.
+3. Vários hospitais compartilham o mesmo endereço de origem no gateway.
+4. Existe contrato com o parceiro, e ele precisa continuar sendo atendido.
+
+Quatro políticas estão sobre a mesa:
+
+#### Política A
+
+Limite por endereço de origem, oito chamadas por segundo. O que passar disso recebe recusa imediata.
+
+#### Política B
+
+Limite por credencial de cliente, com cota separada para o parceiro e para o atendimento presencial.
+
+#### Política C
+
+Fila com espera: as chamadas acima da capacidade aguardam até dois segundos antes de serem atendidas ou recusadas.
+
+#### Política D
+
+Nenhum limite, e aumento da capacidade do serviço para trinta chamadas por segundo.
+
+Os quatro fatos, a descrição das quatro políticas e o contrato com o parceiro, todos nesta página.
 
 **Seu papel**
 
-Você recomenda a decisão e suas condições de evolução.
-
-**Artefato que você irá usar**
-
-Crie `<raiz-do-clone>/entregas/modulo-4/avaliar-limite.md`, usando `docs/modulo-4-governanca/exemplo-arquitetural.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml`.
-
-**Antes de executar**
-
-O estado inicial considera consumidores parcialmente identificados, suporte em horário comercial e meta de latência para consultas aceitas.
-
-**Insumos disponíveis**
-
-Pico, capacidade, risco de atraso e alternativas IP, credencial e fila.
+Você recomenda a política que entra em vigor na segunda-feira, sabendo que ela será revista.
 
 **O que fazer**
 
-1. Compare as três estratégias por proteção, justiça e operação.
-2. Declare resposta `429`, SLO, sinal de revisão e comunicação a consumidores.
-3. Proponha experimento reversível e plano de retorno.
+Escreva em prosa, uma resposta por item.
+
+1. Declare de três a quatro critérios de julgamento e diga qual pesa mais, justificando pelo efeito sobre o atendimento presencial.
+2. Avalie as quatro políticas contra os seus critérios, um parágrafo por política, dizendo quem é protegido e quem é prejudicado em cada uma.
+3. O fato 3 atrapalha uma das quatro de forma direta. Diga qual e explique o mecanismo.
+4. Recomende uma política e escreva o que o parceiro recebe quando ultrapassa o limite: código de resposta, informação devolvida e o que ele deve fazer em seguida.
+5. Escreva o sinal observável que encerraria essa política temporária, e diga quem olha esse sinal.
 
 **Evidência esperada**
 
-Política observada: rate limiting; arquivo: `infra/kong/kong.yml`; serviço que a recebe: Kong diante de Elegibilidade; entrega: `<raiz-do-clone>/entregas/modulo-4/avaliar-limite.md`; saída: série controlada de chamadas com `429` e decisão registrada sobre o impacto.
-
-**Entrega esperada**
-
-Envie o arquivo com alternativas, decisão, consequências, evidências e retorno.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Comparação equilibrada | 25% | Evidência: ganhos e custos; insuficiente: uma opção idealizada. |
-| Vínculo com capacidade e risco | 25% | Evidência: risco justifica decisão; insuficiente: mecanismo sem contexto. |
-| SLO e sinais operacionais | 20% | Evidência: meta e sinal; insuficiente: número sem ação. |
-| Reversibilidade | 15% | Evidência: plano de retorno; insuficiente: alteração irreversível sem avaliação. |
-| Comunicação a consumidores | 15% | Evidência: impacto comunicado; insuficiente: mudança sem destinatário. |
+O arquivo entregue traz critérios declarados, as quatro políticas julgadas com protegido e prejudicado nomeados, o efeito do endereço compartilhado explicado, a resposta ao parceiro descrita com código e orientação, e o sinal de encerramento com responsável.
 
 ## Criar
-
-### Desenhar o mínimo de governança para agenda
+### Propor o mínimo de governança para uma capacidade nova
 
 **Objetivo**
 
-Criar um pacote inicial de decisão para Agenda que continue verificável ao evoluir.
+Propor o conjunto mínimo de governança para uma capacidade que nasce agora, escolhendo entre três níveis de exigência e defendendo o que fica de fora.
 
 **Situação**
 
-Agenda consulta Elegibilidade, reserva horário e informa preparo de sala; terá owner próprio, API pública e integração com duas equipes.
+O hospital vai lançar a capacidade de Agendamento como serviço próprio, com equipe própria. Ela consulta Elegibilidade, reserva o horário e avisa Preparo de Sala, que pertence a outra equipe.
+
+A API de Agendamento será pública para dois parceiros externos desde o primeiro dia.
+
+O hospital já tem seis serviços no ar, e nenhum deles tem dono declarado por escrito. Quando algo quebra, a descoberta de quem responde leva em média quarenta minutos.
+
+A diretoria aprovou o serviço novo com uma condição: ele não pode nascer com o mesmo problema dos outros seis.
+
+A equipe de plataforma tem duas pessoas e já opera um gateway em produção.
+
+Três níveis de exigência estão sobre a mesa:
+
+#### Nível A
+
+Dono declarado e contrato publicado. Nada mais é exigido para o lançamento.
+
+#### Nível B
+
+O nível A, mais identificador de correlação atravessando a cadeia e um limite de tráfego aplicado no gateway.
+
+#### Nível C
+
+O nível B, mais registro de decisão arquitetural obrigatório, verificação automática do contrato na esteira e sinal de saúde publicado por serviço.
+
+O histórico dos seis serviços, o tamanho da equipe de plataforma, a exposição externa desde o primeiro dia e os três níveis, todos nesta página.
 
 **Seu papel**
 
-Você cria a proposta que começa localmente sem depender de memória informal.
-
-**Artefato que você irá usar**
-
-Crie `<raiz-do-clone>/entregas/modulo-4/criar-agenda/` e entregue nele `adr.md`, `politica.yml`, `sinais.md` e `teste.md`, usando `laboratorios/plataforma-hospitalar/infra/compose.governanca.yml` apenas como referência.
-
-**Antes de executar**
-
-Considere dados sintéticos, confirmação inicial em três segundos e no máximo três novas unidades implantáveis no semestre.
-
-**Insumos disponíveis**
-
-Contrato de Elegibilidade, Compose da oficina e as restrições declaradas.
+Você propõe o pacote de governança que acompanha o lançamento. Exigir demais atrasa o serviço; exigir de menos repete o problema que a diretoria mandou evitar.
 
 **O que fazer**
 
-1. Defina catálogo, classificação de dados, contrato e estratégia de versão.
-2. Separe políticas de gateway, serviço e domínio.
-3. Modele logs, métricas conceituais, trace, `correlation_id`, SLO e orçamento de erro.
-4. Planeje testes de rota, limite e propagação, além de dois gatilhos de revisão.
+Escreva em prosa, uma resposta por item.
+
+1. Escolha um dos três níveis e defenda a escolha, citando a condição imposta pela diretoria e o tamanho da equipe de plataforma.
+2. Sobre os dois níveis que você não escolheu, escreva duas frases cada: o que ganhariam e o que custariam neste lançamento.
+3. Para cada exigência do nível escolhido, diga em uma linha como alguém verifica que ela está valendo. Se alguma não puder ser verificada hoje, marque-a como intenção e diga o que falta.
+4. O problema dos quarenta minutos é de descoberta de responsável. Diga qual exigência do seu nível ataca isso diretamente, e por quê.
+5. Escreva o sinal que indicaria que o nível escolhido ficou insuficiente, e a exigência que você acrescentaria primeiro.
 
 **Evidência esperada**
 
-Política observada: rota, correlação e limite; arquivo: `<raiz-do-clone>/entregas/modulo-4/criar-agenda/politica.yml`; serviço que a recebe: Agenda através do gateway; saída: roteiro reproduzível com resposta de rota, `429`, `X-Correlation-ID` e consulta de trace.
-
-**Entrega esperada**
-
-Envie os quatro arquivos com ADR, diagrama, configuração ilustrativa, plano de sinais e roteiro de teste.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Coerência entre ownership e contrato | 20% | Evidência: dono mantém contrato; insuficiente: responsabilidade dividida sem regra. |
-| Separação de políticas | 20% | Evidência: borda e domínio separados; insuficiente: política clínica no gateway. |
-| Observabilidade verificável | 20% | Evidência: consulta reproduzível; insuficiente: sinal sem como verificar. |
-| SLO contextualizado | 15% | Evidência: usuário e janela; insuficiente: meta sem contexto. |
-| Testes reproduzíveis | 15% | Evidência: comando e resultado; insuficiente: procedimento não repetível. |
-| Gatilhos de evolução | 10% | Evidência: sinal de mudança; insuficiente: evolução sem condição. |
+O arquivo entregue traz o nível escolhido com justificativa, os outros dois avaliados, uma forma de verificação para cada exigência mantida, a ligação explícita com o problema de descoberta de responsável e o sinal de reforço com a próxima exigência nomeada.

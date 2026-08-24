@@ -147,7 +147,6 @@ SAGA resolveria o problema de coordenar uma mudança que atravessa múltiplas tr
 </details>
 
 ## Aplicar
-
 ### Recomendar a fronteira entre laudos e notificações
 
 **Objetivo**
@@ -161,18 +160,6 @@ Uma clínica de diagnóstico por imagem roda tudo num sistema único: um process
 As duas funcionalidades leem e escrevem as mesmas tabelas, e nenhuma tabela tem dono declarado. A tabela `laudo` carrega, lado a lado, o conteúdo clínico e o controle de envio, nas colunas `sms_enviado_em` e `tentativas_envio`. O mesmo trecho de código que publica o documento também dispara o aviso, dentro da mesma transação.
 
 Na semana passada o provedor de SMS ficou lento. A publicação de laudos travou junto, e o plantão levou quarenta minutos para descobrir que o problema não estava no laudo. A diretoria pediu uma recomendação para a próxima reunião.
-
-**Seu papel**
-
-Você é a pessoa arquiteta convidada a recomendar um caminho. A equipe da clínica implementa depois, e espera de você a escolha e a justificativa, com os riscos declarados.
-
-**Artefato que você irá usar**
-
-Crie `entregas/modulo-3/aplicar-laudos.md`, a partir da raiz do clone, e use as quatro alternativas descritas adiante junto com `docs/modulo-3-servicos/padroes-e-decisoes.md`.
-
-**Antes de executar**
-
-Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
 
 Seis fatos foram apurados na clínica e valem para a decisão:
 
@@ -201,49 +188,27 @@ As quatro alternativas em avaliação:
 | **C. Módulos com entrega adiada** | Como a B, e a publicação passa a apenas registrar o aviso numa tabela de pendências do módulo de Notificações. Um processo em segundo plano envia depois. Uma implantação só. |
 | **D. Notificações como serviço** | Notificações vira processo próprio, com banco próprio, recebendo os avisos por um *broker* novo no ambiente. |
 
-**Insumos disponíveis**
-
 Os seis fatos apurados, as quatro alternativas descritas e as referências de padrões e decisões do módulo.
 
-**Como conduzir**
+**Seu papel**
+
+Você é a pessoa arquiteta convidada a recomendar um caminho. A equipe da clínica implementa depois, e espera de você a escolha e a justificativa, com os riscos declarados.
 
 **O que fazer**
 
-1. Recomende **uma** das quatro alternativas para a clínica agora, em uma frase.
-2. Preencha o quadro comparativo, uma linha por alternativa, dizendo o que ela resolve do incidente da semana passada, o que ela cobra em troca e qual fato apurado a favorece ou a inviabiliza.
+Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
 
-    | Alternativa | O que resolve | O que cobra | Fato decisivo |
-    | --- | --- | --- | --- |
-    | A. Tempo limite no envio | a publicação para de travar por lentidão do provedor | mantém as duas capacidades escrevendo a mesma linha, e o aviso continua podendo se perder em silêncio | fato 3, porque a transação segue intacta |
-    | B. Módulos com dono declarado | | | |
-    | C. Módulos com entrega adiada | | | |
-    | D. Notificações como serviço | | | |
-
-3. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
-4. Declare o risco que a sua recomendação aceita, isto é, o que pode dar errado e a clínica escolheu conviver com isso.
-5. Escreva um sinal de revisão observável, a condição concreta que levaria a clínica a trocar de alternativa. Data no calendário não é sinal.
-6. Se algum fato necessário para decidir não estiver na lista, registre a pergunta que você faria à clínica antes de assinar a recomendação.
+1. Recomende uma das quatro alternativas para a clínica, em uma frase.
+2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do incidente da semana passada e o que ela cobra em troca.
+3. As alternativas B e C separam a propriedade dos dados do mesmo jeito. Explique o que só a C resolve.
+4. Aponte a alternativa que você descartaria de imediato e diga qual fato a derruba.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria a clínica trocar de alternativa. Data no calendário não vale como sinal.
 
 **Evidência esperada**
 
 O artefato traz o quadro comparativo completo, com ganho e custo declarados para cada uma das quatro alternativas, a recomendação escrita em uma frase, o fato que sustenta a escolha, o risco aceito e o sinal de revisão como condição observável.
 
-**Entrega esperada**
-
-Envie o arquivo `entregas/modulo-3/aplicar-laudos.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, a alternativa descartada, o risco aceito e o sinal de revisão.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Comparação com ganho e custo em cada alternativa | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: alternativa descrita sem custo declarado. |
-| Recomendação sustentada por fato apurado | 25% | Evidência: fato citado pelo número; insuficiente: preferência tecnológica sem base no caso. |
-| Alternativa descartada com motivo | 15% | Evidência: fato que a derruba; insuficiente: descarte por gosto. |
-| Risco aceito declarado | 15% | Evidência: consequência nomeada; insuficiente: recomendação apresentada sem custo. |
-| Sinal de revisão observável | 15% | Evidência: condição mensurável; insuficiente: prazo no calendário. |
-
 ## Analisar
-
 ### Diagnosticar a rede de clínicas
 
 **Objetivo**
@@ -259,18 +224,6 @@ A cada consulta registrada, Atendimento chama Cadastro, depois Agenda, depois Fa
 Os quatro processos apontam para o mesmo *schema* PostgreSQL, com as mesmas credenciais. Acrescentar um campo no cadastro do paciente, no mês passado, exigiu quatro implantações coordenadas na mesma janela de sábado.
 
 O painel de cada equipe mostra 99,9% de disponibilidade, e mesmo assim o fluxo de atendimento acumulou incidentes o suficiente para virar pauta na diretoria. Ninguém fez a conta que explica o painel: quatro chamadas síncronas em série, cada uma com 99,9%, entregam 99,6% no fluxo inteiro, o que significa cerca de 35 horas indisponíveis por ano contra as 9 horas que cada equipe promete isoladamente.
-
-**Seu papel**
-
-Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de código será alterada esta semana; a diretoria quer entender o problema antes de autorizar trabalho.
-
-**Artefato que você irá usar**
-
-Crie `entregas/modulo-3/analisar-rede-de-clinicas.md`, a partir da raiz do clone. Tudo o que você precisa para responder está descrito nesta página.
-
-**Antes de executar**
-
-Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
 
 Sete fatos foram apurados na rede. Trate cada um como dado verificado:
 
@@ -302,11 +255,11 @@ Os dois viram um serviço só, com transação local, banco próprio e uma estei
 
 Os quatro processos continuam existindo. Atendimento passa a responder ao usuário assim que Cadastro e Agenda confirmam, e o aviso a Faturamento sai depois, fora da espera.
 
-**Insumos disponíveis**
-
 Os sete fatos, o mapa de chamadas, a conta de disponibilidade, as definições de acoplamento e as duas correções propostas, todos nesta página.
 
-**Como conduzir**
+**Seu papel**
+
+Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de código será alterada esta semana; a diretoria quer entender o problema antes de autorizar trabalho.
 
 **O que fazer**
 
@@ -323,23 +276,7 @@ Escreva em prosa, um parágrafo por resposta. Sempre que afirmar algo, diga se e
 
 O texto explica o mecanismo de cada sintoma em vez de apenas nomeá-lo, associa cada afirmação a um fato ou a uma inferência declarada, compara as duas correções com ganho e limite de cada uma, e traz a resposta de falha parcial escrita com o comportamento que o usuário observa.
 
-**Entrega esperada**
-
-Envie `entregas/modulo-3/analisar-rede-de-clinicas.md` com no máximo duas páginas, contendo as seis respostas em prosa e a hipótese rotulada com o dado que a confirmaria.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Mecanismo explicado, e não apenas nomeado | 30% | Evidência: a cadeia causal descrita; insuficiente: o tipo de acoplamento citado sem explicação. |
-| Separação entre fato e inferência | 25% | Evidência: hipótese rotulada com o dado que a confirmaria; insuficiente: suposição apresentada como apurada. |
-| Comparação das duas correções | 20% | Evidência: ganho e limite de cada uma; insuficiente: uma correção escolhida sem contrastar. |
-| Leitura da conta de disponibilidade | 15% | Evidência: a composição em série explicada; insuficiente: o número repetido sem interpretação. |
-| Falha parcial descrita pelo que o usuário vê | 10% | Evidência: parte saudável nomeada; insuficiente: sistema tratado como um bloco. |
-
-
 ## Avaliar
-
 ### Decidir a resposta à indisponibilidade da autorização
 
 **Objetivo**
@@ -355,18 +292,6 @@ O provedor fica indisponível por até quinze minutos, algumas vezes por mês, s
 Duas coisas são inaceitáveis para a rede, e elas puxam em direções opostas. Executar um procedimento sem autorização válida cria risco clínico e prejuízo financeiro, porque a operadora pode recusar o pagamento depois. Perder a solicitação do paciente também é inaceitável, porque ele já está na clínica e vai embora sem atendimento.
 
 O comitê de arquitetura se reúne na quinta-feira para decidir.
-
-**Seu papel**
-
-Você é a pessoa arquiteta que apresenta a recomendação ao comitê. A decisão será registrada e cobrada depois, então o que você declarar como custo aceito precisa estar escrito.
-
-**Artefato que você irá usar**
-
-Crie `entregas/modulo-3/avaliar-autorizacao.md`, a partir da raiz do clone. As quatro alternativas e as restrições estão descritas nesta página, e bastam para decidir.
-
-**Antes de executar**
-
-Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
 
 Cinco restrições valem para a decisão:
 
@@ -394,11 +319,11 @@ A clínica guarda a última resposta conhecida de cada beneficiário e a reutili
 
 A clínica aceita e executa na hora apenas os procedimentos de uma lista curta previamente acordada com a operadora, de baixo custo e baixo risco. Todos os demais entram como pendentes, como na alternativa B.
 
-**Insumos disponíveis**
-
 As cinco restrições, as duas condições inaceitáveis e as quatro alternativas descritas, todas nesta página.
 
-**Como conduzir**
+**Seu papel**
+
+Você é a pessoa arquiteta que apresenta a recomendação ao comitê. A decisão será registrada e cobrada depois, então o que você declarar como custo aceito precisa estar escrito.
 
 **O que fazer**
 
@@ -416,23 +341,7 @@ Escreva em prosa. O comitê vai ler o documento antes da reunião, então cada r
 
 O documento traz critérios declarados e ponderados antes da comparação, as quatro alternativas avaliadas contra esses critérios, a recomendação com o custo aceito escrito em uma frase, a tabela de estados com o que a recepção observa, e o sinal de revisão com o responsável por observá-lo.
 
-**Entrega esperada**
-
-Envie `entregas/modulo-3/avaliar-autorizacao.md` com no máximo duas páginas, contendo os critérios ponderados, a avaliação das quatro alternativas, a recomendação, os estados da solicitação e o sinal de revisão.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Critérios declarados e ponderados pelo risco do domínio | 30% | Evidência: o critério mais pesado justificado pelo risco clínico; insuficiente: lista de critérios técnicos sem ponderação. |
-| Avaliação das quatro alternativas | 25% | Evidência: o que cada uma protege e o que expõe; insuficiente: alternativa mencionada sem julgamento. |
-| Custo aceito declarado na recomendação | 20% | Evidência: a frase que nomeia o que a clínica abre mão; insuficiente: recomendação apresentada como sem perdas. |
-| Estados e repetição tratados | 15% | Evidência: estados descritos e o identificador usado contra duplicidade; insuficiente: apenas o caminho feliz. |
-| Sinal de revisão com responsável | 10% | Evidência: condição observável e quem observa; insuficiente: "monitorar o sistema". |
-
-
 ## Criar
-
 ### Propor a arquitetura inicial do agendamento
 
 **Objetivo**
@@ -448,18 +357,6 @@ Primeiro, consultar **Elegibilidade**, que já existe e responde por HTTP se o b
 Três coisas diferenciam essas partes. A agenda muda o tempo inteiro e recebe picos concentrados no início da manhã. Elegibilidade é estável e raramente muda. Preparo de Sala tem outro dono, outro ritmo de entrega, e tolera receber o aviso com até dois minutos de atraso.
 
 O paciente precisa ver a confirmação da reserva em até três segundos.
-
-**Seu papel**
-
-Você é a pessoa arquiteta responsável pela proposta inicial. Ela será discutida com as três equipes envolvidas e precisa começar simples, sem fechar portas que a rede vá querer abrir depois.
-
-**Artefato que você irá usar**
-
-Crie `entregas/modulo-3/criar-agendamento.md`, a partir da raiz do clone. As três topologias e as restrições estão descritas nesta página, e bastam para a proposta.
-
-**Antes de executar**
-
-Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
 
 Cinco restrições valem para a proposta:
 
@@ -483,11 +380,11 @@ Agendamento vira serviço próprio com banco próprio. Continua chamando Elegibi
 
 Agendamento vira serviço próprio com banco próprio. Consulta Elegibilidade por HTTP, reserva o horário, confirma ao paciente, e registra o aviso a Preparo de Sala numa tabela de saída processada logo depois.
 
-**Insumos disponíveis**
-
 As cinco restrições, as três capacidades descritas, as diferenças de ritmo entre elas e as três topologias, todas nesta página.
 
-**Como conduzir**
+**Seu papel**
+
+Você é a pessoa arquiteta responsável pela proposta inicial. Ela será discutida com as três equipes envolvidas e precisa começar simples, sem fechar portas que a rede vá querer abrir depois.
 
 **O que fazer**
 
@@ -504,18 +401,3 @@ Escreva em prosa, com um título por resposta. A proposta é um documento de dec
 **Evidência esperada**
 
 O documento traz a topologia escolhida com pelo menos três restrições citadas pelo número, as outras duas avaliadas e descartadas, um dono declarado para cada dado, o caminho de sucesso descrito com o orçamento de tempo, três falhas parciais com o que o paciente observa e o destino da reserva, e dois sinais de mudança em direções opostas.
-
-**Entrega esperada**
-
-Envie `entregas/modulo-3/criar-agendamento.md` com no máximo três páginas, contendo a escolha justificada, as alternativas descartadas, a propriedade dos dados, o caminho de sucesso, as três falhas parciais e os dois sinais de evolução.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Escolha defendida pelas restrições dadas | 25% | Evidência: três restrições citadas pelo número; insuficiente: topologia escolhida por preferência. |
-| Alternativas descartadas com custo | 20% | Evidência: o que cada uma cobraria; insuficiente: alternativa ignorada. |
-| Propriedade dos dados declarada | 20% | Evidência: um dono por dado, com justificativa; insuficiente: dados sem autoridade definida. |
-| Falhas parciais com efeito visível | 20% | Evidência: o que o paciente vê e o destino da reserva; insuficiente: apenas o caminho de sucesso. |
-| Sinais de evolução em duas direções | 15% | Evidência: um sinal para separar e um para consolidar; insuficiente: evolução sem gatilho observável. |
-

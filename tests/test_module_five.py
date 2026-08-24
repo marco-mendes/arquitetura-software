@@ -67,18 +67,14 @@ class ModuleFiveTest(unittest.TestCase):
         self.assertIn("custo operacional", comparison)
         self.assertIn("limites", comparison)
 
-    def test_advanced_exercises_use_only_the_nine_self_contained_fields(self):
+    def test_advanced_exercises_use_only_the_five_lean_fields(self):
         exercises = read_module_page("modulo-5-eventos", "exercicios.md")
         required_labels = (
             "**Objetivo**",
             "**Situação**",
             "**Seu papel**",
-            "**Artefato que você irá usar**",
-            "**Antes de executar**",
             "**O que fazer**",
             "**Evidência esperada**",
-            "**Entrega esperada**",
-            "**Critérios de avaliação**",
         )
         advanced_sections = {
             level: section
@@ -103,7 +99,7 @@ class ModuleFiveTest(unittest.TestCase):
                 exercises, "modulo-5-eventos/exercicios.md"
             ),
         )
-        self.assertGreaterEqual(exercises.count("<raiz-do-clone>/entregas/"), 4)
+        self.assertNotIn("<raiz-do-clone>", exercises)
 
     def test_mermaid_diagrams_include_accessible_editorial_context(self):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))

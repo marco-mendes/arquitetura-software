@@ -7,17 +7,21 @@ from scripts.validate_content import (
     self_contained_activity_errors,
 )
 
-
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_SLUGS = tuple(MODULES)
 ADVANCED_LABELS = (
     "Objetivo",
     "Situação",
     "Seu papel",
-    "Artefato que você irá usar",
-    "Antes de executar",
     "O que fazer",
     "Evidência esperada",
+)
+# Saíram do contrato: preparação de laboratório, entrega e critérios. A atividade
+# avançada virou uma questão de arquitetura respondida em texto.
+RETIRED_LABELS = (
+    "Artefato que você irá usar",
+    "Insumos disponíveis",
+    "Antes de executar",
     "Entrega esperada",
     "Critérios de avaliação",
 )
@@ -38,7 +42,6 @@ _ALLOWED_FIGURE_DECISIONS = (
     "não usar",
 )
 
-
 class EditorialRecoveryTest(unittest.TestCase):
     def test_every_module_exercise_page_uses_expandable_feedback_and_self_contained_labels(self):
         for slug in MODULE_SLUGS:
@@ -48,6 +51,9 @@ class EditorialRecoveryTest(unittest.TestCase):
             self.assertGreaterEqual(text.count("<summary>Ver resposta</summary>"), 6, slug)
             for label in ADVANCED_LABELS:
                 self.assertIn(f"**{label}**", text, slug)
+            for retired in RETIRED_LABELS:
+                self.assertNotIn(f"**{retired}**", text, slug)
+            self.assertNotIn("<raiz-do-clone>", text, slug)
 
     def test_public_figure_captions_identify_their_source(self):
         for path in (ROOT / "docs").rglob("*.md"):
@@ -80,39 +86,23 @@ class EditorialRecoveryTest(unittest.TestCase):
 
 **Objetivo**
 
-Definir uma projeção administrativa com dados sintéticos.
+Recomendar uma entre três formas de propagar um fato.
 
 **Situação**
 
-Uma fila pode entregar o mesmo evento duas vezes.
+Uma fila pode entregar o mesmo evento duas vezes, e três consumidores dependem dele.
 
 **Seu papel**
 
-Você é responsável pelo contrato da projeção.
-
-**Artefato que você irá usar**
-
-Leia `<raiz-do-clone>/laboratorios/eventos/contrato-v1.json`.
-
-**Antes de executar**
-
-O arquivo existe e a fila local está parada; confirme esse estado antes de editar.
+Você recomenda o caminho e declara o custo aceito.
 
 **O que fazer**
 
-1. Crie a projeção e registre a chave de deduplicação; se a validação falhar, registre a rejeição.
+1. Recomende uma das três alternativas e diga o que ela cobra em troca.
 
 **Evidência esperada**
 
-Saída: duas entregas do mesmo evento produzem um único registro.
-
-**Entrega esperada**
-
-Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
-
-**Critérios de avaliação**
-
-O contrato identifica a chave, a saída e o limite da projeção.
+A resposta traz o registro do que cada alternativa resolve e do que ela custa.
 """
 
         self.assertEqual([], self_contained_activity_errors(text, "exemplo.md"))
@@ -122,7 +112,7 @@ O contrato identifica a chave, a saída e o limite da projeção.
 
 **Objetivo**
 
-Definir uma projeção administrativa com dados sintéticos.
+Recomendar uma entre três formas de propagar um fato.
 
 **Situação**
 
@@ -130,201 +120,20 @@ Uma fila pode entregar o mesmo evento duas vezes.
 
 **Seu papel**
 
-Você é responsável pelo contrato da projeção.
-
-**Artefato que você irá usar**
-
-Leia `<raiz-do-clone>/laboratorios/eventos/contrato-v1.json`.
-
-**Antes de executar**
-
-O arquivo existe e a fila local está parada; confirme esse estado antes de editar.
+Você recomenda o caminho e declara o custo aceito.
 
 **O que fazer**
 
-1. Crie a projeção e registre a chave de deduplicação.
+1. Recomende uma das três alternativas e diga o que ela cobra em troca.
 
 **Evidência esperada**
-
-Saída: duas entregas do mesmo evento produzem um único registro.
-
-**Entrega esperada**
-
-Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
-
-**Critérios de avaliação**
 """
 
         self.assertIn(
             "exemplo.md: Aplicar: campo obrigatório sem conteúdo: "
-            "**Critérios de avaliação**",
+            "**Evidência esperada**",
             self_contained_activity_errors(text, "exemplo.md"),
         )
-
-    def test_self_contained_activity_parser_rejects_insufficient_practical_guidance(self):
-        text = """## Aplicar
-
-**Objetivo**
-
-Definir uma projeção administrativa com dados sintéticos.
-
-**Situação**
-
-Uma fila pode entregar o mesmo evento duas vezes.
-
-**Seu papel**
-
-Você é responsável pelo contrato da projeção.
-
-**Artefato que você irá usar**
-
-O contrato.
-
-**Antes de executar**
-
-Prepare tudo.
-
-**O que fazer**
-
-Faça a atividade.
-
-**Evidência esperada**
-
-Evidência.
-
-**Entrega esperada**
-
-Entregue o resultado.
-
-**Critérios de avaliação**
-
-Use os critérios do módulo.
-"""
-
-        errors = self_contained_activity_errors(text, "exemplo.md")
-
-        for expected in (
-            "artefato deve identificar um caminho",
-            "preparação deve declarar um estado inicial verificável",
-            "ação deve listar uma manipulação ou execução concreta",
-            "evidência deve indicar uma saída ou observação verificável",
-            "atividade deve informar uma contingência",
-        ):
-            self.assertTrue(any(expected in error for error in errors), expected)
-
-    def test_self_contained_activity_parser_rejects_minimal_operational_tokens(self):
-        text = """## Aplicar
-
-**Objetivo**
-
-Definir uma projeção administrativa com dados sintéticos.
-
-**Situação**
-
-Uma fila pode entregar o mesmo evento duas vezes.
-
-**Seu papel**
-
-Você é responsável pelo contrato da projeção.
-
-**Artefato que você irá usar**
-
-Leia `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py`.
-
-**Antes de executar**
-
-Confirme.
-
-**O que fazer**
-
-- Faça.
-
-**Evidência esperada**
-
-Registro.
-
-**Entrega esperada**
-
-Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
-
-**Critérios de avaliação**
-
-Se necessário.
-"""
-
-        errors = self_contained_activity_errors(text, "exemplo.md")
-
-        for expected in (
-            "preparação deve declarar um estado inicial verificável",
-            "ação deve listar uma manipulação ou execução concreta",
-            "evidência deve indicar uma saída ou observação verificável",
-            "atividade deve informar uma contingência",
-        ):
-            self.assertTrue(any(expected in error for error in errors), expected)
-
-    def test_self_contained_activity_parser_rejects_ambiguous_artifact_paths(self):
-        text = """## Aplicar
-
-**Objetivo**
-
-Definir uma projeção administrativa com dados sintéticos.
-
-**Situação**
-
-Uma fila pode entregar o mesmo evento duas vezes.
-
-**Seu papel**
-
-Você é responsável pelo contrato da projeção.
-
-**Artefato que você irá usar**
-
-Leia `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml` e `src/hospital/eventos/consumidor.py`.
-
-**Antes de executar**
-
-O arquivo existe e a fila local está parada; confirme esse estado antes de editar.
-
-**O que fazer**
-
-1. Crie a projeção e registre a chave de deduplicação; se a validação falhar, registre a rejeição.
-
-**Evidência esperada**
-
-Saída: duas entregas do mesmo evento produzem um único registro.
-
-**Entrega esperada**
-
-Salve o relatório em `<raiz-do-clone>/entregas/projecao.md`.
-
-**Critérios de avaliação**
-
-O contrato identifica a chave, a saída e o limite da projeção.
-"""
-
-        self.assertTrue(
-            any(
-                "artefato não pode usar caminho relativo ambíguo" in error
-                for error in self_contained_activity_errors(
-                    text, "modulo-5-eventos/exercicios.md"
-                )
-            )
-        )
-
-    def test_modules_five_and_six_use_rooted_laboratory_paths(self):
-        for slug in ("modulo-5-eventos", "modulo-6-nuvem"):
-            with self.subTest(module=slug):
-                path = ROOT / "docs" / slug / "exercicios.md"
-                errors = self_contained_activity_errors(
-                    path.read_text(encoding="utf-8"), f"{slug}/exercicios.md"
-                )
-                self.assertFalse(
-                    any(
-                        "artefato não pode usar caminho relativo ambíguo" in error
-                        for error in errors
-                    ),
-                    errors,
-                )
 
     def test_self_contained_activity_parser_reports_an_out_of_order_label(self):
         text = """## Aplicar
@@ -335,17 +144,9 @@ O contrato identifica a chave, a saída e o limite da projeção.
 
 **Seu papel**
 
-**Artefato que você irá usar**
-
-**Antes de executar**
-
 **Evidência esperada**
 
 **O que fazer**
-
-**Entrega esperada**
-
-**Critérios de avaliação**
 """
 
         self.assertIn(

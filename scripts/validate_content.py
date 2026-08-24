@@ -95,38 +95,20 @@ _PROCEDURAL_LABEL = re.compile(
     r"^[ \t]*(?:(?:[-*+]|\d+\.)[ \t]+)?"
     r"\*\*(?P<label>[^*\n]+)\*\*(?P<tail>.*)$"
 )
+# Contrato enxuto: a atividade avançada é uma questão de arquitetura respondida
+# em texto. Preparação de laboratório, entrega e critérios saíram porque tornavam
+# a leitura pesada e obrigavam o aluno a clonar o repositório para responder.
 _SELF_CONTAINED_LABELS = (
     "**Objetivo**",
     "**Situação**",
     "**Seu papel**",
-    "**Artefato que você irá usar**",
-    "**Antes de executar**",
     "**O que fazer**",
     "**Evidência esperada**",
-    "**Entrega esperada**",
-    "**Critérios de avaliação**",
-)
-_ACTIVITY_PATH = re.compile(
-    r"(?:<raiz-do-clone>/|(?:\.\.?/|[A-Za-z0-9_.-]+/)[A-Za-z0-9_./-]+)"
-)
-_ACTIVITY_ROOT_PATH = re.compile(r"<raiz-do-clone>/[A-Za-z0-9_./-]+")
-_AMBIGUOUS_LABORATORY_PATH = re.compile(
-    r"(?<![A-Za-z0-9_.-])(?:src|tests|infra)/[A-Za-z0-9_./-]+"
-)
-_ACTIVITY_INITIAL_STATE = re.compile(
-    r"\b(?:estado|inicial|existe|parad[oa]s?|confirm\w*|verifi\w*|"
-    r"instalad[oa]s?)\b",
-    re.IGNORECASE,
 )
 _ACTIVITY_EVIDENCE = re.compile(
     r"\b(?:sa[ií]da|resposta|status|registro|arquivo|resultado|observ\w*|"
     r"mensagem|teste|log|m[eé]trica|tabela|diagrama|parecer|cadeia|pol[ií]tica|"
     r"artefato|linha)\b",
-    re.IGNORECASE,
-)
-_ACTIVITY_CONTINGENCY = re.compile(
-    r"\b(?:se|caso|conting[êe]ncia|falha|erro|indispon\w*|"
-    r"n[aã]o\s+funcion\w*|retorn\w*)\b",
     re.IGNORECASE,
 )
 _ANSWER_BLOCK = re.compile(
@@ -163,29 +145,10 @@ def _has_concrete_action(content: str) -> bool:
     )
 
 
-def _has_described_contingency(content: str) -> bool:
-    """Exige condição e encaminhamento, não apenas 'Se necessário'."""
-
-    clauses = re.split(r"(?<=[.!?])\s+|\n", content)
-    return any(
-        _ACTIVITY_CONTINGENCY.search(clause)
-        and _has_minimum_context(clause, 4)
-        for clause in clauses
-    )
 
 
-def _ambiguous_laboratory_paths(content: str) -> list[str]:
-    """Retorna caminhos de laboratório que perderam a raiz do clone."""
-
-    without_rooted_paths = _ACTIVITY_ROOT_PATH.sub("", content)
-    return [
-        match.group(0)
-        for match in _AMBIGUOUS_LABORATORY_PATH.finditer(without_rooted_paths)
-    ]
 
 
-def _requires_rooted_laboratory_paths(location: str) -> bool:
-    return location.startswith(("modulo-5-eventos/", "modulo-6-nuvem/"))
 
 
 @dataclass(frozen=True)
@@ -278,43 +241,18 @@ def self_contained_activity_errors(text: str, location: str) -> list[str]:
                     f"{location}: {level}: campo obrigatório sem conteúdo: {label}"
                 )
 
-        artifact = fields["**Artefato que você irá usar**"]
-        preparation = fields["**Antes de executar**"]
         action = fields["**O que fazer**"]
         evidence = fields["**Evidência esperada**"]
-        if not _ACTIVITY_PATH.search(artifact):
-            errors.append(
-                f"{location}: {level}: artefato deve identificar um caminho"
-            )
-        if _requires_rooted_laboratory_paths(location):
-            for ambiguous_path in _ambiguous_laboratory_paths(
-                "\n".join(fields.values())
-            ):
-                errors.append(
-                    f"{location}: {level}: artefato não pode usar caminho relativo "
-                    f"ambíguo: {ambiguous_path}"
-                )
-        if (
-            not _ACTIVITY_INITIAL_STATE.search(preparation)
-            or not _has_minimum_context(preparation, 4)
-        ):
-            errors.append(
-                f"{location}: {level}: preparação deve declarar um estado inicial verificável"
-            )
         if not _has_concrete_action(action):
             errors.append(
-                f"{location}: {level}: ação deve listar uma manipulação ou execução concreta"
+                f"{location}: {level}: ação deve listar ao menos uma pergunta concreta"
             )
         if (
             not _ACTIVITY_EVIDENCE.search(evidence)
             or not _has_minimum_context(evidence, 4)
         ):
             errors.append(
-                f"{location}: {level}: evidência deve indicar uma saída ou observação verificável"
-            )
-        if not _has_described_contingency("\n".join(fields.values())):
-            errors.append(
-                f"{location}: {level}: atividade deve informar uma contingência"
+                f"{location}: {level}: evidência deve indicar uma observação verificável"
             )
     return errors
 
@@ -633,38 +571,6 @@ def _percentage_errors(text: str, location: str, context: str = "") -> list[str]
     return errors
 
 
-def _criteria_table_evidence_errors(text: str, location: str) -> list[str]:
-    """Exige evidência e insuficiência explícitas em cada linha de critérios."""
-
-    errors: list[str] = []
-    for instrument, block in enumerate(_criteria_blocks(text), start=1):
-        for table in _TABLE.finditer(block):
-            rows = [line for line in table.group(0).splitlines() if line.strip()]
-            if len(rows) < 3:
-                continue
-            header = [cell.strip().casefold() for cell in rows[0].strip().strip("|").split("|")]
-            if len(header) < 3 or not any(
-                "evid" in cell and "insufici" in cell for cell in header
-            ):
-                errors.append(
-                    f"{location}: instrumento {instrument}: tabela de critérios "
-                    "sem coluna de evidência e insuficiência"
-                )
-                continue
-            for row_number, row in enumerate(rows[2:], start=1):
-                cells = [cell.strip() for cell in row.strip().strip("|").split("|")]
-                description = " ".join(cells[2:]).casefold()
-                if "evid" not in description:
-                    errors.append(
-                        f"{location}: instrumento {instrument}, critério {row_number}: "
-                        "critério sem evidência explícita"
-                    )
-                if "insufici" not in description:
-                    errors.append(
-                        f"{location}: instrumento {instrument}, critério {row_number}: "
-                        "critério sem insuficiência explícita"
-                    )
-    return errors
 
 
 def _word_count(text: str) -> int:
@@ -696,10 +602,6 @@ def _validate_exercises(path: Path, docs_root: Path) -> list[str]:
             errors.append(
                 f"{location}: {level}: bloco de resposta fora de Recordar/Compreender"
             )
-    for level in ("Aplicar", "Analisar", "Avaliar"):
-        section = sections.get(level, "")
-        errors.extend(_percentage_errors(section, location, level))
-    errors.extend(_criteria_table_evidence_errors(text, location))
     errors.extend(expandable_feedback_errors(text, location))
     errors.extend(self_contained_activity_errors(text, location))
     return errors

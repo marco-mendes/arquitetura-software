@@ -148,7 +148,7 @@ class ModuleOneTest(unittest.TestCase):
             [], expandable_feedback_errors(exercises, "exercicios.md")
         )
 
-    def test_advanced_activities_explain_the_lab_before_commands(self):
+    def test_advanced_activities_use_the_lean_contract(self):
         exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
 
         for level in ("Aplicar", "Analisar", "Avaliar", "Criar"):
@@ -157,14 +157,17 @@ class ModuleOneTest(unittest.TestCase):
                 "**Objetivo**",
                 "**Situação**",
                 "**Seu papel**",
-                "**Artefato que você irá usar**",
-                "**Antes de executar**",
                 "**O que fazer**",
                 "**Evidência esperada**",
-                "**Entrega esperada**",
-                "**Critérios de avaliação**",
             ):
                 self.assertIn(label, section, f"{level}: {label}")
+            for retirado in (
+                "**Insumos disponíveis**",
+                "**Entrega esperada**",
+                "**Critérios de avaliação**",
+                "<raiz-do-clone>",
+            ):
+                self.assertNotIn(retirado, section, f"{level}: {retirado}")
 
     def test_style_decision_frames_make_use_and_avoidance_explicit(self):
         text = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
@@ -236,31 +239,7 @@ class ModuleOneTest(unittest.TestCase):
         ):
             self.assertIn(fragment, text)
 
-    def test_advanced_activities_name_a_concrete_workspace_and_start_condition(self):
-        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
-        sections = bloom_sections(exercises)
 
-        for level, workspace in (
-            ("Analisar", "analise-integracao"),
-            ("Avaliar", "parecer.md"),
-            ("Criar", "baseline-inicial"),
-        ):
-            section = sections[level]
-            self.assertIn(workspace, section)
-            self.assertIn("Condição inicial verificável", section)
-            self.assertIn("**Entrega esperada**", section)
-
-    def test_advanced_activities_share_a_root_delivery_location(self):
-        exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")
-        sections = bloom_sections(exercises)
-
-        for level, delivery in (
-            ("Analisar", "entregas/unidade-1/analise-integracao"),
-            ("Avaliar", "entregas/unidade-1/avaliacao-leitos"),
-            ("Criar", "entregas/unidade-1/baseline-inicial"),
-        ):
-            self.assertIn(delivery, sections[level])
-            self.assertIn("raiz do repositório `arquitetura-software`", sections[level])
 
     def test_workshop_uses_the_three_existing_chapter_one_examples(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
