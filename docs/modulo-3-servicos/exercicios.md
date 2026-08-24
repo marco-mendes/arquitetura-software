@@ -148,11 +148,11 @@ SAGA resolveria o problema de coordenar uma mudança que atravessa múltiplas tr
 
 ## Aplicar
 
-### Delimitar o fluxo de laudos
+### Recomendar a fronteira entre laudos e notificações
 
 **Objetivo**
 
-Propor uma primeira fronteira lógica que preserve a transação clínica e permita notificação atrasada.
+Recomendar uma entre quatro arquiteturas propostas para a clínica, sustentando a escolha nos fatos apurados e declarando o que cada alternativa ganha e o que cobra.
 
 **Situação**
 
@@ -160,15 +160,15 @@ Uma clínica de diagnóstico por imagem roda tudo num sistema único: um process
 
 As duas funcionalidades leem e escrevem as mesmas tabelas, e nenhuma tabela tem dono declarado. A tabela `laudo` carrega, lado a lado, o conteúdo clínico e o controle de envio, nas colunas `sms_enviado_em` e `tentativas_envio`. O mesmo trecho de código que publica o documento também dispara o aviso, dentro da mesma transação.
 
-Na semana passada o provedor de SMS ficou lento. A publicação de laudos travou junto, e o plantão levou quarenta minutos para descobrir que o problema não estava no laudo. A clínica quer separar responsabilidades e proteger a publicação, sem distribuir em serviços agora.
+Na semana passada o provedor de SMS ficou lento. A publicação de laudos travou junto, e o plantão levou quarenta minutos para descobrir que o problema não estava no laudo. A diretoria pediu uma recomendação para a próxima reunião.
 
 **Seu papel**
 
-Você é a pessoa arquiteta da clínica e responde pela proposta inicial de fronteira.
+Você é a pessoa arquiteta convidada a recomendar um caminho. A equipe da clínica implementa depois, e espera de você a escolha e a justificativa, com os riscos declarados.
 
 **Artefato que você irá usar**
 
-Crie `entregas/modulo-3/aplicar-laudos.md`, a partir da raiz do clone, e use as descrições de `docs/modulo-3-servicos/conceitos.md` e `docs/modulo-3-servicos/padroes-e-decisoes.md`.
+Crie `entregas/modulo-3/aplicar-laudos.md`, a partir da raiz do clone, e use as quatro alternativas descritas adiante junto com `docs/modulo-3-servicos/padroes-e-decisoes.md`.
 
 **Antes de executar**
 
@@ -190,48 +190,57 @@ Os termos necessários para responder:
 | Dono do dado | quem tem autoridade para interpretar e alterar a informação; os demais pedem por interface |
 | Fronteira lógica | módulos com interface e propriedade definidas dentro do mesmo processo |
 | Fronteira física | processo, rede e implantação separados, com falha independente |
-| Acoplamento de dados | duas unidades dependem da mesma estrutura ou alteram a mesma informação |
+| Acoplamento temporal | uma unidade só conclui o próprio trabalho depois que outra responde |
+
+As quatro alternativas em avaliação:
+
+| Alternativa | O que muda no desenho |
+| --- | --- |
+| **A. Tempo limite no envio** | Nada de estrutura. A chamada ao provedor de SMS ganha tempo limite curto e o erro é registrado. Uma implantação, um banco, mesma transação. |
+| **B. Módulos com dono declarado** | Laudos e Notificações viram módulos separados no mesmo processo, cada um dono das próprias tabelas. A publicação continua chamando a notificação de forma direta e síncrona. |
+| **C. Módulos com entrega adiada** | Como a B, e a publicação passa a apenas registrar o aviso numa tabela de pendências do módulo de Notificações. Um processo em segundo plano envia depois. Uma implantação só. |
+| **D. Notificações como serviço** | Notificações vira processo próprio, com banco próprio, recebendo os avisos por um *broker* novo no ambiente. |
 
 **Insumos disponíveis**
 
-Os seis fatos apurados, as duas capacidades descritas e as referências de conceitos e padrões do módulo.
+Os seis fatos apurados, as quatro alternativas descritas e as referências de padrões e decisões do módulo.
 
 **Como conduzir**
 
 **O que fazer**
 
-1. Complete o mapa de propriedade. A primeira linha vem resolvida como modelo.
+1. Recomende **uma** das quatro alternativas para a clínica agora, em uma frase.
+2. Preencha o quadro comparativo, uma linha por alternativa, dizendo o que ela resolve do incidente da semana passada, o que ela cobra em troca e qual fato apurado a favorece ou a inviabiliza.
 
-    | Dado | Proprietário | Como o outro lado acessa hoje | Como passará a acessar |
+    | Alternativa | O que resolve | O que cobra | Fato decisivo |
     | --- | --- | --- | --- |
-    | `laudo` (conteúdo clínico, assinatura, data de publicação) | Laudos | Notificações lê `paciente_id` e `status` direto da tabela | recebe o evento interno `LaudoPublicado`, com `laudo_id` e `paciente_id` |
-    | `laudo.sms_enviado_em`, `laudo.tentativas_envio` | | | |
-    | `paciente_contato` (telefone, e-mail, preferência de canal) | | | |
+    | A. Tempo limite no envio | a publicação para de travar por lentidão do provedor | mantém as duas capacidades escrevendo a mesma linha, e o aviso continua podendo se perder em silêncio | fato 3, porque a transação segue intacta |
+    | B. Módulos com dono declarado | | | |
+    | C. Módulos com entrega adiada | | | |
+    | D. Notificações como serviço | | | |
 
-2. Nomeie os contexts e os termos centrais de cada capacidade.
-3. Desenhe as interfaces internas e as dependências permitidas entre elas.
-4. Declare o evento interno e a sua semântica: o que ele carrega e em que momento é publicado.
-5. Decida entre manter as duas capacidades como módulos no mesmo processo ou extrair Notificações para um serviço próprio agora, justificando com pelo menos dois dos seis fatos.
-6. Escreva um sinal de revisão observável, isto é, a condição concreta que faria a clínica revisitar a decisão daqui a seis meses. Data no calendário não é sinal.
-7. Se uma fronteira não puder ser justificada pelos fatos, mantenha-a no monólito e registre a hipótese a medir.
+3. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
+4. Declare o risco que a sua recomendação aceita, isto é, o que pode dar errado e a clínica escolheu conviver com isso.
+5. Escreva um sinal de revisão observável, a condição concreta que levaria a clínica a trocar de alternativa. Data no calendário não é sinal.
+6. Se algum fato necessário para decidir não estiver na lista, registre a pergunta que você faria à clínica antes de assinar a recomendação.
 
 **Evidência esperada**
 
-O artefato mostra capacidade, regra, dono do dado, direção de dependência e a razão contextual da escolha, com o mapa de propriedade completo e o sinal de revisão escrito como condição observável.
+O artefato traz o quadro comparativo completo, com ganho e custo declarados para cada uma das quatro alternativas, a recomendação escrita em uma frase, o fato que sustenta a escolha, o risco aceito e o sinal de revisão como condição observável.
 
 **Entrega esperada**
 
-Envie o arquivo `entregas/modulo-3/aplicar-laudos.md` com uma página, o mapa de propriedade completo, um mapa de contexto, duas guardas automatizáveis, uma suposição e um risco.
+Envie o arquivo `entregas/modulo-3/aplicar-laudos.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, a alternativa descartada, o risco aceito e o sinal de revisão.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Limites alinhados às capacidades e invariantes | 30% | Evidência: capacidade e regra; insuficiente: limite técnico arbitrário. |
-| Propriedade de dados explícita | 25% | Evidência: dono do dado; insuficiente: banco compartilhado sem regra. |
-| Dependências e contratos coerentes | 20% | Evidência: direção e contrato; insuficiente: acesso direto oculto. |
-| Decisão ligada aos insumos | 15% | Evidência: insumo citado; insuficiente: decisão sem contexto. |
-| Riscos e sinais de revisão | 10% | Evidência: risco e sinal; insuficiente: revisão sem condição. |
+| Comparação com ganho e custo em cada alternativa | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: alternativa descrita sem custo declarado. |
+| Recomendação sustentada por fato apurado | 25% | Evidência: fato citado pelo número; insuficiente: preferência tecnológica sem base no caso. |
+| Alternativa descartada com motivo | 15% | Evidência: fato que a derruba; insuficiente: descarte por gosto. |
+| Risco aceito declarado | 15% | Evidência: consequência nomeada; insuficiente: recomendação apresentada sem custo. |
+| Sinal de revisão observável | 15% | Evidência: condição mensurável; insuficiente: prazo no calendário. |
 
 ## Analisar
 
