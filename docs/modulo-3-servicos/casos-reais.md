@@ -4,6 +4,16 @@ Entre o toque no play e o primeiro quadro na tela passam cerca de dois segundos.
 
 Nada disso existia em 2008. A história de como passou a existir é uma sequência de decisões que deram errado antes de darem certo, e é isso que a torna útil.
 
+## Pauta de leitura
+
+O caso é longo e a primeira leitura rende mais com três perguntas na mão. Elas ligam a narrativa da Netflix aos três conceitos centrais deste módulo, e são diferentes das questões de revisão do fim da página, que cobram os fatos.
+
+**A.** A migração levou sete anos. Que decisão de **propriedade de dados** aparece no texto como parte dessa demora?
+
+**B.** O Chaos Monkey derruba servidores em produção. Que problema de **falha parcial** ele existe para tornar visível?
+
+**C.** Perder uma região inteira foi tratado como evento esperado, não como acidente. O que isso implica sobre a **consistência** entre réplicas em regiões diferentes?
+
 ## Agosto de 2008: três dias sem enviar DVDs
 
 A Netflix ainda era, em boa medida, uma locadora pelo correio. O anúncio oficial que a empresa publicaria oito anos depois descreve o que aconteceu em uma frase seca: *"We experienced a major database corruption and for three days could not ship DVDs to our members."*
@@ -31,14 +41,14 @@ timeline
     2012 : Open Connect entra no ar com 5% do tráfego
     2013 : Arquitetura ativa-ativa entre regiões
          : Chaos Kong derruba uma região inteira
-    2015 : Per-title encoding
+    2015 : Codificação ajustada título a título
          : Artigo sobre o sistema de recomendação
     2016 : Último componente sai do datacenter próprio
          : Serviço ligado em mais de 130 países
     2018 : Hystrix entra em modo de manutenção
 ```
 
-**Texto alternativo:** linha do tempo da Netflix de 2008 a 2018, marcando a corrupção do banco e o início da migração, o Chaos Monkey e o Isthmus, a entrada do Open Connect, a arquitetura ativa-ativa e o Chaos Kong, o per-title encoding e o artigo de recomendação, a conclusão da migração com a expansão internacional, e o Hystrix em modo de manutenção.
+**Texto alternativo:** linha do tempo da Netflix de 2008 a 2018, marcando a corrupção do banco e o início da migração, o Chaos Monkey e o Isthmus, a entrada do Open Connect, a arquitetura ativa-ativa e o Chaos Kong, a codificação ajustada título a título e o artigo de recomendação, a conclusão da migração com a expansão internacional, e o Hystrix em modo de manutenção.
 
 *Figura 1 — Dez anos de decisões arquiteturais na Netflix. Fonte: curso, a partir das publicações oficiais citadas ao final.*
 
@@ -56,7 +66,7 @@ Há uma pergunta arquitetural embutida aí, e ela reaparece em qualquer empresa:
 
 O Open Connect entrou no ar em 2012, servindo cerca de 5% do tráfego. O desenho é heterodoxo para uma empresa de software.
 
-A Netflix projeta e monta servidores. São duas famílias. O aparelho de armazenamento é um equipamento de duas unidades de rack que a documentação oficial descreve com até 120 TB de capacidade, cerca de 200 Gbps de vazão, consumo aproximado de 400 W e conectividade de seis interfaces de 10 Gbps agregadas ou até duas de 100 Gbps. O aparelho global é menor e mais barato, com até 60 TB, cerca de 80 Gbps e 250 W, projetado explicitamente para provedores menores e mercados emergentes, com meta de *"4-6 year no touch reliability"*.
+A Netflix projeta e monta servidores. São duas famílias. O aparelho de armazenamento é um equipamento de duas unidades de rack que a documentação oficial descreve com até 120 TB de capacidade, cerca de 200 Gbps de vazão, consumo aproximado de 400 W e conectividade de seis interfaces de 10 Gbps agregadas ou até duas de 100 Gbps. O aparelho global é menor e mais barato, com até 60 TB, cerca de 80 Gbps e 250 W, projetado explicitamente para provedores menores e mercados emergentes, projetado para operar de quatro a seis anos sem intervenção presencial.
 
 Esses equipamentos vão para dois lugares. Alguns ficam em instalações da própria Netflix e em locais de interconexão (IXP), que a empresa declara somarem mais de 60 datacenters globais. Outros são embarcados dentro da rede dos provedores de acesso, e aí está a parte incomum: a Netflix entrega o aparelho sem cobrar nada por ele.
 
@@ -76,7 +86,7 @@ Isso só é possível porque o catálogo é conhecido e a demanda é previsível
 
 Entre o arquivo que o estúdio entrega e o que chega ao aparelho existe uma etapa de transcodificação que multiplica o conteúdo. Cada título precisa existir em várias resoluções, várias taxas de bits, vários formatos de áudio, várias legendas e vários envelopes compatíveis com aparelhos que vão de um televisor recente a um celular de entrada.
 
-Em 2015 a Netflix publicou que trocou a escada fixa de taxas de bits por uma análise feita título a título. O raciocínio é simples de enunciar e caro de executar: uma animação com áreas planas de cor e um filme de ação com granulação e movimento rápido não precisam da mesma taxa de bits para atingir a mesma qualidade percebida. Tratar os dois igual desperdiça banda num caso e entrega qualidade ruim no outro.
+Em 2015 a Netflix publicou que trocou a escada fixa de taxas de bits por uma análise feita título a título, técnica que a empresa batizou de *per-title encoding*, ou codificação por título. O raciocínio é simples de enunciar e caro de executar: uma animação com áreas planas de cor e um filme de ação com granulação e movimento rápido não precisam da mesma taxa de bits para atingir a mesma qualidade percebida. Tratar os dois igual desperdiça banda num caso e entrega qualidade ruim no outro.
 
 ## 2011 a 2016: aprender a perder uma região inteira
 

@@ -2,7 +2,7 @@
 
 Em março de 2023, um engenheiro sênior da Amazon publicou no blog técnico do Prime Video um artigo com um título que parecia erro de digitação: **"Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%"**. O subtítulo tirava a dúvida. *"The move from a distributed microservices architecture to a monolith application helped achieve higher scale, resilience, and reduce costs."*
 
-Uma equipe da Amazon havia desmontado uma arquitetura de microsserviços serverless, empacotado tudo num processo único, e cortado mais de 90% do custo de infraestrutura. A internet técnica pegou fogo por semanas.
+Uma equipe da Amazon havia desmontado uma arquitetura de microsserviços *serverless* (sem servidor sob gestão da equipe), empacotado tudo num processo único, e cortado mais de 90% do custo de infraestrutura. A internet técnica pegou fogo por semanas.
 
 O artigo é curto e vale ser lido inteiro. O que ele diz é mais interessante do que a briga que provocou.
 
@@ -16,7 +16,7 @@ O serviço tem três partes. Um conversor de mídia transforma o fluxo de entrad
 
 ## A primeira arquitetura: cada parte no seu quadrado
 
-O desenho inicial fez o que qualquer equipe treinada nos últimos dez anos faria. Componentes distribuídos, serverless, orquestrados por AWS Step Functions, detectores rodando em AWS Lambda, quadros de imagem trafegando por um bucket S3 entre uma etapa e outra.
+O desenho inicial fez o que qualquer equipe treinada nos últimos dez anos faria. Componentes distribuídos e *serverless*, orquestrados por AWS Step Functions, detectores rodando em AWS Lambda, quadros de imagem trafegando por um bucket S3 entre uma etapa e outra.
 
 O artigo defende essa escolha, e a defesa importa: *"which was a good choice for building the service quickly"*. Em teoria, cada componente escalaria de forma independente.
 
@@ -30,7 +30,7 @@ A equipe encontrou dois sorvedouros, e nenhum dos dois está no processamento de
 
 **A orquestração.** O serviço fazia várias transições de estado **por segundo de transmissão**. Isso esbarrou nos limites da conta e, pior, o Step Functions cobra por transição de estado. O custo crescia com a duração do vídeo multiplicada pelo número de fluxos, e não com o trabalho útil de detectar defeito.
 
-**O transporte dos quadros.** Para evitar reconverter o vídeo em cada detector, a equipe fatiava o vídeo em imagens e as depositava temporariamente num bucket S3. Cada detector, rodando como microsserviço separado, baixava as imagens de lá. O artigo aponta o resultado: o volume de chamadas Tier-1 ao S3 ficou caro.
+**O transporte dos quadros.** Para evitar reconverter o vídeo em cada detector, a equipe fatiava o vídeo em imagens e as depositava temporariamente num *bucket* S3, o repositório de objetos da AWS. Cada detector, rodando como microsserviço separado, baixava as imagens de lá. O artigo aponta o resultado: o volume de chamadas da classe Tier-1, a mais cara na tabela de preços do S3, ficou caro.
 
 Vale reter a natureza dos dois custos. Nenhum deles é custo de computar. São custos de **coordenar** e de **mover dados entre fronteiras** — exatamente o que a distribuição introduz e o que o desenho monolítico não tem.
 
@@ -78,9 +78,9 @@ Há ainda uma decisão contraintuitiva que o artigo faz questão de registrar. A
 
 Mais de 90% de redução no custo de infraestrutura. Capacidade de processar milhares de transmissões, com folga para crescer. E a possibilidade de usar planos de economia de EC2, que derrubam o custo mais um pouco.
 
-A conclusão dos autores é bem menos dramática do que a repercussão: *"Microservices and serverless components are tools that do work at high scale, but whether to use them over monolith has to be made on a case-by-case basis."*
+A conclusão dos autores é bem menos dramática do que a repercussão: *"Microservices and serverless components are tools that do work at high scale, but whether to use them over monolith has to be made on a case-by-case basis."* Em português: microsserviços e componentes sem servidor funcionam em grande escala, e a escolha entre eles e o monólito precisa ser feita caso a caso.
 
-O artigo trata de **um** serviço, de **uma** equipe, dentro do Prime Video. Ele não afirma que a Amazon abandonou microsserviços, não fala do Prime Video inteiro, e não declara vencedor entre os estilos. Metade da polêmica de 2023 foi discussão sobre um texto que os participantes não tinham lido.
+O escopo do artigo é **um** serviço de **uma** equipe dentro do Prime Video. A conclusão nunca é estendida ao Prime Video inteiro, e o texto se recusa a eleger um vencedor entre os estilos. Metade da polêmica de 2023 foi discussão sobre um artigo que os participantes não tinham lido.
 
 ## Questões para discussão
 

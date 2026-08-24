@@ -82,17 +82,17 @@ A unidade de paralelismo é a partição, e a ordem é garantida dentro dela. Es
 
 ## A escala, e o que ela revela
 
-A publicação oficial de engenharia sobre a customização do Kafka afirma: *"We maintain over 100 Kafka clusters with more than 4,000 brokers, which serve more than 100,000 topics and 7 million partitions"*, processando mais de 7 trilhões de mensagens por dia.
+A publicação oficial de engenharia sobre a customização do Kafka afirma: *"We maintain over 100 Kafka clusters with more than 4,000 brokers, which serve more than 100,000 topics and 7 million partitions"*, processando mais de 7 trilhões de mensagens por dia. Em números redondos: mais de cem *clusters*, quatro mil *brokers*, cem mil tópicos e sete milhões de partições.
 
 Ler esse número como troféu desperdiça o caso. O que ele revela é uma decisão de topologia que quase nunca aparece nos resumos.
 
-O texto "Running Kafka At Scale", também publicado pela engenharia do LinkedIn, descreve o desenho em duas camadas. Para cada categoria de mensagem existe um agrupamento **local**, contendo o que foi produzido naquele datacenter, e um agrupamento **agregador**, que combina as mensagens de todos os agrupamentos locais daquela categoria. A cópia de um para o outro é feita por espelhamento.
+O texto "Running Kafka At Scale", também publicado pela engenharia do LinkedIn, descreve o desenho em duas camadas. Para cada categoria de mensagem existe um *cluster* **local**, um conjunto de servidores Kafka que contém o que foi produzido naquele datacenter, e um *cluster* **agregador**, que combina as mensagens de todos os *clusters* locais daquela categoria. A cópia de um para o outro é feita por espelhamento.
 
-A razão é contenção de domínio de falha e controle do tráfego entre datacenters. Um agrupamento único dessa dimensão transformaria qualquer incidente local em incidente global.
+A razão é contenção de domínio de falha e controle do tráfego entre datacenters. Um *cluster* único dessa dimensão transformaria qualquer incidente local em incidente global.
 
 ## O custo que a empresa assumiu
 
-Operar Kafka nessa escala exigiu construir ferramental que não existia. A publicação oficial cita três peças abertas depois: o **Cruise Control**, para manutenção e recuperação automática do agrupamento; o **Brooklin**, para espelhamento entre agrupamentos; e o **Bean Counter**, para auditoria de completude dos fluxos.
+Operar Kafka nessa escala exigiu construir ferramental que não existia. A publicação oficial cita três peças abertas depois: o **Cruise Control**, para manutenção e recuperação automática do *cluster*; o **Brooklin**, para espelhamento entre *clusters*; e o **Bean Counter**, para auditoria de completude dos fluxos.
 
 Essa é a parte que uma equipe pequena precisa levar a sério. A adoção do Kafka **move** trabalho. Sai a coordenação de chamadas síncronas e entra a operação de um sistema de armazenamento distribuído, com particionamento, replicação, atraso de consumo e evolução de esquema. Este módulo trata a contraparte disso em [esquema, compatibilidade e evolução](padroes-e-decisoes.md#esquema-compatibilidade-e-evolucao) e em [dead-letter queue](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito).
 
@@ -115,7 +115,7 @@ Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os f
 ## Fontes
 
 - Jay Kreps, Neha Narkhede e Jun Rao, [Kafka: a Distributed Messaging System for Log Processing](https://notes.stephenholiday.com/Kafka.pdf) — artigo apresentado no NetDB Workshop em 2011, com a motivação e o desenho do log distribuído.
-- LinkedIn Engineering, [How LinkedIn customizes Apache Kafka for 7 trillion messages per day](https://www.linkedin.com/blog/engineering/open-source/apache-kafka-trillion-messages) — origem dos números de agrupamentos, corretores, tópicos e partições, e do ferramental aberto.
+- LinkedIn Engineering, [How LinkedIn customizes Apache Kafka for 7 trillion messages per day](https://www.linkedin.com/blog/engineering/open-source/apache-kafka-trillion-messages) — origem dos números de *clusters*, *brokers*, tópicos e partições, e do ferramental aberto.
 - LinkedIn Engineering, [Running Kafka At Scale](https://engineering.linkedin.com/kafka/running-kafka-scale) — descrição oficial dos agrupamentos locais e agregadores.
 - Josh Clemm, **A Brief History of Scaling LinkedIn** — relato oficial de engenharia sobre Leo, a iniciativa "Kill Leo", o Rest.li e o Inversion. O LinkedIn retirou a página do ar; use a [cópia arquivada](https://web.archive.org/web/20260516082245/https://engineering.linkedin.com/architecture/brief-history-scaling-linkedin) ou a [versão mantida pelo autor](https://joshclemm.com/writing/a-brief-history-of-scaling-linkedin/).
 - Jay Kreps, [The Log: What every software engineer should know about real-time data's unifying abstraction](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying) — o argumento conceitual do log como abstração de integração.

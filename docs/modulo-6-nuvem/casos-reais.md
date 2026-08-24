@@ -4,13 +4,13 @@
 
 Cancelou um ou dois segundos depois de perceber. Dos 310 GB do banco de produção do GitLab.com, restaram **4,5 GB**.
 
-O que aconteceu nas horas seguintes é o motivo pelo qual este caso é ensinado. O GitLab tinha cinco mecanismos de recuperação. Nenhum funcionava. E, em vez de esconder, a empresa transmitiu a recuperação ao vivo no YouTube e publicou um post-mortem completo, com nome dos comandos, horários e as próprias falhas de processo.
+O que aconteceu nas horas seguintes é o motivo pelo qual este caso é ensinado. O GitLab tinha cinco mecanismos de recuperação. Nenhum funcionava. E, em vez de esconder, a empresa transmitiu a recuperação ao vivo no YouTube e publicou um *post-mortem* completo, o relatório aberto de análise do incidente, com nome dos comandos, horários e as próprias falhas de processo.
 
 ## O que estava acontecendo antes
 
 O incidente não começou com o comando errado. Começou com uma sequência de coisas menores, cada uma inofensiva sozinha.
 
-O GitLab.com rodava com **um primário e uma réplica** em espera quente, usada apenas para failover. Um único banco aguentava toda a carga, e o post-mortem reconhece que isso não era ideal.
+O GitLab.com rodava com **um primário e uma réplica** em espera quente, usada apenas para *failover*, a assunção automática do papel de primário. Um único banco aguentava toda a carga, e o *post-mortem* reconhece que isso não era ideal.
 
 Às 17h20 daquele dia, um engenheiro tirou um instantâneo LVM do banco de produção para carregar no ambiente de teste — ele queria uma cópia mais recente que a automática das 01h00, para testar o pgpool-II.
 
@@ -26,7 +26,7 @@ A equipe aumentou `max_wal_senders` de 3 para 32. O PostgreSQL então se recusou
 
 O `pg_basebackup` continuou sem iniciar a replicação. Um engenheiro rodou `strace` e viu o processo parado numa chamada `poll`, sem mais informação.
 
-Aqui está o detalhe cruel. O post-mortem revela depois que **aquele era o comportamento normal**: o `pg_basebackup` espera silenciosamente até o primário começar a enviar dados de replicação. Nenhum runbook da empresa registrava isso, e a documentação oficial da ferramenta também não deixava claro.
+Aqui está o detalhe cruel. O *post-mortem* revela depois que **aquele era o comportamento normal**: o `pg_basebackup` espera silenciosamente até o primário começar a enviar dados de replicação. Nenhum *runbook* da empresa, o roteiro operacional que a equipe segue em plantão, registrava isso, e a documentação oficial da ferramenta também não deixava claro.
 
 Um engenheiro, achando que tentativas anteriores tinham deixado arquivos no diretório, decidiu limpá-lo. No servidor errado.
 
@@ -34,11 +34,11 @@ Um engenheiro, achando que tentativas anteriores tinham deixado arquivos no dire
 
 A parte que transforma um erro humano em desastre é a seguinte. O GitLab tinha, no papel, cinco formas de recuperar.
 
-**Réplica PostgreSQL.** Existia apenas para failover. A essa altura a replicação estava quebrada e os dados já tinham sido apagados dos dois lados.
+**Réplica PostgreSQL.** Existia apenas para *failover*. A essa altura a replicação estava quebrada e os dados já tinham sido apagados dos dois lados.
 
-**Backup diário com `pg_dump` para o S3.** O bucket estava vazio. A causa é um clássico de configuração: o procedimento rodava `pg_dump` 9.2 contra um banco PostgreSQL 9.6. Diferença de versão maior faz o `pg_dump` abortar com erro. Isso acontecia porque o backup era executado em um servidor de aplicação comum, onde não existe diretório de dados do PostgreSQL, e o empacotamento do GitLab, sem conseguir detectar a versão, assumia 9.2 como padrão.
+**Backup diário com `pg_dump` para o S3.** O *bucket*, o repositório de objetos onde as cópias eram guardadas, estava vazio. A causa é um clássico de configuração: o procedimento rodava `pg_dump` 9.2 contra um banco PostgreSQL 9.6. Diferença de versão maior faz o `pg_dump` abortar com erro. Isso acontecia porque o backup era executado em um servidor de aplicação comum, onde não existe diretório de dados do PostgreSQL, e o empacotamento do GitLab, sem conseguir detectar a versão, assumia 9.2 como padrão.
 
-**E o alerta desse erro?** As tarefas agendadas notificavam falha por e-mail. O GitLab.com usa DMARC, e o DMARC não estava configurado para os e-mails dessas tarefas. As mensagens eram rejeitadas pelo destinatário. O post-mortem resume: *"This means we were never aware of the backups failing, until it was too late."*
+**E o alerta desse erro?** As tarefas agendadas notificavam falha por e-mail. O GitLab.com usa DMARC, e o DMARC não estava configurado para os e-mails dessas tarefas. As mensagens eram rejeitadas pelo destinatário. O *post-mortem* resume: *"This means we were never aware of the backups failing, until it was too late."*
 
 **Instantâneos de disco do Azure.** Estavam habilitados nos servidores de arquivos, e **não** nos servidores de banco, porque a equipe presumia que os outros mecanismos bastavam.
 
@@ -51,14 +51,14 @@ flowchart TB
     A[Apagamento do diretório do primário] --> B{Réplica?}
     B -- replicação quebrada --> C{pg_dump no S3?}
     C -- bucket vazio, versão errada --> D{Alerta do backup?}
-    D -- e-mail rejeitado por DMARC --> E{Snapshot Azure?}
-    E -- não habilitado no banco --> F{Snapshot LVM?}
+    D -- e-mail rejeitado por DMARC --> E{Instantâneo Azure?}
+    E -- não habilitado no banco --> F{Instantâneo LVM?}
     F -- existe, tirado por acaso 6h antes --> G[Recuperação com 6h de perda]
 ```
 
 **Texto alternativo:** fluxo que parte do apagamento do diretório do primário e percorre cinco mecanismos de recuperação. A réplica falha por replicação quebrada, o backup em S3 por bucket vazio e versão incompatível, o alerta do backup por e-mail rejeitado, o instantâneo do Azure por não estar habilitado no banco, e apenas o instantâneo LVM tirado por acaso seis horas antes permite recuperar, com perda de seis horas de dados.
 
-*Figura 1 — Os cinco caminhos de recuperação do GitLab e onde cada um parou. Fonte: curso, a partir do post-mortem oficial de 10 de fevereiro de 2017.*
+*Figura 1 — Os cinco caminhos de recuperação do GitLab e onde cada um parou. Fonte: curso, a partir do *post-mortem* oficial de 10 de fevereiro de 2017.*
 
 **Leitura textual da figura:** cada losango é um mecanismo que existia na documentação da empresa e falhou por um motivo diferente. Três das cinco falhas são silenciosas: ninguém sabia que o backup não rodava, que o alerta não chegava, nem que o instantâneo não cobria o banco. O único caminho que funcionou não tinha sido projetado para essa finalidade.
 
@@ -68,21 +68,21 @@ Restaurar o instantâneo LVM parece simples e não foi.
 
 O ambiente de teste do GitLab rodava em Azure clássico, sem armazenamento premium, escolha feita para economizar. Os discos eram de rede e limitados a cerca de 60 Mbps. Copiar o diretório de dados do ambiente de teste para o de produção **levou aproximadamente 18 horas**. Não havia gargalo de rede nem de processador; o gargalo eram os discos, e não existia caminho para mover aquilo para armazenamento mais rápido.
 
-Em 1º de fevereiro, às 17h00 UTC, o banco foi restaurado ao estado de 31 de janeiro às 17h20. Um detalhe do processo merece registro: como o procedimento de cópia para o ambiente de teste **remove os webhooks** para não disparar chamadas por acidente, a equipe teve de montar um segundo banco a partir do mesmo instantâneo, sem essa remoção, só para recuperá-los. E incrementou todas as sequências do banco em 100.000, para que nenhum identificador já usado fosse reaproveitado.
+Em 1º de fevereiro, às 17h00 UTC, o banco foi restaurado ao estado de 31 de janeiro às 17h20. Um detalhe do processo merece registro: como o procedimento de cópia para o ambiente de teste **remove os *webhooks*** (as chamadas automáticas que o sistema dispara para endereços externos) para não disparar chamadas por acidente, a equipe teve de montar um segundo banco a partir do mesmo instantâneo, sem essa remoção, só para recuperá-los. E incrementou todas as sequências do banco em 100.000, para que nenhum identificador já usado fosse reaproveitado.
 
 ## O que se perdeu
 
 Modificações feitas entre 17h20 e 00h00 UTC de 31 de janeiro. A estimativa da empresa: cerca de **5.000 projetos, 5.000 comentários e 700 contas novas**. Repositórios de código e wikis ficaram indisponíveis durante a interrupção, e não foram afetados pela perda de dados.
 
-O post-mortem abre com uma frase que vale pelo documento inteiro: *"Losing production data is unacceptable."* E o executivo-chefe pede desculpas em nome próprio e da empresa, no texto.
+O *post-mortem* abre com uma frase que vale pelo documento inteiro: *"Losing production data is unacceptable."* E o executivo-chefe pede desculpas em nome próprio e da empresa, no texto.
 
-## Por que isso é um caso de arquitetura de nuvem
+## As três decisões arquiteturais anteriores ao incidente
 
 É tentador ler o caso como erro humano, e essa leitura não ensina nada. Um engenheiro cansado às 23h vai digitar o comando errado, mais cedo ou mais tarde. A arquitetura é o que decide se isso vira incidente ou catástrofe.
 
 Três decisões arquiteturais aparecem no relato, todas anteriores ao incidente.
 
-Um único primário concentrando toda a carga, com a réplica servindo apenas para failover, sem nenhum mecanismo pensado para recuperação de desastre.
+Um único primário concentrando toda a carga, com a réplica servindo apenas para *failover*, sem nenhum mecanismo pensado para recuperação de desastre.
 
 Backup tratado como tarefa agendada em vez de capacidade verificada. Ninguém tinha restaurado um backup recentemente, e por isso ninguém sabia que não havia backup.
 

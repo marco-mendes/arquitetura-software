@@ -2,7 +2,7 @@
 
 Em 1º de agosto de 2012, às 9h30 da manhã, a bolsa de Nova York abriu. Quarenta e cinco minutos depois, a Knight Capital Americas tinha comprado e vendido 397 milhões de ações que ninguém pediu, acumulado uma posição não intencional de bilhões de dólares e perdido mais de **460 milhões**. A empresa, que respondia por cerca de 10% do volume negociado em ações listadas nos Estados Unidos, foi vendida meses depois.
 
-A causa não foi um ataque, nem uma falha de hardware, nem um algoritmo mal calibrado. Foi um deploy manual em oito servidores no qual um técnico esqueceu um.
+A causa não foi um ataque, nem uma falha de hardware, nem um algoritmo mal calibrado. Foi uma implantação manual em oito servidores na qual um técnico esqueceu um.
 
 O relato a seguir vem da ordem administrativa que a SEC publicou em 16 de outubro de 2013. É um documento regulatório, com o detalhe técnico apurado e as datas confirmadas, e é raro ter uma fonte dessa qualidade sobre um incidente de software.
 
@@ -24,17 +24,17 @@ O código morto perdeu o freio, e ninguém testou porque ninguém pretendia cham
 
 Ficou assim por sete anos.
 
-## Julho de 2012: a flag é reaproveitada
+## Julho de 2012: a *flag* é reaproveitada
 
 A bolsa de Nova York lançaria em 1º de agosto de 2012 o Retail Liquidity Program. Para participar, a Knight escreveu código novo no SMARS.
 
-Duas decisões de implementação se combinaram. O código novo foi escrito para ocupar o lugar do código não usado do Power Peg. E **reaproveitou a mesma flag** que antigamente ativava o Power Peg. A intenção era apagar o Power Peg, de modo que a flag ligada passasse a acionar a funcionalidade nova.
+Duas decisões de implementação se combinaram. O código novo foi escrito para ocupar o lugar do código não usado do Power Peg. E **reaproveitou a mesma *flag*** que antigamente ativava o Power Peg, isto é, o mesmo sinalizador de configuração. A intenção era apagar o Power Peg, de modo que a *flag* ligada passasse a acionar a funcionalidade nova.
 
 A partir de 27 de julho, o código foi implantado em etapas, em alguns servidores por dia. E então:
 
 > *"During the deployment of the new code, however, one of Knight's technicians did not copy the new code to one of the eight SMARS computer servers. Knight did not have a second technician review this deployment and no one at Knight realized that the Power Peg code had not been removed from the eighth server, nor the new RLP code added. Knight had no written procedures that required such a review."*
 
-Sete servidores com o código novo. Um servidor com o código de 2003, sem freio, e uma flag que agora seria ligada por ordens de clientes reais.
+Sete servidores com o código novo. Um servidor com o código de 2003, sem freio, e uma *flag* que agora seria ligada por ordens de clientes reais.
 
 ## 8h01: o sistema avisa 97 vezes
 
@@ -48,7 +48,7 @@ Noventa e sete avisos, com o nome do subsistema e o nome exato da funcionalidade
 
 ## 9h30: quarenta e cinco minutos
 
-O mercado abriu. As ordens chegaram com a flag ligada. Os sete servidores corretos processaram normalmente. O oitavo acionou o Power Peg.
+O mercado abriu. As ordens chegaram com a *flag* ligada. Os sete servidores corretos processaram normalmente. O oitavo acionou o Power Peg.
 
 Como a função de quantidade acumulada tinha sido movida em 2005, esse servidor passou a enviar ordens filhas em sequência rápida para cada ordem que entrava, sem considerar quantas execuções já tinham voltado. Outra parte do sistema sabia que as ordens já estavam preenchidas, e essa informação não chegava ao SMARS.
 
@@ -66,7 +66,7 @@ Numa das tentativas de correção, a equipe **desinstalou o código novo dos set
 
 > *"This action worsened the problem, causing additional incoming parent orders to activate the Power Peg code that was present on those servers, similar to what had already occurred on the eighth server."*
 
-A hipótese era razoável: o problema apareceu depois do deploy, então reverter o deploy deveria resolver. Estava errada, porque o defeito não estava no código novo. Estava no código antigo que o novo deveria ter apagado. Reverter transformou um servidor defeituoso em oito.
+A hipótese era razoável: o problema apareceu depois da implantação, então reverter a implantação deveria resolver. Estava errada, porque o defeito não estava no código novo. Estava no código antigo que o novo deveria ter apagado. Reverter transformou um servidor defeituoso em oito.
 
 ## Os controles que existiam e não pararam nada
 
@@ -100,10 +100,10 @@ Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os f
 
 **4.** A reversão do código novo nos sete servidores corretos piorou o incidente. Explique o raciocínio que levou a essa ação e identifique em que suposição ele estava errado.
 
-**5.** Compare os três controles que existiam — o limite da Conta 33, o PMON e o teto de 9,5% no preço — quanto ao que cada um observava e ao que cada um era capaz de interromper.
+**5.** Compare os três controles que existiam (o limite da Conta 33, o PMON e o teto de 9,5% no preço) quanto ao que cada um observava e ao que cada um era capaz de interromper.
 
 ## Fontes
 
 - U.S. Securities and Exchange Commission, [In the Matter of Knight Capital Americas LLC — Release No. 34-70694, Administrative Proceeding File No. 3-15570](https://www.sec.gov/litigation/admin/2013/34-70694.pdf) — 16 de outubro de 2013. Fonte primária de toda a cronologia, de todas as citações e de todos os números deste caso.
 - SEC, [Rule 15c3-5 — Risk Management Controls for Brokers or Dealers with Market Access](https://www.sec.gov/rules/final/2010/34-63241.pdf) — a regra que a Knight violou, útil para ver como um regulador descreve controles de risco em sistemas automatizados.
-- NYSE, [Release No. 34-67347](https://www.sec.gov/rules/sro/nyse/2012/34-67347.pdf) — aprovação do Retail Liquidity Program, o programa cuja data de início criou o prazo do deploy.
+- NYSE, [Release No. 34-67347](https://www.sec.gov/rules/sro/nyse/2012/34-67347.pdf) — aprovação do Retail Liquidity Program, o programa cuja data de início criou o prazo da implantação.

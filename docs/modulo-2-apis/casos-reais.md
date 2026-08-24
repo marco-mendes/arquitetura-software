@@ -24,7 +24,7 @@ Quem tinha um cliente em produção nesse momento enfrentou uma decisão difíci
 
 ## Agosto de 2012: a restrição vira código
 
-A versão 1.1 da API tornou a intenção executável. As mudanças anunciadas em 16 de agosto de 2012 incluíam autenticação obrigatória em todos os *endpoints*, limites de taxa recalculados por *endpoint* em vez de globais, e uma regra nova que atingia especificamente uma categoria de aplicativo.
+A versão 1.1 da API tornou a intenção executável. As mudanças anunciadas em 16 de agosto de 2012 incluíam autenticação obrigatória em todos os *endpoints* (os endereços que a API expõe), limites de taxa recalculados por *endpoint* em vez de globais, e uma regra nova que atingia especificamente uma categoria de aplicativo.
 
 Clientes de terceiros passaram a ter teto de **100 mil tokens de usuário**. Um aplicativo que atingisse cem mil usuários precisava negociar diretamente com o Twitter para crescer. Quem já estava acima do teto ganhou espaço até o dobro da base daquele momento, e nada além disso.
 
