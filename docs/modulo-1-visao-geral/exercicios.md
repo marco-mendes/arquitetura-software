@@ -104,58 +104,85 @@ Porque depende de detalhes privados, aumenta acoplamento e incentiva core creep.
 
 ## Aplicar
 
+### Recomendar um estilo para o motor de regras de reajuste
+
 **Objetivo**
 
-Executar o comparador didático de estilos e explicar por que sua saída é uma evidência parcial, não uma decisão automática.
+Recomendar um entre quatro estilos arquiteturais para um componente descrito, declarando o que cada um ganha, o que cobra e qual atributo de qualidade decide.
 
 **Situação**
 
-Uma capacidade administrativa possui validação comum e etapa opcional por unidade; a regra varia mensalmente.
+Uma operadora de saúde calcula o reajuste anual dos contratos coletivos. O cálculo aplica uma sequência de regras: índice legal do ano, faixa etária dos beneficiários, sinistralidade do contrato, descontos negociados e arredondamento contratual. Hoje tudo isso vive num único método de 900 linhas, dentro do serviço que emite o boleto.
+
+Quando a lei muda o índice, alguém edita esse método. Quando um cliente grande negocia um desconto diferente, alguém acrescenta um `if`. O time perdeu a conta de quantas regras existem, e ninguém consegue dizer, olhando um cálculo pronto, quais regras foram aplicadas e em que ordem.
+
+A diretoria pediu uma recomendação de estrutura antes da próxima virada de índice.
 
 **Seu papel**
 
-Você transforma a necessidade em forças verificáveis e interpreta a execução.
+Você é a pessoa arquiteta chamada para recomendar a estrutura. A equipe implementa depois, e espera de você a escolha, a justificativa e os riscos.
 
 **Artefato que você irá usar**
 
-Em `laboratorios/plataforma-hospitalar`, `src/hospital/estilos.py` compara quatro estilos por forças, limites e evidências. `tests/test_estilos.py` verifica o comparador. Não há dados reais ou conexão externa.
-
-**Insumos disponíveis**
-
-Use o código, seus testes, a [oficina](oficina-de-ferramentas.md) e o [template de ADR](../referencia/template-adr.md).
+Crie `entregas/unidade-1/aplicar-motor-de-regras.md`, a partir da raiz do repositório `arquitetura-software`, e use as descrições de estilos em `docs/modulo-1-visao-geral/padroes-e-decisoes.md`.
 
 **Antes de executar**
 
-Abra o terminal em `laboratorios/plataforma-hospitalar`. Siga a preparação da [oficina](oficina-de-ferramentas.md) até existir `.venv` e `python --version` e `python -m pytest --version` funcionarem. Leia os dois arquivos: o comparador recebe prioridades e retorna uma lista; não mede produção.
+Crie o diretório `entregas/unidade-1/`; o estado inicial é sem execução de laboratório e sem alteração dos exemplos do repositório.
 
-**Como conduzir**
+Seis fatos foram apurados na operadora:
 
-Verifique o ambiente, registre a execução e só então argumente.
+1. O índice legal muda uma vez por ano; descontos negociados mudam várias vezes por ano.
+2. A equipe tem seis pessoas e faz uma implantação por semana, com tudo junto.
+3. A auditoria exige saber, para cada cálculo já emitido, quais regras foram aplicadas e em que ordem.
+4. O volume é de alguns milhares de cálculos por dia, sem pico previsto.
+5. Acrescentar uma regra hoje exige alterar o método e reimplantar o sistema inteiro.
+6. Ninguém pediu para trocar uma regra com o sistema no ar.
+
+As quatro alternativas em avaliação:
+
+| Alternativa | O que muda na estrutura |
+| --- | --- |
+| **A. Camadas** | O cálculo vira um serviço de domínio na camada de negócio, chamado pela camada de aplicação. Uma classe por grupo de regras, todas dentro do mesmo serviço. |
+| **B. Pipes and Filters** | Cada regra vira um filtro independente. O cálculo é a passagem do contrato por uma sequência de filtros, e cada filtro registra o que alterou. |
+| **C. Microkernel** | Um núcleo estável executa o cálculo e consulta um registro de regras. Cada regra é um plugin que se declara ao núcleo por um contrato fixo. |
+| **D. Monólito modular** | O motor de regras vira um módulo com fronteira verificada na esteira de integração, dentro da mesma implantação, com interface própria. |
 
 **O que fazer**
 
-1. Crie `evidencias` na raiz do laboratório.
-2. Execute `python -m pytest tests/test_estilos.py -q` e guarde a saída em `evidencias/testes-estilos.txt` conforme a oficina.
-3. Crie `evidencias/comparacao.py` para prioridades `modificabilidade` e `extensibilidade`; importe e imprima `comparar_estilos`.
-4. Registre primeira alternativa, força, limite, evidência e um cenário com estímulo, resposta e medida.
-5. Copie o [template de ADR](../referencia/template-adr.md) para `evidencias/ADR-001-estilo-inicial.md` e registre alternativas, consequência e revisão.
+1. Recomende **um** dos quatro estilos para a operadora agora, em uma frase.
+2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+
+    | Alternativa | O que resolve | O que cobra | Fato decisivo |
+    | --- | --- | --- | --- |
+    | A. Camadas | organiza a dependência e separa o cálculo da emissão | o método continua sendo um bloco só; nada torna visível a sequência de regras aplicada | fato 3, que continua sem resposta |
+    | B. Pipes and Filters | | | |
+    | C. Microkernel | | | |
+    | D. Monólito modular | | | |
+
+3. Nomeie o atributo de qualidade que decide a sua recomendação e escreva um cenário para ele com estímulo, resposta e medida.
+4. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
+5. Declare o risco que a sua recomendação aceita, isto é, o que pode dar errado e a operadora escolheu conviver com isso.
+6. Escreva o sinal observável que levaria a operadora a trocar de estilo. Data no calendário não é sinal.
+7. Se algum fato necessário para decidir não estiver na lista, registre a pergunta que você faria antes de assinar a recomendação.
 
 **Evidência esperada**
 
-`3 passed`, script, saída e ADR. Microkernel pode surgir primeiro, mas a tabela não substitui o limite de compatibilidade de plugins.
+O artefato traz o quadro comparativo completo, com ganho e custo declarados para os quatro estilos, a recomendação em uma frase, o cenário de qualidade com medida, o fato que sustenta a escolha, o risco aceito e o sinal de revisão como condição observável.
 
 **Entrega esperada**
 
-Entregue `evidencias` e um parágrafo sobre o que o comparador não mede.
+Envie `entregas/unidade-1/aplicar-motor-de-regras.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, o cenário de qualidade, a alternativa descartada, o risco aceito e o sinal de revisão.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Execução reproduzível | 25% | Evidência: comando, saída e cenário; insuficiência: arquivo sem contexto. |
-| Cenário de qualidade | 25% | Evidência: estímulo, resposta e medida; insuficiência: qualidade vaga. |
-| Comparação responsável | 30% | Evidência: força e limite ligados; insuficiência: tabela tratada como oráculo. |
-| Decisão revisável | 20% | Evidência: consequência e gatilho; insuficiência: ADR sem revisão. |
+| Comparação com ganho e custo nos quatro estilos | 30% | Evidência: as duas colunas preenchidas para os quatro; insuficiente: estilo descrito sem custo declarado. |
+| Recomendação sustentada por fato apurado | 25% | Evidência: fato citado pelo número; insuficiente: preferência técnica sem base no caso. |
+| Cenário de qualidade com medida | 15% | Evidência: estímulo, resposta e medida; insuficiente: adjetivo como "flexível" sem medida. |
+| Alternativa descartada com motivo | 15% | Evidência: fato que a derruba; insuficiente: descarte por gosto. |
+| Risco aceito e sinal de revisão | 15% | Evidência: consequência nomeada e condição observável; insuficiente: prazo no calendário. |
 
 ## Analisar
 

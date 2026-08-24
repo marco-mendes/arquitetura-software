@@ -88,57 +88,84 @@ Que uma decisão publicada, sua configuração e uma execução observada podem 
 
 ## Aplicar
 
-### Publicar uma rota de resultado de exame
+### Recomendar onde aplicar a política de limite e correlação
 
 **Objetivo**
 
-Preparar uma política inicial para Resultados que seja declarada, limitada e verificável.
+Recomendar um entre quatro lugares para aplicar uma política de governança, declarando o que cada opção ganha, o que cobra e o que deixa descoberto.
 
 **Situação**
 
-Resultados contém dado de saúde, possui consumidor móvel autenticado, precisa suportar picos e mantém a decisão de vínculo clínico no serviço.
+Uma plataforma hospitalar tem seis serviços mantidos por três equipes. A diretoria de tecnologia aprovou duas políticas: toda chamada carrega um identificador de correlação que atravessa a cadeia inteira, e nenhum consumidor ultrapassa três chamadas por segundo por origem.
+
+As políticas estão escritas e ninguém consegue provar que valem. Cada equipe entende a regra de um jeito, dois serviços já implementaram versões diferentes do limite, e o identificador de correlação se perde em algum lugar do meio da cadeia sem que ninguém saiba onde.
+
+A diretoria pediu uma recomendação de onde a política deve morar.
 
 **Seu papel**
 
-Você prepara a proposta de owner do serviço.
+Você é a pessoa arquiteta responsável pela recomendação. As três equipes implementam depois, e esperam de você a escolha e o que ela deixa em aberto.
 
 **Artefato que você irá usar**
 
-Crie `<raiz-do-clone>/entregas/modulo-4/aplicar-resultados.md`, usando `docs/modulo-4-governanca/padroes-e-decisoes.md` e `laboratorios/plataforma-hospitalar/infra/kong/kong.yml` como referência, sem alterar o laboratório.
+Crie `entregas/modulo-4/aplicar-onde-mora-a-politica.md`, a partir da raiz do clone, e use as comparações de `docs/modulo-4-governanca/padroes-e-decisoes.md`.
 
 **Antes de executar**
 
-O estado inicial é Kong DB-less com uma réplica local, Collector, Jaeger e a convenção `X-Correlation-ID`; não há tráfego real nesta atividade.
+Crie o diretório `entregas/modulo-4/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
 
-**Insumos disponíveis**
+Seis fatos foram apurados na plataforma:
 
-Contrato de Resultados, catálogo em Markdown e políticas da oficina.
+1. Os seis serviços usam três linguagens diferentes.
+2. A política precisa valer também nas chamadas entre serviços internos, e não apenas no tráfego que entra.
+3. A operação de plataforma tem duas pessoas.
+4. Uma auditoria externa exige provar, serviço por serviço, que o limite estava ativo numa data passada.
+5. Não existe malha de serviços instalada, e instalar exigiria janela de manutenção nos seis serviços.
+6. O tráfego que entra passa integralmente por um gateway já em produção.
+
+As quatro alternativas em avaliação:
+
+| Alternativa | Onde a política é aplicada |
+| --- | --- |
+| **A. Em cada serviço** | Cada equipe implementa o limite e a propagação no próprio código, seguindo a política escrita. |
+| **B. Biblioteca compartilhada** | Uma biblioteca de chassi implementa a política, e todos os serviços a incorporam como dependência. |
+| **C. Gateway de borda** | O gateway que já existe aplica o limite e injeta o identificador de correlação antes de rotear. |
+| **D. Malha de serviços** | Um *sidecar* ao lado de cada serviço aplica a política, fora do código da aplicação. |
 
 **O que fazer**
 
-1. Registre owner, contrato, consumidores, dados e versão.
-2. Proponha rota, chave, janela, consequência de `429` e fronteira de domínio.
-3. Desenhe a propagação de `correlation_id` e trace.
-4. Declare um gatilho de revisão do limite.
-5. Se a política não puder ser verificada com dados sintéticos, mantenha-a como hipótese e registre o teste pendente.
+1. Recomende **uma** das quatro alternativas para a plataforma agora, em uma frase.
+2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+
+    | Alternativa | O que resolve | O que cobra | Fato decisivo |
+    | --- | --- | --- | --- |
+    | A. Em cada serviço | alcança também as chamadas internas, sem infraestrutura nova | seis implementações para manter e seis provas independentes para a auditoria | fato 4, que multiplica o custo de comprovação |
+    | B. Biblioteca compartilhada | | | |
+    | C. Gateway de borda | | | |
+    | D. Malha de serviços | | | |
+
+3. Nomeie explicitamente o que a sua recomendação **deixa descoberto** em relação ao fato 2, e diga como a auditoria do fato 4 seria atendida mesmo assim.
+4. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
+5. Declare o risco que a sua recomendação aceita e escreva o sinal observável que levaria a rever a decisão.
+6. Se a política recomendada não puder ser verificada com dados sintéticos no laboratório, registre-a como hipótese e nomeie o teste pendente.
 
 **Evidência esperada**
 
-Política observada: limite de entrada; arquivo: `<raiz-do-clone>/entregas/modulo-4/aplicar-resultados.md`; serviço que a recebe: Resultados via gateway; saída: uma chamada automatizável com `429`, `X-Correlation-ID` e trace consultável.
+O artefato traz o quadro comparativo completo, a recomendação em uma frase, a lacuna declarada em relação às chamadas internas, o caminho de comprovação para a auditoria, a alternativa descartada com o fato que a derruba, o risco aceito e o sinal de revisão observável.
 
 **Entrega esperada**
 
-Envie o arquivo com uma página, política, mapa de fluxo, hipótese e risco.
+Envie `entregas/modulo-4/aplicar-onde-mora-a-politica.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, a lacuna declarada, o risco aceito e o sinal de revisão.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Catálogo e ownership explícitos | 20% | Evidência: dono e consumidor; insuficiente: API sem responsável. |
-| Política de borda coerente | 25% | Evidência: regra declarada; insuficiente: política sem risco associado. |
-| Regra de domínio preservada | 25% | Evidência: serviço decide regra; insuficiente: gateway decide domínio. |
-| Evidência de correlação e trace | 20% | Evidência: identificador e trace; insuficiente: sinais não relacionados. |
-| Condição de revisão | 10% | Evidência: limiar de revisão; insuficiente: política permanente sem gatilho. |
+| Comparação com ganho e custo nas quatro alternativas | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: opção listada sem custo. |
+| Lacuna declarada em vez de escondida | 25% | Evidência: o que fica descoberto, nomeado; insuficiente: recomendação apresentada como cobertura total. |
+| Recomendação sustentada por fato apurado | 20% | Evidência: fato citado pelo número; insuficiente: escolha por preferência de ferramenta. |
+| Caminho de comprovação para a auditoria | 15% | Evidência: onde o registro fica e como é consultado; insuficiente: "os logs mostram". |
+| Risco aceito e sinal de revisão | 10% | Evidência: consequência e condição observável; insuficiente: prazo no calendário. |
 
 ## Analisar
 

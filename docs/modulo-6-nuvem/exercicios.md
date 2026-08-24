@@ -112,55 +112,85 @@ Uma sequência de no máximo 400 palavras e um diagrama de estado simples.
 
 ## Aplicar
 
-### Preparar uma implantação local reproduzível
+### Recomendar o modelo de execução para uma carga em rajada
 
 **Objetivo**
 
-Demonstrar implantação local descartável com evidências.
+Recomendar um entre quatro modelos de execução em nuvem para uma carga concentrada, declarando ganho, custo e a restrição que encarece a escolha.
 
 **Situação**
 
-Outro grupo precisa demonstrar a API sem provedor remoto, usando Docker, kind, kubectl e o laboratório.
+Uma operadora emite a segunda via da carteirinha do beneficiário. O beneficiário pede pelo aplicativo, o sistema monta um documento e devolve um endereço para baixar.
+
+O uso é concentrado. No primeiro dia útil de cada mês, quando o boleto chega, a procura sobe por cerca de duas horas. No resto do mês, o serviço fica praticamente parado. Hoje ele roda numa máquina virtual ligada o tempo inteiro, dimensionada para o pico, e a conta mensal incomoda a diretoria.
+
+A área de infraestrutura pediu uma recomendação de modelo de execução.
 
 **Seu papel**
 
-Você produz o roteiro operacional mínimo.
+Você é a pessoa arquiteta responsável pela recomendação. A equipe de infraestrutura implementa depois, e espera de você a escolha e a restrição que ela encarece.
 
 **Artefato que você irá usar**
 
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/Dockerfile`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/k8s/service.yaml`. Eles definem imagem, cluster, réplicas e probes.
+Crie `<raiz-do-clone>/entregas/modulo-6/aplicar-modelo-de-execucao.md` e use as comparações de `docs/modulo-6-nuvem/padroes-e-decisoes.md`.
 
 **Antes de executar**
 
-O estado inicial não usa `hospital-local`, não aplicou manifests e mira `kind-hospital-local`. Crie `<raiz-do-clone>/entregas/modulo-6/`; confirme versões e contexto. Não use cluster compartilhado.
+Crie o diretório `<raiz-do-clone>/entregas/modulo-6/`; o estado inicial é sem cluster criado e sem alteração do laboratório.
+
+Seis fatos foram apurados na operadora:
+
+1. A rajada dura cerca de duas horas por mês; no restante, o uso é quase nulo.
+2. Cada emissão leva de três a quarenta segundos, porque depende de um serviço externo lento.
+3. A equipe tem duas pessoas e nenhuma experiência com orquestração de contêineres.
+4. O documento gerado é gravado em armazenamento de objetos, e o processo não guarda estado local.
+5. A área de segurança exige que o tráfego de saída use um endereço fixo conhecido pelo parceiro.
+6. Nenhuma outra carga da operadora precisa de orquestração hoje.
+
+As quatro alternativas em avaliação:
+
+| Alternativa | Como a carga executa |
+| --- | --- |
+| **A. Máquina maior** | Uma máquina virtual dimensionada para o pico, ligada o mês inteiro. |
+| **B. Grupo com escala automática** | Um conjunto de máquinas virtuais que cresce e encolhe conforme a fila de pedidos. |
+| **C. Contêineres orquestrados** | A aplicação roda em contêineres num serviço gerenciado de orquestração, com escala por métrica. |
+| **D. Função sob demanda** | Cada emissão executa numa função sem servidor, cobrada por invocação e por tempo de execução. |
 
 **O que fazer**
 
-1. Registre no roteiro as versões e o contexto esperado `kind-hospital-local`.
-2. Em `<raiz-do-clone>/laboratorios/plataforma-hospitalar`, construa `hospital-api:1.0.0`, crie `hospital-local` por `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml` e carregue a imagem.
-3. Faça dry-run, aplique namespace/manifests e acompanhe rollout.
-4. Faça port-forward para `127.0.0.1:18080`, consulte `/health/ready` e guarde pods/endpoints com duas réplicas.
-5. Salve em `<raiz-do-clone>/entregas/modulo-6/aplicar-implantacao-local.md` e remova o cluster.
-6. Se kind, Docker ou porta falhar, não use outro cluster: rode o teste de manifests e registre o desvio.
+1. Recomende **um** dos quatro modelos, em uma frase.
+2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+
+    | Alternativa | O que resolve | O que cobra | Fato decisivo |
+    | --- | --- | --- | --- |
+    | A. Máquina maior | previsibilidade total de comportamento e de endereço de saída | paga-se o pico durante o mês inteiro, que é exatamente a queixa da diretoria | fato 1, que a torna cara |
+    | B. Grupo com escala automática | | | |
+    | C. Contêineres orquestrados | | | |
+    | D. Função sob demanda | | | |
+
+3. Diga qual fato apurado encarece a sua recomendação e descreva o que precisa ser montado para atendê-lo.
+4. Estabeleça a relação entre o fato 4 e a viabilidade das alternativas B, C e D.
+5. Aponte a alternativa que você descartaria de imediato e nomeie os fatos apurados que a derrubam.
+6. Declare o risco aceito e escreva o sinal observável que levaria a rever a decisão.
+7. Se a alternativa recomendada não puder ser experimentada no laboratório local, registre isso como limite do exercício e nomeie o teste que faltaria.
 
 **Evidência esperada**
 
-Versões/contexto, imagem, `2/2` réplicas, `200` de `/health/ready`, endpoints e limpeza. Na contingência, teste de manifests substitui o cluster.
+O artefato traz o quadro comparativo completo, a recomendação em uma frase, o fato que encarece a escolha com o que precisa ser montado, a relação entre ausência de estado local e as alternativas elásticas, a alternativa descartada, o risco aceito e o sinal de revisão observável.
 
 **Entrega esperada**
 
-Um roteiro por plataforma, saída esperada e checklist de evidências em `<raiz-do-clone>/entregas/modulo-6/aplicar-implantacao-local.md`.
+Envie `<raiz-do-clone>/entregas/modulo-6/aplicar-modelo-de-execucao.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, o custo da restrição de saída, o risco aceito e o sinal de revisão.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Reprodutibilidade e contexto seguro | 25% | Evidência: versões e dados sintéticos; insuficiente: passo depende de máquina oculta. |
-| Sequência de imagem, cluster e apply | 25% | Evidência: ordem registrada; insuficiente: recursos aplicados sem namespace. |
-| Evidência observável | 25% | Evidência: saída ou status; insuficiente: implantação sem prova. |
-| Limpeza e contingência | 25% | Evidência: remoção limitada; insuficiente: comando global perigoso. |
-
-<!-- Compatibilidade editorial: **Insumos disponíveis** e **Como conduzir** foram substituídos pelos campos auto-contidos acima. -->
+| Comparação com ganho e custo nas quatro alternativas | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: modelo listado sem custo. |
+| Recomendação sustentada por fato apurado | 25% | Evidência: fato citado pelo número; insuficiente: escolha por moda tecnológica. |
+| Restrição de saída tratada com custo | 20% | Evidência: o que precisa ser montado; insuficiente: exigência de segurança ignorada. |
+| Alternativa descartada com motivo | 15% | Evidência: fatos que a derrubam; insuficiente: descarte sem base. |
+| Risco aceito e sinal de revisão | 10% | Evidência: consequência e condição observável; insuficiente: prazo no calendário. |
 
 ## Analisar
 

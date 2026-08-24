@@ -88,69 +88,84 @@ Porque a tradução contém conhecimento da dependência e de seus significados.
 
 ## Aplicar
 
+### Recomendar o estilo de entrega do resultado ao parceiro
+
 **Objetivo**
 
-Verificar, como consumidor do contrato, que a API local de elegibilidades diferencia uma solicitação aceita de uma solicitação incompatível com o contrato.
+Recomendar um entre quatro estilos de interação para entregar resultados de exame a uma operadora parceira, declarando ganho, custo e o fato que decide.
 
 **Situação**
 
-Antes da baseline, confirme caminho válido, recuperação por protocolo e erro de validação. A prática prova a fronteira HTTP local, não uma decisão real de plano.
+O hospital precisa entregar o resultado de exames a uma operadora de saúde parceira. O resultado nasce no laboratório e fica pronto muito depois do pedido. A operadora usa esse resultado para liberar procedimentos seguintes, então o atraso tem consequência para o paciente.
+
+Hoje não existe integração. Alguém exporta uma planilha no fim do dia e envia por correio eletrônico. A operadora reclama do atraso e o hospital reclama do retrabalho.
+
+A área de integração pediu uma recomendação de contrato antes de abrir o projeto.
 
 **Seu papel**
 
-Você atua como pessoa consumidora e revisora de contrato. Você não altera código, schemas nem o OpenAPI principal; registra evidências que outra pessoa possa repetir.
+Você é a pessoa arquiteta responsável pela recomendação de contrato. A implementação fica com outra equipe, que espera de você a escolha e os riscos declarados.
 
 **Artefato que você irá usar**
 
-`laboratorios/plataforma-hospitalar` contém a **API de elegibilidades da plataforma hospitalar**. `src/hospital/api/main.py` inicia FastAPI; `contratos/openapi.yaml` descreve `POST /elegibilidades` e `GET /elegibilidades/{protocolo}`; `tests/test_api_contract.py` verifica parte da concordância. Dados são sintéticos e ficam em memória.
-
-**Insumos disponíveis**
-
-Use a [oficina de ferramentas](oficina-de-ferramentas.md), Bruno, Spectral, Python e o pedido sintético abaixo:
-
-```json
-{
-  "cpf": "12345678901",
-  "codigo_operadora": "OPS-001",
-  "matricula_plano": "MAT-2026-001"
-}
-```
+Crie `entregas/unidade-2/aplicar-entrega-resultado.md`, a partir da raiz do repositório `arquitetura-software`, e use as comparações de estilos de interação em `docs/modulo-2-apis/conceitos.md`.
 
 **Antes de executar**
 
-Abra um terminal na raiz do clone `arquitetura-software` e siga a instalação da [oficina](oficina-de-ferramentas.md#instalacao) para o seu sistema operacional. Entre em `laboratorios/plataforma-hospitalar`, crie `.venv` e instale o pacote. A condição inicial verificável é: `tests/test_api_contract.py` existe, `contratos/openapi.yaml` abre no editor e o comando de teste indicado na oficina encerra sem falhas. Reserve um segundo terminal para o servidor.
+Crie o diretório `entregas/unidade-2/`; o estado inicial é sem serviço iniciado e sem alteração do laboratório.
 
-**Como conduzir**
+Seis fatos foram apurados nas duas empresas:
 
-Primeiro confirme documento e testes; depois experimente o caminho válido; por fim, provoque uma violação pequena e compare o que cada evidência consegue provar.
+1. O resultado fica pronto entre vinte minutos e seis horas depois do pedido, sem previsibilidade.
+2. A operadora processa no máximo quatrocentos resultados por dia.
+3. O contrato entre as empresas exige comprovar a entrega de cada resultado, com identificador e carimbo de tempo.
+4. A operadora não mantém endereço público para receber chamadas de entrada, e a área de segurança dela não pretende abrir um.
+5. O hospital não opera fila nem *broker* hoje, e a infraestrutura tem uma pessoa.
+6. Um atraso de até quinze minutos entre o resultado ficar pronto e chegar à operadora é aceitável.
+
+As quatro alternativas em avaliação:
+
+| Alternativa | O que muda no contrato |
+| --- | --- |
+| **A. Consulta periódica** | O hospital expõe um recurso REST com os resultados prontos. A operadora consulta de tempos em tempos e marca o que já leu. |
+| **B. Aceitação assíncrona** | A operadora registra o interesse num pedido e recebe `202` com `Location`. Consulta aquele protocolo depois, até o resultado aparecer. |
+| **C. Chamada de retorno** | Quando o resultado fica pronto, o hospital chama um endereço da operadora e entrega o conteúdo. |
+| **D. Mensageria** | O hospital publica cada resultado num tópico. A operadora consome no próprio ritmo, com reprocessamento possível. |
 
 **O que fazer**
 
-1. Crie `evidencias-aplicar` dentro de `laboratorios/plataforma-hospitalar`; ela guardará somente seus resultados, sem modificar a baseline.
-2. Execute os testes de `tests/test_api_contract.py` conforme o comando da oficina e salve a saída como `evidencias-aplicar/testes-contrato.txt`.
-3. Valide `contratos/openapi.yaml` com Spectral e salve a saída.
-4. Inicie `src/hospital/api/main.py`; prossiga ao aparecer `http://127.0.0.1:8000`.
-5. Em `http://127.0.0.1:8000/docs`, envie o pedido válido e registre `202`, `Location`, `protocolo`, `situacao` e `criado_em`.
-6. Consulte esse protocolo com `GET` e compare as duas respostas.
-7. Remova apenas `cpf`, envie outro `POST` e registre `422`, `codigo`, `mensagem` e `body.cpf`.
-8. Diferencie, em três frases, contrato, execução e limite da memória.
+1. Recomende **uma** das quatro alternativas, em uma frase.
+2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+
+    | Alternativa | O que resolve | O que cobra | Fato decisivo |
+    | --- | --- | --- | --- |
+    | A. Consulta periódica | funciona sem exigir nada da infraestrutura da operadora | gasta chamadas em vão quase o dia inteiro e o atraso depende do intervalo escolhido | fato 4, que mantém a alternativa viva |
+    | B. Aceitação assíncrona | | | |
+    | C. Chamada de retorno | | | |
+    | D. Mensageria | | | |
+
+3. Escreva o contrato de erro da alternativa recomendada: que resposta o consumidor recebe quando o resultado ainda não existe e quando o identificador é desconhecido.
+4. Diga como a sua recomendação atende ao fato 3, isto é, onde fica a comprovação de entrega.
+5. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
+6. Declare o risco que a sua recomendação aceita e escreva o sinal observável que levaria a trocar de alternativa.
 
 **Evidência esperada**
 
-Há uma saída de teste, uma saída de Spectral, uma resposta `202` com `Location`, uma consulta `200` com o mesmo protocolo, uma resposta `422` estruturada e uma nota que não chama aceitação de aprovação.
+O artefato traz o quadro comparativo completo, a recomendação em uma frase, o contrato de erro escrito com código de status e identificador, a resposta sobre comprovação de entrega, a alternativa descartada com o fato que a derruba, o risco aceito e o sinal de revisão observável.
 
 **Entrega esperada**
 
-Entregue a pasta `evidencias-aplicar` com os arquivos de saída, três respostas HTTP salvas e a nota de interpretação. Inclua comandos e versões usados para que outra pessoa consiga refazer a prática.
+Envie `entregas/unidade-2/aplicar-entrega-resultado.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, o contrato de erro, o risco aceito e o sinal de revisão.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Execução reproduzível | 25% | Evidência: caminho e saída; insuficiência: resultado sem comando. |
-| `POST` e `GET` coerentes | 30% | Evidência: protocolo usado; insuficiência: respostas desconectadas. |
-| Erro interpretado | 25% | Evidência: `422` e detalhe; insuficiência: só status. |
-| Limites precisos | 20% | Evidência: memória declarada; insuficiência: tratar como produção. |
+| Comparação com ganho e custo nas quatro alternativas | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: alternativa listada sem custo. |
+| Recomendação sustentada por fato apurado | 25% | Evidência: fato citado pelo número; insuficiente: escolha por moda tecnológica. |
+| Contrato de erro explícito | 20% | Evidência: código de status e identificador; insuficiente: "retorna erro". |
+| Alternativa descartada com motivo | 15% | Evidência: fato que a derruba; insuficiente: descarte sem base. |
+| Risco aceito e sinal de revisão | 10% | Evidência: consequência e condição observável; insuficiente: prazo no calendário. |
 
 ## Analisar
 

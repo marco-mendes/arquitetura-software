@@ -128,54 +128,84 @@ Uma explicação ilustrada com uma linha do tempo de duas tentativas e um efeito
 
 ## Aplicar
 
-### Modelar uma reação administrativa
+### Recomendar a forma de propagar o resultado de exame
 
 **Objetivo**
 
-Projetar uma reação administrativa que permaneça explicável diante de atraso, repetição e rejeição.
+Recomendar uma entre quatro formas de propagar um fato para três consumidores independentes, declarando ganho, custo e a pré-condição que falta.
 
 **Situação**
 
-A plataforma precisa atualizar projeção administrativa quando um resultado fica disponível. Aceita atraso de minutos, mas não conta o mesmo exame duas vezes nem recebe conteúdo clínico.
+No hospital, o serviço de Exames grava o resultado no próprio banco e precisa avisar três destinos. Faturamento usa o resultado para compor a conta. Notificações avisa o paciente. Auditoria guarda o histórico para consulta posterior.
+
+Hoje o serviço de Exames chama os três em sequência, dentro da mesma transação que grava o resultado. Na semana passada, o serviço de Notificações ficou lento e resultados deixaram de ser gravados. O time descobriu por reclamação de médico, e não por alarme.
+
+A liderança técnica pediu uma recomendação antes de acrescentar o quarto consumidor, já solicitado por Compliance.
 
 **Seu papel**
 
-Você desenha contrato e reação mínima.
+Você é a pessoa arquiteta responsável pela recomendação. A equipe implementa depois, e espera de você a escolha, a pré-condição obrigatória e o risco aceito.
 
 **Artefato que você irá usar**
 
-Use `<raiz-do-clone>/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml`, `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/publicador.py` e `<raiz-do-clone>/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py`; definem contrato, filas e deduplicação.
+Crie `<raiz-do-clone>/entregas/modulo-5/aplicar-propagar-resultado.md` e use as comparações de `docs/modulo-5-eventos/padroes-e-decisoes.md`.
 
 **Antes de executar**
 
-Crie `<raiz-do-clone>/entregas/modulo-5/`. O estado inicial é Compose parado e laboratório imutável; confirme exchange, fila e `event_id`.
+Crie o diretório `<raiz-do-clone>/entregas/modulo-5/`; o estado inicial é sem *broker* iniciado e sem alteração do laboratório.
+
+Seis fatos foram apurados no hospital:
+
+1. Quando a regra de retenção legal muda, a Auditoria precisa reprocessar os últimos noventa dias.
+2. Faturamento não pode perder nenhum resultado; Notificações pode perder sem dano relevante.
+3. O serviço de Exames grava o resultado no próprio banco antes de avisar qualquer destino.
+4. Hoje, se um dos avisos falha, a gravação do resultado é desfeita junto.
+5. Um consumidor novo é pedido a cada dois meses, em média.
+6. Nenhum dos três consumidores trata mensagem repetida hoje.
+
+As quatro alternativas em avaliação:
+
+| Alternativa | Como o fato chega aos destinos |
+| --- | --- |
+| **A. Chamada síncrona** | Exames chama os três destinos e só conclui quando todos responderem. |
+| **B. Uma fila por destino** | Exames publica em três filas, uma por consumidor, cada uma com seu dono. |
+| **C. Tópico compartilhado** | Exames publica um evento num tópico. Os três consomem de forma independente, cada um no próprio ritmo. |
+| **D. Tópico com registro de saída** | Como a C, e a publicação passa por uma tabela de saída gravada na mesma transação do resultado, com retenção que permite reprocessar. |
 
 **O que fazer**
 
-1. Crie `<raiz-do-clone>/entregas/modulo-5/aplicar-projecao-administrativa.md` e declare se a entrada é evento, comando ou consulta.
-2. Copie para o documento um payload sintético mínimo, a versão `v1` e a chave `event_id`; não copie resultado clínico.
-3. Desenhe `hospital.events`, fila própria, owner e confirmação após persistência.
-4. Simule duas entregas do mesmo `event_id` e um registro.
-5. Declare atraso, estado pendente e DLQ.
-6. Se faltar `event_id` ou o contrato falhar, rejeite na DLQ.
+1. Recomende **uma** das quatro alternativas, em uma frase.
+2. Preencha o quadro comparativo, uma linha por alternativa. A primeira vem resolvida como modelo.
+
+    | Alternativa | O que resolve | O que cobra | Fato decisivo |
+    | --- | --- | --- | --- |
+    | A. Chamada síncrona | entrega imediata e ordem trivial de raciocinar | a gravação do resultado depende da saúde dos três destinos, que é o incidente da semana passada | fato 4, que a derruba |
+    | B. Uma fila por destino | | | |
+    | C. Tópico compartilhado | | | |
+    | D. Tópico com registro de saída | | | |
+
+3. Diga como a sua recomendação atende ao fato 1 e ao fato 2, que pedem coisas diferentes.
+4. Nomeie a pré-condição obrigatória imposta pelo fato 6 e diga o que acontece se a equipe ligar a solução antes de resolvê-la.
+5. Aponte a alternativa que você descartaria de imediato e nomeie o fato apurado que a derruba.
+6. Declare o risco aceito e escreva o sinal observável que levaria a rever a decisão.
 
 **Evidência esperada**
 
-Payload `v1`, duas entradas de `event_id`, saída com um `INSERT` e rejeição com nome da DLQ verificam deduplicação sem RabbitMQ.
+O artefato traz o quadro comparativo completo, a recomendação em uma frase, a resposta para os fatos 1 e 2, a pré-condição de idempotência nomeada com a consequência de ignorá-la, a alternativa descartada com o fato que a derruba, o risco aceito e o sinal de revisão observável.
 
 **Entrega esperada**
 
-Um contrato, diagrama de fluxo, pseudocódigo de consumidor e plano de evidências locais em `<raiz-do-clone>/entregas/modulo-5/aplicar-projecao-administrativa.md`.
+Envie `<raiz-do-clone>/entregas/modulo-5/aplicar-propagar-resultado.md` com no máximo uma página, contendo o quadro comparativo, a recomendação, a pré-condição obrigatória, o risco aceito e o sinal de revisão.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Semântica e ownership explícitos | 20% | Evidência: fato e dono; insuficiente: evento sem responsabilidade. |
-| Payload mínimo e versionamento | 20% | Evidência: campos necessários e versão; insuficiente: dado excessivo sem justificativa. |
-| Idempotência verificável | 25% | Evidência: repetição testada; insuficiente: chave apenas citada. |
-| Consistência eventual comunicada | 20% | Evidência: estado pendente explicado; insuficiente: atraso escondido. |
-| Falha e DLQ tratadas | 15% | Evidência: rejeição e destino; insuficiente: mensagem perdida sem sinal. |
+| Comparação com ganho e custo nas quatro alternativas | 30% | Evidência: as duas colunas preenchidas para as quatro; insuficiente: alternativa listada sem custo. |
+| Recomendação sustentada por fato apurado | 20% | Evidência: fato citado pelo número; insuficiente: escolha por preferência de ferramenta. |
+| Tratamento das exigências divergentes | 20% | Evidência: resposta separada para retenção e para perda zero; insuficiente: as duas tratadas como a mesma coisa. |
+| Pré-condição de repetição nomeada | 20% | Evidência: idempotência exigida antes de ligar; insuficiente: repetição ignorada. |
+| Risco aceito e sinal de revisão | 10% | Evidência: consequência e condição observável; insuficiente: prazo no calendário. |
 
 ## Analisar
 
