@@ -156,11 +156,15 @@ Propor uma primeira fronteira lógica que preserve a transação clínica e perm
 
 **Situação**
 
-Uma clínica possui um sistema único. Laudos recebe o resultado técnico, aplica assinatura profissional e publica o documento; Notificações envia aviso depois da publicação. Ambos usam tabelas sem proprietário e a equipe quer melhorar limites sem distribuir agora.
+Uma clínica de diagnóstico por imagem roda tudo num sistema único: um processo, um banco, uma implantação. Duas coisas acontecem ali dentro. **Laudos** recebe o resultado técnico do equipamento, registra a assinatura do médico radiologista e publica o documento no portal do paciente. **Notificações** avisa o paciente por SMS e por e-mail depois que o laudo foi publicado.
+
+As duas funcionalidades leem e escrevem as mesmas tabelas, e nenhuma tabela tem dono declarado. A tabela `laudo` carrega, lado a lado, o conteúdo clínico e o controle de envio, nas colunas `sms_enviado_em` e `tentativas_envio`. O mesmo trecho de código que publica o documento também dispara o aviso, dentro da mesma transação.
+
+Na semana passada o provedor de SMS ficou lento. A publicação de laudos travou junto, e o plantão levou quarenta minutos para descobrir que o problema não estava no laudo. A clínica quer separar responsabilidades e proteger a publicação, sem distribuir em serviços agora.
 
 **Seu papel**
 
-Você é a pessoa arquiteta responsável pela proposta inicial.
+Você é a pessoa arquiteta da clínica e responde pela proposta inicial de fronteira.
 
 **Artefato que você irá usar**
 
@@ -168,30 +172,56 @@ Crie `entregas/modulo-3/aplicar-laudos.md`, a partir da raiz do clone, e use as 
 
 **Antes de executar**
 
-Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório. Considere uma equipe, implantação semanal conjunta, transação local para assinatura/publicação, atraso aceitável de cinco minutos para avisos e volume estável.
+Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
+
+Seis fatos foram apurados na clínica e valem para a decisão:
+
+1. Uma equipe só mantém o sistema inteiro.
+2. A implantação é semanal, com tudo junto.
+3. Assinatura e publicação acontecem na mesma transação local, e precisam continuar assim.
+4. Um atraso de até cinco minutos no aviso ao paciente é aceitável para a clínica.
+5. O volume é estável, sem pico previsto para os próximos meses.
+6. Não existe fila, *broker* ou serviço separado no ambiente hoje.
+
+Os termos necessários para responder:
+
+| Termo | Definição em uma linha |
+| --- | --- |
+| Dono do dado | quem tem autoridade para interpretar e alterar a informação; os demais pedem por interface |
+| Fronteira lógica | módulos com interface e propriedade definidas dentro do mesmo processo |
+| Fronteira física | processo, rede e implantação separados, com falha independente |
+| Acoplamento de dados | duas unidades dependem da mesma estrutura ou alteram a mesma informação |
 
 **Insumos disponíveis**
 
-As capacidades, restrições e referências indicadas acima.
+Os seis fatos apurados, as duas capacidades descritas e as referências de conceitos e padrões do módulo.
 
 **Como conduzir**
 
 **O que fazer**
 
-1. Nomeie contexts e termos centrais.
-2. Aloque tabelas e operações a um proprietário.
-3. Desenhe interfaces internas e dependências permitidas.
-4. Indique um evento interno e sua semântica.
-5. Escolha a forma de implantação inicial e um sinal de revisão.
-6. Se uma fronteira não puder ser justificada pelos fatos, mantenha-a no monólito e registre a hipótese a medir.
+1. Complete o mapa de propriedade. A primeira linha vem resolvida como modelo.
+
+    | Dado | Proprietário | Como o outro lado acessa hoje | Como passará a acessar |
+    | --- | --- | --- | --- |
+    | `laudo` (conteúdo clínico, assinatura, data de publicação) | Laudos | Notificações lê `paciente_id` e `status` direto da tabela | recebe o evento interno `LaudoPublicado`, com `laudo_id` e `paciente_id` |
+    | `laudo.sms_enviado_em`, `laudo.tentativas_envio` | | | |
+    | `paciente_contato` (telefone, e-mail, preferência de canal) | | | |
+
+2. Nomeie os contexts e os termos centrais de cada capacidade.
+3. Desenhe as interfaces internas e as dependências permitidas entre elas.
+4. Declare o evento interno e a sua semântica: o que ele carrega e em que momento é publicado.
+5. Decida entre manter as duas capacidades como módulos no mesmo processo ou extrair Notificações para um serviço próprio agora, justificando com pelo menos dois dos seis fatos.
+6. Escreva um sinal de revisão observável, isto é, a condição concreta que faria a clínica revisitar a decisão daqui a seis meses. Data no calendário não é sinal.
+7. Se uma fronteira não puder ser justificada pelos fatos, mantenha-a no monólito e registre a hipótese a medir.
 
 **Evidência esperada**
 
-O artefato mostra capacidade, regra, dono do dado, direção de dependência e a razão contextual da escolha.
+O artefato mostra capacidade, regra, dono do dado, direção de dependência e a razão contextual da escolha, com o mapa de propriedade completo e o sinal de revisão escrito como condição observável.
 
 **Entrega esperada**
 
-Envie o arquivo `entregas/modulo-3/aplicar-laudos.md` com uma página, um mapa de contexto, duas guardas automatizáveis, uma suposição e um risco.
+Envie o arquivo `entregas/modulo-3/aplicar-laudos.md` com uma página, o mapa de propriedade completo, um mapa de contexto, duas guardas automatizáveis, uma suposição e um risco.
 
 **Critérios de avaliação**
 
@@ -213,11 +243,17 @@ Separar fatos, inferências e hipóteses ao analisar dependências que parecem s
 
 **Situação**
 
-Cadastro, Agenda, Atendimento e Faturamento usam o mesmo schema. Atendimento chama os três em sequência; uma mudança de campo exige quatro implantações. Cada serviço anuncia 99,9% de disponibilidade, mas o fluxo tem incidentes frequentes.
+Uma rede de clínicas separou seu sistema em quatro serviços há dois anos: **Cadastro**, **Agenda**, **Atendimento** e **Faturamento**. Cada um roda no próprio processo, com repositório próprio e esteira de implantação própria. No papel, são quatro microsserviços.
+
+A cada consulta registrada, Atendimento chama Cadastro, depois Agenda, depois Faturamento, em sequência, e só responde ao usuário quando as três voltam.
+
+Os quatro processos apontam para o mesmo *schema* PostgreSQL, com as mesmas credenciais. Acrescentar um campo no cadastro do paciente, no mês passado, exigiu quatro implantações coordenadas na mesma janela de sábado. O painel de cada equipe mostra 99,9% de disponibilidade, e mesmo assim o fluxo de atendimento acumulou incidentes o suficiente para virar pauta na diretoria.
+
+Ninguém fez a conta que explica o painel. Quatro chamadas síncronas em série, cada uma com 99,9%, entregam 99,6% no fluxo inteiro, ou cerca de 35 horas indisponíveis por ano, contra as 9 horas que cada equipe promete isoladamente.
 
 **Seu papel**
 
-Você lidera a análise antes de qualquer reestruturação.
+Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de código será alterada esta semana.
 
 **Artefato que você irá usar**
 
@@ -225,29 +261,56 @@ Crie `entregas/modulo-3/analisar-monolito-distribuido.md` a partir da raiz do cl
 
 **Antes de executar**
 
-Registre como fatos que 70% das mudanças em Cadastro e Atendimento ocorrem juntas, Agenda escala dez vezes nos horários de entrada, Faturamento pertence a outro time, cadastro válido é obrigatório e faturamento não precisa confirmar no caminho crítico. Não há eventos nem idempotência.
+Registre como fatos apurados, e não como impressões:
+
+1. 70% das mudanças em Cadastro e em Atendimento são publicadas juntas.
+2. Agenda recebe dez vezes mais carga entre 07h e 09h, quando os pacientes chegam.
+3. Faturamento pertence a outro time, com backlog e prioridades próprias.
+4. Cadastro válido é obrigatório para registrar o atendimento.
+5. Faturamento não precisa confirmar nada no caminho crítico do atendimento.
+6. Não há eventos, nem idempotência, nem repetição automática em lugar nenhum.
+7. Os quatro processos usam o mesmo *schema* e as mesmas credenciais.
+
+Os tipos de acoplamento que a análise vai usar, conforme a página de conceitos do módulo:
+
+| Tipo | Definição em uma linha |
+| --- | --- |
+| de contrato | o consumidor depende de campos, semântica e códigos de resposta do provedor |
+| temporal | o consumidor precisa que o provedor esteja disponível agora |
+| de dados | duas unidades dependem da mesma estrutura ou alteram a mesma informação |
+| de implantação | uma mudança exige publicar várias unidades em conjunto |
+| organizacional | equipes precisam negociar continuamente para entregar uma capacidade |
 
 **Insumos disponíveis**
 
-Mapa de chamadas e fatos declarados na situação.
+Os sete fatos apurados, o mapa de chamadas descrito na situação e a conta de disponibilidade do fluxo.
 
 **Como conduzir**
 
 **O que fazer**
 
-1. Classifique os acoplamentos.
-2. Identifique dependências críticas dispensáveis.
+1. Complete a classificação dos acoplamentos. A primeira linha vem resolvida como modelo.
+
+    | Sintoma | Fato que sustenta | Tipo de acoplamento | Fato, inferência ou hipótese |
+    | --- | --- | --- | --- |
+    | Um campo novo exige quatro implantações coordenadas | 7 (*schema* e credenciais compartilhados) | de dados e de implantação | fato |
+    | Cadastro e Atendimento sempre são publicados juntos | | | |
+    | Atendimento espera Faturamento para responder ao usuário | | | |
+    | Agenda precisa de capacidade que os outros três não precisam | | | |
+
+2. Identifique quais dependências no caminho crítico são dispensáveis, citando o fato que sustenta cada uma.
 3. Relacione coevolução e escala a limites candidatos.
-4. Compare duas alternativas de consolidação ou extração.
-5. Modele uma falha parcial visível ao consumidor.
+4. Compare duas alternativas: consolidar Cadastro e Atendimento num macrosserviço com transação local, ou manter os quatro processos e tirar Faturamento do caminho crítico. Diga o que cada uma resolve e o que ela deixa de pé.
+5. Modele uma falha parcial visível ao consumidor: se Faturamento está fora do ar e alguém registra um atendimento, informe o código de status e o identificador de erro que Atendimento deve retornar, e diga que parte do sistema continuou saudável.
+6. Se uma conclusão não puder ser sustentada por um dos sete fatos, rotule-a como hipótese e indique o dado que a confirmaria.
 
 **Evidência esperada**
 
-Saída: o texto associa cada conclusão a fato, inferência ou hipótese.
+O texto associa cada conclusão a fato, inferência ou hipótese, com a tabela de acoplamentos completa e a resposta de falha parcial escrita como status e identificador de erro.
 
 **Entrega esperada**
 
-Envie `entregas/modulo-3/analisar-monolito-distribuido.md`, com no máximo duas páginas e dois diagramas (atual e candidato).
+Envie `entregas/modulo-3/analisar-monolito-distribuido.md`, com no máximo duas páginas, a tabela de acoplamentos completa e dois diagramas (atual e candidato).
 
 **Critérios de avaliação**
 
