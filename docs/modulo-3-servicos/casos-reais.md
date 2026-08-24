@@ -12,7 +12,7 @@ O caso é longo e a primeira leitura rende mais com três perguntas na mão. Ela
 
 **B.** O Chaos Monkey derruba servidores em produção. Que problema de **falha parcial** ele existe para tornar visível?
 
-**C.** Perder uma região inteira foi tratado como evento esperado, não como acidente. O que isso implica sobre a **consistência** entre réplicas em regiões diferentes?
+**C.** A empresa passou a ensaiar a perda de uma região inteira como evento de rotina. O que isso implica sobre a **consistência** entre réplicas em regiões diferentes?
 
 ## Agosto de 2008: três dias sem enviar DVDs
 
