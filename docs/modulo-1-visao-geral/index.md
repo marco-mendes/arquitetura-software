@@ -34,7 +34,7 @@ Consulte o [glossário compartilhado](../referencia/glossario.md) sempre que um 
 3. **Padrões e decisões:** aprofunda Camadas, Pipes and Filters, Microkernel e Monólito modular, com figuras, características e anti-padrões, e apresenta o ADR.
 4. **Exemplo arquitetural:** aplica os estilos ao caso hospitalar, da reserva em camadas ao pipeline de faturamento.
 5. **Estudo de caso:** conduz quatro exercícios encadeados sobre a plataforma hospitalar, de cenários mensuráveis ao ADR-001.
-6. **[Casos reais](casos-reais.md):** examina o monólito modular da Shopify a partir do relato de engenharia da própria empresa.
+6. **[Casos reais](casos-reais.md):** acompanha a equipe do Prime Video desmontar uma arquitetura serverless e cortar 90% do custo.
 7. **Oficina de ferramentas:** executa os três exemplos de estilos e captura evidências de comportamento.
 8. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
 9. **Síntese e referências:** consolida o método e aponta fontes públicas.

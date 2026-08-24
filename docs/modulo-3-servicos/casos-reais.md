@@ -138,11 +138,17 @@ O Hystrix, biblioteca de disjuntor de circuito que a Netflix abriu e que virou p
 
 ## Questões para discussão
 
-**1.** A Netflix levou sete anos migrando e declarou que reescreveu quase tudo. Argumente a favor e contra essa escolha para uma empresa que precisasse sair do datacenter em dezoito meses.
+Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os fatos, explicar os mecanismos e comparar as escolhas descritas no próprio caso.
 
-**2.** O Open Connect inverte a lógica de cache: o conteúdo chega antes do pedido. Que propriedade do negócio da Netflix torna isso possível, e que tipo de serviço jamais conseguiria fazer o mesmo?
+**1.** Segundo o anúncio oficial, o que aconteceu em 2008 e qual operação da empresa ficou parada por três dias?
 
-**3.** O Project Nimble levou duas pessoas e seis meses para reduzir uma evacuação de região de 50 para 8 minutos. Discuta como uma equipe justificaria esse investimento antes de ter sofrido o incidente que ele previne.
+**2.** A Netflix declara ter reconstruído a tecnologia em vez de transportá-la. Explique a diferença entre as duas coisas e o que cada uma muda na arquitetura resultante.
+
+**3.** O Open Connect inverte a lógica de cache: o conteúdo chega antes do pedido. Que propriedade do negócio da Netflix torna isso possível, e que tipo de serviço jamais conseguiria fazer o mesmo?
+
+**4.** Compare Isthmus, arquitetura ativa-ativa e Chaos Kong quanto ao modo de falha que cada um endereça.
+
+**5.** O Chaos Monkey exige a plataforma Spinnaker e o Hystrix está em modo de manutenção desde 2018. Explique o que cada um desses fatos diz sobre reaproveitar a plataforma de ferramentas de outra empresa.
 
 ## Fontes
 

@@ -1,63 +1,104 @@
-# Casos reais: Shopify e o monólito modular
+# Prime Video: o serviço que voltou a ser um processo só
 
-O [estudo de caso deste módulo](estudo-de-caso.md) trabalha a escolha de estilo numa plataforma hospitalar, onde você controla os requisitos. Esta página traz o mesmo tipo de decisão numa empresa existente, documentada por ela própria. Leia antes o [protocolo de leitura de caso público](../referencia/como-ler-um-caso-publico.md), que explica o que se transfere de um relato desses e o que não se transfere.
+Em março de 2023, um engenheiro sênior da Amazon publicou no blog técnico do Prime Video um artigo com um título que parecia erro de digitação: **"Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%"**. O subtítulo tirava a dúvida. *"The move from a distributed microservices architecture to a monolith application helped achieve higher scale, resilience, and reduce costs."*
 
-O caso é a Shopify, plataforma de comércio eletrônico, e a fonte é um artigo assinado por Kirsten Westeinde no blog de engenharia da empresa, publicado em 21 de fevereiro de 2019.
+Uma equipe da Amazon havia desmontado uma arquitetura de microsserviços serverless, empacotado tudo num processo único, e cortado mais de 90% do custo de infraestrutura. A internet técnica pegou fogo por semanas.
 
-## A restrição
+O artigo é curto e vale ser lido inteiro. O que ele diz é mais interessante do que a briga que provocou.
 
-A Shopify descreve o próprio sistema como *"one of the largest Ruby on Rails codebases in existence"*, trabalhado por mais de mil desenvolvedores ao longo de mais de uma década.
+## O problema: assistir a tudo que os clientes assistem
 
-O sintoma que o artigo escolhe para abrir é preciso e vale reter, porque é o mesmo que aparece em sistemas mil vezes menores: *"Making a seemingly innocuous change could trigger a cascade of unrelated test failures."* Uma mudança pequena provocava falhas em testes que nada tinham a ver com ela.
+O Prime Video transmite milhares de canais ao vivo. Para garantir que o cliente recebe o conteúdo em ordem, a empresa montou uma ferramenta que monitora **cada transmissão vista por cada cliente**, procurando defeitos que um algoritmo consegue reconhecer: bloco corrompido, imagem congelada, áudio dessincronizado do vídeo.
 
-O segundo sintoma é de carga cognitiva. Para mexer em uma parte do sistema, uma pessoa recém-contratada precisava entender como pedidos são criados e como pagamentos são processados, porque tudo estava entrelaçado.
+A ferramenta existia antes, e o artigo é honesto sobre a origem do problema: *"we never intended nor designed it to run at high scale"*. Ela foi construída para outra escala e a equipe passou a plugar cada vez mais transmissões nela.
 
-Nenhum desses dois sintomas é sobre desempenho ou escala de tráfego. São sintomas de **acoplamento**, que é a variável que o [mapa de estilos deste módulo](conceitos.md#um-mapa-antes-da-escolha) usa para separar as famílias.
+O serviço tem três partes. Um conversor de mídia transforma o fluxo de entrada em quadros de imagem e trechos de áudio. Os detectores rodam os algoritmos que procuram os defeitos nesses quadros. E uma camada de orquestração controla o fluxo entre os dois.
 
-## A decisão que a Shopify não tomou
+## A primeira arquitetura: cada parte no seu quadrado
 
-O artigo registra que a equipe considerou microsserviços e recusou. A justificativa é explícita: a mudança resolveria os problemas existentes e traria outro conjunto inteiro de problemas, entre eles múltiplas esteiras de implantação, sobrecarga de infraestrutura, latência de rede e dificuldade de coordenar refatorações que atravessam serviços.
+O desenho inicial fez o que qualquer equipe treinada nos últimos dez anos faria. Componentes distribuídos, serverless, orquestrados por AWS Step Functions, detectores rodando em AWS Lambda, quadros de imagem trafegando por um bucket S3 entre uma etapa e outra.
 
-Essa recusa é o valor didático do caso. Uma empresa com mais de mil desenvolvedores no mesmo repositório é o cenário em que o argumento por microsserviços é mais forte, e ainda assim a decisão foi outra.
+O artigo defende essa escolha, e a defesa importa: *"which was a good choice for building the service quickly"*. Em teoria, cada componente escalaria de forma independente.
 
-## A decisão que a Shopify tomou
+Na prática, o teto apareceu cedo. A frase que mais dói do artigo inteiro: *"the way we used some components caused us to hit a hard scaling limit at around 5% of the expected load"*.
 
-A definição que o artigo dá é curta e serve como referência: *"A modular monolith is a system where all of the code powers a single application and there are strictly enforced boundaries between different domains."*
+Cinco por cento. A arquitetura escolhida para escalar parou a um vinte avos da carga esperada.
 
-Duas metades importam igualmente. A primeira: o código inteiro continua sustentando uma aplicação única, com uma implantação e um banco. A segunda: existem fronteiras entre domínios e elas são impostas por verificação, sem depender de disciplina individual.
+## Onde o dinheiro estava indo
 
-A execução foi reorganizar o código por domínio de negócio, com pedidos, envio e faturamento como unidades de primeira classe em vez de camadas técnicas. Para impor as fronteiras, a equipe construiu uma ferramenta interna chamada Wedge, que acompanha o progresso de isolamento de cada componente e detecta violação de fronteira usando *tracepoints* de Ruby durante a integração contínua.
+A equipe encontrou dois sorvedouros, e nenhum dos dois está no processamento de imagem.
 
-A fronteira, aqui, é verificada por máquina. É a diferença entre uma convenção de equipe, que dura até a próxima entrega urgente, e uma restrição arquitetural.
+**A orquestração.** O serviço fazia várias transições de estado **por segundo de transmissão**. Isso esbarrou nos limites da conta e, pior, o Step Functions cobra por transição de estado. O custo crescia com a duração do vídeo multiplicada pelo número de fluxos, e não com o trabalho útil de detectar defeito.
 
-## A evidência
+**O transporte dos quadros.** Para evitar reconverter o vídeo em cada detector, a equipe fatiava o vídeo em imagens e as depositava temporariamente num bucket S3. Cada detector, rodando como microsserviço separado, baixava as imagens de lá. O artigo aponta o resultado: o volume de chamadas Tier-1 ao S3 ficou caro.
 
-O artigo é econômico em números, e isso é uma qualidade. O resultado concreto que ele apresenta é a substituição completa do sistema de cálculo de impostos, com a observação de que, antes do trabalho de modularização, aquilo teria sido uma tarefa quase impossível.
+Vale reter a natureza dos dois custos. Nenhum deles é custo de computar. São custos de **coordenar** e de **mover dados entre fronteiras** — exatamente o que a distribuição introduz e o que o desenho monolítico não tem.
 
-É uma evidência de segunda ordem, e ela mede exatamente o que o estilo pretendia melhorar: a capacidade de trocar uma parte sem tocar no resto. Compare com um resultado de latência ou de custo, que mediria outra coisa.
+```mermaid
+flowchart LR
+    subgraph A[Antes: componentes distribuídos]
+    SF[Step Functions] --> C1[Conversor]
+    C1 --> S3[(Bucket S3)]
+    S3 --> D1[Detector 1]
+    S3 --> D2[Detector 2]
+    S3 --> D3[Detector 3]
+    end
+    subgraph B[Depois: uma tarefa ECS]
+    P[Conversor, orquestração e detectores no mesmo processo]
+    P --- M[Dados trafegam em memória]
+    end
+    A --> B
+```
 
-## O que o caso não prova
+**Texto alternativo:** à esquerda, a arquitetura anterior, com Step Functions orquestrando um conversor que grava quadros num bucket S3, de onde três detectores separados os baixam. À direita, a arquitetura nova, com conversor, orquestração e detectores no mesmo processo, trocando dados em memória dentro de uma tarefa ECS.
 
-A Shopify tem um único produto com um modelo de domínio coerente, e o comércio eletrônico permite manter quase tudo numa transação de banco. Um hospital tem domínios com ciclos regulatórios distintos e integrações externas obrigatórias, que às vezes forçam um processo separado por exigência contratual de terceiro, mesmo quando a técnica permitiria mantê-lo junto.
+*Figura 1 — As duas arquiteturas do serviço de monitoração do Prime Video. Fonte: curso, a partir do artigo de Marcin Kolny.*
 
-A ferramenta Wedge também depende de uma característica do Ruby que nem toda plataforma oferece. Em Java o papel equivalente cabe a testes de arquitetura ou a módulos verificados na compilação; em .NET, a projetos separados com visibilidade controlada. O mecanismo muda; a exigência de que a fronteira seja verificada automaticamente permanece.
+**Leitura textual da figura:** os componentes lógicos são os mesmos nas duas versões. O que muda é a fronteira entre eles. Na primeira, cada fronteira é uma chamada de rede e uma gravação em armazenamento externo, cobrada por transição de estado e por requisição. Na segunda, a mesma fronteira é uma chamada de função dentro do mesmo processo, e o dado nunca sai da memória.
 
-Por fim, mil desenvolvedores num repositório é uma escala que impõe investimento em ferramental próprio. Uma equipe de dez pessoas obtém o mesmo efeito com convenções de pacote e uma regra de dependência na esteira de integração.
+## A decisão
 
-## Leitura guiada
+O artigo registra que a equipe primeiro considerou consertar cada problema separadamente, e então mudou de ideia: *"We experimented and took a bold decision: we decided to rearchitect our infrastructure."*
 
-**1. Sintoma e causa.** A falha em cascata de testes não relacionados indica qual propriedade estrutural? Explique por que aumentar a cobertura de testes não resolveria esse sintoma.
+Empacotaram todos os componentes num processo único. Isso eliminou o bucket S3 como armazenamento intermediário, porque a transferência passou a acontecer na memória, e substituiu o Step Functions por uma orquestração interna à instância. A implantação foi para Amazon EC2 e Amazon ECS.
 
-**2. A recusa.** Reconstrua o argumento pelo qual a Shopify recusou microsserviços e identifique qual dos quatro custos citados seria mais grave numa equipe pequena.
+O detalhe que a maior parte dos resumos omite: *"Conceptually, the high-level architecture remained the same."* Os mesmos três componentes continuaram existindo, e muito código foi reaproveitado. A arquitetura **lógica** não mudou. Mudou a arquitetura **física**, isto é, onde ficam as fronteiras de processo.
 
-**3. Fronteira imposta.** Diferencie fronteira acordada de fronteira verificada, e proponha o mecanismo de verificação que você usaria na plataforma hospitalar, dada a linguagem do laboratório deste módulo.
+## O que a equipe pagou por isso
 
-**4. Escolha da métrica.** A Shopify mediu o resultado pela capacidade de substituir um subsistema inteiro. Justifique por que essa métrica se ajusta à decisão tomada, e diga qual métrica seria adequada se a decisão tivesse sido distribuir.
+O artigo não esconde a conta. Antes, cada detector era um microsserviço e podia escalar horizontalmente por conta própria. Depois, todos rodam na mesma instância, e o número de detectores passou a escalar **verticalmente**.
 
-**5. Transferência.** Aplique a definição de monólito modular ao [Exercício 2 do estudo de caso](estudo-de-caso.md#exercicio-2-matriz-de-estilos-por-capacidade) e indique quais capacidades hospitalares ficariam no mesmo processo sob esse critério.
+A equipe adiciona detectores com frequência, e já estourou a capacidade de uma instância. A solução foi clonar o serviço várias vezes, cada cópia parametrizada com um subconjunto diferente de detectores, e escrever uma camada leve de orquestração para distribuir as requisições entre as cópias.
+
+Ou seja: voltaram a distribuir, numa granularidade muito maior e sob controle próprio. Não é um retorno ao monólito de 1998. É uma correção do **tamanho da unidade de distribuição**.
+
+Há ainda uma decisão contraintuitiva que o artigo faz questão de registrar. A equipe **replicou** o processo caro de conversão de mídia, colocando uma cópia perto de cada detector. Rodar a conversão uma vez e guardar o resultado parecia mais barato, e medindo não era.
+
+## O resultado, e a frase que ninguém citou
+
+Mais de 90% de redução no custo de infraestrutura. Capacidade de processar milhares de transmissões, com folga para crescer. E a possibilidade de usar planos de economia de EC2, que derrubam o custo mais um pouco.
+
+A conclusão dos autores é bem menos dramática do que a repercussão: *"Microservices and serverless components are tools that do work at high scale, but whether to use them over monolith has to be made on a case-by-case basis."*
+
+O artigo trata de **um** serviço, de **uma** equipe, dentro do Prime Video. Ele não afirma que a Amazon abandonou microsserviços, não fala do Prime Video inteiro, e não declara vencedor entre os estilos. Metade da polêmica de 2023 foi discussão sobre um texto que os participantes não tinham lido.
+
+## Questões para discussão
+
+Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os fatos, explicar os mecanismos e comparar as escolhas descritas no próprio caso.
+
+**1.** O serviço de monitoração tem três componentes. Nomeie os três e descreva a função de cada um.
+
+**2.** O artigo identifica dois sorvedouros de custo, e nenhum deles é o processamento de imagem. Diga quais são e explique, em cada caso, com o que o custo crescia.
+
+**3.** A arquitetura travou em torno de 5% da carga esperada. Explique o mecanismo pelo qual a orquestração por transição de estado impôs esse teto.
+
+**4.** Compare o caminho de um quadro de imagem, da conversão até o detector, nas duas arquiteturas. Diga o que deixa de existir na segunda.
+
+**5.** O artigo afirma que a arquitetura conceitual permaneceu a mesma. Compare o que mudou com o que ficou igual, e explique o que essa distinção revela sobre decomposição lógica e fronteira de processo.
 
 ## Fontes
 
-- Kirsten Westeinde, [Deconstructing the Monolith: Designing Software that Maximizes Developer Productivity](https://shopify.engineering/deconstructing-monolith-designing-software-maximizes-developer-productivity) — Shopify Engineering, 21 de fevereiro de 2019. Fonte primária de todas as citações e da definição de monólito modular.
-- Simon Brown, [Modular Monoliths](https://www.infoq.com/presentations/modular-monoliths/) — apresentação que estabelece o vocabulário usado no caso.
-- ArchUnit, [documentação oficial](https://www.archunit.org/userguide/html/000_Index.html) — verificação automatizada de regras de dependência, equivalente funcional do Wedge no ecossistema Java.
+- Marcin Kolny, **Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%** — Prime Video Tech, 22 de março de 2023. Fonte primária de todas as citações e números. A Amazon retirou a página original do ar; use a [cópia arquivada](https://web.archive.org/web/20240805183535/https://www.primevideotech.com/video-streaming/scaling-up-the-prime-video-audio-video-monitoring-service-and-reducing-costs-by-90).
+- AWS, [Step Functions — preços](https://aws.amazon.com/step-functions/pricing/) e [Amazon S3 — preços](https://aws.amazon.com/s3/pricing/) — o modelo de cobrança por transição de estado e por requisição, que explica os dois sorvedouros descritos no caso.
+- Amazon ECS, [documentação oficial](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) — a unidade de implantação para onde o serviço foi movido.
+- Adrian Cockcroft, [So Many Bad Takes — What Is There To Learn From The Prime Video Microservices To Monolith Story](https://adrianco.medium.com/so-many-bad-takes-what-is-there-to-learn-from-the-prime-video-microservices-to-monolith-story-4bd0970423d4) — leitura de quem dirigiu a arquitetura de nuvem da Netflix e depois trabalhou na AWS, útil para separar o que o artigo diz do que a repercussão inventou.

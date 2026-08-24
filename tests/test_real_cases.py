@@ -12,26 +12,27 @@ DOCS = ROOT / "docs"
 PAGE = "casos-reais.md"
 PROTOCOL = "referencia/como-ler-um-caso-publico.md"
 
-# Páginas já reescritas em formato narrativo. As demais seguem no formato
-# analítico anterior e serão substituídas por outros casos.
-NARRATIVE_PAGES = ("modulo-3-servicos",)
+# Todas as páginas de casos reais seguem o formato narrativo.
+NARRATIVE_PAGES = tuple(MODULES)
 
+# iFood e Taco Bell deixaram de ser o caso real do módulo 6 e seguem como
+# contexto de mercado no estudo de caso da unidade.
 LEGACY_CANONICAL = {
     "3.9.1 O caso Netflix.md": "docs/modulo-3-servicos/casos-reais.md",
     "3.9.1.1 Discussão sobre o caso Netflix.md": "docs/modulo-3-servicos/casos-reais.md",
     "4.3.1 Estudo de Caso LinkedIn - Kafka.md": "docs/modulo-5-eventos/casos-reais.md",
-    "5.5 Estudo de Caso iFood.md": "docs/modulo-6-nuvem/casos-reais.md",
-    "5.6 Estudo de Caso TacoBell.md": "docs/modulo-6-nuvem/casos-reais.md",
+    "5.5 Estudo de Caso iFood.md": "docs/modulo-6-nuvem/estudo-de-caso.md",
+    "5.6 Estudo de Caso TacoBell.md": "docs/modulo-6-nuvem/estudo-de-caso.md",
 }
 
 # Uma empresa por módulo mantém o caso ancorado na decisão central do encontro.
 EXPECTED_SUBJECTS = {
-    "modulo-1-visao-geral": ("Shopify",),
-    "modulo-2-apis": ("Stripe",),
+    "modulo-1-visao-geral": ("Prime Video",),
+    "modulo-2-apis": ("Twitter",),
     "modulo-3-servicos": ("Netflix",),
-    "modulo-4-governanca": ("Zalando",),
+    "modulo-4-governanca": ("Knight Capital",),
     "modulo-5-eventos": ("LinkedIn", "Kafka"),
-    "modulo-6-nuvem": ("iFood", "Taco Bell"),
+    "modulo-6-nuvem": ("GitLab",),
 }
 
 
@@ -92,15 +93,53 @@ class RealCasesTest(unittest.TestCase):
             self.assertNotIn("](estudo-de-caso.md)", text, module)
             self.assertNotIn("hospital", text.casefold(), module)
 
-    def test_narrative_pages_tell_a_dated_story(self):
+    def test_narrative_pages_anchor_events_in_time(self):
+        """A página conta uma história situada, e não um resumo atemporal.
+
+        A unidade varia com o caso: a Netflix se estende por uma década, o
+        GitLab cabe em uma noite. Por isso a contagem aceita ano, mês e hora.
+        """
+        marker = re.compile(
+            r"\b(?:19|20)\d{2}\b"
+            r"|\b\d{1,2}h(?:\d{2})?\b"
+            r"|\b(?:janeiro|fevereiro|março|abril|maio|junho|julho|agosto"
+            r"|setembro|outubro|novembro|dezembro)\b",
+            re.IGNORECASE,
+        )
         for module in NARRATIVE_PAGES:
             text = (DOCS / module / PAGE).read_text(encoding="utf-8")
-            years = {
-                int(match.group(0))
-                for match in re.finditer(r"\b(?:19|20)\d{2}\b", text)
-            }
-            self.assertGreaterEqual(len(years), 5, f"{module}: poucos marcos datados")
+            self.assertGreaterEqual(
+                len(marker.findall(text)), 6, f"{module}: história pouco situada"
+            )
+            self.assertGreaterEqual(
+                len({m.group(0) for m in re.finditer(r"\b(?:19|20)\d{2}\b", text)}),
+                2,
+                f"{module}: sem antes e depois datados",
+            )
+
+    # As questões de casos reais ficam em recordar, compreender e comparar. O
+    # projeto e a aplicação a outros contextos pertencem a exercicios.md.
+    APPLICATION_VERBS = (
+        "proponha", "desenhe", "redesenhe", "monte ", "estime",
+        "aplique", "formule", "calcule", "escreva o argumento",
+    )
+
+    def test_questions_stay_below_the_application_level(self):
+        for module in MODULES:
+            text = (DOCS / module / PAGE).read_text(encoding="utf-8")
+            questions = text.split("## Questões para discussão", 1)[1]
+            questions = questions.split("## Fontes", 1)[0].casefold()
+            for verb in self.APPLICATION_VERBS:
+                self.assertNotIn(verb, questions, f"{module}: verbo de aplicação {verb!r}")
+
+    def test_every_page_closes_with_architect_lens_questions(self):
+        for module in MODULES:
+            text = (DOCS / module / PAGE).read_text(encoding="utf-8")
             self.assertIn("## Questões para discussão", text, module)
+            questions = text.split("## Questões para discussão", 1)[1]
+            self.assertIn("lente do arquiteto", questions, module)
+            for item in range(1, 6):
+                self.assertIn(f"**{item}.", questions, f"{module}: questão {item}")
 
     def test_module_index_announces_the_page(self):
         for module in MODULES:

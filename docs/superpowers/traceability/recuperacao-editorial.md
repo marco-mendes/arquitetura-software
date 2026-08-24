@@ -55,8 +55,8 @@ ao aluno a história de migração dos materiais.
 | `5.2.1 Arquitetura de Nuvem com AWS.md` | `docs/modulo-6-nuvem/padroes-e-decisoes.md` | referenciar | Computação, armazenamento, banco, rede, segurança, IA e observabilidade como capacidades de nuvem, não como receita AWS. | adaptar — ícones e diagramas AWS não serão copiados; capacidades serão mapeadas em diagrama neutro com AWS como exemplo contextual. |
 | `5.3 O conceito de conteinerizacao.md` | `docs/modulo-6-nuvem/conceitos.md` | integrar | Virtualização versus contêiner, imagem, contêiner, Docker, Kubernetes, portabilidade e casos de uso. | recriar em Mermaid — comparação VM/contêiner será refeita em diagrama de camadas acessível e ligada ao laboratório local. |
 | `5.4 Orquestracao de conteineres.md` | `docs/modulo-6-nuvem/padroes-e-decisoes.md` | integrar | Orquestração, cluster, réplica, serviço, exposição, escalonamento, Docker Swarm e Kubernetes como alternativas. | recriar em Mermaid — diagramas de Swarm e Kubernetes serão recriados para explicar estado desejado, não tutoriais de fornecedor. |
-| `5.5 Estudo de Caso iFood.md` | `docs/modulo-6-nuvem/casos-reais.md` | reconstruir com fonte primária | Migração e evolução em nuvem, capacidades AWS, personalização, classificação de responsabilidades e limites do caso. | recriar em Mermaid — pré-condições de arquitetura que convertem orquestração em economia; o vídeo externo deixa de ser a fonte central. |
-| `5.6 Estudo de Caso TacoBell.md` | `docs/modulo-6-nuvem/casos-reais.md` | reconstruir com fonte primária | Serverless, Lambda, comparação com PaaS, SaaS e IaaS, benefícios e limites de arquitetura orientada a eventos. | recriar em Mermaid — sequência de aceite e efetivação do pedido, que torna visível a separação temporal entre confirmar e registrar. |
+| `5.5 Estudo de Caso iFood.md` | `docs/modulo-6-nuvem/estudo-de-caso.md` | referenciar | Migração e evolução em nuvem, capacidades AWS, personalização, classificação de responsabilidades e limites do caso. | recriar em Mermaid — pré-condições de arquitetura que convertem orquestração em economia; o vídeo externo deixa de ser a fonte central. |
+| `5.6 Estudo de Caso TacoBell.md` | `docs/modulo-6-nuvem/estudo-de-caso.md` | referenciar | Serverless, Lambda, comparação com PaaS, SaaS e IaaS, benefícios e limites de arquitetura orientada a eventos. | recriar em Mermaid — sequência de aceite e efetivação do pedido, que torna visível a separação temporal entre confirmar e registrar. |
 
 ## Regras de uso da matriz
 
@@ -87,20 +87,35 @@ ilumina a decisão central daquele encontro:
 
 | Módulo | Caso | Decisão em foco |
 | --- | --- | --- |
-| 1 — Estilos | Shopify | modularidade imposta sem distribuição |
-| 2 — APIs | Stripe | evolução de contrato sem quebrar consumidores |
+| 1 — Estilos | Amazon Prime Video | granularidade da unidade de distribuição |
+| 2 — APIs | Twitter | a fronteira pública como dependência que não se controla |
 | 3 — Serviços | Netflix | reconstrução na nuvem e falha como estado esperado |
-| 4 — Governança | Zalando | governança como artefato verificável |
+| 4 — Governança | Knight Capital | implantação, código morto e alerta sem dono |
 | 5 — Eventos | LinkedIn | log distribuído no lugar da cadeia síncrona |
-| 6 — Nuvem | iFood e Taco Bell | elasticidade gerenciada e serverless |
+| 6 — Nuvem | GitLab | backup contra capacidade real de recuperação |
 
-Os casos de Shopify, Stripe e Zalando não têm arquivo correspondente no acervo
-legado; foram pesquisados diretamente na fonte primária para completar o
-contrato. Por isso não aparecem na matriz acima, que rastreia apenas o acervo.
+Prime Video, Twitter, Knight Capital e GitLab não têm arquivo correspondente no
+acervo legado; foram pesquisados diretamente na fonte primária. Por isso não
+aparecem na matriz acima, que rastreia apenas o acervo da raiz.
 
-O protocolo de leitura comum às seis páginas fica em
-`docs/referencia/como-ler-um-caso-publico.md`, para não ser repetido em cada
-módulo.
+## Formato das páginas de casos reais
+
+A primeira versão dessas páginas era analítica e correlacionava cada caso com a
+plataforma hospitalar. Não funcionou: perdia a narrativa e forçava uma
+correspondência que enfraquecia os dois lados. O formato atual é uma história
+situada no tempo, com as tentativas que não bastaram, e sem qualquer referência
+ao caso condutor da disciplina.
+
+Três regras valem para toda página de caso real, e estão verificadas em
+`tests/test_real_cases.py`:
+
+- **Sem correlação com o hospital.** A palavra não aparece na página. A
+  transferência é trabalho do aluno, não do texto.
+- **Só afirmação com fonte publicada.** O que não tem origem verificável fica de
+  fora, sem virar seção de desmentido. A classificação de fontes está em
+  `docs/referencia/como-ler-um-caso-publico.md`.
+- **Fecho com lente de arquiteto.** Cinco questões que obrigam a reler o caso
+  identificando decisão, alternativas descartadas e evidência.
 
 ## Apêndice — numeração das figuras da Unidade 2
 

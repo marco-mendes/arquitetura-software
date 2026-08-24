@@ -1,119 +1,110 @@
-# Casos reais: iFood e Taco Bell
+# GitLab: a noite em que cinco backups não existiam
 
-O [estudo de caso deste módulo](estudo-de-caso.md) decide elasticidade na janela de agendamento hospitalar, onde você mede os próprios sinais. Esta página traz duas empresas que tomaram decisões de nuvem em direções diferentes. Leia antes o [protocolo de leitura de caso público](../referencia/como-ler-um-caso-publico.md).
+Às 23h27 de 31 de janeiro de 2017, um engenheiro do GitLab cansado, no fim de um turno que já durava horas, digitou um comando para limpar o diretório de dados de um servidor PostgreSQL. Ele acreditava estar na réplica. Estava no primário.
 
-O iFood mostra orquestração de contêineres gerenciada em escala, com material publicado pelo fornecedor de nuvem. A Taco Bell mostra serverless numa organização pequena, com relato assinado por quem conduziu a migração.
+Cancelou um ou dois segundos depois de perceber. Dos 310 GB do banco de produção do GitLab.com, restaram **4,5 GB**.
 
-## iFood: elasticidade gerenciada
+O que aconteceu nas horas seguintes é o motivo pelo qual este caso é ensinado. O GitLab tinha cinco mecanismos de recuperação. Nenhum funcionava. E, em vez de esconder, a empresa transmitiu a recuperação ao vivo no YouTube e publicou um post-mortem completo, com nome dos comandos, horários e as próprias falhas de processo.
 
-O iFood interessa por ser uma operação brasileira, sujeita à mesma infraestrutura de rede, ao mesmo mercado de trabalho e à mesma regulação dos sistemas que você provavelmente vai arquitetar. O material público sobre ele é predominantemente do fornecedor de nuvem, o que torna o caso um bom exercício de leitura crítica.
+## O que estava acontecendo antes
 
-### A escala declarada
+O incidente não começou com o comando errado. Começou com uma sequência de coisas menores, cada uma inofensiva sozinha.
 
-O estudo de caso publicado pela AWS descreve o iFood atendendo *"millions of orders a month for more than 300,000 restaurants"*, com mais de 80% de participação no mercado brasileiro, e afirma que a empresa processa *"up to 60 million requests per minute"* usando o Amazon EKS. O mesmo material atribui ao Kubernetes uma redução de custos de 40%.
+O GitLab.com rodava com **um primário e uma réplica** em espera quente, usada apenas para failover. Um único banco aguentava toda a carga, e o post-mortem reconhece que isso não era ideal.
 
-Um segundo estudo de caso da AWS, focado em inteligência artificial, descreve mais de 80 milhões de pedidos por mês e mais de 330 mil estabelecimentos parceiros, e afirma que o iFood representou 0,5% do Produto Interno Bruto brasileiro em 2022.
+Às 17h20 daquele dia, um engenheiro tirou um instantâneo LVM do banco de produção para carregar no ambiente de teste — ele queria uma cópia mais recente que a automática das 01h00, para testar o pgpool-II.
 
-As duas páginas do mesmo fornecedor divergem na contagem de restaurantes e na ordem de grandeza dos pedidos, e nenhuma informa data de apuração. Registre isso como característica do gênero. Estudo de caso de fornecedor é material comercial revisto por quem vendeu a solução. Os números servem para dimensionar a ordem de grandeza do problema, e falham como citação precisa.
+Às 19h00, a carga do banco disparou. A suspeita registrada é spam. Parte do peso vinha de um processo em segundo plano tentando remover um funcionário do GitLab e os dados associados, porque a conta dele tinha sido marcada por abuso e agendada para remoção por engano.
 
-### A decisão e a cadeia que a sustenta
+Às 23h00, sob essa carga, a replicação da réplica ficou para trás. Os segmentos de log que ela precisava já tinham sido removidos do primário, e como o GitLab.com não usava arquivamento de WAL, a réplica teria de ser ressincronizada manualmente. Isso significa apagar o diretório de dados da réplica e rodar `pg_basebackup` para copiar tudo de novo a partir do primário.
 
-A escolha documentada é orquestração de contêineres gerenciada, com o Amazon EKS sustentando o tráfego. A afirmação de 40% de redução merece leitura cuidadosa, porque contêiner não reduz custo por si.
+## A hora e meia de frustração
 
-O que reduz custo é uma cadeia de pré-condições. Densidade maior por máquina, porque vários serviços compartilham o mesmo nó em vez de ocuparem instâncias dedicadas subutilizadas. Escala automática acompanhando a curva de demanda, o que exige aplicações *stateless*, conforme [stateless, stateful e os doze fatores](padroes-e-decisoes.md#stateless-stateful-e-os-doze-fatores). E capacidade computacional interrompível para cargas que toleram ser reiniciadas.
+O `pg_basebackup` travava sem produzir saída, mesmo com a opção `--verbose` ligada. Depois de algumas tentativas, informou que não conseguia conectar porque o primário não tinha conexões de replicação disponíveis.
 
-Uma aplicação que guarda sessão em memória impede o terceiro efeito e degrada o segundo. Um serviço sem limites de recurso declarados quebra o primeiro. O caso não demonstra que Kubernetes é barato; demonstra que uma equipe que adaptou as aplicações colheu 40% segundo o próprio fornecedor.
+A equipe aumentou `max_wal_senders` de 3 para 32. O PostgreSQL então se recusou a reiniciar, reclamando de semáforos demais — efeito de `max_connections` estar em 8000, um valor absurdo que estava aplicado havia quase um ano e vinha funcionando. Baixaram para 2000 e o banco subiu.
 
-### Inferência dentro da requisição
+O `pg_basebackup` continuou sem iniciar a replicação. Um engenheiro rodou `strace` e viu o processo parado numa chamada `poll`, sem mais informação.
 
-O material mais recente descreve o uso do Amazon SageMaker para prazos de entrega, segurança e experiência do usuário, e do Amazon Bedrock para recursos de IA generativa, incluindo um assistente chamado Garçon. O estudo de caso afirma que um usuário atravessa mais de cem modelos entre abrir o aplicativo e concluir a compra, e cita Thiago Cardoso, diretor de dados e IA: *"Only with AI can I create a personalized experience for each user, from recommendation to fraud prevention."*
+Aqui está o detalhe cruel. O post-mortem revela depois que **aquele era o comportamento normal**: o `pg_basebackup` espera silenciosamente até o primário começar a enviar dados de replicação. Nenhum runbook da empresa registrava isso, e a documentação oficial da ferramenta também não deixava claro.
 
-Cem modelos por transação diz mais sobre a arquitetura do sistema do que sobre a qualidade dos modelos. A afirmação implica que a inferência está no caminho síncrono da requisição, que existe um orçamento de latência repartido entre esses modelos e que a indisponibilidade de um deles precisa ter comportamento definido. Um modelo de detecção de fraude que não responde não pode simplesmente bloquear o pedido nem simplesmente liberá-lo. Alguém decidiu qual dos dois erros é aceitável, e isso é decisão de arquitetura.
+Um engenheiro, achando que tentativas anteriores tinham deixado arquivos no diretório, decidiu limpá-lo. No servidor errado.
 
-## Taco Bell: serverless numa equipe pequena
+## Cinco mecanismos, zero recuperações
 
-A Taco Bell tem material melhor documentado, e vale dizer por quê. O apêndice B do livro *Serverless Development on AWS*, de Sheen Brisals e Luke Hedger, foi escrito com contribuições de Vadim Parizher, vice-presidente de tecnologia, e Robbie Kohler, diretor sênior de engenharia de software, ambos da Taco Bell. É relato assinado por quem conduziu a decisão.
+A parte que transforma um erro humano em desastre é a seguinte. O GitLab tinha, no papel, cinco formas de recuperar.
 
-### A restrição
+**Réplica PostgreSQL.** Existia apenas para failover. A essa altura a replicação estava quebrada e os dados já tinham sido apagados dos dois lados.
 
-Em novembro de 2023 a rede tinha mais de 7.200 restaurantes atendendo mais de 40 milhões de clientes por semana nos Estados Unidos. Os pedidos entram por caminhos muito diferentes: atendente no sistema de venda da loja, quiosque de autoatendimento, site próprio, aplicativo e plataformas de entrega de terceiros.
+**Backup diário com `pg_dump` para o S3.** O bucket estava vazio. A causa é um clássico de configuração: o procedimento rodava `pg_dump` 9.2 contra um banco PostgreSQL 9.6. Diferença de versão maior faz o `pg_dump` abortar com erro. Isso acontecia porque o backup era executado em um servidor de aplicação comum, onde não existe diretório de dados do PostgreSQL, e o empacotamento do GitLab, sem conseguir detectar a versão, assumia 9.2 como padrão.
 
-O sistema legado de comércio eletrônico era um monólito Java com banco único. O relato de Kohler é específico quanto aos sintomas. Eventos de tráfego alto, como promoções de fidelidade, causavam lentidão e indisponibilidade, e preparar a escala era tarefa manual e sujeita a erro. Servidores rodavam o tempo inteiro, inclusive em períodos de baixa. O código passava de um milhão de linhas, com camadas de abstração que poucos especialistas entendiam de fato. Latência do banco ou queda de um servidor de tarefas podia derrubar o sistema inteiro. Colocar uma pessoa nova para produzir levava semanas, às vezes meses.
+**E o alerta desse erro?** As tarefas agendadas notificavam falha por e-mail. O GitLab.com usa DMARC, e o DMARC não estava configurado para os e-mails dessas tarefas. As mensagens eram rejeitadas pelo destinatário. O post-mortem resume: *"This means we were never aware of the backups failing, until it was too late."*
 
-A restrição decisiva, porém, é organizacional, e o apêndice a declara sem rodeio: a empresa não dispunha de uma equipe grande e experiente de engenharia de software, e não pretendia crescê-la rapidamente. Nas palavras de Kohler, era preciso fazer muito com pouco.
+**Instantâneos de disco do Azure.** Estavam habilitados nos servidores de arquivos, e **não** nos servidores de banco, porque a equipe presumia que os outros mecanismos bastavam.
 
-### A decisão
+**Instantâneos LVM.** Serviam para copiar produção para o ambiente de teste, e essa era a única finalidade prevista. Havia dois disponíveis: um automático de quase 24 horas antes, e aquele que o engenheiro tinha tirado manualmente às 17h20, **seis horas antes** do apagamento.
 
-A migração do comércio eletrônico começou em meados de 2022, na direção de uma arquitetura MACH, sigla para microsserviços, API-first, nativa de nuvem e *headless*. A empresa controladora, a Yum! Brands, construiu um motor de comércio *headless* responsável por autenticação, processamento de pagamento, carrinho e cálculo de tributos.
-
-A transição usou o padrão estrangulador com fatias verticais, e a ordem das fatias é instrutiva: primeiro o microsserviço de lojas, depois o de cardápio, depois o de carrinho e pedido, e por último o de usuário. Cada fatia entrega uma capacidade completa e reduz o risco da seguinte.
-
-O middleware de pedidos, construído antes, é o exemplo mais claro de desenho orientado a eventos. Ele é descrito como 100% serverless e sem VPC, com Step Functions para orquestração e EventBridge para coreografia de eventos, DynamoDB para dados do pedido e para persistir tokens de tarefa, e funções Lambda em TypeScript escritas num padrão hexagonal simplificado.
+O único caminho de volta era o instantâneo tirado por acaso, para outro propósito, por um engenheiro que queria testar outra coisa.
 
 ```mermaid
-sequenceDiagram
-    participant App as Canal digital
-    participant Api as API Gateway
-    participant Fn as Função de aceite
-    participant Ev as EventBridge
-    participant Sf as Step Functions
-    participant Pos as Sistema de venda da loja
-    App->>Api: envia pedido
-    Api->>Fn: invoca função de aceite
-    Fn-->>App: confirma recebimento
-    Fn->>Ev: publica pedido aceito
-    Ev->>Sf: inicia máquina de estados
-    Sf->>Sf: aguarda token de retomada
-    Sf->>Pos: libera pedido para produção
+flowchart TB
+    A[Apagamento do diretório do primário] --> B{Réplica?}
+    B -- replicação quebrada --> C{pg_dump no S3?}
+    C -- bucket vazio, versão errada --> D{Alerta do backup?}
+    D -- e-mail rejeitado por DMARC --> E{Snapshot Azure?}
+    E -- não habilitado no banco --> F{Snapshot LVM?}
+    F -- existe, tirado por acaso 6h antes --> G[Recuperação com 6h de perda]
 ```
 
-**Texto alternativo:** diagrama de sequência em que o canal digital envia o pedido ao API Gateway, que invoca a função de aceite. A função confirma o recebimento e publica o evento de pedido aceito no EventBridge, que inicia uma máquina de estados no Step Functions. A máquina aguarda um token de retomada e então libera o pedido para produção no sistema de venda da loja.
+**Texto alternativo:** fluxo que parte do apagamento do diretório do primário e percorre cinco mecanismos de recuperação. A réplica falha por replicação quebrada, o backup em S3 por bucket vazio e versão incompatível, o alerta do backup por e-mail rejeitado, o instantâneo do Azure por não estar habilitado no banco, e apenas o instantâneo LVM tirado por acaso seis horas antes permite recuperar, com perda de seis horas de dados.
 
-*Figura 1 — Aceite, espera e liberação do pedido na Taco Bell. Fonte: curso, a partir do apêndice B de Serverless Development on AWS.*
+*Figura 1 — Os cinco caminhos de recuperação do GitLab e onde cada um parou. Fonte: curso, a partir do post-mortem oficial de 10 de fevereiro de 2017.*
 
-**Leitura textual da figura:** o cliente recebe resposta assim que o pedido é aceito, antes de o pedido chegar à loja. Entre o aceite e a liberação existe um evento e uma máquina de estados que fica suspensa aguardando um sinal externo. O apêndice descreve esse sinal: quando o entregador se aproxima da loja, um evento é enviado ao EventBridge para que o pedido seja liberado e a comida seja preparada. A espera é parte do desenho, e não uma falha.
+**Leitura textual da figura:** cada losango é um mecanismo que existia na documentação da empresa e falhou por um motivo diferente. Três das cinco falhas são silenciosas: ninguém sabia que o backup não rodava, que o alerta não chegava, nem que o instantâneo não cobria o banco. O único caminho que funcionou não tinha sido projetado para essa finalidade.
 
-Esse detalhe é o mais interessante do caso para este módulo. A máquina de estados usa o padrão de token de retomada para permanecer parada por tempo indeterminado sem consumir computação. Uma solução com servidor manteria um processo ou uma tarefa agendada vigiando a condição.
+## A recuperação levou dezoito horas para copiar arquivos
 
-### As evidências
+Restaurar o instantâneo LVM parece simples e não foi.
 
-O apêndice apresenta números da migração do comércio eletrônico. Uma equipe de cinco engenheiros migrou o backend inteiro em menos de um ano, sem impacto na operação existente. As linhas de código caíram cerca de 95%, de aproximadamente um milhão para menos de 50 mil. O custo de AWS caiu mais de 90% em relação à arquitetura com servidores. As liberações passaram de aproximadamente uma por mês para várias por semana. E uma pessoa nova passa a produzir num serviço serverless em menos de uma hora, contra semanas ou meses no sistema anterior.
+O ambiente de teste do GitLab rodava em Azure clássico, sem armazenamento premium, escolha feita para economizar. Os discos eram de rede e limitados a cerca de 60 Mbps. Copiar o diretório de dados do ambiente de teste para o de produção **levou aproximadamente 18 horas**. Não havia gargalo de rede nem de processador; o gargalo eram os discos, e não existia caminho para mover aquilo para armazenamento mais rápido.
 
-O middleware de cardápio traz um dado igualmente relevante: a primeira entrega foi feita por dois engenheiros dentro do prazo, e o sistema chegou a mais de doze canais de integração processando dezenas de milhares de cardápios por dia.
+Em 1º de fevereiro, às 17h00 UTC, o banco foi restaurado ao estado de 31 de janeiro às 17h20. Um detalhe do processo merece registro: como o procedimento de cópia para o ambiente de teste **remove os webhooks** para não disparar chamadas por acidente, a equipe teve de montar um segundo banco a partir do mesmo instantâneo, sem essa remoção, só para recuperá-los. E incrementou todas as sequências do banco em 100.000, para que nenhum identificador já usado fosse reaproveitado.
 
-Note que a redução de custo aqui tem base de comparação declarada: um monólito Java com servidores rodando o tempo inteiro e banco dimensionado para tráfego imprevisível. É por isso que esse percentual é mais utilizável do que o do caso anterior.
+## O que se perdeu
 
-### O que a própria equipe registra como caminho, e não como salto
+Modificações feitas entre 17h20 e 00h00 UTC de 31 de janeiro. A estimativa da empresa: cerca de **5.000 projetos, 5.000 comentários e 700 contas novas**. Repositórios de código e wikis ficaram indisponíveis durante a interrupção, e não foram afetados pela perda de dados.
 
-O apêndice desmonta a leitura heroica. Kohler afirma que a empresa não migrou tudo de uma vez. O primeiro middleware de cardápio usou banco relacional MySQL gerenciado, ferramentas tradicionais de integração de dados e bastante SQL, porque a equipe ainda não estava confortável com NoSQL. As primeiras funções foram escritas em .NET, zipadas e enviadas pelo console, sem estrutura de infraestrutura como código. As últimas instâncias EC2 desse sistema só foram desligadas em 2022.
+O post-mortem abre com uma frase que vale pelo documento inteiro: *"Losing production data is unacceptable."* E o executivo-chefe pede desculpas em nome próprio e da empresa, no texto.
 
-A equipe também trocou de linguagem por razão de ecossistema: percebeu que havia pouca gente usando .NET com serverless e que o apoio da comunidade era fraco, e passou a escrever em JavaScript e Python. O código .NET original continua rodando.
+## Por que isso é um caso de arquitetura de nuvem
 
-## O que os dois casos não provam
+É tentador ler o caso como erro humano, e essa leitura não ensina nada. Um engenheiro cansado às 23h vai digitar o comando errado, mais cedo ou mais tarde. A arquitetura é o que decide se isso vira incidente ou catástrofe.
 
-O iFood tolera consistência eventual em quase toda a experiência. Um restaurante que aparece como aberto e recusa o pedido segundos depois é defeito irritante e recuperável. O hospital não tem essa folga na autorização de exame.
+Três decisões arquiteturais aparecem no relato, todas anteriores ao incidente.
 
-Serverless funcionou na Taco Bell porque o trabalho é curto, sem estado e disparado por evento externo. Processamento em lote de longa duração, cargas com alto uso de memória e sistemas com latência de inicialização intolerável não cabem nesse formato, e o caso não afirma o contrário.
+Um único primário concentrando toda a carga, com a réplica servindo apenas para failover, sem nenhum mecanismo pensado para recuperação de desastre.
 
-As duas empresas aceitaram dependência forte de um provedor específico. Uma máquina de estados escrita em Step Functions não é portável, e um fluxo em EventBridge tem semântica própria de roteamento e repetição. A conta de saída dessas arquiteturas é reescrita, e não migração. Este módulo trata isso em [custo e lock-in](padroes-e-decisoes.md#custo-e-lock-in), e a decisão precisa ser registrada com o custo de saída estimado, conforme o [template de ADR](../referencia/template-adr.md).
+Backup tratado como tarefa agendada em vez de capacidade verificada. Ninguém tinha restaurado um backup recentemente, e por isso ninguém sabia que não havia backup.
 
-## Leitura guiada
+Escolha de armazenamento barato no ambiente de teste, que só cobrou o preço no dia em que esse ambiente virou a origem da recuperação. Um ambiente secundário tinha se tornado, sem que ninguém decidisse isso, parte do caminho crítico de continuidade.
 
-**1. Causa da economia.** A redução de 40% do iFood é atribuída ao Kubernetes. Reescreva a afirmação de modo tecnicamente preciso, nomeando as pré-condições sem as quais o resultado não ocorre.
+## Questões para discussão
 
-**2. Classificação por fronteira.** Monte uma tabela com Amazon EKS, AWS Lambda e AWS Step Functions indicando qual responsabilidade fica com o provedor e qual fica com a equipe. Só depois atribua o rótulo IaaS, PaaS, SaaS ou serverless, e explique onde o rótulo é ambíguo. O [vocabulário de revisão](conceitos.md#vocabulario-de-revisao) apoia essa distinção.
+Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os fatos, explicar os mecanismos e comparar as escolhas descritas no próprio caso.
 
-**3. Inferência no caminho crítico.** Assumindo cem modelos entre a abertura do aplicativo e a compra, e orçamento total de 400 milissegundos, discuta que estratégias tornam isso viável. Considere execução paralela, resultados pré-calculados e degradação controlada.
+**1.** Liste os cinco mecanismos de recuperação que o GitLab tinha documentados e diga por que cada um falhou naquela noite.
 
-**4. Espera sem computação.** Explique o que a máquina de estados da Taco Bell faz enquanto aguarda o entregador se aproximar da loja, e compare com o custo de manter um processo ou tarefa agendada vigiando a mesma condição.
+**2.** Explique a cadeia que fez o backup com `pg_dump` falhar em silêncio, ligando a versão do binário, o servidor em que a tarefa rodava e o e-mail de notificação.
 
-**5. Bases de comparação.** Os dois casos declaram redução de custo. Explique por que o percentual da Taco Bell é mais utilizável do que o do iFood e formule as perguntas que faltam para tornar o segundo comparável.
+**3.** O único caminho de recuperação que funcionou não tinha sido projetado para essa finalidade. Explique o que esse fato revela sobre a diferença entre ter backup e ter capacidade de recuperação.
+
+**4.** A cópia dos dados levou aproximadamente 18 horas. Explique como uma decisão de custo tomada para o ambiente de teste passou a determinar o tempo de recuperação da produção.
+
+**5.** Compare a réplica em espera quente e o instantâneo LVM quanto à finalidade para a qual cada um foi projetado e quanto ao que cada um teria protegido.
 
 ## Fontes
 
-- AWS, [iFood: an Artificial Intelligence (AI) journey with AWS](https://aws.amazon.com/solutions/case-studies/ifood-bedrock/) — pedidos por mês, estabelecimentos parceiros, uso de SageMaker e Bedrock e a afirmação sobre a quantidade de modelos por transação.
-- AWS, [iFood — Innovators](https://aws.amazon.com/solutions/case-studies/innovators/ifood/) — participação de mercado, requisições por minuto com Amazon EKS e a redução de custos atribuída ao Kubernetes.
-- Sheen Brisals e Luke Hedger, [Serverless Development on AWS, Apêndice B — Taco Bell's Serverless Journey](https://www.oreilly.com/library/view/serverless-development-on/9781098141929/app02.html) — O'Reilly, 2024, com contribuições de Vadim Parizher e Robbie Kohler. Fonte de todos os dados da Taco Bell.
-- AWS, [Taco Bell e Trek10 — Partner Success](https://aws.amazon.com/partners/success/taco-bell-trek10) — página oficial da AWS que corrobora as reduções declaradas.
-- Amazon EKS, [documentação oficial](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html) — divisão de responsabilidade entre plano de controle gerenciado e nós de trabalho.
-- AWS Step Functions, [callback com token de tarefa](https://docs.aws.amazon.com/step-functions/latest/dg/callback-task-sample-sqs.html) e Amazon EventBridge, [documentação oficial](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html) — semântica dos mecanismos usados no middleware de pedidos.
+- GitLab, [Postmortem of database outage of January 31](https://about.gitlab.com/blog/postmortem-of-database-outage-of-january-31/) — 10 de fevereiro de 2017. Fonte primária de toda a cronologia, dos cinco mecanismos de recuperação, dos números de perda e das citações.
+- GitLab, [GitLab.com database incident](https://about.gitlab.com/blog/gitlab-dot-com-database-incident/) — 1º de fevereiro de 2017, a comunicação publicada durante o incidente, útil para observar como a informação era conhecida em tempo real.
+- PostgreSQL, [documentação do pg_basebackup](https://www.postgresql.org/docs/current/app-pgbasebackup.html) e [Continuous Archiving and Point-in-Time Recovery](https://www.postgresql.org/docs/current/continuous-archiving.html) — o arquivamento de WAL que não estava em uso e que teria mudado o desfecho.
+- Google, [Site Reliability Engineering, capítulo 26 — Data Integrity](https://sre.google/sre-book/data-integrity/) — tratamento sistemático da diferença entre ter backup e conseguir restaurar.

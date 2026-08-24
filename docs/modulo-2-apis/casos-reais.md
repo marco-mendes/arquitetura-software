@@ -1,61 +1,94 @@
-# Casos reais: Stripe e o contrato que não pode quebrar
+# Twitter: a API que criou um ecossistema e depois o desligou
 
-O [estudo de caso deste módulo](estudo-de-caso.md) decide contratos de integração para uma plataforma hospitalar. Esta página traz a mesma decisão numa empresa cujo produto **é** a API. Leia antes o [protocolo de leitura de caso público](../referencia/como-ler-um-caso-publico.md).
+Boa parte do vocabulário do Twitter não foi inventada pelo Twitter. O termo *tweet* apareceu num cliente de terceiro, o Twitterrific. A resposta com arroba, a repostagem e a marcação com cerquilha nasceram do uso e foram absorvidas depois. Durante alguns anos, a plataforma foi projetada por gente que não trabalhava lá, através de uma API aberta.
 
-O caso é a Stripe, e a fonte é um artigo assinado por Brandur Leach no blog de engenharia da empresa, publicado em 5 de agosto de 2017.
+Depois a empresa fechou a porta. Três vezes, com onze anos de intervalo entre a primeira e a última, e cada fechamento apagou uma categoria inteira de software.
 
-## A restrição
+Este caso não trata de desenho de contrato. Trata do que acontece com quem construiu em cima do contrato de outra pessoa.
 
-Quando a API é o produto, quebrar o contrato quebra o negócio do cliente. Uma integração de pagamento escrita em 2013 e nunca mais tocada continua rodando em produção, e o cliente que a escreveu talvez nem trabalhe mais na empresa dele.
+## 2006 a 2010: a API como estratégia de produto
 
-Isso cria uma tensão que o módulo trata em [contrato verificável e sua evolução](conceitos.md#o-contrato-verificavel-e-a-sua-evolucao). A empresa precisa evoluir o modelo de dados, corrigir nomes ruins e mudar formatos de resposta. E precisa fazer isso sem que nenhuma integração existente pare.
+O Twitter abriu a API cedo e ela virou o principal motor de adoção. Clientes de terceiros disputavam usuário entre si, e a competição produziu mais inovação de interface do que a empresa conseguiria sozinha. Tweetie, Twitterrific, TweetDeck e Echofon eram, para muita gente, o Twitter.
 
-A saída comum no mercado é o versionamento por caminho: `/v1`, `/v2`, `/v3`. Ela funciona e tem um efeito conhecido: a cada versão maior, o cliente precisa reescrever a integração inteira de uma vez, e a empresa passa a manter duas implementações completas em paralelo.
+A consequência arquitetural é a que interessa a este módulo. O Twitter tinha um contrato público e milhares de consumidores independentes, cada um com o próprio ciclo de entrega. Isso é o cenário em que uma API deixa de ser um detalhe de integração e passa a ser a fronteira que define o produto.
 
-## A decisão
+Em 2010 a empresa comprou o Tweetie e o transformou no cliente oficial para iPhone. A partir daí, o dono do contrato passou a competir com os consumidores do contrato.
 
-A Stripe adotou versões contínuas identificadas pela data de lançamento, como `2017-05-24`, cada uma contendo um conjunto pequeno de mudanças. O artigo descreve o efeito pretendido: tornar as atualizações incrementais relativamente fáceis.
+## Março de 2011: o aviso
 
-O mecanismo de vinculação é automático. Segundo o artigo: *"The first time a user makes an API request, their account is automatically pinned to the most recent version available, and from then on, every API call they make is assigned that version implicitly."* O cliente pode sobrescrever isso pelo cabeçalho `Stripe-Version` ou atualizar pelo painel.
+Ryan Sarver, então responsável pela plataforma, escreveu à lista de desenvolvedores uma mensagem que ficou conhecida. O trecho reproduzido em toda a cobertura da época diz que os desenvolvedores não deveriam construir aplicativos clientes que imitassem ou reproduzissem a experiência de consumo principal do Twitter.
 
-A parte estruturalmente interessante vem em seguida. A Stripe não mantém uma implementação por versão. Cada mudança incompatível é encapsulada num módulo que declara a documentação da mudança, a transformação correspondente e os tipos de recurso afetados. A resposta é sempre gerada na versão mais recente e então transformada para trás, aplicando os módulos em ordem até chegar à versão à qual a conta do cliente está vinculada.
+Foi um aviso, e nada mais. O contrato continuava funcionando exatamente como antes. O que mudou foi a declaração pública sobre o que seria tolerado dali em diante.
 
-## Por que isso é uma decisão arquitetural
+Quem tinha um cliente em produção nesse momento enfrentou uma decisão difícil de tomar com racionalidade: continuar investindo numa base de código cuja permissão de existir tinha acabado de ser posta em dúvida por um aviso informal.
 
-O desenho separa duas coisas que costumam ficar coladas: o modelo interno e a representação exposta. Existe uma única implementação viva, na versão atual, e uma cadeia de transformações que reconstrói o passado sob demanda.
+## Agosto de 2012: a restrição vira código
 
-A consequência é que o custo de manter compatibilidade deixa de crescer com a quantidade de versões e passa a crescer com a quantidade de mudanças incompatíveis. Cada mudança é escrita uma vez, como transformação, e continua sendo aplicada indefinidamente.
+A versão 1.1 da API tornou a intenção executável. As mudanças anunciadas em 16 de agosto de 2012 incluíam autenticação obrigatória em todos os *endpoints*, limites de taxa recalculados por *endpoint* em vez de globais, e uma regra nova que atingia especificamente uma categoria de aplicativo.
 
-O artigo declara a escala do compromisso: quase cem atualizações incompatíveis ao longo de seis anos, todas ainda alcançáveis a partir da versão corrente.
+Clientes de terceiros passaram a ter teto de **100 mil tokens de usuário**. Um aplicativo que atingisse cem mil usuários precisava negociar diretamente com o Twitter para crescer. Quem já estava acima do teto ganhou espaço até o dobro da base daquele momento, e nada além disso.
 
-## O que a própria Stripe reconhece como custo
+Repare no desenho do controle. Não é um limite de requisições, que protegeria a infraestrutura. É um limite de **usuários**, que protege o modelo de negócio. Um limite de taxa e um teto de tokens parecem o mesmo tipo de mecanismo na documentação, e resolvem problemas de natureza completamente diferente.
 
-O autor não vende a solução como gratuita. O artigo registra que versionamento é sempre um compromisso entre melhorar a experiência de quem integra e o trabalho adicional de manter versões antigas.
+O prazo de migração da 1.0 para a 1.1 foi de seis meses. Depois disso, a versão antiga foi desligada.
 
-Vale explicitar o que esse trabalho significa na prática. Toda mudança incompatível exige escrever a transformação reversa, e essa transformação precisa ser testada contra todas as combinações de versões anteriores. Uma transformação escrita errado corrompe respostas de clientes antigos de forma silenciosa, porque eles não têm como saber qual deveria ser a resposta correta.
+```mermaid
+timeline
+    2006 : API aberta; ecossistema de clientes nasce
+    2010 : Twitter compra o Tweetie e lança cliente oficial
+    2011 : Aviso: não construam clientes
+    2012 : API 1.1, teto de 100 mil tokens por cliente
+         : Seis meses para migrar; 1.0 desligada
+    2018 : User Streams e Site Streams desligados
+         : Account Activity API entra no lugar
+    2023 : Acesso gratuito encerrado; API passa a ser paga
+```
 
-## O que o caso não prova
+**Texto alternativo:** linha do tempo do Twitter de 2006 a 2023, marcando a abertura da API e o nascimento do ecossistema, a compra do Tweetie, o aviso de 2011, o teto de tokens da versão 1.1 em 2012, o desligamento das APIs de fluxo contínuo em 2018 e o fim do acesso gratuito em 2023.
 
-A Stripe expõe recursos com semântica estável, em que uma mudança quase sempre pode ser expressa como renomear, acrescentar ou reformatar um campo. Nem toda mudança cabe nisso. Quando o próprio conceito de negócio muda, não existe transformação reversa possível, e aí a versão nova é realmente incompatível.
+*Figura 9 — Dezessete anos de decisões sobre a fronteira pública do Twitter. Fonte: curso, a partir dos anúncios oficiais e da cobertura de imprensa da época.*
 
-A abordagem também depende de disciplina de produto que uma equipe interna raramente tem. Se seus consumidores são três times da mesma empresa, negociar uma janela de migração é mais barato do que construir e testar a cadeia de transformações.
+**Leitura textual da figura:** a sequência mostra três fechamentos sucessivos, cada um atingindo uma classe diferente de consumidor. O de 2012 atingiu clientes de leitura; o de 2018, aplicativos que dependiam de fluxo contínuo de eventos; o de 2023, qualquer consumidor sem orçamento. Entre um e outro passam anos, tempo suficiente para uma nova geração de produtos ser construída sobre a mesma fronteira.
 
-Para o hospital do módulo, o contrato externo obrigatório é o TISS, definido por terceiro e sem margem de negociação. A lição transferível não é a data como número de versão. É a separação entre o modelo interno, que você controla, e a representação exposta, que você deve ao consumidor.
+## Agosto de 2018: muda o estilo de interação
 
-## Leitura guiada
+O segundo fechamento foi mais técnico e, para quem estava do lado de fora, mais caro.
 
-**1. Comparação de estratégias.** Compare versionamento por caminho (`/v1`, `/v2`) com versões contínuas por data. Indique como cada um distribui o esforço entre o provedor e o consumidor da API.
+As APIs de fluxo contínuo conhecidas como User Streams e Site Streams foram desligadas em 16 de agosto de 2018, substituídas pela Account Activity API. A diferença não é de contrato: é de **estilo de interação**. Uma conexão persistente que empurra eventos foi trocada por um modelo em que a plataforma chama um endereço do consumidor.
 
-**2. Vinculação implícita.** A Stripe vincula a conta à versão corrente na primeira requisição. Descreva o comportamento surpreendente que essa escolha evita para um cliente que integrou há três anos.
+Isso não se resolve trocando a URL. Um aplicativo que recebia eventos por conexão aberta não precisava de endereço público, nem de certificado, nem de disponibilidade permanente para receber chamadas de entrada. Passou a precisar. Produtos inteiros fecharam por não conseguirem pagar essa mudança, entre eles o Favstar.
 
-**3. Custo que não cresce com versões.** Explique por que gerar sempre na versão atual e transformar para trás faz o custo crescer com a quantidade de mudanças em vez da quantidade de versões.
+## Fevereiro de 2023: o acesso gratuito acaba
 
-**4. Limite do mecanismo.** Descreva uma mudança de contrato que não pode ser expressa como transformação reversa e explique o que o provedor deve fazer nesse caso.
+O terceiro fechamento veio sem transição. Em 2 de fevereiro de 2023 a empresa anunciou que, a partir do dia 9, o acesso gratuito à API terminaria, nas versões 1.1 e 2. Sete dias.
 
-**5. Transferência.** Retome a [Decisão 2 do estudo de caso](estudo-de-caso.md#decisao-2-rest-interno-e-soaptiss-externo-podem-coexistir) e diga qual parte da estratégia da Stripe se aplica ao contrato interno do hospital, e qual não se aplica ao contrato TISS.
+O que morreu dessa vez foi diferente das outras duas. Bots públicos de utilidade, ferramentas de acessibilidade, projetos de pesquisa acadêmica e serviços gratuitos mantidos por uma pessoa só. Nenhum deles tinha receita para migrar para um plano pago.
+
+## A lição que o caso ensina sobre contratos
+
+Uma API pública tem duas faces, e o módulo trata as duas. Do lado de dentro, é um contrato que precisa ser versionado, documentado e testado. Do lado de fora, é uma **dependência que você não controla**.
+
+Toda decisão de consumir uma API de terceiro é uma aposta sobre o comportamento futuro de uma empresa. O contrato técnico não protege contra mudança de estratégia, e o histórico do Twitter mostra que o aviso costuma vir antes da restrição, às vezes com anos de antecedência.
+
+Isso não é argumento para não integrar. É argumento para tratar a integração como decisão arquitetural registrada, com o custo de saída estimado antes de começar.
+
+## Questões para discussão
+
+Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os fatos, explicar os mecanismos e comparar as escolhas descritas no próprio caso.
+
+**1.** A página descreve três fechamentos sucessivos da fronteira pública. Diga o ano de cada um e que classe de consumidor cada um atingiu.
+
+**2.** Limite de taxa por *endpoint* e teto de tokens de usuário aparecem no mesmo anúncio. Explique o que cada um mede e diga qual protege a infraestrutura e qual protege o modelo de negócio.
+
+**3.** Em 2018, as APIs de fluxo contínuo foram trocadas por um modelo em que a plataforma chama o consumidor. Explique o que um consumidor passou a precisar ter e que antes não precisava.
+
+**4.** Compare o aviso de março de 2011 com a mudança de agosto de 2012 quanto ao efeito prático sobre quem já mantinha um cliente em produção.
+
+**5.** No anúncio de 2012, aplicativos já acima do teto podiam crescer até o dobro da base daquele momento. Compare a situação de um aplicativo com 90 mil usuários e a de outro com 300 mil no dia do anúncio.
 
 ## Fontes
 
-- Brandur Leach, [APIs as infrastructure: future-proofing Stripe with versioning](https://stripe.com/blog/api-versioning) — Stripe, 5 de agosto de 2017. Fonte primária das citações, do mecanismo de transformação e do número de atualizações incompatíveis.
-- Stripe, [API versioning](https://docs.stripe.com/api/versioning) — documentação oficial corrente do cabeçalho `Stripe-Version` e do esquema de datas.
-- Stripe, [API reference](https://docs.stripe.com/api) — o contrato público em si, útil para observar a granularidade das mudanças.
+- Twitter, **Changes coming in Version 1.1 of the Twitter API** — anúncio oficial de 16 de agosto de 2012, origem das mudanças de autenticação, limites por *endpoint* e do teto de tokens. Página instável no domínio atual; use a [cópia arquivada](https://web.archive.org/web/20240416135831/https://blog.twitter.com/developer/en_us/a/2012/changes-coming-to-twitter-api).
+- Twitter, [Delivering a consistent Twitter experience](https://blog.x.com/developer/en_us/a/2012/delivering-consistent-twitter-experience) — postagem de junho de 2012 que antecede e justifica as mudanças da versão 1.1.
+- X, [Account Activity API — guia de migração a partir de User Streams e Site Streams](https://developer.x.com/en/docs/x-api/enterprise/account-activity-api/migration/us-ss-migration-guide) — documentação oficial da substituição de 2018, incluindo o que o consumidor precisa passar a operar.
+- Fontes secundárias, identificadas como tais: a mensagem de Ryan Sarver de março de 2011 à lista de desenvolvedores é conhecida por reprodução na imprensa técnica, entre elas [O'Reilly Radar](http://radar.oreilly.com/2011/03/twitter-developers.html). O encerramento do acesso gratuito em fevereiro de 2023 foi noticiado por [Forbes](https://www.forbes.com/sites/jenaebarnes/2023/02/03/twitter-ends-its-free-api-heres-who-will-be-affected/) e [Engadget](https://www.engadget.com/twitter-shutting-off-free-api-prepare-174340770.html), e o fechamento do Favstar em 2018 por [TechCrunch](https://techcrunch.com/2018/05/14/favstar-twitter/).

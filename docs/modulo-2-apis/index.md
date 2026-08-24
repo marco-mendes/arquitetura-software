@@ -43,7 +43,7 @@ Ao concluir o percurso, você será capaz de:
 3. **Padrões e decisões:** tipos de APIs por contexto, a lente da plataforma e a agenda do arquiteto.
 4. **Exemplo arquitetural:** percorre o contrato de elegibilidade de ponta a ponta.
 5. **Estudo de caso:** aplica as decisões à plataforma hospitalar e às integrações externas.
-6. **[Casos reais](casos-reais.md):** examina como a Stripe evolui um contrato público sem quebrar integrações antigas.
+6. **[Casos reais](casos-reais.md):** acompanha o Twitter abrir uma API, criar um ecossistema inteiro e depois desligá-lo três vezes.
 7. **Oficina de ferramentas:** executa FastAPI, OpenAPI, Bruno, Spectral, testes automatizados e a extensão com o gateway Ocelot.
 8. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
 9. **Síntese e referências:** consolida o método e aponta fontes públicas.
