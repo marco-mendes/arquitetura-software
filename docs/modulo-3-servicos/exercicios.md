@@ -244,11 +244,11 @@ Envie o arquivo `entregas/modulo-3/aplicar-laudos.md` com no máximo uma página
 
 ## Analisar
 
-### Diagnosticar um monólito distribuído
+### Diagnosticar a rede de clínicas
 
 **Objetivo**
 
-Separar fatos, inferências e hipóteses ao analisar dependências que parecem serviços autônomos.
+Explicar o mecanismo por trás de cada sintoma relatado, separando o que é fato apurado do que é inferência sua, e comparar duas correções propostas.
 
 **Situação**
 
@@ -256,182 +256,266 @@ Uma rede de clínicas separou seu sistema em quatro serviços há dois anos: **C
 
 A cada consulta registrada, Atendimento chama Cadastro, depois Agenda, depois Faturamento, em sequência, e só responde ao usuário quando as três voltam.
 
-Os quatro processos apontam para o mesmo *schema* PostgreSQL, com as mesmas credenciais. Acrescentar um campo no cadastro do paciente, no mês passado, exigiu quatro implantações coordenadas na mesma janela de sábado. O painel de cada equipe mostra 99,9% de disponibilidade, e mesmo assim o fluxo de atendimento acumulou incidentes o suficiente para virar pauta na diretoria.
+Os quatro processos apontam para o mesmo *schema* PostgreSQL, com as mesmas credenciais. Acrescentar um campo no cadastro do paciente, no mês passado, exigiu quatro implantações coordenadas na mesma janela de sábado.
 
-Ninguém fez a conta que explica o painel. Quatro chamadas síncronas em série, cada uma com 99,9%, entregam 99,6% no fluxo inteiro, ou cerca de 35 horas indisponíveis por ano, contra as 9 horas que cada equipe promete isoladamente.
+O painel de cada equipe mostra 99,9% de disponibilidade, e mesmo assim o fluxo de atendimento acumulou incidentes o suficiente para virar pauta na diretoria. Ninguém fez a conta que explica o painel: quatro chamadas síncronas em série, cada uma com 99,9%, entregam 99,6% no fluxo inteiro, o que significa cerca de 35 horas indisponíveis por ano contra as 9 horas que cada equipe promete isoladamente.
 
 **Seu papel**
 
-Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de código será alterada esta semana.
+Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de código será alterada esta semana; a diretoria quer entender o problema antes de autorizar trabalho.
 
 **Artefato que você irá usar**
 
-Crie `entregas/modulo-3/analisar-monolito-distribuido.md` a partir da raiz do clone; use a tabela comparativa de `docs/modulo-3-servicos/padroes-e-decisoes.md`.
+Crie `entregas/modulo-3/analisar-rede-de-clinicas.md`, a partir da raiz do clone. Tudo o que você precisa para responder está descrito nesta página.
 
 **Antes de executar**
 
-Registre como fatos apurados, e não como impressões:
+Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
 
-1. 70% das mudanças em Cadastro e em Atendimento são publicadas juntas.
+Sete fatos foram apurados na rede. Trate cada um como dado verificado:
+
+1. Setenta por cento das mudanças em Cadastro e em Atendimento são publicadas juntas.
 2. Agenda recebe dez vezes mais carga entre 07h e 09h, quando os pacientes chegam.
-3. Faturamento pertence a outro time, com backlog e prioridades próprias.
+3. Faturamento pertence a outro time, com fila de trabalho e prioridades próprias.
 4. Cadastro válido é obrigatório para registrar o atendimento.
-5. Faturamento não precisa confirmar nada no caminho crítico do atendimento.
-6. Não há eventos, nem idempotência, nem repetição automática em lugar nenhum.
+5. Faturamento não precisa confirmar nada enquanto o usuário espera a resposta.
+6. Não existe evento, idempotência nem repetição automática em lugar nenhum.
 7. Os quatro processos usam o mesmo *schema* e as mesmas credenciais.
 
-Os tipos de acoplamento que a análise vai usar, conforme a página de conceitos do módulo:
+Cinco tipos de acoplamento aparecem nesta análise, e as definições abaixo bastam para respondê-la:
 
-| Tipo | Definição em uma linha |
+| Tipo | O que significa |
 | --- | --- |
 | de contrato | o consumidor depende de campos, semântica e códigos de resposta do provedor |
-| temporal | o consumidor precisa que o provedor esteja disponível agora |
+| temporal | o consumidor só conclui o próprio trabalho se o provedor responder agora |
 | de dados | duas unidades dependem da mesma estrutura ou alteram a mesma informação |
-| de implantação | uma mudança exige publicar várias unidades em conjunto |
-| organizacional | equipes precisam negociar continuamente para entregar uma capacidade |
+| de implantação | uma mudança obriga a publicar várias unidades na mesma janela |
+| organizacional | duas equipes precisam negociar continuamente para entregar uma capacidade |
+
+Duas correções estão sobre a mesa, e a diretoria quer sua leitura sobre as duas:
+
+#### Correção 1 — consolidar Cadastro e Atendimento
+
+Os dois viram um serviço só, com transação local, banco próprio e uma esteira. Agenda e Faturamento continuam separados como estão hoje.
+
+#### Correção 2 — tirar Faturamento do caminho crítico
+
+Os quatro processos continuam existindo. Atendimento passa a responder ao usuário assim que Cadastro e Agenda confirmam, e o aviso a Faturamento sai depois, fora da espera.
 
 **Insumos disponíveis**
 
-Os sete fatos apurados, o mapa de chamadas descrito na situação e a conta de disponibilidade do fluxo.
+Os sete fatos, o mapa de chamadas, a conta de disponibilidade, as definições de acoplamento e as duas correções propostas, todos nesta página.
 
 **Como conduzir**
 
 **O que fazer**
 
-1. Complete a classificação dos acoplamentos. A primeira linha vem resolvida como modelo.
+Escreva em prosa, um parágrafo por resposta. Sempre que afirmar algo, diga se está apoiado num dos sete fatos ou se é inferência sua.
 
-    | Sintoma | Fato que sustenta | Tipo de acoplamento | Fato, inferência ou hipótese |
-    | --- | --- | --- | --- |
-    | Um campo novo exige quatro implantações coordenadas | 7 (*schema* e credenciais compartilhados) | de dados e de implantação | fato |
-    | Cadastro e Atendimento sempre são publicados juntos | | | |
-    | Atendimento espera Faturamento para responder ao usuário | | | |
-    | Agenda precisa de capacidade que os outros três não precisam | | | |
-
-2. Identifique quais dependências no caminho crítico são dispensáveis, citando o fato que sustenta cada uma.
-3. Relacione coevolução e escala a limites candidatos.
-4. Compare duas alternativas: consolidar Cadastro e Atendimento num macrosserviço com transação local, ou manter os quatro processos e tirar Faturamento do caminho crítico. Diga o que cada uma resolve e o que ela deixa de pé.
-5. Modele uma falha parcial visível ao consumidor: se Faturamento está fora do ar e alguém registra um atendimento, informe o código de status e o identificador de erro que Atendimento deve retornar, e diga que parte do sistema continuou saudável.
-6. Se uma conclusão não puder ser sustentada por um dos sete fatos, rotule-a como hipótese e indique o dado que a confirmaria.
+1. Três sintomas foram relatados: um campo novo exigiu quatro implantações coordenadas, Cadastro e Atendimento saem sempre juntos, e Atendimento espera Faturamento para responder. Explique o mecanismo de cada um e diga que tipo de acoplamento ele revela.
+2. Explique por que quatro painéis marcando 99,9% convivem com um fluxo de 99,6%, e diga o que essa conta revela sobre medir disponibilidade serviço por serviço.
+3. Um dos quatro processos tem razão legítima para continuar separado mesmo depois da reestruturação. Identifique qual, e sustente com o fato que dá essa razão.
+4. Compare as duas correções propostas: o que cada uma resolve, o que ela deixa em pé e qual fato apurado sustenta cada avaliação. Se recomendar as duas, diga em que ordem e por quê.
+5. Hoje, quando Faturamento está fora do ar e alguém registra um atendimento, Atendimento devolve um erro genérico. Explique que informação essa resposta esconde e diga qual resposta seria honesta em cada uma das duas correções.
+6. Aponte uma conclusão sua que os sete fatos não sustentam, rotule-a como hipótese e diga qual dado a confirmaria.
 
 **Evidência esperada**
 
-O texto associa cada conclusão a fato, inferência ou hipótese, com a tabela de acoplamentos completa e a resposta de falha parcial escrita como status e identificador de erro.
+O texto explica o mecanismo de cada sintoma em vez de apenas nomeá-lo, associa cada afirmação a um fato ou a uma inferência declarada, compara as duas correções com ganho e limite de cada uma, e traz a resposta de falha parcial escrita com o comportamento que o usuário observa.
 
 **Entrega esperada**
 
-Envie `entregas/modulo-3/analisar-monolito-distribuido.md`, com no máximo duas páginas, a tabela de acoplamentos completa e dois diagramas (atual e candidato).
+Envie `entregas/modulo-3/analisar-rede-de-clinicas.md` com no máximo duas páginas, contendo as seis respostas em prosa e a hipótese rotulada com o dado que a confirmaria.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Classificação precisa dos acoplamentos | 25% | Evidência: tipo e causa; insuficiente: dependência genérica. |
-| Uso consistente dos dados do caso | 25% | Evidência: fatos referenciados; insuficiente: dado inventado. |
-| Comparação de alternativas | 20% | Evidência: consequências contrastadas; insuficiente: opção só listada. |
-| Análise de falha parcial | 20% | Evidência: parte saudável e falha; insuficiente: sistema tratado como inteiro. |
-| Separação entre fato e hipótese | 10% | Evidência: hipótese rotulada; insuficiente: suposição como fato. |
+| Mecanismo explicado, e não apenas nomeado | 30% | Evidência: a cadeia causal descrita; insuficiente: o tipo de acoplamento citado sem explicação. |
+| Separação entre fato e inferência | 25% | Evidência: hipótese rotulada com o dado que a confirmaria; insuficiente: suposição apresentada como apurada. |
+| Comparação das duas correções | 20% | Evidência: ganho e limite de cada uma; insuficiente: uma correção escolhida sem contrastar. |
+| Leitura da conta de disponibilidade | 15% | Evidência: a composição em série explicada; insuficiente: o número repetido sem interpretação. |
+| Falha parcial descrita pelo que o usuário vê | 10% | Evidência: parte saudável nomeada; insuficiente: sistema tratado como um bloco. |
+
 
 ## Avaliar
 
-### Escolher consistência para autorização prévia
+### Decidir a resposta à indisponibilidade da autorização
 
 **Objetivo**
 
-Escolher uma resposta à indisponibilidade que preserve a regra clínica e não esconda seus custos.
+Julgar quatro respostas possíveis a uma indisponibilidade externa, usando critérios que você mesmo pondera, e defender a escolha diante de um risco clínico.
 
 **Situação**
 
-Uma rede quer receber solicitações durante até quinze minutos de indisponibilidade do provedor de autorizações. A autorização pode mudar a qualquer momento; executar sem ela é arriscado e perder a solicitação também é inaceitável.
+Uma rede de clínicas depende de um provedor externo de autorizações. Antes de executar um procedimento, a clínica consulta esse provedor por uma chamada HTTP e recebe autorizado ou negado. Não existe evento nem aviso de mudança, e a resposta pode variar de um dia para o outro conforme a situação do beneficiário.
+
+O provedor fica indisponível por até quinze minutos, algumas vezes por mês, sem hora marcada. Nesses períodos, hoje, a clínica simplesmente para de receber solicitações.
+
+Duas coisas são inaceitáveis para a rede, e elas puxam em direções opostas. Executar um procedimento sem autorização válida cria risco clínico e prejuízo financeiro, porque a operadora pode recusar o pagamento depois. Perder a solicitação do paciente também é inaceitável, porque ele já está na clínica e vai embora sem atendimento.
+
+O comitê de arquitetura se reúne na quinta-feira para decidir.
 
 **Seu papel**
 
-Você participa do comitê que decide entre falha explícita, recepção pendente, cache ou outro desenho fundamentado.
+Você é a pessoa arquiteta que apresenta a recomendação ao comitê. A decisão será registrada e cobrada depois, então o que você declarar como custo aceito precisa estar escrito.
 
 **Artefato que você irá usar**
 
-Crie `entregas/modulo-3/avaliar-autorizacao.md`, a partir da raiz do clone, usando CAP, SAGA e CQRS conforme explicados em `docs/modulo-3-servicos/padroes-e-decisoes.md`.
+Crie `entregas/modulo-3/avaliar-autorizacao.md`, a partir da raiz do clone. As quatro alternativas e as restrições estão descritas nesta página, e bastam para decidir.
 
 **Antes de executar**
 
-Considere identificador único por solicitação, estado pendente aceito por até trinta minutos, consulta HTTP sem eventos do provedor, equipe operacional em horário comercial e ausência de transação distribuída.
+Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
+
+Cinco restrições valem para a decisão:
+
+1. Cada solicitação já nasce com um identificador único gerado pela clínica.
+2. A rede aceita manter uma solicitação em estado pendente por até trinta minutos.
+3. A comunicação com o provedor é consulta HTTP; ele não notifica mudanças.
+4. A equipe de operação trabalha em horário comercial, sem plantão noturno.
+5. Não existe transação distribuída entre a clínica e o provedor, e não haverá.
+
+As quatro alternativas em avaliação:
+
+#### A. Falha explícita
+
+Enquanto o provedor não responde, a clínica recusa a solicitação e informa que o sistema de autorização está indisponível. O paciente é orientado a voltar, ou a recepção anota em papel.
+
+#### B. Recepção pendente
+
+A clínica aceita a solicitação, guarda como pendente e responde que a autorização está em análise. Quando o provedor volta, o sistema consulta e resolve cada pendência, avisando a recepção do resultado.
+
+#### C. Autorização em cache
+
+A clínica guarda a última resposta conhecida de cada beneficiário e a reutiliza durante a indisponibilidade, dentro de uma janela definida por ela.
+
+#### D. Faixa de risco
+
+A clínica aceita e executa na hora apenas os procedimentos de uma lista curta previamente acordada com a operadora, de baixo custo e baixo risco. Todos os demais entram como pendentes, como na alternativa B.
 
 **Insumos disponíveis**
 
-As garantias e limitações declaradas na situação.
+As cinco restrições, as duas condições inaceitáveis e as quatro alternativas descritas, todas nesta página.
 
 **Como conduzir**
 
 **O que fazer**
 
-1. Defina recebimento e execução.
-2. Compare três alternativas por segurança, disponibilidade, consistência e operação.
-3. Avalie SAGA e CQRS apenas se resolverem uma necessidade concreta.
-4. Escolha, declare estados, timeout, repetição, idempotência e sinal de revisão.
+Escreva em prosa. O comitê vai ler o documento antes da reunião, então cada resposta precisa se sustentar sozinha.
+
+1. Antes de comparar, declare os critérios que você vai usar e diga qual deles pesa mais nesta decisão. Justifique a ponderação pelo risco do domínio, e não por preferência técnica.
+2. Avalie as quatro alternativas contra os seus critérios, uma por parágrafo, dizendo o que cada uma protege e o que ela expõe.
+3. Recomende uma delas e escreva, em uma frase, o que a clínica está aceitando ao segui-la.
+4. Descreva os estados pelos quais uma solicitação passa na sua recomendação, e diga o que a recepção enxerga em cada estado.
+5. Explique como o identificador único da restrição 1 impede que uma repetição vire procedimento duplicado.
+6. Uma das quatro é inaceitável para esta rede. Diga qual, e sustente com uma das duas condições inaceitáveis da situação.
+7. Escreva o sinal observável que levaria a rede a rever a decisão, e diga quem olharia esse sinal, dado que não há plantão noturno.
 
 **Evidência esperada**
 
-A decisão mostra por que a promessa de consistência protege o risco do domínio e como a equipe observará pendências.
+O documento traz critérios declarados e ponderados antes da comparação, as quatro alternativas avaliadas contra esses critérios, a recomendação com o custo aceito escrito em uma frase, a tabela de estados com o que a recepção observa, e o sinal de revisão com o responsável por observá-lo.
 
 **Entrega esperada**
 
-Envie `entregas/modulo-3/avaliar-autorizacao.md` com contexto, alternativas, decisão, consequências, fluxo de estados e plano de observação.
+Envie `entregas/modulo-3/avaliar-autorizacao.md` com no máximo duas páginas, contendo os critérios ponderados, a avaliação das quatro alternativas, a recomendação, os estados da solicitação e o sinal de revisão.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Critérios ligados ao risco do domínio | 30% | Evidência: risco orienta critério; insuficiente: critério técnico solto. |
-| Comparação equilibrada | 25% | Evidência: custo e ganho; insuficiente: padrão sem contraste. |
-| Tratamento de estados e falhas | 20% | Evidência: transição e falha; insuficiente: fluxo só feliz. |
-| Uso criterioso de SAGA e CQRS | 15% | Evidência: necessidade justifica padrão; insuficiente: sigla sem problema. |
-| Revisão e observação | 10% | Evidência: sinal e revisão; insuficiente: monitoramento sem decisão. |
+| Critérios declarados e ponderados pelo risco do domínio | 30% | Evidência: o critério mais pesado justificado pelo risco clínico; insuficiente: lista de critérios técnicos sem ponderação. |
+| Avaliação das quatro alternativas | 25% | Evidência: o que cada uma protege e o que expõe; insuficiente: alternativa mencionada sem julgamento. |
+| Custo aceito declarado na recomendação | 20% | Evidência: a frase que nomeia o que a clínica abre mão; insuficiente: recomendação apresentada como sem perdas. |
+| Estados e repetição tratados | 15% | Evidência: estados descritos e o identificador usado contra duplicidade; insuficiente: apenas o caminho feliz. |
+| Sinal de revisão com responsável | 10% | Evidência: condição observável e quem observa; insuficiente: "monitorar o sistema". |
+
 
 ## Criar
 
-### Projetar uma evolução verificável
+### Propor a arquitetura inicial do agendamento
 
 **Objetivo**
 
-Desenhar uma evolução mínima para Agendamento que declare fronteiras, falhas e gatilhos de mudança.
+Propor a arquitetura de uma capacidade nova, escolhendo entre três topologias esboçadas e defendendo a escolha com as restrições dadas.
 
 **Situação**
 
-A plataforma hospitalar ganhará Agendamento: consulta Elegibilidade, reserva horário e pede preparo de sala. Agenda muda com frequência e recebe picos; Preparo de Sala pertence a outra equipe e aceita dois minutos de atraso.
+A plataforma hospitalar vai ganhar uma capacidade nova: **Agendamento**. Quando um paciente marca um procedimento, o agendamento precisa fazer três coisas, nesta ordem.
+
+Primeiro, consultar **Elegibilidade**, que já existe e responde por HTTP se o beneficiário pode usar o plano. Segundo, reservar o horário na agenda do equipamento, garantindo que ninguém mais ocupe aquele intervalo. Terceiro, avisar **Preparo de Sala**, que pertence a outra equipe e cuida de material, higienização e equipe de apoio.
+
+Três coisas diferenciam essas partes. A agenda muda o tempo inteiro e recebe picos concentrados no início da manhã. Elegibilidade é estável e raramente muda. Preparo de Sala tem outro dono, outro ritmo de entrega, e tolera receber o aviso com até dois minutos de atraso.
+
+O paciente precisa ver a confirmação da reserva em até três segundos.
 
 **Seu papel**
 
-Você cria uma proposta que comece simples e continue verificável ao evoluir.
+Você é a pessoa arquiteta responsável pela proposta inicial. Ela será discutida com as três equipes envolvidas e precisa começar simples, sem fechar portas que a rede vá querer abrir depois.
 
 **Artefato que você irá usar**
 
-Crie o diretório `entregas/modulo-3/criar-agendamento/` a partir da raiz do clone e entregue `proposta.md`, `fluxo-nominal.md` e `falhas-parciais.md`; use os contratos de `laboratorios/plataforma-hospitalar/` apenas como referência, sem alterar o código.
+Crie `entregas/modulo-3/criar-agendamento.md`, a partir da raiz do clone. As três topologias e as restrições estão descritas nesta página, e bastam para a proposta.
 
 **Antes de executar**
 
-Considere resposta inicial em três segundos, identificador fornecido pelo consumidor, PostgreSQL disponível, mensageria permitida porém não instalada e no máximo três novas unidades implantáveis neste semestre.
+Crie o diretório `entregas/modulo-3/`; o estado inicial é sem serviços iniciados e sem alteração do laboratório.
+
+Cinco restrições valem para a proposta:
+
+1. A resposta ao paciente sai em até três segundos.
+2. O identificador da solicitação é gerado pelo consumidor, e chega pronto.
+3. PostgreSQL está disponível e é a base padrão da plataforma.
+4. Mensageria é permitida, e não existe nenhum *broker* instalado hoje.
+5. No máximo três unidades implantáveis novas podem existir neste semestre.
+
+As três topologias esboçadas:
+
+#### A. Agendamento como módulo
+
+Agendamento nasce como módulo dentro de um serviço existente, chamando Elegibilidade por HTTP e Preparo de Sala por HTTP, tudo dentro da mesma requisição do paciente.
+
+#### B. Agendamento como serviço, avisos síncronos
+
+Agendamento vira serviço próprio com banco próprio. Continua chamando Elegibilidade e Preparo de Sala por HTTP, e só confirma ao paciente depois que os dois responderem.
+
+#### C. Agendamento como serviço, aviso adiado
+
+Agendamento vira serviço próprio com banco próprio. Consulta Elegibilidade por HTTP, reserva o horário, confirma ao paciente, e registra o aviso a Preparo de Sala numa tabela de saída processada logo depois.
+
+**Insumos disponíveis**
+
+As cinco restrições, as três capacidades descritas, as diferenças de ritmo entre elas e as três topologias, todas nesta página.
+
+**Como conduzir**
 
 **O que fazer**
 
-1. Modele capacidades, contexts, comandos, consultas e proprietários.
-2. Escolha a implantação inicial.
-3. Desenhe o fluxo nominal e três falhas parciais.
-4. Declare consistência, compensações, contratos, idempotência e telemetria.
-5. Planeje duas etapas com gatilhos de extração ou consolidação e testes de contrato, fronteira e recuperação.
+Escreva em prosa, com um título por resposta. A proposta é um documento de decisão; o detalhe técnico fica para a equipe que implementa.
+
+1. Escolha uma das três topologias e defenda a escolha usando pelo menos três das cinco restrições, citando cada uma pelo número.
+2. Explique o que as outras duas topologias custariam, uma por parágrafo, para deixar registrado que foram consideradas.
+3. Diga quem é o dono de cada dado que aparece na história: a reserva de horário, a resposta de elegibilidade e o estado do preparo de sala. Justifique cada dono.
+4. Descreva o caminho de sucesso do agendamento em texto corrido, do pedido do paciente até a confirmação, indicando onde a resposta de três segundos é gasta.
+5. Descreva três falhas parciais e o que o paciente vê em cada uma: Elegibilidade fora do ar, horário já ocupado por outra pessoa entre a consulta e a reserva, e Preparo de Sala fora do ar. Para cada uma, diga se a reserva permanece válida.
+6. A restrição 4 permite mensageria e não a entrega instalada. Diga se a sua proposta precisa dela agora, e o que aconteceria se a equipe adotasse um *broker* apenas para este caso.
+7. Escreva dois sinais observáveis que levariam a rede a mudar a topologia escolhida, um na direção de mais separação e outro na direção de menos.
 
 **Evidência esperada**
 
-Saída: cada componente tem proprietário, contrato verificável e consequência para falha e atraso.
+O documento traz a topologia escolhida com pelo menos três restrições citadas pelo número, as outras duas avaliadas e descartadas, um dono declarado para cada dado, o caminho de sucesso descrito com o orçamento de tempo, três falhas parciais com o que o paciente observa e o destino da reserva, e dois sinais de mudança em direções opostas.
 
 **Entrega esperada**
 
-Envie `entregas/modulo-3/criar-agendamento/` com dois diagramas, registro de decisão, tabela de estados, contratos de exemplo, estratégia de testes e roteiro de evolução.
+Envie `entregas/modulo-3/criar-agendamento.md` com no máximo três páginas, contendo a escolha justificada, as alternativas descartadas, a propriedade dos dados, o caminho de sucesso, as três falhas parciais e os dois sinais de evolução.
 
 **Critérios de avaliação**
 
 | Critério | Percentual | Evidência e insuficiência |
 | --- | ---: | --- |
-| Coerência entre domínio, dados e implantação | 25% | Evidência: mesmos limites; insuficiente: topologia contradiz domínio. |
-| Falhas e consistência explícitas | 25% | Evidência: falha e efeito; insuficiente: consistência presumida. |
-| Contratos e verificações executáveis | 20% | Evidência: teste ou comando; insuficiente: contrato sem verificação. |
-| Evolução orientada por sinais | 15% | Evidência: sinal aciona mudança; insuficiente: evolução sem gatilho. |
-| Viabilidade operacional | 15% | Evidência: recursos considerados; insuficiente: componente sem operação possível. |
+| Escolha defendida pelas restrições dadas | 25% | Evidência: três restrições citadas pelo número; insuficiente: topologia escolhida por preferência. |
+| Alternativas descartadas com custo | 20% | Evidência: o que cada uma cobraria; insuficiente: alternativa ignorada. |
+| Propriedade dos dados declarada | 20% | Evidência: um dono por dado, com justificativa; insuficiente: dados sem autoridade definida. |
+| Falhas parciais com efeito visível | 20% | Evidência: o que o paciente vê e o destino da reserva; insuficiente: apenas o caminho de sucesso. |
+| Sinais de evolução em duas direções | 15% | Evidência: um sinal para separar e um para consolidar; insuficiente: evolução sem gatilho observável. |
+
