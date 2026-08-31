@@ -10,7 +10,7 @@ Três pessoas participaram da decisão: a arquiteta responsável pela plataforma
 
 ## Decisão e consequências
 
-Resultados publicou `ResultadoLaboratorialDisponibilizado.v1` em `hospital.events`, contendo referência, não laudo. Faturamento assumiu `billing.resultados.v1`, retry, store idempotente e DLQ; nova capacidade poderá criar sua própria fila. A disponibilidade do resultado deixou de depender da cobrança: o médico passou a ver o resultado assim que Resultados publicasse, independente do estado de Faturamento.
+Resultados publicou `ResultadoLaboratorialDisponibilizado.v1` em `hospital.events`, contendo referência, não laudo. Faturamento assumiu `billing.resultados.v1`, retry, store idempotente e uma dead-letter queue (DLQ, a fila que guarda mensagens rejeitadas em vez de descartá-las); nova capacidade poderá criar sua própria fila. A disponibilidade do resultado deixou de depender da cobrança: o médico passou a ver o resultado assim que Resultados publicasse, independente do estado de Faturamento.
 
 Essa é consistência eventual: a interface pode informar resultado disponível e atualização administrativa pendente. Operação acompanha idade da mensagem, tamanho da fila, rejeição e DLQ. Fila vazia não prova efeito correto; fila crescente pede investigação de capacidade, dependência ou contrato. Nas primeiras duas semanas depois da migração, a equipe manteve um painel simples só com essas quatro métricas, porque não havia histórico suficiente para saber qual variação era normal.
 

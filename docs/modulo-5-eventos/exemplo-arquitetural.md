@@ -2,9 +2,13 @@
 
 ## Contexto e fronteiras
 
+Este exemplo caminha por uma implementação completa dos conceitos das páginas anteriores, no mesmo caso hospitalar retomado na oficina a seguir. Três capacidades participam. Resultados publica quando um exame fica disponível para consulta. Faturamento decide e registra a cobrança administrativa correspondente. Notificação, se existir, prepara o aviso ao paciente. Cada uma mantém o próprio banco de dados, e nenhuma chama a outra diretamente: todas reagem a um fato publicado num broker RabbitMQ, o mesmo papel de broker descrito em [Broker e mediator](conceitos.md#broker-e-mediator).
+
 Resultados é dono da disponibilização do exame. Quando sua regra interna conclui que o resultado pode ser consultado, ela persiste o estado e emite o fato `ResultadoLaboratorialDisponibilizado.v1`. Faturamento é dono de decidir e registrar uma cobrança de resultado disponibilizado. Notificação, se vier a existir, é dona de preparar seu próprio aviso. Nenhum desses consumidores precisa entrar no banco de Resultados, e Resultados não precisa chamar Faturamento para concluir a disponibilização clínica.
 
 O contrato mínimo evita circular conteúdo clínico. `exam_id` e `patient_id` são identificadores sintéticos no laboratório; `result_reference` aponta para o recurso que o owner controla. Em uma solução real, a classificação de dado, autorização de leitura e minimização do payload são decisões de domínio e segurança. Um evento não contorna controle de acesso por ter sido entregue internamente.
+
+O diagrama a seguir usa duas siglas que valem a pena definir antes de aparecerem juntas. Uma **dead-letter exchange** (DLX) é a exchange para a qual o RabbitMQ redireciona uma mensagem rejeitada, em vez de descartá-la. Uma **dead-letter queue** (DLQ) é a fila ligada a essa DLX, onde a mensagem rejeitada fica disponível para inspeção manual. A DLX decide para onde a rejeição vai; a DLQ é onde ela pousa e pode ser lida.
 
 ```mermaid
 flowchart LR
@@ -19,7 +23,7 @@ flowchart LR
 
 **Texto alternativo:** Topologia em que Resultados publica por outbox ou publicador na exchange hospital.events, que alimenta a fila de faturamento; o consumidor grava tentativas e efeitos e rejeições seguem para DLQ.
 
-*Figura 10 — Contrato, fila de Faturamento, store idempotente e DLQ. Fonte: curso.*
+*Figura 11 — Contrato, fila de Faturamento, store idempotente e DLQ. Fonte: curso.*
 
 **Leitura textual:** Resultados publica no canal `hospital.events`. A fila `billing.resultados.v1` entrega ao consumidor. O consumidor registra tentativa e efeito em armazenamento local; uma mensagem rejeitada por schema segue para a exchange de dead-letter e para a DLQ.
 

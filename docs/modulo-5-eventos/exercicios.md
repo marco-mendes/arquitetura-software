@@ -8,21 +8,29 @@ As propostas usam o caso hospitalar e dados sintéticos. Não há resposta únic
 
 **Situação**
 
-Uma equipe recebeu os nomes `ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`, mas mistura intenção de domínio e elemento de transporte.
+Você acabou de entrar como arquiteta numa equipe que está migrando a integração entre Resultados e Faturamento de chamadas diretas para mensageria. Ao herdar o código e as conversas já em andamento, você encontra seis nomes espalhados pelo repositório, sem nenhum glossário que diga o que cada um significa: `ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`. Numa reunião recente, dois desenvolvedores gastaram dez minutos discutindo se `GerarCobranca` era algo que já tinha acontecido ou um pedido para alguém fazer algo — e a discussão só terminou porque o horário da reunião acabou, não porque alguém convenceu o outro.
 
 **Seu papel**
 
-Você prepara um glossário de entrada para a equipe.
+Você prepara um glossário curto, que vai virar a referência oficial da equipe a partir de agora.
 
-1\. A equipe usa evento, comando, mensagem, broker, mediator, fila, tópico e log distribuído de forma intercambiável em reuniões, e isso já gerou pelo menos uma discussão de projeto que não chegava a lugar nenhum porque duas pessoas falavam de coisas diferentes com a mesma palavra. Defina cada um dos oito termos numa frase curta, escrita de um jeito que alguém que nunca leu este módulo consiga usar para separar os oito conceitos sem confundir um pelo outro.
+1\. Qual é a diferença essencial entre um broker e um mediator?
 
 <details>
 <summary>Ver resposta</summary>
 
-Evento afirma um fato já ocorrido; comando pede uma ação a alguém; mensagem é o envelope técnico que transporta os dois. Broker distribui mensagens sem decidir regra de negócio; mediator coordena uma conversa entre participantes e assume essa decisão. Fila reparte trabalho pendente entre consumidores; tópico distribui a mesma publicação para múltiplos destinos independentes; log distribuído retém a sequência publicada e permite releituras em ritmos diferentes.
+Um broker distribui mensagens entre produtor e consumidor sem decidir nada sobre a ordem ou o sentido de negócio do fluxo; ele só roteia. Um mediator conhece o processo inteiro, decide a sequência dos passos e coordena os participantes — assume, de propósito, a decisão que o broker se recusa a tomar.
 </details>
 
-2\. Antes de você chegar, ninguém na equipe sabia dizer de cabeça se `ResultadoLaboratorialDisponibilizado.v1` era um evento ou um comando, nem se `hospital.events.dlx` era uma fila ou uma exchange — a distinção nunca tinha sido escrita em lugar nenhum. Classifique cada um dos seis nomes da situação (`ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`) numa das categorias evento, comando, exchange de domínio, fila de trabalho, exchange de dead-letter ou fila de dead-letter, e diga que pista no próprio nome levou você a cada classificação.
+2\. Como se nomeia corretamente um evento? E um comando? Dê um exemplo de cada, usando o domínio da situação acima.
+
+<details>
+<summary>Ver resposta</summary>
+
+Um evento é nomeado no particípio passado, porque afirma um fato já ocorrido: `ResultadoLaboratorialDisponibilizado` segue esse padrão. Um comando é nomeado no infinitivo ou como uma ordem direta, porque pede uma ação a alguém: `GerarCobranca` segue esse padrão. Nomear um comando no particípio (como se já tivesse acontecido) é exatamente o tipo de erro que gerou a discussão de dez minutos da situação.
+</details>
+
+3\. Classifique cada um dos seis nomes da situação (`ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`) numa das categorias evento, comando, exchange de domínio, fila de trabalho, exchange de dead-letter ou fila de dead-letter.
 
 <details>
 <summary>Ver resposta</summary>
@@ -30,20 +38,12 @@ Evento afirma um fato já ocorrido; comando pede uma ação a alguém; mensagem 
 `ResultadoLaboratorialDisponibilizado.v1` é evento, pelo particípio e pela versão explícita. `GerarCobranca` é comando, pelo verbo no infinitivo pedindo uma ação. `hospital.events` é a exchange de domínio, pelo nome genérico do canal. `billing.resultados.v1` é a fila de trabalho de um consumidor específico. `hospital.events.dlx` é a exchange de dead-letter, pelo sufixo `.dlx`. `billing.resultados.v1.dlq` é a fila de dead-letter correspondente, pelo sufixo `.dlq`.
 </details>
 
-3\. O mesmo glossário precisa cobrir o vocabulário de confiabilidade que a equipe vai usar toda semana ao operar a fila em produção, sem o qual cada incidente vira uma discussão do zero sobre o que as palavras significam. Defina entrega pelo menos uma vez, idempotência, ordenação e dead-letter queue, e diga por que uma equipe acostumada só com filas tradicionais tende a tratar as duas primeiras como sinônimos.
+4\. Defina, numa frase cada, entrega pelo menos uma vez, idempotência, ordenação e dead-letter queue.
 
 <details>
 <summary>Ver resposta</summary>
 
-Entrega pelo menos uma vez admite repetição da mensagem; idempotência é a propriedade que faz repetir a mensagem não repetir o efeito de negócio. Ordenação exige declarar qual sequência importa e sob qual chave; dead-letter queue guarda mensagens rejeitadas para decisão controlada, sem apagá-las. Equipes acostumadas a filas tradicionais tratam as duas primeiras como sinônimos porque, numa fila simples sem múltiplos consumidores nem redelivery agressivo, a repetição raramente aparece — até o dia em que aparece.
-</details>
-
-4\. Um desenvolvedor júnior da equipe trata `GerarCobranca` como se fosse um fato já consumado: assim que a mensagem chega, ele processa a cobrança sem checar se ela foi de fato autorizada por outro serviço antes. Descreva a consequência prática dessa confusão entre comando e evento nesse cenário específico, e escreva a frase que você usaria para corrigir o entendimento dele.
-
-<details>
-<summary>Ver resposta</summary>
-
-Tratar um comando como um evento já consumado pula a etapa de decisão que o comando deveria disparar: a cobrança sai sem que ninguém tenha verificado se ela era devida, e se a autorização vier a ser negada depois, o dinheiro já saiu. A correção: "`GerarCobranca` pede que você decida e aja; só publique o fato de que a cobrança ocorreu depois de ter decidido, nunca antes."
+Entrega pelo menos uma vez admite que a mesma mensagem chegue mais de uma vez. Idempotência é a propriedade que faz repetir a mensagem não repetir o efeito de negócio. Ordenação exige declarar qual sequência importa e sob qual chave. Dead-letter queue é a fila que guarda mensagens rejeitadas para decisão controlada, sem apagá-las.
 </details>
 
 ## Compreender

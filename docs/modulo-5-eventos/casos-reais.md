@@ -1,5 +1,7 @@
 # LinkedIn: matar o Leo, congelar o produto e inventar o Kafka
 
+O LinkedIn é a rede social profissional fundada em 2003, hoje usada por profissionais do mundo inteiro para networking, vagas e conteúdo de carreira. Este caso acompanha a infraestrutura de eventos que a empresa precisou inventar para sobreviver ao próprio crescimento: o Apache Kafka, hoje uma das peças mais usadas em arquitetura orientada a eventos do mercado, e o assunto deste módulo.
+
 Em 2011, a engenharia do LinkedIn tomou uma decisão que quase nenhuma empresa consegue tomar: parou de construir funcionalidades. A pausa valeu para a organização de engenharia inteira, e durou o tempo necessário para arrumar a casa.
 
 A iniciativa se chamou **Inversion**. Para entender por que foi necessária, é preciso voltar oito anos e conhecer o Leo.
@@ -32,7 +34,7 @@ Vale registrar o que esse tipo de decisão exige de quem a propõe. Não existe 
 
 Na mesma fase, o RPC Java inconsistente foi substituído pelo **Rest.li**, um contrato JSON sobre HTTP. O relato descreve mais de 975 recursos e cerca de 100 bilhões de chamadas por dia sobre esse padrão.
 
-## O problema que nenhuma correção resolveu
+## Rest.li não resolveu a cadeia síncrona
 
 O Rest.li deixou as chamadas consistentes e não mudou o fato de que eram chamadas. A cadeia síncrona continuava sendo cadeia síncrona, e o padrão de trabalho continuava sendo um fato de negócio que muitos subsistemas precisavam conhecer.
 
@@ -84,11 +86,13 @@ A unidade de paralelismo é a partição, e a ordem é garantida dentro dela. Es
 
 O próprio paper de 2011 registra a escala que já preocupava a equipe: *"hundreds of gigabytes of data and close to a billion messages per day"*, quase um bilhão de mensagens por dia. É uma fração pequena do que a mesma equipe reportaria menos de uma década depois, mas o volume já bastava para expor os limites de uma fila que não fosse desenhada em torno do disco sequencial.
 
-A primeira escolha foi armazenamento sequencial. Cada partição é um log físico, implementado como um conjunto de arquivos de segmento de tamanho fixo, cerca de 1 GB cada segundo o paper. O broker só faz append no último segmento. Não há estrutura de índice aleatória mapeando identificador de mensagem para posição em disco, porque a mensagem não tem identificador próprio: ela é endereçada pelo próprio offset no log. Isso elimina toda uma classe de escrita e leitura aleatória que definia o desempenho dos sistemas de fila tradicionais.
+Vale uma pausa para quem não vem de sistemas operacionais. Em 2011, o padrão de armazenamento ainda era o disco rígido mecânico, com um braço físico que se move para ler ou escrever cada dado. Pedir posições espalhadas pelo disco, numa ordem aleatória, faz esse braço saltar de um lado para o outro sem parar. Pedir posições vizinhas, em sequência, deixa o braço andar sempre no mesmo sentido. A diferença de velocidade entre as duas formas de acesso pode passar de cem vezes no mesmo disco físico. As três escolhas abaixo existem para manter Kafka do lado sequencial dessa conta, o tempo inteiro.
 
-A segunda foi recusar cache próprio. Kafka não mantém as mensagens em memória no processo da JVM; delega isso ao page cache do sistema operacional. O motivo declarado no paper é duplo: evita o custo de dupla cópia entre o cache da aplicação e o cache do SO, e evita que o coletor de lixo da JVM precise gerenciar gigabytes de mensagens em memória. Um broker reiniciado herda um cache já quente, porque o cache pertence ao SO, e não ao processo que foi reiniciado.
+1. **Armazenamento sequencial.** Cada partição é um log físico: um conjunto de arquivos de segmento de tamanho fixo, cerca de 1 GB cada segundo o paper. O broker só escreve no final do último segmento, nunca no meio de um arquivo, o que já garante escrita sequencial. Na leitura, a mensagem não carrega um identificador próprio que precise ser procurado num índice: ela é localizada pelo seu deslocamento em bytes dentro do arquivo, chamado *offset*. Sem índice para consultar, não há salto aleatório à procura de uma mensagem específica; o consumidor apenas continua lendo de onde parou.
 
-A terceira foi zero-copy. Uma transferência ingênua de disco para rede custa quatro cópias de dados e duas chamadas de sistema: ler do disco para o page cache, copiar do page cache para um buffer da aplicação, copiar de volta para um buffer de kernel, e então para o socket. A chamada `sendfile`, disponível em Linux, transfere bytes diretamente de um arquivo para um canal de socket, eliminando duas dessas cópias e uma dessas chamadas. Kafka usa exatamente essa chamada para servir um consumidor a partir de um segmento de log.
+2. **Delegar o cache ao sistema operacional.** Qualquer sistema operacional reserva parte da memória RAM livre para guardar cópias recentes de dados lidos ou escritos em disco, de forma automática; essa área chama-se *page cache*, e nenhum programa precisa pedir por ela. Kafka decidiu não manter as próprias mensagens em memória dentro do processo Java (a JVM): delega isso inteiramente ao page cache do sistema operacional. A razão é dupla. Guardar uma cópia própria além da que o sistema operacional já guarda seria desperdiçar memória com duas cópias do mesmo dado. E o coletor de lixo da JVM (a rotina que a linguagem Java usa para liberar memória não utilizada) não precisaria vasculhar gigabytes de mensagens à procura do que pode descartar, o que pausaria o programa por instantes a cada execução. Um efeito colateral favorável: quando um broker reinicia, o page cache continua quente, porque pertence ao sistema operacional, não ao processo que caiu.
+
+3. **Zero-copy.** Enviar um dado do disco para a rede, do jeito ingênuo, custa quatro cópias de memória e duas *chamadas de sistema* (uma chamada de sistema, ou *syscall*, é um pedido que um programa faz ao núcleo do sistema operacional para executar algo que só ele pode fazer, como ler um arquivo ou falar com a placa de rede; cada uma consome tempo de processamento). O caminho ingênuo é: ler do disco para o page cache, copiar do page cache para um buffer do programa, copiar de volta para um buffer do núcleo, e daí para a placa de rede — quatro cópias, duas travessias entre o programa e o núcleo. A chamada `sendfile`, disponível em Linux, pede ao núcleo para mandar os bytes direto de um arquivo para um canal de rede, sem passar pelo programa no meio do caminho, eliminando duas dessas cópias e uma dessas chamadas. Kafka usa exatamente essa chamada para entregar um segmento de log a um consumidor.
 
 Uma quarta decisão, menos técnica e mais organizacional, também aparece no paper: o modelo de consumo é por *pull*. Em vez do broker empurrar mensagens no ritmo que escolhe, cada consumidor pede o que consegue processar, no próprio ritmo. Isso evita que um consumidor lento seja inundado. Como efeito colateral, o consumidor pode rebobinar e reler uma faixa antiga do log sempre que precisar, algo que um modelo de broker empurrando dados dificulta.
 
@@ -96,7 +100,7 @@ O paper documenta o resultado dessas escolhas contra sistemas concorrentes da é
 
 Uma peça está ausente dessa primeira versão: replicação. O paper de 2011 lista, como trabalho futuro, adicionar redundância entre múltiplos brokers. Sem ela, perder o disco de um broker perdia para sempre qualquer mensagem não consumida daquela partição. O mecanismo que resolve isso chegou nas versões seguintes: um líder por partição escreve primeiro, e um conjunto de réplicas em sincronia (ISR, *in-sync replica set*) confirma a cópia antes que o líder reconheça a escrita ao produtor. É essa peça, ausente em 2011, que sustenta hoje a tolerância a falha dos mais de 4.000 brokers citados na escala do LinkedIn.
 
-## A escala, e o que ela revela
+## Clusters locais e agregadores
 
 A publicação oficial de engenharia sobre a customização do Kafka afirma: *"We maintain over 100 Kafka clusters with more than 4,000 brokers, which serve more than 100,000 topics and 7 million partitions"*, processando mais de 7 trilhões de mensagens por dia. Em números redondos: mais de cem *clusters*, quatro mil *brokers*, cem mil tópicos e sete milhões de partições.
 
@@ -106,7 +110,7 @@ O texto "Running Kafka At Scale", também publicado pela engenharia do LinkedIn,
 
 A razão é contenção de domínio de falha e controle do tráfego entre datacenters. Um *cluster* único dessa dimensão transformaria qualquer incidente local em incidente global.
 
-## O custo que a empresa assumiu
+## Cruise Control, Brooklin e Bean Counter: o ferramental que a operação exigiu
 
 Operar Kafka nessa escala exigiu construir ferramental que não existia. A publicação oficial cita três peças abertas depois: o **Cruise Control**, para manutenção e recuperação automática do *cluster*; o **Brooklin**, para espelhamento entre *clusters*; e o **Bean Counter**, para auditoria de completude dos fluxos.
 

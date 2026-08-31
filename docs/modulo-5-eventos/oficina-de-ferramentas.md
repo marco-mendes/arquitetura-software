@@ -6,6 +6,8 @@ Oficina local: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponib
 
 Esta oficina implementa em código o que os módulos de [Conceitos](conceitos.md) e [Padrões e decisões](padroes-e-decisoes.md) descrevem em prosa. Antes de rodar qualquer comando, abra os arquivos abaixo. Você está lendo esta página pelo site publicado, sem o repositório clonado, então os links vão direto ao código no GitHub.
 
+Duas siglas aparecem várias vezes a partir daqui. Uma **dead-letter exchange** (DLX) é a exchange para a qual o RabbitMQ redireciona uma mensagem rejeitada. Uma **dead-letter queue** (DLQ) é a fila ligada a essa DLX, onde a mensagem rejeitada fica disponível para inspeção em vez de reentregue em loop ou descartada.
+
 | Arquivo | O que ele faz | Onde isso aparece na teoria |
 | --- | --- | --- |
 | [`infra/compose.eventos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml) | Sobe um RabbitMQ 4 isolado, com plugin de management e healthcheck, e declara as portas AMQP e HTTP que os comandos desta oficina vão usar. | A infraestrutura por trás do [broker](conceitos.md#broker-e-mediator): aqui ele é uma exchange `hospital.events` e uma fila de trabalho `billing.resultados.v1`. |
