@@ -8,6 +8,18 @@ A entrega **pelo menos uma vez** admite repetição. Um consumidor recebe a mens
 
 A fronteira deve ser transacional onde for possível. Registrar deduplicação e efeito na mesma transação SQLite evita o intervalo em que um é gravado sem o outro. Em outro sistema, a mesma ideia pode usar uma tabela de inbox no banco do consumidor, uma restrição única ou uma operação naturalmente idempotente. Um cache de processo é insuficiente: reinício, réplica diferente e expiração permitem duplicidade. Para efeitos fora do banco, como e-mail ou lançamento externo, a chave de idempotência também precisa chegar ao provedor e a reconciliação passa a fazer parte do desenho.
 
+Idempotência resolve o problema de uma mensagem chegar duas vezes. Um problema vizinho, e independente dele, é o de várias mensagens chegarem na ordem errada.
+
+## Payload completo ou referência?
+
+Antes de decidir ordem, contrato ou tecnologia, há uma escolha mais básica: quanto do dado viaja dentro do evento. Duas estratégias competem.
+
+O **payload completo** carrega no evento todos os dados de que o consumidor precisa. Ele elimina uma ida de volta à origem, o que ajuda quando o consumidor não tem acesso ao banco do produtor, quando a origem pode estar indisponível no momento do consumo, ou quando o histórico precisa refletir o estado exato daquele instante. O preço é um evento maior, mais acoplado à estrutura interna de quem publica, e uma cópia de dado circulando por canais que talvez não devessem transportá-lo.
+
+A estratégia de **referência** envia apenas identificadores, e o consumidor busca o que precisa na origem. O evento fica pequeno e estável, o produtor mantém controle sobre quem lê o quê, e dado sensível não circula pelo canal. O preço é que o consumidor passa a depender da disponibilidade da origem no momento em que processa, e o dado buscado pode já ter mudado desde o instante do fato.
+
+O contrato deste módulo usa a estratégia de referência: `result_reference` aponta para o recurso que o owner controla, em vez de carregar o laudo. Num domínio clínico, essa escolha é menos sobre tamanho de mensagem e mais sobre controle de acesso — um evento entregue internamente não deveria virar um atalho em torno da autorização de leitura. Num domínio sem essa restrição, o payload completo pode ser a decisão certa pelo motivo oposto: reduzir acoplamento temporal com a origem.
+
 ## Ordem: qual ordem, para qual chave?
 
 “Precisamos de ordenação” é uma frase incompleta. É necessário declarar a sequência relevante: eventos do mesmo pedido? mudanças do mesmo cliente? todos os fatos da loja? Ordem global reduz paralelismo, torna falhas mais caras e em muitos brokers simplesmente não é garantida. Uma fila com vários consumidores pode entregar mensagens em sequência, mas seus efeitos terminam em ordem diferente. Retentativas e redelivery também alteram o momento observado.
@@ -21,6 +33,8 @@ O contrato é uma interface pública entre capacidades, mesmo quando todas estã
 Evoluir não é apenas alterar JSON. Adicionar um campo opcional pode ser compatível para consumidores que o ignoram; tornar campo obrigatório ou mudar seu significado pode quebrar leitura. Trocar unidade, fuso, identificador ou classificação de dado pode quebrar negócio sem quebrar parse. Uma estratégia usual é publicar leitura compatível durante transição, documentar data e owner, e retirar apenas quando consumidores confirmarem a migração. Uma nova versão no nome é mais clara quando a semântica se rompe; produzir duas versões temporariamente pode reduzir risco, ao custo de observabilidade e prazo explícito.
 
 Schema Registry, JSON Schema, Avro, Protobuf e validação de modelos são mecanismos possíveis; nenhum deles substitui a conversa de contrato. A questão é descobrir incompatibilidade antes de uma mensagem parada em produção. Testes de contrato, exemplos sintéticos e uma política de depreciação verificável fazem essa descoberta mais barata.
+
+Mesmo um contrato bem versionado eventualmente chega quebrado: de um bug no produtor, de uma migração incompleta, de um consumidor que ainda espera a versão antiga. É para guardar essa mensagem, sem confirmá-la como sucesso, que existe a dead-letter queue.
 
 ## Dead-letter queue como evidência, não depósito
 
@@ -56,7 +70,9 @@ Publicar diretamente após uma transação de domínio cria o problema de dupla 
 
 O laboratório mostra a metade consumidora da ideia: a tabela de mensagens processadas é uma inbox didática. Não implementa outbox porque o foco é observar a repetição, mas a decisão de produção deve considerar os dois lados. Se a origem tem banco transacional, outbox costuma ser mais confiável do que tentar coordenar banco e broker com uma transação distribuída. Se a origem é um fluxo de log, a estratégia pode ser diferente. A obrigação é documentar a janela de falha e a recuperação em vez de invocar “exactly-once” para escondê-la.
 
-## RabbitMQ, Kafka ou ActiveMQ: matriz de perguntas
+Idempotência, ordem, contrato, DLQ, outbox: nenhuma dessas garantias é exclusiva de uma tecnologia específica, mas o esforço para implementá-las muda bastante de uma para outra.
+
+## Escolher entre RabbitMQ, Kafka, ActiveMQ e serviços gerenciados
 
 RabbitMQ é uma alternativa quando roteamento de mensagens e unidades de trabalho com confirmações forem o centro do problema e a topologia de filas for compreensível para a operação. Kafka é uma alternativa quando retenção, replay, leitura por múltiplos grupos e particionamento de fluxo forem requisitos centrais. ActiveMQ é uma alternativa quando filas ou tópicos com confirmações precisam integrar sistemas que já dependem de JMS ou de protocolos interoperáveis. Nenhuma dessas capacidades substitui idempotência, ownership, nem uma política para falhas.
 

@@ -16,6 +16,9 @@ RabbitMQ e Kafka não são degraus de maturidade. RabbitMQ oferece exchanges, fi
 - [Apache Kafka: semântica de entrega](https://kafka.apache.org/documentation/#semantics) descreve limites e mecanismos de processamento.
 - [CloudEvents specification](https://github.com/cloudevents/spec) oferece uma referência aberta para metadados de eventos; adotar o formato ainda exige uma decisão de contrato.
 - [Martin Kleppmann, *Designing Data-Intensive Applications*](https://dataintensive.net/) aprofunda logs, replicação, ordenação e sistemas distribuídos.
+- Gregor Hohpe e Bobby Woolf, [*Enterprise Integration Patterns*](https://www.enterpriseintegrationpatterns.com/) catalogam os padrões de mensageria que broker, mediator, canal e roteador formalizam.
+- Mark Richards e Neal Ford, [*Fundamentals of Software Architecture*](https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/) situam a arquitetura orientada por eventos entre os demais estilos e seus atributos de qualidade.
+- Microsoft, [Event-driven architecture style](https://learn.microsoft.com/azure/architecture/guide/architecture-styles/event-driven) resume o estilo, suas topologias e quando ele não se aplica.
 
 ## Perguntas de saída
 

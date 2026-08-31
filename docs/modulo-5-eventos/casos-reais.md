@@ -1,10 +1,8 @@
-# LinkedIn: matar o Leo, congelar o produto e inventar o Kafka
+# LinkedIn: de um monólito a sete trilhões de mensagens por dia
 
 O LinkedIn é a rede social profissional fundada em 2003, hoje usada por profissionais do mundo inteiro para networking, vagas e conteúdo de carreira. Este caso acompanha a infraestrutura de eventos que a empresa precisou inventar para sobreviver ao próprio crescimento: o Apache Kafka, hoje uma das peças mais usadas em arquitetura orientada a eventos do mercado, e o assunto deste módulo.
 
-Em 2011, a engenharia do LinkedIn tomou uma decisão que quase nenhuma empresa consegue tomar: parou de construir funcionalidades. A pausa valeu para a organização de engenharia inteira, e durou o tempo necessário para arrumar a casa.
-
-A iniciativa se chamou **Inversion**. Para entender por que foi necessária, é preciso voltar oito anos e conhecer o Leo.
+O crescimento da base de membros expôs um problema que nenhuma reescrita de código, sozinha, resolveria: uma ação simples de um usuário passou a exigir reação de dezenas de subsistemas independentes. A arquitetura de comunicação da empresa mudou de forma três vezes até encontrar uma resposta duradoura para isso. Este caso acompanha essas três fases (do monólito Leo aos serviços síncronos, e dos serviços síncronos ao log distribuído que a própria empresa batizou de Kafka) e o que cada uma revela sobre os limites de comunicação entre sistemas. Para entender a primeira fase, é preciso voltar a 2003 e conhecer o Leo.
 
 ## 2003: 2.700 pessoas na primeira semana
 
@@ -14,31 +12,17 @@ Funcionou por anos. Depois deixou de funcionar, e o relato de engenharia da empr
 
 Existe uma pressão de fundo nesse crescimento que interessa especificamente a este módulo, e ela não é sobre volume de acessos. É sobre **formato do trabalho**. Uma ação simples de um membro precisa ser reagida por vários subsistemas independentes: o grafo social recalcula caminhos, a busca reindexa o perfil, as notificações são geradas, a telemetria é coletada. Cada consumidor novo de um evento que já existia exigia mais uma integração amarrada diretamente à origem.
 
-## "Kill Leo"
+## Fase 2: serviços síncronos, e o acoplamento que mudou de natureza
 
-A iniciativa de decomposição recebeu esse nome dentro da empresa, e ele diz muito sobre o clima.
-
-O primeiro serviço extraído foi o de grafo de conexões, comunicando-se por RPC em Java. Depois vieram busca, perfil, comunicações e grupos. Em 2010 já existiam mais de 150 serviços. O mesmo relato registra mais de 750 posteriormente.
+A iniciativa de decomposição recebeu, dentro da empresa, o nome de "Kill Leo". O primeiro serviço extraído foi o de grafo de conexões, comunicando-se por RPC em Java. Depois vieram busca, perfil, comunicações e grupos. Em 2010 já existiam mais de 150 serviços. O mesmo relato registra mais de 750 posteriormente.
 
 E aí o LinkedIn descobriu o que muita gente descobriria na década seguinte. O acoplamento não tinha sido eliminado. Tinha mudado de natureza.
 
 Uma requisição de página passou a depender de uma cadeia de chamadas síncronas atravessando muitos serviços. Cada elo somava latência ao total. Cada elo podia falhar e derrubar a resposta inteira. A empresa trocou um monólito que caía por um conjunto de serviços cuja disponibilidade combinada era pior que a de qualquer um deles isolado.
 
-## Fim de 2011: o Inversion
+Duas correções vieram nessa fase, e vale registrar o que cada uma alcançou. No fim de 2011, numa iniciativa interna chamada **Inversion**, a empresa suspendeu temporariamente o desenvolvimento de funcionalidades para investir em ferramental, implantação e produtividade — uma decisão organizacional relevante, que melhorou a capacidade de entrega sem tocar na topologia de comunicação entre os serviços. Na mesma fase, o RPC Java inconsistente foi substituído pelo **Rest.li**, um contrato JSON sobre HTTP; o relato descreve mais de 975 recursos e cerca de 100 bilhões de chamadas por dia sobre esse padrão.
 
-Foi nesse contexto que veio a decisão mais difícil de vender internamente.
-
-O LinkedIn suspendeu o desenvolvimento de funcionalidades e dedicou a organização de engenharia a ferramental, implantação e produtividade de desenvolvimento. Uma empresa de capital aberto, em crescimento acelerado e sob concorrência, parou de entregar produto para consertar a fundação.
-
-Vale registrar o que esse tipo de decisão exige de quem a propõe. Não existe métrica de produto que a justifique no trimestre. O argumento é que a velocidade de entrega já estava próxima de zero e ninguém tinha percebido, porque o custo estava distribuído em atrito diário em vez de concentrado numa parada visível.
-
-Na mesma fase, o RPC Java inconsistente foi substituído pelo **Rest.li**, um contrato JSON sobre HTTP. O relato descreve mais de 975 recursos e cerca de 100 bilhões de chamadas por dia sobre esse padrão.
-
-## Rest.li não resolveu a cadeia síncrona
-
-O Rest.li deixou as chamadas consistentes e não mudou o fato de que eram chamadas. A cadeia síncrona continuava sendo cadeia síncrona, e o padrão de trabalho continuava sendo um fato de negócio que muitos subsistemas precisavam conhecer.
-
-Enquanto isso, a empresa acumulava tubulações de dados construídas caso a caso. Cada par de sistemas que precisava trocar informação ganhava a própria integração, com o próprio formato, a própria semântica de falha e o próprio dono.
+O Rest.li padronizou o formato das chamadas e não mudou o fato de que eram chamadas. A cadeia síncrona continuava sendo cadeia síncrona, e um fato de negócio continuava precisando ser empurrado, um a um, para cada subsistema interessado. Enquanto isso, a empresa acumulava tubulações de dados construídas caso a caso: cada par de sistemas que precisava trocar informação ganhava a própria integração, com o próprio formato, a própria semântica de falha e o próprio dono. O limite dessa fase não era qualidade de código nem produtividade da equipe. Era a forma da comunicação.
 
 ```mermaid
 flowchart TB
@@ -116,7 +100,7 @@ Operar Kafka nessa escala exigiu construir ferramental que não existia. A publi
 
 Essa é a parte que uma equipe pequena precisa levar a sério. A adoção do Kafka **move** trabalho. Sai a coordenação de chamadas síncronas e entra a operação de um sistema de armazenamento distribuído, com particionamento, replicação, atraso de consumo e evolução de esquema. Este módulo trata a contraparte disso em [esquema, compatibilidade e evolução](padroes-e-decisoes.md#esquema-compatibilidade-e-evolucao) e em [dead-letter queue](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito).
 
-Kafka resolveu disseminação de um mesmo fato para muitos consumidores independentes. Se um sistema tem dois consumidores e uma integração direta que funciona, este caso não é argumento a favor de trocar. A [matriz de perguntas](padroes-e-decisoes.md#rabbitmq-kafka-ou-activemq-matriz-de-perguntas) existe para essa comparação.
+Kafka resolveu disseminação de um mesmo fato para muitos consumidores independentes. Se um sistema tem dois consumidores e uma integração direta que funciona, este caso não é argumento a favor de trocar. A seção sobre [como escolher entre RabbitMQ, Kafka, ActiveMQ e serviços gerenciados](padroes-e-decisoes.md#escolher-entre-rabbitmq-kafka-activemq-e-servicos-gerenciados) existe para essa comparação.
 
 ## Questões para discussão
 
