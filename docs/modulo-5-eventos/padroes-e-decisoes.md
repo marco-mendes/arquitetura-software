@@ -18,6 +18,12 @@ O **payload completo** carrega no evento todos os dados de que o consumidor prec
 
 A estratégia de **referência** envia apenas identificadores, e o consumidor busca o que precisa na origem. O evento fica pequeno e estável, o produtor mantém controle sobre quem lê o quê, e dado sensível não circula pelo canal. O preço é que o consumidor passa a depender da disponibilidade da origem no momento em que processa, e o dado buscado pode já ter mudado desde o instante do fato.
 
+![Comparação entre as duas estratégias de payload: à esquerda, o evento de pedido carrega itens, total e endereço de entrega; à direita, o evento carrega apenas o identificador e uma referência, e a Expedição consulta a origem dos dados de forma autorizada.](../assets/images/m05-payload-completo-referencia.png)
+
+*Figura 11 — Dados completos ou referência: o que viaja dentro do evento. Fonte: curso.*
+
+**Leitura textual da figura:** à esquerda, na estratégia de dados completos, o serviço de Pedidos publica um evento que carrega itens, valor total e endereço de entrega; a Expedição consome tudo o que precisa sem consultar a origem, e o evento funciona como um retrato do instante do fato. O preço é uma mensagem maior e cópias de dados que exigem proteção. À direita, na estratégia de referência, o mesmo evento carrega apenas o identificador do pedido e um caminho de consulta; a Expedição faz uma consulta autorizada à origem dos dados para obter o resto. O evento fica menor e o controle de acesso permanece na origem, mas o consumidor passa a depender de ela estar disponível, e os dados consultados podem já ter mudado desde o instante do fato. A pergunta que decide entre as duas: o consumidor precisa do retrato do passado ou pode consultar a origem?
+
 O contrato deste módulo usa a estratégia de referência: `result_reference` aponta para o recurso que o owner controla, em vez de carregar o laudo. Num domínio clínico, essa escolha é menos sobre tamanho de mensagem e mais sobre controle de acesso — um evento entregue internamente não deveria virar um atalho em torno da autorização de leitura. Num domínio sem essa restrição, o payload completo pode ser a decisão certa pelo motivo oposto: reduzir acoplamento temporal com a origem.
 
 ## Ordem: qual ordem, para qual chave?
@@ -42,6 +48,14 @@ Uma **dead-letter queue** (DLQ) recebe mensagens que não puderam seguir a polí
 
 DLQ não corrige schema automaticamente nem é trilha de auditoria geral. Sem owner, alerta e procedimento de decisão, ela vira armazenamento silencioso de falhas. A equipe define quais erros são transitórios e merecem retry, quais são permanentes e vão à DLQ, como proteger dados ali presentes e como evitar reprocessar em loop. Corrigir o produtor, criar evento de compensação ou descartar uma mensagem sintética são decisões diferentes; a fila só preserva a evidência para tomá-las, e quem decide é a equipe.
 
+A separação entre erro transitório e permanente é o que decide o caminho da mensagem, e a figura a seguir mostra os três desfechos possíveis de uma entrega.
+
+![Caminhos de uma mensagem no consumidor: sucesso grava o efeito e confirma; falha temporária espera e tenta de novo até um limite; falha permanente vai direto à fila de erros, que a equipe responsável analisa.](../assets/images/m05-retentativas-dlq.png)
+
+*Figura 12 — Retentativa com limite, isolamento do erro e recuperação com critério. Fonte: curso.*
+
+**Leitura textual da figura:** o evento de pedido chega a Faturamento, que valida e processa. Em caso de sucesso, o efeito é gravado e a mensagem é confirmada. Uma falha temporária, como um serviço indisponível, leva a uma espera seguida de nova tentativa, com número de tentativas limitado; atingido esse limite, a mensagem segue para a fila de erros. Uma falha permanente, como um campo obrigatório ausente, vai direto para a fila de erros sem retentativa, porque repetir não mudaria o resultado. A fila de erros preserva a mensagem e o motivo da falha, e uma equipe responsável analisa, corrige e decide a recuperação, num reprocessamento controlado. Duas condições sustentam o desenho: uma mensagem inválida nunca é confirmada como sucesso, e a fila de erros precisa de responsável, alerta e procedimento.
+
 ```mermaid
 sequenceDiagram
     participant R as Pedidos
@@ -60,13 +74,19 @@ sequenceDiagram
 
 **Texto alternativo:** Sequência de duas entregas do mesmo evento A: a primeira cria efeito e a segunda apenas registra nova tentativa no store idempotente antes da confirmação.
 
-*Figura 10 — Reentrega com efeito de negócio idempotente. Fonte: curso.*
+*Figura 13 — Reentrega com efeito de negócio idempotente. Fonte: curso.*
 
 **Leitura textual:** Pedidos publica a ocorrência A. Faturamento registra o efeito e confirma. A mesma ocorrência chega outra vez; o store aumenta a contagem de tentativas, reconhece a identidade já processada e impede novo efeito antes da segunda confirmação.
 
 ## Outbox, inbox e fronteiras de escrita
 
 Publicar diretamente após uma transação de domínio cria o problema de dupla escrita: o resultado pode ser salvo sem evento se o processo falhar antes de publicar; ou o evento pode sair quando a transação local falha. O padrão **outbox** grava a mudança e uma intenção de publicação na mesma transação local. Um publicador separado envia a outbox ao broker e marca o avanço. Ainda há repetição possível, portanto o destinatário usa uma **inbox** ou deduplicação pelo `event_id`.
+
+![Fluxo em três etapas: Pedidos grava o pedido e a caixa de saída na mesma transação, um publicador lê a saída e publica na central de eventos, e Faturamento grava a caixa de entrada e o efeito de negócio na mesma transação, produzindo uma única cobrança mesmo com duas entregas.](../assets/images/m05-outbox-inbox.png)
+
+*Figura 14 — Caixa de saída e caixa de entrada protegendo as duas pontas. Fonte: curso.*
+
+**Leitura textual da figura:** na primeira etapa, o serviço de Pedidos grava o pedido registrado e a caixa de saída (*outbox*) com o evento A dentro da mesma transação local, de modo que ou os dois são gravados, ou nenhum. Na segunda etapa, um publicador separado lê a caixa de saída, publica na central de eventos e marca o envio depois da confirmação; entre a central e o consumidor pode haver reentrega do mesmo evento. Na terceira etapa, Faturamento grava a caixa de entrada (*inbox*), registrando que o evento A foi processado, e o efeito de negócio, uma cobrança, também na mesma transação, confirmando o consumo só depois de gravar. O consumidor identifica duplicatas pela identidade do evento, não pelo horário nem pela posição na fila. O resultado: duas entregas do evento A produzem uma única cobrança.
 
 O laboratório mostra a metade consumidora da ideia: a tabela de mensagens processadas é uma inbox didática. Não implementa outbox porque o foco é observar a repetição, mas a decisão de produção deve considerar os dois lados. Se a origem tem banco transacional, outbox costuma ser mais confiável do que tentar coordenar banco e broker com uma transação distribuída. Se a origem é um fluxo de log, a estratégia pode ser diferente. A obrigação é documentar a janela de falha e a recuperação em vez de invocar “exactly-once” para escondê-la.
 

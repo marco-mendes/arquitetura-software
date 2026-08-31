@@ -19,8 +19,8 @@ class ConceptInfographicsTest(unittest.TestCase):
             ("modulo-3-servicos/conceitos.md", "../assets/images/m03-fronteira-logica-fisica.png", 3),
             ("modulo-3-servicos/conceitos.md", "../assets/images/m03-propriedade-dados.png", 4),
             ("modulo-4-governanca/conceitos.md", "../assets/images/m04-governanca-observavel.png", 5),
-            ("modulo-5-eventos/conceitos.md", "../assets/images/m05-eda-loja-virtual.png", 5),
-            ("modulo-5-eventos/conceitos.md", "../assets/images/m05-fluxo-eventos.png", 7),
+            ("modulo-5-eventos/conceitos.md", "../assets/images/m05-eda-loja-virtual.png", 6),
+            ("modulo-5-eventos/conceitos.md", "../assets/images/m05-fluxo-eventos.png", 8),
             ("modulo-6-nuvem/conceitos.md", "../assets/images/m06-resiliencia-nuvem.png", 7),
         )
         for page_name, reference, number in figures:

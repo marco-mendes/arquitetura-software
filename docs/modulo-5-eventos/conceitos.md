@@ -2,7 +2,7 @@
 
 ![Arquitetura orientada por eventos numa loja virtual: o Cliente faz um pedido, o Serviço de Pedidos publica o fato na central de eventos, e Estoque, Pagamentos e Notificações reagem de forma independente, cada um com sua própria fila e seus próprios dados.](../assets/images/m05-eda-loja-virtual.png)
 
-*Figura 5 — Um pedido, várias reações independentes. Fonte: curso.*
+*Figura 6 — Um pedido, várias reações independentes. Fonte: curso.*
 
 **Leitura textual da figura:** o Cliente faz um pedido na loja virtual. O Serviço de Pedidos, no papel de produtor, registra o pedido nos seus próprios dados e publica o evento “Pedido realizado”, que carrega o identificador do pedido. A central de eventos recebe essa publicação e entrega uma cópia para a fila de cada assinante. Estoque reserva os produtos, Pagamentos inicia o faturamento e Notificações avisa o cliente, cada consumidor com sua fila própria e seu banco de dados próprio, sem que o Serviço de Pedidos conheça qualquer um deles. Três propriedades sustentam o desenho: o evento informa um fato já ocorrido; o processamento é assíncrono, então Pedidos não espera as reações terminarem; e a consistência é eventual, porque as atualizações de cada consumidor podem ocorrer em momentos diferentes.
 
@@ -68,7 +68,7 @@ sequenceDiagram
 
 **Texto alternativo:** Diagrama de sequência em que o Cliente publica um pedido e cada serviço, ao concluir sua etapa, publica um evento para o próximo e também para Notificação; todas as setas seguem adiante, nenhuma delas é uma resposta de volta para quem a originou.
 
-*Figura 6 — Padrão broker: cada serviço publica adiante, sem esperar resposta. Fonte: curso, adaptado de material do curso sobre o padrão broker.*
+*Figura 7 — Padrão broker: cada serviço publica adiante, sem esperar resposta. Fonte: curso, adaptado de material do curso sobre o padrão broker.*
 
 **Leitura textual:** O Cliente publica o pedido, que chega a Compras. Compras publica para Crédito e, em paralelo, para Notificação. Crédito, ao aprovar, publica para Estoque e também para Notificação. Estoque publica para Despacho e para Notificação. Despacho publica para Notificação. Por fim, Notificação avisa o Cliente. Repare que cada seta é de mão única: nenhum serviço aguarda confirmação de quem recebeu antes de seguir em frente, e nenhum deles sabe se alguém está do outro lado lendo a fila.
 
@@ -76,7 +76,7 @@ Um broker faz mais do que encaminhar. Ele também precisa responder o que fazer 
 
 ![Fluxo de eventos: um resultado laboratorial disponível é publicado em um broker, entregue a um consumidor de faturamento, verificado por idempotência e enviado à DLQ se inválido.](../assets/images/m05-fluxo-eventos.png)
 
-*Figura 7 — Publicação, consumo, idempotência e dead-letter queue. Fonte: curso.*
+*Figura 8 — Publicação, consumo, idempotência e dead-letter queue. Fonte: curso.*
 
 **Leitura textual da figura:** o laboratório publica o fato “resultado disponível” no broker. O broker entrega uma cópia ao consumidor de Faturamento. Antes de produzir efeito, o consumidor consulta o registro de idempotência para impedir uma cobrança duplicada. Uma mensagem inválida ou que não possa ser processada segue para a DLQ, onde fica visível para diagnóstico e reprocessamento controlado, sem desaparecer silenciosamente.
 
@@ -122,7 +122,7 @@ sequenceDiagram
 
 **Texto alternativo:** Diagrama de sequência em que o Cliente fala só com o Mediator; para cada etapa (crédito, estoque, despacho), o Mediator envia uma solicitação e recebe uma resposta de volta antes de seguir para a próxima, até publicar a notificação final.
 
-*Figura 8 — Padrão mediator: o coordenador solicita, aguarda a resposta e decide o próximo passo. Fonte: curso, adaptado de material do curso sobre o padrão mediator.*
+*Figura 9 — Padrão mediator: o coordenador solicita, aguarda a resposta e decide o próximo passo. Fonte: curso, adaptado de material do curso sobre o padrão mediator.*
 
 **Leitura textual:** O Cliente envia o pedido ao Mediator, que é seu único interlocutor no fluxo inteiro. O Mediator pede a avaliação de crédito e espera a resposta “aprovado” antes de prosseguir. Só então pede a verificação de estoque e espera a resposta “disponível”. Só então pede a organização do despacho e espera a confirmação. Ao final, o Mediator manda notificar o Cliente. Cada seta de ida tem uma seta de volta tracejada: o Mediator não passa para a etapa seguinte sem primeiro receber a resposta da etapa atual.
 
@@ -135,7 +135,7 @@ sequenceDiagram
 
 ### Comparando os dois padrões
 
-Comparar as duas figuras revela a diferença que a definição sozinha esconde: na Figura 6 nenhuma seta intermediária volta para quem a enviou, e na Figura 8 cada uma volta. Se o Serviço de Estoque cair, a Figura 6 mostra a Fila de Despacho simplesmente parada, sem que ninguém saiba por quê; a Figura 8 mostra o Mediator esperando uma resposta que não chega, e é ele quem decide se cancela o pedido, tenta de novo ou segue sem estoque confirmado. Um exemplo real reforça a escolha: depois do evento de pedido, Crédito pode aprovar um limite e Notificação pode preparar um aviso, como na Figura 6, porque nenhuma reação precisa comandar a outra. Um processo de cancelamento de pedido, que precisa ordenar estorno de crédito, reposição de estoque e registro administrativo com regras de compensação, pede a coreografia visível da Figura 8. Chamar as duas figuras de “orquestração” esconderia a diferença que elas mostram.
+Comparar as duas figuras revela a diferença que a definição sozinha esconde: na Figura 7 nenhuma seta intermediária volta para quem a enviou, e na Figura 9 cada uma volta. Se o Serviço de Estoque cair, a Figura 7 mostra a Fila de Despacho simplesmente parada, sem que ninguém saiba por quê; a Figura 9 mostra o Mediator esperando uma resposta que não chega, e é ele quem decide se cancela o pedido, tenta de novo ou segue sem estoque confirmado. Um exemplo real reforça a escolha: depois do evento de pedido, Crédito pode aprovar um limite e Notificação pode preparar um aviso, como na Figura 7, porque nenhuma reação precisa comandar a outra. Um processo de cancelamento de pedido, que precisa ordenar estorno de crédito, reposição de estoque e registro administrativo com regras de compensação, pede a coreografia visível da Figura 9. Chamar as duas figuras de “orquestração” esconderia a diferença que elas mostram.
 
 ## Fila, tópico e log distribuído
 
@@ -158,7 +158,7 @@ flowchart TB
 
 **Texto alternativo:** Comparação entre um produtor que publica em exchange ou tópico para filas independentes e grupos que leem posições próprias em um log particionado.
 
-*Figura 9 — Topologias de distribuição por fila, tópico e log. Fonte: curso.*
+*Figura 10 — Topologias de distribuição por fila, tópico e log. Fonte: curso.*
 
 **Leitura textual:** Um produtor publica no canal. Um tópico pode encaminhar cópias para filas com responsabilidades distintas. Em um log distribuído, grupos independentes mantêm posições próprias de leitura sobre o registro retido.
 
