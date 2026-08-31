@@ -6,6 +6,14 @@ A entrega **pelo menos uma vez** admite repetição. Um consumidor recebe a mens
 
 **Idempotência** significa que aplicar a mesma ocorrência mais de uma vez tem o mesmo efeito de negócio observável que aplicá-la uma única vez. Não significa que nada acontece na segunda tentativa: é útil registrar que houve outra tentativa, medir o motivo e confirmar a mensagem. No serviço de Pedidos, `processed_events` guarda `event_id` e contagem de tentativas, enquanto `billing_effects` tem uma chave única por `event_id`. A primeira mensagem cria o efeito; a segunda eleva tentativas para duas e não cria novo lançamento administrativo.
 
+Vale situar a entrega pelo menos uma vez entre as três garantias que uma mensageria pode oferecer, porque as outras duas são frequentemente prometidas sem ressalva.
+
+![Comparação dos três modelos de entrega: no máximo uma vez, com zero ou uma entrega e risco de perda; pelo menos uma vez, com uma ou mais entregas e risco de duplicata; e exatamente uma vez, com uma entrega lógica dentro de um escopo garantido. Abaixo, a idempotência protege o efeito de negócio registrando evento e efeito na mesma transação.](../assets/images/m05-modelos-entrega.png)
+
+*Figura 11 — Os três modelos de entrega e o papel da idempotência. Fonte: curso.*
+
+**Leitura textual da figura:** no modelo **no máximo uma vez**, o remetente envia e não acompanha o resultado: a mensagem chega uma vez ou não chega, porque não há reenvio. Pode haver perda. No modelo **pelo menos uma vez**, o remetente reenvia enquanto não receber confirmação; se a confirmação se perder no caminho, ele tenta de novo, e o destinatário pode receber a mesma mensagem duas vezes. Não há perda, mas há duplicatas. No modelo **exatamente uma vez**, um controle de entrega com registro persistente absorve as tentativas internas e entrega uma única vez ao destinatário, sem perda nem duplicação — dentro de um escopo delimitado, que a figura marca explicitamente. Na faixa inferior, a idempotência protege o efeito de negócio por outro caminho: mesmo que o evento A chegue duas vezes, um consumidor idempotente registra o evento e o efeito na mesma transação e produz um único lançamento no banco. O aviso final vale para a decisão inteira: entrega, processamento e efeito externo têm escopos diferentes, e uma garantia num deles não se estende automaticamente aos outros.
+
 A fronteira deve ser transacional onde for possível. Registrar deduplicação e efeito na mesma transação SQLite evita o intervalo em que um é gravado sem o outro. Em outro sistema, a mesma ideia pode usar uma tabela de inbox no banco do consumidor, uma restrição única ou uma operação naturalmente idempotente. Um cache de processo é insuficiente: reinício, réplica diferente e expiração permitem duplicidade. Para efeitos fora do banco, como e-mail ou lançamento externo, a chave de idempotência também precisa chegar ao provedor e a reconciliação passa a fazer parte do desenho.
 
 Idempotência resolve o problema de uma mensagem chegar duas vezes. Um problema vizinho, e independente dele, é o de várias mensagens chegarem na ordem errada.
@@ -20,7 +28,7 @@ A estratégia de **referência** envia apenas identificadores, e o consumidor bu
 
 ![Comparação entre as duas estratégias de payload: à esquerda, o evento de pedido carrega itens, total e endereço de entrega; à direita, o evento carrega apenas o identificador e uma referência, e a Expedição consulta a origem dos dados de forma autorizada.](../assets/images/m05-payload-completo-referencia.png)
 
-*Figura 11 — Dados completos ou referência: o que viaja dentro do evento. Fonte: curso.*
+*Figura 12 — Dados completos ou referência: o que viaja dentro do evento. Fonte: curso.*
 
 **Leitura textual da figura:** à esquerda, na estratégia de dados completos, o serviço de Pedidos publica um evento que carrega itens, valor total e endereço de entrega; a Expedição consome tudo o que precisa sem consultar a origem, e o evento funciona como um retrato do instante do fato. O preço é uma mensagem maior e cópias de dados que exigem proteção. À direita, na estratégia de referência, o mesmo evento carrega apenas o identificador do pedido e um caminho de consulta; a Expedição faz uma consulta autorizada à origem dos dados para obter o resto. O evento fica menor e o controle de acesso permanece na origem, mas o consumidor passa a depender de ela estar disponível, e os dados consultados podem já ter mudado desde o instante do fato. A pergunta que decide entre as duas: o consumidor precisa do retrato do passado ou pode consultar a origem?
 
@@ -52,7 +60,7 @@ A separação entre erro transitório e permanente é o que decide o caminho da 
 
 ![Caminhos de uma mensagem no consumidor: sucesso grava o efeito e confirma; falha temporária espera e tenta de novo até um limite; falha permanente vai direto à fila de erros, que a equipe responsável analisa.](../assets/images/m05-retentativas-dlq.png)
 
-*Figura 12 — Retentativa com limite, isolamento do erro e recuperação com critério. Fonte: curso.*
+*Figura 13 — Retentativa com limite, isolamento do erro e recuperação com critério. Fonte: curso.*
 
 **Leitura textual da figura:** o evento de pedido chega a Faturamento, que valida e processa. Em caso de sucesso, o efeito é gravado e a mensagem é confirmada. Uma falha temporária, como um serviço indisponível, leva a uma espera seguida de nova tentativa, com número de tentativas limitado; atingido esse limite, a mensagem segue para a fila de erros. Uma falha permanente, como um campo obrigatório ausente, vai direto para a fila de erros sem retentativa, porque repetir não mudaria o resultado. A fila de erros preserva a mensagem e o motivo da falha, e uma equipe responsável analisa, corrige e decide a recuperação, num reprocessamento controlado. Duas condições sustentam o desenho: uma mensagem inválida nunca é confirmada como sucesso, e a fila de erros precisa de responsável, alerta e procedimento.
 
@@ -74,7 +82,7 @@ sequenceDiagram
 
 **Texto alternativo:** Sequência de duas entregas do mesmo evento A: a primeira cria efeito e a segunda apenas registra nova tentativa no store idempotente antes da confirmação.
 
-*Figura 13 — Reentrega com efeito de negócio idempotente. Fonte: curso.*
+*Figura 14 — Reentrega com efeito de negócio idempotente. Fonte: curso.*
 
 **Leitura textual:** Pedidos publica a ocorrência A. Faturamento registra o efeito e confirma. A mesma ocorrência chega outra vez; o store aumenta a contagem de tentativas, reconhece a identidade já processada e impede novo efeito antes da segunda confirmação.
 
@@ -84,7 +92,7 @@ Publicar diretamente após uma transação de domínio cria o problema de dupla 
 
 ![Fluxo em três etapas: Pedidos grava o pedido e a caixa de saída na mesma transação, um publicador lê a saída e publica na central de eventos, e Faturamento grava a caixa de entrada e o efeito de negócio na mesma transação, produzindo uma única cobrança mesmo com duas entregas.](../assets/images/m05-outbox-inbox.png)
 
-*Figura 14 — Caixa de saída e caixa de entrada protegendo as duas pontas. Fonte: curso.*
+*Figura 15 — Caixa de saída e caixa de entrada protegendo as duas pontas. Fonte: curso.*
 
 **Leitura textual da figura:** na primeira etapa, o serviço de Pedidos grava o pedido registrado e a caixa de saída (*outbox*) com o evento A dentro da mesma transação local, de modo que ou os dois são gravados, ou nenhum. Na segunda etapa, um publicador separado lê a caixa de saída, publica na central de eventos e marca o envio depois da confirmação; entre a central e o consumidor pode haver reentrega do mesmo evento. Na terceira etapa, Faturamento grava a caixa de entrada (*inbox*), registrando que o evento A foi processado, e o efeito de negócio, uma cobrança, também na mesma transação, confirmando o consumo só depois de gravar. O consumidor identifica duplicatas pela identidade do evento, não pelo horário nem pela posição na fila. O resultado: duas entregas do evento A produzem uma única cobrança.
 
