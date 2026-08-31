@@ -6,11 +6,13 @@
 
 **Leitura textual da figura:** o Cliente faz um pedido na loja virtual. O Serviço de Pedidos, no papel de produtor, registra o pedido nos seus próprios dados e publica o evento “Pedido realizado”, que carrega o identificador do pedido. A central de eventos recebe essa publicação e entrega uma cópia para a fila de cada assinante. Estoque reserva os produtos, Pagamentos inicia o faturamento e Notificações avisa o cliente, cada consumidor com sua fila própria e seu banco de dados próprio, sem que o Serviço de Pedidos conheça qualquer um deles. Três propriedades sustentam o desenho: o evento informa um fato já ocorrido; o processamento é assíncrono, então Pedidos não espera as reações terminarem; e a consistência é eventual, porque as atualizações de cada consumidor podem ocorrer em momentos diferentes.
 
-Um pedido acontece uma vez, e vários serviços podem precisar reagir a esse mesmo fato, cada um no próprio ritmo, sem que o serviço de Pedidos precise conhecer nenhum deles. A figura acima mostra três reagindo; ao longo desta página o elenco varia conforme o que cada exemplo precisa ilustrar, e essa variação é proposital: quem publica não decide quantos são nem quais são. Esse descompasso entre "o fato aconteceu uma vez" e "várias equipes reagem quando puderem" é o problema deste módulo, e ele só se resolve com um vocabulário preciso. As seções a seguir constroem esse vocabulário na ordem em que as perguntas realmente aparecem: o que estamos publicando, quem entrega, como o canal se comporta depois da entrega, e o que fazer com o tempo que passa entre publicar e reagir.
+Qualquer sistema distribuído precisa decidir como suas partes colaboram, e essa decisão é arquitetural antes de ser tecnológica. Numa integração síncrona, quem chama espera a resposta de quem foi chamado, e essa espera cria uma dependência de tempo entre os dois: o desempenho e a disponibilidade de quem responde passam a limitar quem chamou. A arquitetura orientada por eventos parte de outra premissa. Um componente publica o que aconteceu no seu domínio e encerra o próprio trabalho ali; quem tiver interesse reage depois, no ritmo que conseguir sustentar.
+
+A figura acima mostra esse estilo em uma loja virtual. Ao longo desta página o elenco de serviços varia conforme o que cada exemplo precisa ilustrar, e essa variação é proposital: quem publica não decide quantos consumidores existem nem quais são.
 
 ## O estilo: arquitetura orientada por eventos
 
-A **arquitetura orientada por eventos** (*event-driven architecture*, EDA) é o estilo arquitetural em que componentes desacoplados colaboram reagindo a fatos publicados, em vez de chamarem uns aos outros diretamente. Ela aparece em microsserviços, em plataformas de IoT e em processamento de dados em tempo real — contextos em que muitos participantes precisam reagir ao mesmo acontecimento sem que a origem os conheça.
+A **arquitetura orientada por eventos** (*event-driven architecture*, EDA) formaliza essa premissa como estilo arquitetural: componentes desacoplados colaboram reagindo a fatos publicados, em vez de chamarem uns aos outros diretamente. Ela aparece em microsserviços, em plataformas de IoT e em processamento de dados em tempo real, contextos em que muitos participantes precisam reagir ao mesmo acontecimento sem que a origem os conheça.
 
 Três papéis compõem o estilo, e o vocabulário deste módulo inteiro se organiza em torno deles:
 
@@ -20,7 +22,7 @@ Três papéis compõem o estilo, e o vocabulário deste módulo inteiro se organ
 
 Trocar chamadas diretas por essa tríade compra quatro propriedades, e cada uma cobra um preço que as demais seções tratam. **Desacoplamento**: o produtor não conhece os consumidores, o que custa perder a resposta imediata que uma chamada direta daria. **Escalabilidade**: picos de carga podem ser absorvidos pelo canal em vez de derrubarem a origem, ao custo de operar esse canal. **Flexibilidade**: um consumidor novo se inscreve sem exigir mudança no produtor, desde que o contrato do evento tenha sido pensado para isso. **Resiliência**: a falha de um consumidor não impede que o fato tenha ocorrido nem que os outros reajam, mas alguém precisa perceber que aquele consumidor parou.
 
-O restante desta página constrói o vocabulário necessário para projetar sob esse estilo sem tratar suas promessas como garantias automáticas. Começa pelo que se publica.
+O restante desta página constrói o vocabulário necessário para projetar sob esse estilo sem tratar suas promessas como garantias automáticas, na ordem em que as perguntas aparecem durante um projeto: o que se publica, quem entrega, como o canal se comporta depois da entrega, e o que fazer com o tempo que passa entre publicar e reagir. Começa pelo que se publica.
 
 ## Evento, comando e mensagem
 
