@@ -88,7 +88,7 @@ Um broker faz mais do que encaminhar. Ele também precisa responder o que fazer 
 **Ferramentas que exercem o papel de broker.** As diferenças entre elas aparecem em [Padrões e decisões](padroes-e-decisoes.md#escolher-entre-rabbitmq-kafka-activemq-e-servicos-gerenciados); por ora, basta reconhecer que o mesmo papel arquitetural tem muitas implementações.
 
 - [RabbitMQ](https://www.rabbitmq.com/) — roteamento flexível por regras de assinatura, com confirmação de entrega.
-- [Apache Kafka](https://kafka.apache.org/) — registro sequencial retido, que permite reler o histórico.
+- [Apache Kafka](https://kafka.apache.org/) — log distribuído com retenção, que permite reler o histórico.
 - [Apache ActiveMQ](https://activemq.apache.org/) — mensageria interoperável, comum onde já existe Java corporativo.
 - [Apache Pulsar](https://pulsar.apache.org/) — separa armazenamento de processamento e replica entre regiões geográficas.
 - [NATS](https://nats.io/) — leve e de baixa latência, frequente em IoT.
@@ -142,7 +142,7 @@ sequenceDiagram
 
 Comparar as duas figuras revela a diferença que a definição sozinha esconde: na Figura 7 nenhuma seta intermediária volta para quem a enviou, e na Figura 9 cada uma volta. Se o Serviço de Estoque cair, a Figura 7 mostra a Fila de Despacho simplesmente parada, sem que ninguém saiba por quê; a Figura 9 mostra o Mediator esperando uma resposta que não chega, e é ele quem decide se cancela o pedido, tenta de novo ou segue sem estoque confirmado. Um exemplo real reforça a escolha: depois do evento de pedido, Crédito pode aprovar um limite e Notificação pode preparar um aviso, como na Figura 7, porque nenhuma reação precisa comandar a outra. Um processo de cancelamento de pedido, que precisa ordenar estorno de crédito, reposição de estoque e registro administrativo com regras de compensação, pede a coreografia visível da Figura 9. Chamar as duas figuras de “orquestração” esconderia a diferença que elas mostram.
 
-## Fila, tópico e registro sequencial
+## Fila, tópico e log distribuído
 
 Broker e mediator respondem quem entrega a mensagem. Fila, tópico e log respondem uma pergunta diferente: o que acontece com ela depois de entregue, e é aí que a escolha de tecnologia começa a pesar. Os três distribuem mensagens de formas diferentes o bastante para merecer nomes diferentes, mesmo quando a tecnologia por baixo é a mesma exchange ou o mesmo cluster.
 
@@ -150,22 +150,22 @@ Uma **fila** representa trabalho pendente para uma capacidade. Mensagens ficam d
 
 Já um **tópico** muda o critério de distribuição: em vez de repartir trabalho entre réplicas de uma fila, ele copia a mesma publicação para filas distintas com critérios de assinatura próprios. Faturamento recebe uma cópia, Notificações outra e Auditoria uma terceira. Em AMQP, a exchange do tipo topic e as chaves de roteamento realizam isso; o tópico não torna todos os consumidores uma única equipe nem lhes dá o mesmo banco.
 
-Um terceiro formato, o **registro sequencial distribuído** (*log*), muda de novo o critério: em vez de repartir trabalho ou copiar para várias filas, ele guarda as mensagens numa sequência ordenada, por um prazo definido em tempo ou em tamanho. Cada consumidor mantém a própria **posição de leitura** (*offset*), um marcador que indica até onde já leu. Isso permite que dois grupos leiam a mesma sequência em ritmos diferentes, e que um deles recue o marcador para reprocessar um trecho já lido, desde que a mensagem ainda esteja dentro do prazo de guarda. Kafka é a tecnologia mais conhecida desse modelo. O formato favorece a releitura e as leituras independentes, mas não impõe uma ordem única para tudo: a ordem é garantida dentro de cada parte em que a sequência foi dividida, conforme a chave escolhida. O prazo de guarda é uma decisão de custo, privacidade e recuperação, e não um “histórico infinito”.
+Um terceiro formato, o **log distribuído**, muda de novo o critério: em vez de repartir trabalho ou copiar para várias filas, ele guarda as mensagens numa sequência ordenada, por um prazo definido em tempo ou em tamanho. Cada consumidor mantém a própria **posição de leitura** (*offset*), um marcador que indica até onde já leu. Isso permite que dois grupos leiam a mesma sequência em ritmos diferentes, e que um deles recue o marcador para reprocessar um trecho já lido, desde que a mensagem ainda esteja dentro do prazo de guarda. Kafka é a tecnologia mais conhecida desse modelo. O log favorece a releitura e as leituras independentes, mas não impõe uma ordem única para tudo: a ordem é garantida dentro de cada partição em que o log foi dividido, conforme a chave escolhida. O prazo de guarda é uma decisão de custo, privacidade e recuperação, e não um “histórico infinito”.
 
 ```mermaid
 flowchart TB
     P[Produtor] --> X[Tópico]
     X --> Q1[Fila de Faturamento]
     X --> Q2[Fila de Notificações]
-    L[Registro sequencial] --> G1[Grupo A: posição própria]
+    L[Log particionado] --> G1[Grupo A: posição própria]
     L --> G2[Grupo B: posição própria]
 ```
 
-**Texto alternativo:** Comparação entre um produtor que publica em um tópico, que encaminha cópias para filas independentes, e um registro sequencial em que dois grupos mantêm posições próprias de leitura.
+**Texto alternativo:** Comparação entre um produtor que publica em um tópico, que encaminha cópias para filas independentes, e um log particionado em que dois grupos mantêm posições próprias de leitura.
 
-*Figura 10 — Formas de distribuição por fila, tópico e registro sequencial. Fonte: curso.*
+*Figura 10 — Formas de distribuição por fila, tópico e log distribuído. Fonte: curso.*
 
-**Leitura textual:** Um produtor publica no canal. Um tópico encaminha cópias da mesma publicação para filas com responsabilidades distintas, cada uma com seu consumidor. Já num registro sequencial, a mensagem não é copiada para filas: ela fica guardada em um só lugar, e cada grupo de consumidores mantém o próprio marcador indicando até onde leu.
+**Leitura textual:** Um produtor publica no canal. Um tópico encaminha cópias da mesma publicação para filas com responsabilidades distintas, cada uma com seu consumidor. Já num log distribuído, a mensagem não é copiada para filas: ela fica guardada em um só lugar, e cada grupo de consumidores mantém o próprio marcador indicando até onde leu.
 
 Cada uma dessas três formas de canal tem tecnologias associadas, e escolher entre elas é a próxima decisão a tomar.
 
@@ -175,7 +175,7 @@ Cada tecnologia a seguir implementa o papel de intermediário, mas resolve bem p
 
 **RabbitMQ** organiza a entrega em torno de filas de trabalho. Uma publicação chega a um distribuidor, chamado *exchange*, que decide para quais filas encaminhar cópias segundo regras de assinatura. Cada consumidor confirma o que processou, e a mensagem confirmada sai da fila. Ele traz recursos úteis para operação, como um prazo de validade para a mensagem e o redirecionamento automático de mensagens rejeitadas para uma fila de erros. Cabe bem quando o problema central é repartir trabalho entre consumidores e rotear mensagens por critérios variados. O que ele não oferece por si: guardar o histórico das mensagens já consumidas para alguém relê-las depois.
 
-**Apache Kafka** parte de outra ideia. Em vez de uma fila da qual a mensagem sai ao ser consumida, ele mantém um registro sequencial que preserva as mensagens por um prazo configurado, e ler não apaga nada. Cada consumidor guarda a própria posição de leitura nesse registro, o que permite que grupos diferentes leiam a mesma sequência em ritmos diferentes, e que um consumidor volte atrás para reprocessar um trecho já lido. Cabe bem quando releitura do histórico, leitura simultânea por vários grupos independentes e fluxo contínuo de dados são requisitos reais. O preço: a equipe passa a operar retenção, divisão do registro em partes paralelas e a proteção dos dados que ficam guardados.
+**Apache Kafka** parte de outra ideia. Em vez de uma fila da qual a mensagem sai ao ser consumida, ele mantém um log distribuído que preserva as mensagens por um prazo configurado, e ler não apaga nada. Cada consumidor guarda a própria posição de leitura nesse log, o que permite que grupos diferentes leiam a mesma sequência em ritmos diferentes, e que um consumidor volte atrás para reprocessar um trecho já lido. Cabe bem quando releitura do histórico, leitura simultânea por vários grupos independentes e fluxo contínuo de dados são requisitos reais. O preço: a equipe passa a operar retenção, divisão do log em partições paralelas e a proteção dos dados que ficam guardados.
 
 **Apache ActiveMQ** é mensageria de filas e tópicos com forte interoperabilidade de protocolos. O caso típico é integrar sistemas corporativos já existentes, especialmente os que falam JMS, o padrão de mensageria do ecossistema Java. Cabe bem quando essa compatibilidade reduz o esforço de integração. Ele também não transforma a mensageria em histórico ilimitado, e a equipe assume persistência, disponibilidade, atualização e monitoramento.
 
