@@ -4,16 +4,6 @@ Entre o toque no play e o primeiro quadro na tela passam cerca de dois segundos.
 
 Nada disso existia em 2008. A história de como passou a existir é uma sequência de decisões que deram errado antes de darem certo, e é isso que a torna útil.
 
-## Pauta de leitura
-
-O caso é longo e a primeira leitura rende mais com três perguntas na mão. Elas ligam a narrativa da Netflix aos três conceitos centrais deste módulo, e são diferentes das questões de revisão do fim da página, que cobram os fatos.
-
-**A.** A migração levou sete anos. Que decisão de **propriedade de dados** aparece no texto como parte dessa demora?
-
-**B.** O Chaos Monkey derruba servidores em produção. Que problema de **falha parcial** ele existe para tornar visível?
-
-**C.** A empresa passou a ensaiar a perda de uma região inteira como evento de rotina. O que isso implica sobre a **consistência** entre réplicas em regiões diferentes?
-
 ## Agosto de 2008: três dias sem enviar DVDs
 
 A Netflix ainda era, em boa medida, uma locadora pelo correio. O anúncio oficial que a empresa publicaria oito anos depois descreve o que aconteceu em uma frase seca: *"We experienced a major database corruption and for three days could not ship DVDs to our members."*
