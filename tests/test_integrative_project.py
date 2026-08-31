@@ -125,8 +125,12 @@ class IntegrativeProjectTest(unittest.TestCase):
             },
             set(project["dependencies"]),
         )
+        # pyyaml sustenta os testes de contrato do módulo 2, que leem o
+        # openapi.yaml publicado para compará-lo ao contrato gerado pela
+        # aplicação. Sem ele, `pip install -e ".[dev]"` deixa a oficina
+        # quebrada com ModuleNotFoundError.
         self.assertEqual(
-            {"pytest", "pytest-asyncio"},
+            {"pytest", "pytest-asyncio", "pyyaml"},
             set(project["optional-dependencies"]["dev"]),
         )
         self.assertTrue((LAB / "src/hospital/__init__.py").is_file())

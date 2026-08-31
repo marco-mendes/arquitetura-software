@@ -26,6 +26,17 @@ arquitetura-software/
         └── tests/test_api_contract.py
 ```
 
+Quatro arquivos sustentam a oficina inteira. Vale abrir cada um antes de rodar qualquer comando; os links vão direto ao código no GitHub, para quem está lendo pelo site sem o repositório clonado.
+
+| Arquivo | O que ele faz | Onde isso aparece na teoria |
+| --- | --- | --- |
+| [`contratos/openapi.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/openapi.yaml) | O contrato escrito à mão: as duas operações, os schemas e os exemplos que a API promete a quem consome. | É o **contrato** de [interface, contrato e implementação](conceitos.md), publicado num documento que existe independente do código. |
+| [`src/hospital/api/models.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/models.py) | Os modelos Pydantic. O tipo declarado em cada campo é a própria regra de validação. | Onde o contrato deixa de ser documento e passa a ser código executável. |
+| [`src/hospital/api/main.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/main.py) | A aplicação FastAPI: as duas rotas, o `202` com `Location` e os erros estruturados. | A **implementação**, que pode mudar por dentro sem quebrar quem consome, desde que o contrato fique de pé. |
+| [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_api_contract.py) | Sete testes: cinco exercitam a API pela porta da frente, dois comparam o contrato publicado com o que o FastAPI gera. | A verificação de que a promessa publicada e o comportamento real não divergiram. |
+
+Cada teste desse arquivo abre com uma explicação do que ele prova e por que aquilo importa. Ler os testes antes de rodá-los costuma ensinar mais sobre o contrato do que ler o próprio `openapi.yaml`.
+
 Ao final da preparação, a condição inicial verificável será: existe uma pasta `.venv`; o interpretador dela informa versão de Python; `python -m pytest tests/test_api_contract.py -q` termina com testes aprovados; e, ao iniciar o servidor, o terminal informa `http://127.0.0.1:8000`. Só então abra `http://127.0.0.1:8000/docs` ou o Bruno.
 
 ## Ferramenta
@@ -170,7 +181,7 @@ python -m pytest tests -q
 
 **Resultado esperado**
 
-O pytest encerra com todos os testes aprovados. O número total pode crescer em módulos posteriores; neste encontro, procure especificamente os seis testes de `test_api_contract.py`.
+O pytest encerra com todos os testes aprovados. O número total pode crescer em módulos posteriores; neste encontro, procure especificamente os sete testes de `test_api_contract.py`.
 
 **Contingência**
 
@@ -256,6 +267,14 @@ No Bruno, envie o `POST` com:
 
 A resposta é `202 Accepted`, contém `situacao` igual a `recebida` e apresenta `Location`. Copie o protocolo para o parâmetro do `GET` e envie a consulta; o resultado é `200 OK` com o mesmo protocolo.
 
+**Observe**
+
+O `202` diz "recebi e ainda vou processar", e não "pronto". É por isso que a resposta não traz o resultado da elegibilidade: traz um protocolo e o endereço onde consultá-lo. O cabeçalho `Location` entrega esse endereço pronto, poupando o consumidor de montar a URL por convenção — e permitindo que o provedor mude o formato dela sem quebrar ninguém.
+
+**Compare**
+
+Compare com o que aconteceria num `200` que devolvesse a decisão na hora. O `202` compra o direito de processar depois, e cobra do consumidor uma segunda chamada. É a mesma escolha de [interface, contrato e implementação](conceitos.md) sendo exercida no nível do código de status.
+
 **Contingência**
 
 Se o `GET` retornar `404`, confirme que usa a mesma instância do servidor e que o protocolo não contém aspas ou espaços. Reiniciar Uvicorn limpa a memória; nesse caso, crie outro pedido.
@@ -265,6 +284,14 @@ Remova `cpf` do corpo e envie outro `POST`.
 **Resultado esperado**
 
 A resposta é `422 Unprocessable Entity`, com `codigo` igual a `dados_invalidos` e um detalhe cujo `campo` é `body.cpf`.
+
+**Observe**
+
+O corpo do erro tem formato previsível: `codigo`, `mensagem` e a lista `detalhes` apontando o campo problemático. Isso permite que o consumidor trate a falha programaticamente, em vez de exibir texto solto ao usuário. O erro faz parte do contrato tanto quanto o caminho feliz.
+
+**Compare**
+
+Compare esse `422` com um `500`. O primeiro diz "seu pedido está errado, e aqui está onde"; o segundo diz "algo quebrou aqui dentro". Trocar um pelo outro transfere ao consumidor a culpa por um defeito do provedor, ou o contrário.
 
 **Contingência**
 
@@ -310,7 +337,15 @@ python -m pytest tests/test_api_contract.py -q 2>&1 | tee evidencias/testes-cont
 
 **Resultado esperado**
 
-O resumo mostra `6 passed`.
+O resumo mostra `7 passed`.
+
+**Observe**
+
+Os sete testes não fazem a mesma coisa. Cinco chamam a API pela porta da frente e conferem status, corpo e cabeçalho. Os dois últimos comparam o `openapi.yaml` publicado com o contrato que o FastAPI gera a partir do código, que é onde uma divergência costuma passar despercebida: o código muda, o contrato gerado acompanha, e o documento publicado continua prometendo o formato antigo.
+
+**Compare**
+
+Compare o alcance de cada ferramenta desta oficina. O Spectral olha o documento e não sabe se a aplicação obedece. O Bruno mostra uma execução real e não protege contra regressão. Os testes verificam o comportamento e só cobrem os casos que alguém escreveu. Nenhuma das três dispensa a revisão humana da semântica do contrato.
 
 **Contingência**
 
