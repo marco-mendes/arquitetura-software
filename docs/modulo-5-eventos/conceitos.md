@@ -38,9 +38,13 @@ Decidido que `PedidoRealizado.v1` é um evento, falta responder quem entrega ess
 
 ## Broker e mediator
 
-Um **broker** recebe mensagens, aplica regras de roteamento, mantém filas ou retenção conforme a tecnologia e entrega para consumidores. Ele reduz o conhecimento direto entre produtor e consumidor, mas não deveria decidir regra de negócio ou sequência de domínio. No RabbitMQ, uma exchange recebe a publicação e encaminha a filas segundo bindings. No Kafka, brokers mantêm registros particionados; consumidores avançam sua posição de leitura. No ActiveMQ, filas e tópicos atendem mensageria com confirmações e integrações de protocolo, inclusive em ambientes que já usam JMS. Fora desse trio, o mesmo papel aparece em Apache Pulsar (multi-tenancy e replicação geográfica), RabbitMQ Streams e Redis Streams (log de eventos sobre uma base já conhecida da equipe), NATS (baixa latência para IoT e microsserviços), e nos serviços gerenciados AWS SQS/EventBridge, Google Pub/Sub e Azure Service Bus. São infraestruturas que precisam de ownership, observabilidade e limites de retenção; a escolha depende de topologia, modelo de consumo e operação, não de uma lista de funcionalidades.
+### Broker
 
-No fluxo de um pedido, o padrão broker aparece como uma cadeia: cada serviço termina seu trabalho publicando um fato na fila do próximo, sem chamar ninguém diretamente e sem esperar resposta de ninguém. Um diagrama de sequência torna essa característica visível de um jeito que um fluxograma de caixas não consegue: repare que nenhuma seta abaixo volta para quem a enviou. A última seta chega ao Cliente, mas como um aviso novo emitido por Notificação.
+Um **broker** é um intermediário que recebe uma mensagem de quem publica e a faz chegar a quem deve recebê-la. Ele resolve um problema de conhecimento: sem broker, quem publica precisa saber quem são os destinatários, quantos são e onde estão. Com broker, quem publica conhece apenas o canal.
+
+O que define o papel é tão importante quanto o que ele recusa. Um broker roteia, guarda a mensagem até a entrega e confirma o que foi entregue. Um broker não decide regra de negócio nem a ordem em que as etapas de um processo devem acontecer. Se a decisão de aprovar um pedido migrar para dentro da configuração do broker, a regra passa a viver na infraestrutura, longe do domínio a que pertence e de quem responde por ela.
+
+No fluxo de um pedido, o broker produz uma cadeia descentralizada: cada serviço termina seu trabalho publicando um fato, e o serviço seguinte reage a esse fato. Ninguém chama ninguém diretamente, e ninguém espera resposta. Um diagrama de sequência torna essa característica visível de um jeito que um fluxograma de caixas não consegue: repare que nenhuma seta abaixo volta para quem a enviou. A última seta chega ao Cliente, mas como um aviso novo emitido por Notificação.
 
 ```mermaid
 sequenceDiagram
@@ -68,7 +72,31 @@ sequenceDiagram
 
 **Leitura textual:** O Cliente publica o pedido, que chega a Compras. Compras publica para Crédito e, em paralelo, para Notificação. Crédito, ao aprovar, publica para Estoque e também para Notificação. Estoque publica para Despacho e para Notificação. Despacho publica para Notificação. Por fim, Notificação avisa o Cliente. Repare que cada seta é de mão única: nenhum serviço aguarda confirmação de quem recebeu antes de seguir em frente, e nenhum deles sabe se alguém está do outro lado lendo a fila.
 
-Um **mediator** coordena participantes. Ele conhece uma conversa: pode mandar avaliar crédito, aguardar resposta, decidir compensação e ordenar próximos passos. Isso é útil quando o processo é uma política explícita, mas introduz acoplamento ao coordenador. Um mediator pode usar um broker como canal e um broker pode transportar mensagens de um mediator. A pergunta decisiva é: alguém precisa tomar uma decisão central sobre o fluxo, ou as equipes apenas precisam reagir de forma independente ao mesmo fato? Ferramentas como Apache Camel, NServiceBus, Spring Integration, AWS Step Functions, Google Workflows e Azure Logic Apps assumem esse papel central, cada uma com o próprio modelo de estado, retentativa e compensação.
+Um broker faz mais do que encaminhar. Ele também precisa responder o que fazer quando a entrega não pode ser concluída: a mensagem chega corrompida, o consumidor a rejeita, o formato não corresponde ao contrato esperado. A figura a seguir mostra esse caminho completo, já no caso hospitalar que as páginas seguintes do módulo detalham. Ela introduz a **dead-letter queue** (DLQ), a fila que recebe uma mensagem rejeitada e a mantém visível para inspeção, em vez de descartá-la em silêncio ou reentregá-la indefinidamente.
+
+![Fluxo de eventos: um resultado laboratorial disponível é publicado em um broker, entregue a um consumidor de faturamento, verificado por idempotência e enviado à DLQ se inválido.](../assets/images/m05-fluxo-eventos.png)
+
+*Figura 7 — Publicação, consumo, idempotência e dead-letter queue. Fonte: curso.*
+
+**Leitura textual da figura:** o laboratório publica o fato “resultado disponível” no broker. O broker entrega uma cópia ao consumidor de Faturamento. Antes de produzir efeito, o consumidor consulta o registro de idempotência para impedir uma cobrança duplicada. Uma mensagem inválida ou que não possa ser processada segue para a DLQ, onde fica visível para diagnóstico e reprocessamento controlado, sem desaparecer silenciosamente.
+
+**Ferramentas que exercem o papel de broker.** As diferenças entre elas aparecem em [Padrões e decisões](padroes-e-decisoes.md#escolher-entre-rabbitmq-kafka-activemq-e-servicos-gerenciados); por ora, basta reconhecer que o mesmo papel arquitetural tem muitas implementações.
+
+- [RabbitMQ](https://www.rabbitmq.com/) — roteamento flexível por regras de assinatura, com confirmação de entrega.
+- [Apache Kafka](https://kafka.apache.org/) — registro sequencial retido, que permite reler o histórico.
+- [Apache ActiveMQ](https://activemq.apache.org/) — mensageria interoperável, comum onde já existe Java corporativo.
+- [Apache Pulsar](https://pulsar.apache.org/) — separa armazenamento de processamento e replica entre regiões geográficas.
+- [NATS](https://nats.io/) — leve e de baixa latência, frequente em IoT.
+- [Redis Streams](https://redis.io/docs/latest/develop/data-types/streams/) — registro de eventos sobre uma base Redis que a equipe já opera.
+- [Amazon SQS](https://aws.amazon.com/sqs/), [Amazon EventBridge](https://aws.amazon.com/eventbridge/), [Google Pub/Sub](https://cloud.google.com/pubsub) e [Azure Service Bus](https://learn.microsoft.com/azure/service-bus-messaging/) — serviços gerenciados, em que o provedor assume a operação.
+
+### Mediator
+
+Um **mediator** também fica entre os participantes, mas assume o que o broker recusa: ele conhece o processo e decide a ordem das etapas. Enquanto o broker entrega e sai de cena, o mediator solicita uma etapa, espera a resposta, avalia o resultado e decide qual é o próximo passo, inclusive o que fazer quando uma etapa falha.
+
+Essa concentração é uma escolha, com ganho e preço declarados. O ganho: o processo fica escrito num lugar só, legível e auditável, em vez de emergir da soma de quem reage a quê. O preço: todos os participantes passam a depender do coordenador, e a lógica do fluxo vira responsabilidade dele.
+
+A pergunta que separa os dois padrões é direta. Alguém precisa tomar uma decisão central sobre a ordem do fluxo, ou as equipes apenas precisam reagir de forma independente ao mesmo fato? Vale notar que os dois papéis convivem: um mediator costuma usar um broker como canal para conversar com os participantes.
 
 O mesmo pedido, sob um mediator, muda de forma: nenhum serviço fala com o próximo, todos falam só com o coordenador, que decide a sequência e aguarda cada resposta antes do próximo passo.
 
@@ -94,25 +122,24 @@ sequenceDiagram
 
 **Texto alternativo:** Diagrama de sequência em que o Cliente fala só com o Mediator; para cada etapa (crédito, estoque, despacho), o Mediator envia uma solicitação e recebe uma resposta de volta antes de seguir para a próxima, até publicar a notificação final.
 
-*Figura 7 — Padrão mediator: o coordenador solicita, aguarda a resposta e decide o próximo passo. Fonte: curso, adaptado de material do curso sobre o padrão mediator.*
+*Figura 8 — Padrão mediator: o coordenador solicita, aguarda a resposta e decide o próximo passo. Fonte: curso, adaptado de material do curso sobre o padrão mediator.*
 
 **Leitura textual:** O Cliente envia o pedido ao Mediator, que é seu único interlocutor no fluxo inteiro. O Mediator pede a avaliação de crédito e espera a resposta “aprovado” antes de prosseguir. Só então pede a verificação de estoque e espera a resposta “disponível”. Só então pede a organização do despacho e espera a confirmação. Ao final, o Mediator manda notificar o Cliente. Cada seta de ida tem uma seta de volta tracejada: o Mediator não passa para a etapa seguinte sem primeiro receber a resposta da etapa atual.
 
-Comparar as duas figuras revela a diferença que a definição sozinha esconde: na Figura 6 nenhuma seta intermediária volta para quem a enviou, e na Figura 7 cada uma volta. Se o Serviço de Estoque cair, a Figura 6 mostra a Fila de Despacho simplesmente parada, sem que ninguém saiba por quê; a Figura 7 mostra o Mediator esperando uma resposta que não chega, e é ele quem decide se cancela o pedido, tenta de novo ou segue sem estoque confirmado. Um exemplo real reforça a escolha: depois do evento de pedido, Crédito pode aprovar um limite e Notificação pode preparar um aviso, como na Figura 6, porque nenhuma reação precisa comandar a outra. Um processo de cancelamento de pedido, que precisa ordenar estorno de crédito, reposição de estoque e registro administrativo com regras de compensação, pede a coreografia visível da Figura 7. Chamar as duas figuras de “orquestração” esconderia a diferença que elas mostram.
+**Ferramentas que exercem o papel de mediator.** Cada uma traz o próprio modelo de estado, retentativa e compensação, decisões que pesam quando o processo é longo ou precisa desfazer etapas já concluídas.
+
+- [Apache Camel](https://camel.apache.org/) — rotas de integração que encadeiam e transformam mensagens entre sistemas.
+- [Spring Integration](https://spring.io/projects/spring-integration) — canais e handlers para compor fluxos dentro do ecossistema Spring.
+- [NServiceBus](https://particular.net/nservicebus) — coordenação de processos longos com estado, no ecossistema .NET.
+- [AWS Step Functions](https://aws.amazon.com/step-functions/), [Google Workflows](https://cloud.google.com/workflows/docs) e [Azure Logic Apps](https://learn.microsoft.com/azure/logic-apps/) — orquestradores gerenciados que declaram estados, condições e transições.
+
+### Comparando os dois padrões
+
+Comparar as duas figuras revela a diferença que a definição sozinha esconde: na Figura 6 nenhuma seta intermediária volta para quem a enviou, e na Figura 8 cada uma volta. Se o Serviço de Estoque cair, a Figura 6 mostra a Fila de Despacho simplesmente parada, sem que ninguém saiba por quê; a Figura 8 mostra o Mediator esperando uma resposta que não chega, e é ele quem decide se cancela o pedido, tenta de novo ou segue sem estoque confirmado. Um exemplo real reforça a escolha: depois do evento de pedido, Crédito pode aprovar um limite e Notificação pode preparar um aviso, como na Figura 6, porque nenhuma reação precisa comandar a outra. Um processo de cancelamento de pedido, que precisa ordenar estorno de crédito, reposição de estoque e registro administrativo com regras de compensação, pede a coreografia visível da Figura 8. Chamar as duas figuras de “orquestração” esconderia a diferença que elas mostram.
 
 ## Fila, tópico e log distribuído
 
-Broker e mediator respondem quem entrega a mensagem. Fila, tópico e log respondem uma pergunta diferente: o que acontece com ela depois de entregue, e é aí que a escolha de tecnologia começa a pesar.
-
-A figura a seguir muda de domínio de propósito: é o mesmo padrão broker da Figura 6, agora aplicado ao caso hospitalar que as páginas de exemplo arquitetural, estudo de caso e oficina detalham na sequência do módulo, com um resultado de exame no lugar de um pedido. Ela também introduz a **dead-letter queue** (DLQ): a fila que recebe uma mensagem que o consumidor rejeitou, por exemplo por falhar na validação de schema, mantendo-a visível para inspeção em vez de descartá-la ou reentregá-la em loop.
-
-![Fluxo de eventos: um resultado laboratorial disponível é publicado em um broker, entregue a um consumidor de faturamento, verificado por idempotência e enviado à DLQ se inválido.](../assets/images/m05-fluxo-eventos.png)
-
-*Figura 8 — Publicação, consumo, idempotência e dead-letter queue. Fonte: curso.*
-
-**Leitura textual da figura:** o laboratório publica o fato “resultado disponível” no broker. O broker entrega uma cópia ao consumidor de Faturamento. Antes de produzir efeito, o consumidor consulta o registro de idempotência para impedir uma cobrança duplicada. Uma mensagem inválida ou que não possa ser processada segue para a DLQ, onde fica visível para diagnóstico e reprocessamento controlado, sem desaparecer silenciosamente.
-
-Fila, tópico e log distribuem mensagens de formas diferentes o bastante para merecer nomes diferentes, mesmo quando a tecnologia por baixo é a mesma exchange ou o mesmo cluster.
+Broker e mediator respondem quem entrega a mensagem. Fila, tópico e log respondem uma pergunta diferente: o que acontece com ela depois de entregue, e é aí que a escolha de tecnologia começa a pesar. Os três distribuem mensagens de formas diferentes o bastante para merecer nomes diferentes, mesmo quando a tecnologia por baixo é a mesma exchange ou o mesmo cluster.
 
 Uma **fila** representa trabalho pendente para uma capacidade. Mensagens ficam disponíveis até um consumidor confirmar; várias réplicas podem repartir trabalho. A fila `billing.pedidos.v1` é uma fila de Faturamento: uma cópia de cada evento roteado para ela é tratada pelo grupo de trabalho desse domínio. A confirmação ocorre depois da validação e do efeito local. Se o processo cair antes da confirmação, a mensagem pode voltar e a duplicação deve ser esperada.
 
