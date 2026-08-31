@@ -4,19 +4,19 @@
 
 A entrega **pelo menos uma vez** admite repetição. Um consumidor recebe a mensagem, grava o efeito e cai antes de confirmar; o broker não pode saber que a gravação ocorreu e volta a entregar. A rede pode interromper uma confirmação já aplicada. O produtor pode publicar novamente por ter perdido a confirmação. Repetição é consequência prudente de não perder trabalho diante de falhas ambíguas, não uma anomalia que se resolve com uma condição frágil na memória do processo.
 
-**Idempotência** significa que aplicar a mesma ocorrência mais de uma vez tem o mesmo efeito de negócio observável que aplicá-la uma única vez. Não significa que nada acontece na segunda tentativa: é útil registrar que houve outra tentativa, medir o motivo e confirmar a mensagem. No laboratório, `processed_events` guarda `event_id` e contagem de tentativas, enquanto `billing_effects` tem uma chave única por `event_id`. A primeira mensagem cria o efeito; a segunda eleva tentativas para duas e não cria novo lançamento administrativo.
+**Idempotência** significa que aplicar a mesma ocorrência mais de uma vez tem o mesmo efeito de negócio observável que aplicá-la uma única vez. Não significa que nada acontece na segunda tentativa: é útil registrar que houve outra tentativa, medir o motivo e confirmar a mensagem. No serviço de Pedidos, `processed_events` guarda `event_id` e contagem de tentativas, enquanto `billing_effects` tem uma chave única por `event_id`. A primeira mensagem cria o efeito; a segunda eleva tentativas para duas e não cria novo lançamento administrativo.
 
 A fronteira deve ser transacional onde for possível. Registrar deduplicação e efeito na mesma transação SQLite evita o intervalo em que um é gravado sem o outro. Em outro sistema, a mesma ideia pode usar uma tabela de inbox no banco do consumidor, uma restrição única ou uma operação naturalmente idempotente. Um cache de processo é insuficiente: reinício, réplica diferente e expiração permitem duplicidade. Para efeitos fora do banco, como e-mail ou lançamento externo, a chave de idempotência também precisa chegar ao provedor e a reconciliação passa a fazer parte do desenho.
 
 ## Ordem: qual ordem, para qual chave?
 
-“Precisamos de ordenação” é uma frase incompleta. É necessário declarar a sequência relevante: resultados do mesmo exame? mudanças do mesmo paciente? todos os fatos do hospital? Ordem global reduz paralelismo, torna falhas mais caras e em muitos brokers simplesmente não é garantida. Uma fila com vários consumidores pode entregar mensagens em sequência, mas seus efeitos terminam em ordem diferente. Retentativas e redelivery também alteram o momento observado.
+“Precisamos de ordenação” é uma frase incompleta. É necessário declarar a sequência relevante: eventos do mesmo pedido? mudanças do mesmo cliente? todos os fatos da loja? Ordem global reduz paralelismo, torna falhas mais caras e em muitos brokers simplesmente não é garantida. Uma fila com vários consumidores pode entregar mensagens em sequência, mas seus efeitos terminam em ordem diferente. Retentativas e redelivery também alteram o momento observado.
 
-Em Kafka, a ordem é normalmente por partição; escolher `exam_id` como chave pode manter eventos daquele exame na mesma partição, mas não ordena eventos de exames diferentes. Em RabbitMQ, uma fila e um consumidor podem facilitar uma sequência local, mas não tornam uma topologia inteira globalmente ordenada. Quando o domínio exige progressão, o evento pode carregar versão ou sequência por agregado; o consumidor rejeita estado anterior, guarda pendência ou aplica regra determinística. A decisão deve explicar a perda aceitável quando eventos chegam trocados.
+Em Kafka, a ordem é normalmente por partição; escolher `pedido_id` como chave pode manter eventos daquele pedido na mesma partição, mas não ordena eventos de pedidos diferentes. Em RabbitMQ, uma fila e um consumidor podem facilitar uma sequência local, mas não tornam uma topologia inteira globalmente ordenada. Quando o domínio exige progressão, o evento pode carregar versão ou sequência por agregado; o consumidor rejeita estado anterior, guarda pendência ou aplica regra determinística. A decisão deve explicar a perda aceitável quando eventos chegam trocados.
 
 ## Esquema, compatibilidade e evolução
 
-O contrato é uma interface pública entre capacidades, mesmo quando todas estão no mesmo repositório. Um esquema explícito especifica campos, tipos, semântica, campos obrigatórios e versão. A validação Pydantic da oficina recusa payload sem `result_reference` antes do ack. O nome `ResultadoLaboratorialDisponibilizado.v1` torna a versão visível e a configuração `extra="forbid"` impede que o consumidor aceite em silêncio campos desconhecidos no exercício. Não existe padrão universal aqui: em produção, a tolerância a campos adicionais é uma escolha consciente de compatibilidade que cada equipe assume.
+O contrato é uma interface pública entre capacidades, mesmo quando todas estão no mesmo repositório. Um esquema explícito especifica campos, tipos, semântica, campos obrigatórios e versão. A validação Pydantic da oficina recusa um payload sem um campo obrigatório antes do ack. Um nome de evento versionado, como `PedidoRealizado.v1`, torna a versão visível na assinatura do próprio fato, e uma configuração de esquema estrito (`extra="forbid"`) impede que o consumidor aceite em silêncio campos desconhecidos no exercício. Não existe padrão universal aqui: em produção, a tolerância a campos adicionais é uma escolha consciente de compatibilidade que cada equipe assume.
 
 Evoluir não é apenas alterar JSON. Adicionar um campo opcional pode ser compatível para consumidores que o ignoram; tornar campo obrigatório ou mudar seu significado pode quebrar leitura. Trocar unidade, fuso, identificador ou classificação de dado pode quebrar negócio sem quebrar parse. Uma estratégia usual é publicar leitura compatível durante transição, documentar data e owner, e retirar apenas quando consumidores confirmarem a migração. Uma nova versão no nome é mais clara quando a semântica se rompe; produzir duas versões temporariamente pode reduzir risco, ao custo de observabilidade e prazo explícito.
 
@@ -24,13 +24,13 @@ Schema Registry, JSON Schema, Avro, Protobuf e validação de modelos são mecan
 
 ## Dead-letter queue como evidência, não depósito
 
-Uma **dead-letter queue** (DLQ) recebe mensagens que não puderam seguir a política normal: rejeição sem requeue, expiração ou limite de tentativas, conforme configuração. Na oficina, `billing.resultados.v1` declara `hospital.events.dlx` como dead-letter exchange e `billing.resultados.v1.dlq` recebe mensagens rejeitadas. A mensagem inválida não deve ser confirmada como se tivesse sido faturada; ela fica disponível para inspeção com o erro, a versão e a decisão de recuperação.
+Uma **dead-letter queue** (DLQ) recebe mensagens que não puderam seguir a política normal: rejeição sem requeue, expiração ou limite de tentativas, conforme configuração. Na oficina, a fila de trabalho de Faturamento declara uma exchange de dead-letter, e uma fila companion dedicada recebe mensagens rejeitadas. A mensagem inválida não deve ser confirmada como se tivesse sido faturada; ela fica disponível para inspeção com o erro, a versão e a decisão de recuperação.
 
-DLQ não corrige schema automaticamente nem é trilha de auditoria clínica. Sem owner, alerta e procedimento de decisão, ela vira armazenamento silencioso de falhas. A equipe define quais erros são transitórios e merecem retry, quais são permanentes e vão à DLQ, como proteger dados ali presentes e como evitar reprocessar em loop. Corrigir o produtor, criar evento de compensação ou descartar uma mensagem sintética são decisões diferentes; a fila só preserva a evidência para tomá-las, e quem decide é a equipe.
+DLQ não corrige schema automaticamente nem é trilha de auditoria geral. Sem owner, alerta e procedimento de decisão, ela vira armazenamento silencioso de falhas. A equipe define quais erros são transitórios e merecem retry, quais são permanentes e vão à DLQ, como proteger dados ali presentes e como evitar reprocessar em loop. Corrigir o produtor, criar evento de compensação ou descartar uma mensagem sintética são decisões diferentes; a fila só preserva a evidência para tomá-las, e quem decide é a equipe.
 
 ```mermaid
 sequenceDiagram
-    participant R as Resultados
+    participant R as Pedidos
     participant B as Broker
     participant F as Faturamento
     participant S as Store idempotente
@@ -48,7 +48,7 @@ sequenceDiagram
 
 *Figura 9 — Reentrega com efeito de negócio idempotente. Fonte: curso.*
 
-**Leitura textual:** Resultados publica a ocorrência A. Faturamento registra o efeito e confirma. A mesma ocorrência chega outra vez; o store aumenta a contagem de tentativas, reconhece a identidade já processada e impede novo efeito antes da segunda confirmação.
+**Leitura textual:** Pedidos publica a ocorrência A. Faturamento registra o efeito e confirma. A mesma ocorrência chega outra vez; o store aumenta a contagem de tentativas, reconhece a identidade já processada e impede novo efeito antes da segunda confirmação.
 
 ## Outbox, inbox e fronteiras de escrita
 
@@ -61,6 +61,16 @@ O laboratório mostra a metade consumidora da ideia: a tabela de mensagens proce
 RabbitMQ é uma alternativa quando roteamento de mensagens e unidades de trabalho com confirmações forem o centro do problema e a topologia de filas for compreensível para a operação. Kafka é uma alternativa quando retenção, replay, leitura por múltiplos grupos e particionamento de fluxo forem requisitos centrais. ActiveMQ é uma alternativa quando filas ou tópicos com confirmações precisam integrar sistemas que já dependem de JMS ou de protocolos interoperáveis. Nenhuma dessas capacidades substitui idempotência, ownership, nem uma política para falhas.
 
 Avalie limites e custo operacional em relação ao contexto: RabbitMQ pede operação de exchanges, filas, confirmações e DLQ; Kafka pede retenção, partições, grupos, replicação e governança do dado retido; ActiveMQ pede decidir variante, persistência, disponibilidade, compatibilidade de protocolos e monitoramento. Uma ponte entre tecnologias pode ser justificável, mas aumenta contratos, observabilidade e modos de falha. Não use comparação de taxa isolada como decisão: mensagem, persistência, confirmação, tamanho de lote, replicação e consumidores mudam o resultado. Kafka oferece mecanismos de idempotência e transações em escopos definidos, mas efeitos externos ainda exigem desenho ponta a ponta; RabbitMQ e ActiveMQ oferecem confirmações e processamento confiável conforme a topologia, mas a idempotência do consumidor continua necessária.
+
+| Dimensão | RabbitMQ | Kafka | ActiveMQ |
+| --- | --- | --- | --- |
+| Unidade de paralelismo | Fila, com múltiplos consumidores competindo | Partição, uma por consumidor no grupo | Fila ou tópico, conforme o conector |
+| Modelo de leitura | Destrutivo: ack remove a mensagem | Não destrutivo: offset por consumidor, replay possível | Destrutivo, com opções de tópico durável |
+| Retenção típica | Até a confirmação, ou TTL configurado | Por tempo ou tamanho, independente do consumo | Até a confirmação, com store persistente |
+| Protocolo nativo | AMQP 0-9-1, com plugins para MQTT e STOMP | Protocolo próprio binário sobre TCP | JMS, com OpenWire, AMQP e MQTT via conectores |
+| Onde pesa o custo operacional | Exchanges, bindings e política de DLQ | Partições, réplicas e retenção em disco | Escolha de variante (Classic/Artemis) e persistência |
+
+Quando a pergunta muda de “qual mensageria autogerida operar” para “o que terceirizar”, entram os serviços gerenciados citados no módulo de conceitos: AWS SQS resolve fila simples sem servidor próprio, EventBridge resolve roteamento por regra entre serviços AWS, Google Pub/Sub e Azure Service Bus cobrem papéis equivalentes em suas nuvens, e Apache Pulsar aparece quando multi-tenancy e replicação geográfica nativas pesam mais que o ecossistema já maduro do Kafka. Nenhuma dessas opções elimina a decisão sobre idempotência ou ordenação; elas apenas deslocam o time-to-market e o controle fino de configuração para o provedor, ao custo de portabilidade e de uma superfície de API que a equipe não controla.
 
 ## Checklist de decisão
 

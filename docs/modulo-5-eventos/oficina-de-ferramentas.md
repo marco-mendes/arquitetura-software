@@ -4,7 +4,15 @@ Oficina local: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponib
 
 ## Mapa da demonstração local
 
-Antes de iniciar RabbitMQ ou o consumidor, localize a topologia em `infra/compose.eventos.yml`, o publicador em `src/hospital/eventos/publicador.py` e o consumidor de Faturamento em `src/hospital/eventos/consumidor.py`. A exchange é `hospital.events`; a fila de trabalho é `billing.resultados.v1`; o armazenamento de idempotência é o SQLite `evidencias/modulo-5/processed-events.sqlite3`; e a DLQ é `billing.resultados.v1.dlq`, ligada pela DLX `hospital.events.dlx`.
+Esta oficina implementa em código o que os módulos de [Conceitos](conceitos.md) e [Padrões e decisões](padroes-e-decisoes.md) descrevem em prosa. Antes de rodar qualquer comando, abra os arquivos abaixo. Você está lendo esta página pelo site publicado, sem o repositório clonado, então os links vão direto ao código no GitHub.
+
+| Arquivo | O que ele faz | Onde isso aparece na teoria |
+| --- | --- | --- |
+| [`infra/compose.eventos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml) | Sobe um RabbitMQ 4 isolado, com plugin de management e healthcheck, e declara as portas AMQP e HTTP que os comandos desta oficina vão usar. | A infraestrutura por trás do [broker](conceitos.md#broker-e-mediator): aqui ele é uma exchange `hospital.events` e uma fila de trabalho `billing.resultados.v1`. |
+| [`src/hospital/eventos/publicador.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/eventos/publicador.py) | Define o contrato `ResultadoLaboratorialDisponibilizadoV1` (modelo Pydantic) e publica na exchange `hospital.events`, com confirmação de publicação ligada. | O que [evento, comando e mensagem](conceitos.md#evento-comando-e-mensagem) chama de publicador: ele afirma um fato e não conhece quem vai reagir a ele. |
+| [`src/hospital/eventos/consumidor.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py) | Declara a fila `billing.resultados.v1`, valida o schema recebido, grava tentativa e efeito no SQLite `processed-events.sqlite3` por `event_id`, e liga a fila de rejeitados `billing.resultados.v1.dlq` à DLX `hospital.events.dlx`. | A implementação de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia) e de [dead-letter queue](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito). |
+| [`tests/test_event_idempotency.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_event_idempotency.py) | Teste automatizado que publica o mesmo evento duas vezes e verifica, por código, que existe só um efeito de negócio e duas tentativas registradas. | A prova de que a garantia de repetição sem duplicidade de efeito, descrita na teoria, se sustenta neste código específico. |
+| [`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/pyproject.toml) | Declara as dependências do pacote (`aio-pika` para AMQP assíncrono, `pydantic` para o contrato, `pytest` para o teste) e o torna instalável. | Por que o comando de instalação, mais adiante, não pede nenhum argumento além do caminho do pacote. |
 
 **Estado inicial**
 
@@ -186,7 +194,7 @@ Uma pessoa identifica publicação, exchange e routing key; a outra identifica f
 
 **Compare**
 
-Compare o que a infraestrutura roteia com o que `ProcessedEventStore` decide. O broker não sabe se já houve lançamento administrativo; o consumidor não decide se uma mensagem inválida deve parecer sucesso.
+Compare o que a infraestrutura roteia com o que `ProcessedEventStore` decide. O broker não sabe se já houve lançamento administrativo; o consumidor não decide se uma mensagem inválida deve parecer sucesso. É a fronteira descrita em [broker e mediator](conceitos.md#broker-e-mediator): o RabbitMQ só encaminha, quem decide idempotência e rejeição é o código do consumidor.
 
 **Questões exploratórias**
 
@@ -261,11 +269,20 @@ python -m hospital.eventos.consumidor --once --store evidencias/modulo-5/process
 python -m pytest tests/test_event_idempotency.py -q
 ```
 
-No PowerShell, troque `python` por `py` se esse for o iniciador instalado; os argumentos são idênticos.
+No PowerShell:
+
+```powershell
+py -m hospital.eventos.consumidor --once --store evidencias/modulo-5/processed-events.sqlite3
+py -m hospital.eventos.publicador --event-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
+py -m hospital.eventos.consumidor --once --store evidencias/modulo-5/processed-events.sqlite3
+py -m hospital.eventos.publicador --event-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
+py -m hospital.eventos.consumidor --once --store evidencias/modulo-5/processed-events.sqlite3
+py -m pytest tests/test_event_idempotency.py -q
+```
 
 **Observe**
 
-A primeira entrega válida imprime `processed=True attempts=1`. A segunda imprime `processed=False attempts=2`. O teste `test_event_idempotency.py` confirma uma linha de efeito e duas tentativas em banco temporário; a sequência manual preserva a mesma observação no arquivo de evidência.
+A primeira entrega válida imprime `processed=True attempts=1`. A segunda imprime `processed=False attempts=2`. O teste `test_event_idempotency.py` confirma uma linha de efeito e duas tentativas em banco temporário; a sequência manual preserva a mesma observação no arquivo de evidência. É a demonstração ao vivo de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia): a mensagem chega duas vezes, o efeito de negócio acontece uma.
 
 **Compare**
 
@@ -304,10 +321,16 @@ Arquivo inexistente indica que a sequência essencial não foi concluída.
 
 **Execute**
 
-Consulte apenas contagens e a identidade sintética da ocorrência:
+Consulte apenas contagens e a identidade sintética da ocorrência. No macOS ou Linux:
 
 ```bash
 python -c "import sqlite3; c=sqlite3.connect('evidencias/modulo-5/processed-events.sqlite3'); print(c.execute('select event_id, attempts from processed_events').fetchall()); print(c.execute('select count(*) from billing_effects').fetchone())"
+```
+
+No PowerShell:
+
+```powershell
+py -c "import sqlite3; c=sqlite3.connect('evidencias/modulo-5/processed-events.sqlite3'); print(c.execute('select event_id, attempts from processed_events').fetchall()); print(c.execute('select count(*) from billing_effects').fetchone())"
 ```
 
 **Observe**
@@ -351,13 +374,22 @@ Validação Pydantic falha, não há ack de sucesso e a mensagem segue à DLQ.
 
 **Execute**
 
-Publique deliberadamente uma mensagem sem `result_reference`, consuma uma vez e consulte a contagem da DLQ no management endpoint local:
+Publique deliberadamente uma mensagem sem `result_reference`, consuma uma vez e consulte a contagem da DLQ no management endpoint local. No macOS ou Linux:
 
 ```bash
 python -m hospital.eventos.publicador --event-id 65e95d82-4f8c-4e93-9bb3-3e0e92deaf1d --invalid
 python -m hospital.eventos.consumidor --once --store evidencias/modulo-5/processed-events.sqlite3
 curl -u guest:guest "http://localhost:${RABBITMQ_MANAGEMENT_PORT}/api/queues/%2F/billing.resultados.v1.dlq"
 ```
+
+No PowerShell, publique e consuma primeiro:
+
+```powershell
+py -m hospital.eventos.publicador --event-id 65e95d82-4f8c-4e93-9bb3-3e0e92deaf1d --invalid
+py -m hospital.eventos.consumidor --once --store evidencias/modulo-5/processed-events.sqlite3
+```
+
+Essa rejeição é a aplicação prática de [dead-letter queue como evidência](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito): o schema barra a mensagem antes de qualquer regra de negócio rodar, e ela fica visível para inspeção em vez de desaparecer. A consulta HTTP que confirma essa evidência já usa portas e sintaxe específicas do PowerShell, por isso tem uma seção própria a seguir.
 
 **Verificação no PowerShell**
 
@@ -429,12 +461,19 @@ A evidência desejada foi copiada para local apropriado e o terminal ainda está
 
 **Execute**
 
+No macOS ou Linux:
+
 ```bash
 docker compose -f infra/compose.eventos.yml down -v
 rm -rf evidencias/modulo-5
 ```
 
-No PowerShell, use `Remove-Item -Recurse -Force evidencias\modulo-5` para remover a pasta opcional de evidências.
+No PowerShell:
+
+```powershell
+docker compose -f infra/compose.eventos.yml down -v
+Remove-Item -Recurse -Force evidencias\modulo-5
+```
 
 **Observe**
 
