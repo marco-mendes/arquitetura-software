@@ -20,7 +20,12 @@ Três papéis compõem o estilo, e o vocabulário deste módulo inteiro se organ
 - O **consumidor** recebe o evento e decide o que fazer com ele. Pode haver nenhum, um ou vários, e o produtor não precisa saber quantos são.
 - O **intermediário** fica entre os dois, recebendo a publicação e fazendo-a chegar a quem interessa. Broker e mediator, definidos adiante, são as duas formas que esse papel assume.
 
-Trocar chamadas diretas por essa tríade compra quatro propriedades, e cada uma cobra um preço que as demais seções tratam. **Desacoplamento**: o produtor não conhece os consumidores, o que custa perder a resposta imediata que uma chamada direta daria. **Escalabilidade**: picos de carga podem ser absorvidos pelo canal em vez de derrubarem a origem, ao custo de operar esse canal. **Flexibilidade**: um consumidor novo se inscreve sem exigir mudança no produtor, desde que o contrato do evento tenha sido pensado para isso. **Resiliência**: a falha de um consumidor não impede que o fato tenha ocorrido nem que os outros reajam, mas alguém precisa perceber que aquele consumidor parou.
+Trocar chamadas diretas por essa tríade compra quatro propriedades, e cada uma cobra um preço que as demais seções tratam:
+
+- **Desacoplamento** — o produtor não conhece os consumidores. *Custo:* perde-se a resposta imediata que uma chamada direta daria.
+- **Escalabilidade** — picos de carga podem ser absorvidos pelo canal em vez de derrubarem a origem. *Custo:* operar esse canal.
+- **Flexibilidade** — um consumidor novo se inscreve sem exigir mudança no produtor. *Custo:* o contrato do evento precisa ter sido pensado para isso.
+- **Resiliência** — a falha de um consumidor não impede que o fato tenha ocorrido nem que os outros reajam. *Custo:* alguém precisa perceber que aquele consumidor parou.
 
 O restante desta página constrói o vocabulário necessário para projetar sob esse estilo sem tratar suas promessas como garantias automáticas, na ordem em que as perguntas aparecem durante um projeto: o que se publica, quem entrega, como o canal se comporta depois da entrega, e o que fazer com o tempo que passa entre publicar e reagir. Começa pelo que se publica.
 
