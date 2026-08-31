@@ -35,7 +35,7 @@ Um **evento** descreve um fato de domínio no passado. “Pedido realizado” é
 
 Um **comando** expressa intenção dirigida. “Gerar cobrança do pedido” solicita uma ação a um destinatário que pode aceitar, rejeitar ou devolver uma falha. Ele carrega autoridade, pré-condições e, frequentemente, uma resposta. Publicar `GerarCobranca` em um tópico pode ser apropriado em alguns fluxos, mas a semântica não muda: não é um fato aberto a qualquer interpretação. Confundir comando e evento cria consumidores que tomam uma ordem como informação histórica ou publicadores que passam a conhecer regras dos destinatários.
 
-**Mensagem** é o termo de transporte: bytes, cabeçalhos, chave de roteamento, content type e confirmação. Ela pode carregar evento, comando, documento ou sinal técnico. Ao depurar uma entrega, a equipe olha para a mensagem; ao decidir ownership, olha para evento ou comando. Esta separação impede que a escolha de AMQP, HTTP ou um cliente Kafka determine o vocabulário do domínio.
+**Mensagem** é o termo de transporte: os bytes que trafegam, os cabeçalhos que os acompanham, a chave usada para roteamento, o tipo de conteúdo declarado e a confirmação de entrega. Ela pode carregar evento, comando, documento ou sinal técnico. Ao investigar por que uma entrega falhou, a equipe olha para a mensagem; ao decidir quem é responsável por um contrato, olha para evento ou comando. Esta separação impede que a escolha de AMQP, HTTP ou um cliente Kafka determine o vocabulário do domínio.
 
 Numa loja on-line, `PedidoRealizado.v1` tem `event_id`, `occurred_at`, `pedido_id`, `cliente_id` e `pedido_reference`. O contrato afirma que um pedido foi registrado; não inclui os itens do carrinho nem uma instrução de cobrança completa. `event_id` identifica a ocorrência, enquanto `pedido_id` identifica o pedido: duas tentativas de transportar a mesma ocorrência preservam o primeiro e podem compartilhar o segundo. `occurred_at` é o tempo do fato, não o horário em que um consumidor recebeu uma cópia.
 
@@ -77,11 +77,11 @@ sequenceDiagram
 
 **Leitura textual:** O Cliente publica o pedido, que chega a Compras. Compras publica para Crédito e, em paralelo, para Notificação. Crédito, ao aprovar, publica para Estoque e também para Notificação. Estoque publica para Despacho e para Notificação. Despacho publica para Notificação. Por fim, Notificação avisa o Cliente. Repare que cada seta é de mão única: nenhum serviço aguarda confirmação de quem recebeu antes de seguir em frente, e nenhum deles sabe se alguém está do outro lado lendo a fila.
 
-Um broker faz mais do que encaminhar. Ele também precisa responder o que fazer quando a entrega não pode ser concluída: a mensagem chega corrompida, o consumidor a rejeita, o formato não corresponde ao contrato esperado. A figura a seguir mostra esse caminho completo, já no caso hospitalar que as páginas seguintes do módulo detalham. Ela introduz a **dead-letter queue** (DLQ), a fila que recebe uma mensagem rejeitada e a mantém visível para inspeção, em vez de descartá-la em silêncio ou reentregá-la indefinidamente.
+Um broker faz mais do que encaminhar. Ele também precisa responder o que fazer quando a entrega não pode ser concluída: a mensagem chega corrompida, o consumidor a rejeita, o formato não corresponde ao contrato esperado. A figura a seguir mostra esse caminho completo, já no caso hospitalar que as páginas seguintes do módulo detalham. Ela introduz a **fila de erros**, conhecida no jargão da área como *dead-letter queue* (DLQ): a fila que recebe uma mensagem rejeitada e a mantém visível para inspeção, em vez de descartá-la em silêncio ou reentregá-la indefinidamente.
 
 ![Fluxo de eventos: um resultado laboratorial disponível é publicado em um broker, entregue a um consumidor de faturamento, verificado por idempotência e enviado à DLQ se inválido.](../assets/images/m05-fluxo-eventos.png)
 
-*Figura 8 — Publicação, consumo, idempotência e dead-letter queue. Fonte: curso.*
+*Figura 8 — Publicação, consumo, idempotência e fila de erros. Fonte: curso.*
 
 **Leitura textual da figura:** o laboratório publica o fato “resultado disponível” no broker. O broker entrega uma cópia ao consumidor de Faturamento. Antes de produzir efeito, o consumidor consulta o registro de idempotência para impedir uma cobrança duplicada. Uma mensagem inválida ou que não possa ser processada segue para a DLQ, onde fica visível para diagnóstico e reprocessamento controlado, sem desaparecer silenciosamente.
 
@@ -142,7 +142,7 @@ sequenceDiagram
 
 Comparar as duas figuras revela a diferença que a definição sozinha esconde: na Figura 7 nenhuma seta intermediária volta para quem a enviou, e na Figura 9 cada uma volta. Se o Serviço de Estoque cair, a Figura 7 mostra a Fila de Despacho simplesmente parada, sem que ninguém saiba por quê; a Figura 9 mostra o Mediator esperando uma resposta que não chega, e é ele quem decide se cancela o pedido, tenta de novo ou segue sem estoque confirmado. Um exemplo real reforça a escolha: depois do evento de pedido, Crédito pode aprovar um limite e Notificação pode preparar um aviso, como na Figura 7, porque nenhuma reação precisa comandar a outra. Um processo de cancelamento de pedido, que precisa ordenar estorno de crédito, reposição de estoque e registro administrativo com regras de compensação, pede a coreografia visível da Figura 9. Chamar as duas figuras de “orquestração” esconderia a diferença que elas mostram.
 
-## Fila, tópico e log distribuído
+## Fila, tópico e registro sequencial
 
 Broker e mediator respondem quem entrega a mensagem. Fila, tópico e log respondem uma pergunta diferente: o que acontece com ela depois de entregue, e é aí que a escolha de tecnologia começa a pesar. Os três distribuem mensagens de formas diferentes o bastante para merecer nomes diferentes, mesmo quando a tecnologia por baixo é a mesma exchange ou o mesmo cluster.
 
@@ -150,32 +150,38 @@ Uma **fila** representa trabalho pendente para uma capacidade. Mensagens ficam d
 
 Já um **tópico** muda o critério de distribuição: em vez de repartir trabalho entre réplicas de uma fila, ele copia a mesma publicação para filas distintas com critérios de assinatura próprios. Faturamento recebe uma cópia, Notificações outra e Auditoria uma terceira. Em AMQP, a exchange do tipo topic e as chaves de roteamento realizam isso; o tópico não torna todos os consumidores uma única equipe nem lhes dá o mesmo banco.
 
-Um terceiro formato, o **log distribuído**, muda de novo o critério: em vez de fila ou cópia, ele retém um registro ordenado por partição, sob uma política de tempo ou tamanho. Consumidores guardam offsets e podem ler a mesma sequência em ritmos diferentes ou voltar a uma posição permitida pela retenção. Kafka é conhecido por esse modelo. O log favorece replay e múltiplas leituras independentes, mas não torna a ordem global: a garantia comum é por partição, sob uma chave e configuração específicas. Retenção também é uma decisão de custo, privacidade e recuperação, não “histórico infinito”.
+Um terceiro formato, o **registro sequencial distribuído** (*log*), muda de novo o critério: em vez de repartir trabalho ou copiar para várias filas, ele guarda as mensagens numa sequência ordenada, por um prazo definido em tempo ou em tamanho. Cada consumidor mantém a própria **posição de leitura** (*offset*), um marcador que indica até onde já leu. Isso permite que dois grupos leiam a mesma sequência em ritmos diferentes, e que um deles recue o marcador para reprocessar um trecho já lido, desde que a mensagem ainda esteja dentro do prazo de guarda. Kafka é a tecnologia mais conhecida desse modelo. O formato favorece a releitura e as leituras independentes, mas não impõe uma ordem única para tudo: a ordem é garantida dentro de cada parte em que a sequência foi dividida, conforme a chave escolhida. O prazo de guarda é uma decisão de custo, privacidade e recuperação, e não um “histórico infinito”.
 
 ```mermaid
 flowchart TB
-    P[Produtor] --> X[Exchange ou tópico]
+    P[Produtor] --> X[Tópico]
     X --> Q1[Fila de Faturamento]
     X --> Q2[Fila de Notificações]
-    L[Log particionado] --> G1[Grupo A: offsets]
-    L --> G2[Grupo B: offsets]
+    L[Registro sequencial] --> G1[Grupo A: posição própria]
+    L --> G2[Grupo B: posição própria]
 ```
 
-**Texto alternativo:** Comparação entre um produtor que publica em exchange ou tópico para filas independentes e grupos que leem posições próprias em um log particionado.
+**Texto alternativo:** Comparação entre um produtor que publica em um tópico, que encaminha cópias para filas independentes, e um registro sequencial em que dois grupos mantêm posições próprias de leitura.
 
-*Figura 10 — Topologias de distribuição por fila, tópico e log. Fonte: curso.*
+*Figura 10 — Formas de distribuição por fila, tópico e registro sequencial. Fonte: curso.*
 
-**Leitura textual:** Um produtor publica no canal. Um tópico pode encaminhar cópias para filas com responsabilidades distintas. Em um log distribuído, grupos independentes mantêm posições próprias de leitura sobre o registro retido.
+**Leitura textual:** Um produtor publica no canal. Um tópico encaminha cópias da mesma publicação para filas com responsabilidades distintas, cada uma com seu consumidor. Já num registro sequencial, a mensagem não é copiada para filas: ela fica guardada em um só lugar, e cada grupo de consumidores mantém o próprio marcador indicando até onde leu.
 
-Cada uma dessas três formas de canal tem uma tecnologia de referência associada, e escolher entre elas é a próxima decisão a tomar.
+Cada uma dessas três formas de canal tem tecnologias associadas, e escolher entre elas é a próxima decisão a tomar.
 
-## RabbitMQ, Kafka e ActiveMQ sem atalhos
+## As tecnologias, sem atalhos
 
-RabbitMQ é um broker de mensageria com exchanges, filas, bindings, confirmações e recursos como TTL e dead-lettering. Ele atende quando a necessidade comprovada é roteamento flexível e trabalho assíncrono por fila; não oferece, por si, um histórico de replay governado como um log. Kafka é uma plataforma de log distribuído, organizada em tópicos e partições, com retenção e offsets controlados por consumidores. Ele atende quando leitura independente, replay e fluxo contínuo são requisitos relevantes; retenção, partições e a proteção dos dados retidos são limites que a equipe precisa operar.
+Cada tecnologia a seguir implementa o papel de intermediário, mas resolve bem problemas diferentes. Vale ler esta seção procurando o que cada uma assume como caso principal, e não uma lista de funcionalidades.
 
-ActiveMQ é um broker de mensageria para filas e tópicos, com confirmações e opções de interoperabilidade de protocolo. Ele pode ser adequado quando sistemas existentes dependem de JMS ou quando essa interoperabilidade reduz o acoplamento de uma integração. A escolha depende da variante e da topologia: ela não elimina a necessidade de idempotência do consumidor, nem transforma a mensageria em replay histórico ilimitado. Persistência, disponibilidade, atualização e monitoramento compõem um custo operacional a ser assumido pela equipe.
+**RabbitMQ** organiza a entrega em torno de filas de trabalho. Uma publicação chega a um distribuidor, chamado *exchange*, que decide para quais filas encaminhar cópias segundo regras de assinatura. Cada consumidor confirma o que processou, e a mensagem confirmada sai da fila. Ele traz recursos úteis para operação, como um prazo de validade para a mensagem e o redirecionamento automático de mensagens rejeitadas para uma fila de erros. Cabe bem quando o problema central é repartir trabalho entre consumidores e rotear mensagens por critérios variados. O que ele não oferece por si: guardar o histórico das mensagens já consumidas para alguém relê-las depois.
 
-Essas descrições não são uma tabela de vencedores. RabbitMQ também suporta padrões pub/sub e persistência; Kafka também exige planejamento de consumidores, chaves, capacidade e operação; ActiveMQ não dispensa a decisão de topologia, recuperação e compatibilidade. Throughput observado depende de mensagem, confirmação, disco, replicação, rede, clientes e desenho. Nem “Kafka sempre escala mais”, nem “RabbitMQ é apenas uma fila”, nem “ActiveMQ resolve integração legada automaticamente” são critérios arquiteturais suficientes. Uma equipe começa pela semântica, volume esperado, isolamento, recuperação, domínio de retenção e capacidade operacional, então mede o caso real.
+**Apache Kafka** parte de outra ideia. Em vez de uma fila da qual a mensagem sai ao ser consumida, ele mantém um registro sequencial que preserva as mensagens por um prazo configurado, e ler não apaga nada. Cada consumidor guarda a própria posição de leitura nesse registro, o que permite que grupos diferentes leiam a mesma sequência em ritmos diferentes, e que um consumidor volte atrás para reprocessar um trecho já lido. Cabe bem quando releitura do histórico, leitura simultânea por vários grupos independentes e fluxo contínuo de dados são requisitos reais. O preço: a equipe passa a operar retenção, divisão do registro em partes paralelas e a proteção dos dados que ficam guardados.
+
+**Apache ActiveMQ** é mensageria de filas e tópicos com forte interoperabilidade de protocolos. O caso típico é integrar sistemas corporativos já existentes, especialmente os que falam JMS, o padrão de mensageria do ecossistema Java. Cabe bem quando essa compatibilidade reduz o esforço de integração. Ele também não transforma a mensageria em histórico ilimitado, e a equipe assume persistência, disponibilidade, atualização e monitoramento.
+
+**Serviços gerenciados** mudam a natureza da decisão: em vez de instalar e operar um servidor, contrata-se o serviço de um provedor de nuvem. **Amazon SQS** oferece filas de trabalho simples, sem servidor próprio para administrar. **Amazon SNS** faz a distribuição para múltiplos assinantes, e é comum combiná-lo com SQS: o SNS publica para vários destinos, e cada destino tem sua própria fila SQS. **Amazon EventBridge** roteia eventos por regras entre serviços da AWS. **Google Pub/Sub** e **Azure Service Bus** cobrem papéis equivalentes em suas nuvens. O ganho é não precisar operar servidores, escalar capacidade nem aplicar atualizações. O preço é a dependência daquele provedor e menos controle fino sobre a configuração.
+
+Nada disso é uma tabela de vencedores. RabbitMQ também distribui para múltiplos assinantes e também persiste mensagens; Kafka também exige planejamento de consumidores, chaves de distribuição e capacidade; ActiveMQ não dispensa decisões de topologia e recuperação; serviços gerenciados não eliminam a necessidade de tratar mensagens repetidas. A vazão que cada um alcança depende do tamanho da mensagem, da política de confirmação, do disco, da replicação, da rede e do próprio desenho da solução, e por isso números de comparação isolados dizem pouco. Nem “Kafka sempre escala mais”, nem “RabbitMQ é apenas uma fila”, nem “ActiveMQ resolve integração legada automaticamente” são critérios arquiteturais suficientes. Uma equipe começa pela semântica do que precisa trafegar, pelo volume esperado, pelo isolamento entre consumidores, pela forma de recuperação, pelo prazo de guarda dos dados e pela própria capacidade de operar aquilo, e então mede o caso real.
 
 Nenhuma dessas tecnologias resolve, por si, o efeito colateral mais incômodo de desacoplar produtor e consumidor: o tempo que passa entre publicar e reagir.
 
@@ -183,8 +189,8 @@ Nenhuma dessas tecnologias resolve, por si, o efeito colateral mais incômodo de
 
 Com integração assíncrona, uma mudança pode estar visível em uma capacidade antes de outra. Após Pedidos publicar, a tela de status pode mostrar confirmação enquanto Faturamento ainda não criou a cobrança. Isso é **consistência eventual**: se as entregas e reações completarem sem novas mudanças conflitantes, as projeções convergem para o estado esperado. Não é licença para ignorar erro. A equipe precisa decidir como informar estado pendente, quanto tempo é aceitável, como reprocessar e quem investiga uma fila atrasada.
 
-O tempo também aparece no contrato. `occurred_at` permite ordenar fatos de uma mesma origem para análise, mas relógios distribuídos têm desvio e entregas podem chegar fora de ordem. Uma projeção pode usar versão do agregado, sequência por pedido ou regra de precedência, conforme o domínio. Usar hora de recebimento como verdade histórica costuma gerar decisões erradas quando há atraso ou replay.
+O tempo também aparece no contrato. `occurred_at` permite ordenar fatos de uma mesma origem para análise, mas relógios distribuídos têm desvio e entregas podem chegar fora de ordem. Uma projeção pode usar versão do agregado, sequência por pedido ou regra de precedência, conforme o domínio. Usar hora de recebimento como verdade histórica costuma gerar decisões erradas quando há atraso ou releitura do histórico.
 
 ## Vocabulário mínimo para revisão
 
-Ao revisar uma integração, pergunte: qual fato ou intenção estamos nomeando? Quem é owner do contrato? Qual consumidor tem efeito de negócio? Qual chave preserva a ordem necessária? Que duplicação é possível entre escrita e confirmação? Qual dado é referência, qual é cópia e qual não pode circular? Onde aparece atraso, rejeição e dead-letter queue? Essas perguntas tornam a arquitetura legível antes de ela se tornar uma coleção de filas.
+Ao revisar uma integração, pergunte: qual fato ou intenção estamos nomeando? Quem é o responsável pelo contrato? Qual consumidor tem efeito de negócio? Qual chave preserva a ordem necessária? Que duplicação é possível entre escrita e confirmação? Qual dado é referência, qual é cópia e qual não pode circular? Onde aparece atraso, rejeição e fila de erros? Essas perguntas tornam a arquitetura legível antes de ela se tornar uma coleção de filas.
