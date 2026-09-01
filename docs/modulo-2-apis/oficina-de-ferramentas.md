@@ -46,6 +46,93 @@ Os links abaixo abrem cada arquivo no GitHub, para quem está lendo pelo site se
 | [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_api_contract.py) | Sete testes: cinco exercitam a API pela porta da frente, dois comparam o contrato publicado com o que o FastAPI gera. | A verificação de que a promessa publicada e o comportamento real não divergiram. |
 | [`.spectral.yaml` e `contratos/.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/.spectral.yaml) | As regras que o verificador de contrato aplica ao `openapi.yaml`. | A política de contrato que uma equipe acorda e automatiza. |
 
+### O contrato por dentro: lendo o `openapi.yaml`
+
+Este é o arquivo mais citado da oficina, e vale abri-lo antes de rodar qualquer comando. **OpenAPI** é um formato padronizado para descrever uma API em texto: quais operações existem, o que se envia, o que volta e quais erros são possíveis. Como é um formato que máquinas leem, ferramentas conseguem gerar documentação, clientes e testes a partir dele. O arquivo é escrito em **YAML**, uma notação em que a hierarquia se expressa por indentação, sem chaves nem colchetes.
+
+O documento tem quatro blocos de primeiro nível. Começa se identificando:
+
+```yaml
+openapi: 3.1.0                    # versão da especificação OpenAPI usada
+info:
+  title: API de elegibilidades da plataforma hospitalar
+  version: 1.0.0                  # versão desta API, não da especificação
+tags:
+  - name: Elegibilidades          # agrupa operações na documentação
+servers:
+  - url: http://127.0.0.1:8000    # onde a API atende
+```
+
+Repare que há duas versões diferentes ali. O `openapi: 3.1.0` diz qual gramática o documento segue; o `version: 1.0.0` dentro de `info` é a versão da própria API, aquela que muda quando o contrato evolui.
+
+Depois vem `paths`, que descreve cada operação. Este é o `POST`, com os trechos comentados:
+
+```yaml
+paths:
+  /elegibilidades:                          # o caminho
+    post:                                   # o método HTTP nesse caminho
+      operationId: criarElegibilidade       # nome único, usado por geradores de cliente
+      summary: Aceita uma consulta de elegibilidade
+      requestBody:
+        required: true                      # não dá para chamar sem corpo
+        content:
+          application/json:                 # o formato aceito
+            schema:
+              $ref: '#/components/schemas/PedidoElegibilidade'
+            examples:
+              pedidoValido:
+                value:
+                  cpf: '12345678901'        # ← este exemplo será quebrado de propósito
+                  codigo_operadora: OPS-001
+                  matricula_plano: MAT-2026-001
+```
+
+O `$ref` é uma referência interna: em vez de repetir a descrição dos campos aqui, o documento aponta para `components/schemas/PedidoElegibilidade`, definido mais abaixo. É o mesmo princípio de não duplicar código, aplicado ao contrato.
+
+Ainda dentro do `POST`, cada resposta possível é declarada:
+
+```yaml
+      responses:
+        '202':
+          description: Pedido aceito para processamento.
+          headers:
+            Location:                       # o cabeçalho faz parte do contrato
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElegibilidadeAceita'
+        '422':
+          description: Corpo ausente ou incompatível com o contrato.
+```
+
+Declarar o `422` ao lado do `202` é o que torna o erro parte da promessa. Um consumidor lendo este documento sabe, antes de escrever a primeira linha, que precisa tratar essas duas respostas.
+
+Por fim, `components/schemas` define os formatos de dados reaproveitados pelas operações:
+
+```yaml
+components:
+  schemas:
+    PedidoElegibilidade:
+      type: object
+      additionalProperties: false           # campo não previsto é recusado
+      required: [cpf, codigo_operadora, matricula_plano]
+      properties:
+        cpf:
+          type: string
+          pattern: '^\d{11}$'               # exatamente onze dígitos
+        codigo_operadora:
+          type: string
+          minLength: 1
+          maxLength: 40
+```
+
+Três mecanismos de validação aparecem aqui. O `required` lista os campos obrigatórios, e é o que produz o `422` quando o `cpf` é omitido. O `pattern` é uma expressão regular: `^\d{11}$` significa início da cadeia, onze dígitos, fim. E `additionalProperties: false` recusa campos não previstos, em vez de ignorá-los em silêncio.
+
+Compare esse trecho com o `models.py` do laboratório e verá as mesmas três regras escritas em Python: `Field(pattern=r"^\d{11}$")`, a lista de campos sem valor padrão e `ConfigDict(extra="forbid")`. **O mesmo contrato, em duas linguagens.** Manter os dois em acordo é o trabalho que os dois últimos testes verificam.
+
 ### Os códigos de status HTTP usados aqui
 
 Toda resposta HTTP começa por um número de três dígitos que diz, antes de qualquer conteúdo, como a requisição terminou. O primeiro dígito define a família:
@@ -156,26 +243,58 @@ A preparação termina quando quatro condições valem ao mesmo tempo. Existe um
 
 ## Ferramenta
 
-| Ferramenta | Papel | Evidência |
-| --- | --- | --- |
-| Python 3.11 ou superior | executar aplicação e testes | saída do pytest |
-| FastAPI e Uvicorn | implementar e servir HTTP local | respostas e `/docs` |
-| OpenAPI 3.1 | declarar contrato explícito | `openapi.yaml` |
-| Bruno | atuar como consumidor manual | requisições e respostas salvas |
-| Node.js e npx | executar Spectral localmente | relatório de lint |
-| Spectral CLI 6.16.1 | verificar regras do documento | contrato válido e falha deliberada |
+Seis peças aparecem nesta oficina, e vale saber o que cada uma é antes de instalá-las.
 
-Bruno ajuda a executar exemplos, mas uma execução manual não substitui regressão. Spectral encontra problemas estruturais e de estilo sem provar que o servidor obedece ao documento. Já o `TestClient` verifica o comportamento da implementação; a revisão semântica do contrato continua sendo trabalho humano. Use as três perspectivas.
+| Ferramenta | O que é | Para que serve aqui |
+| --- | --- | --- |
+| **Python 3.11+** | A linguagem em que a API e os testes estão escritos. | Executar a aplicação e a suíte de testes. |
+| **FastAPI** | Uma biblioteca Python para construir APIs. Ela lê as anotações de tipo do código e, a partir delas, valida as requisições e gera a documentação. | Implementar as duas rotas e produzir o contrato gerado em `/openapi.json`. |
+| **Uvicorn** | O servidor que atende as requisições HTTP. O FastAPI define o que responder; o Uvicorn é quem abre a porta e escuta. | Colocar a API no ar em `http://127.0.0.1:8000`. |
+| **Bruno** | Um cliente HTTP com interface gráfica, parecido com Postman ou Insomnia. Permite montar e enviar requisições sem escrever código. | Agir como um consumidor externo da API. |
+| **Node.js e `npx`** | Node.js é o ambiente que executa JavaScript fora do navegador. O `npx` é um utilitário que vem com ele e roda uma ferramenta sem instalá-la permanentemente, baixando-a na hora. | Executar o Spectral, que é escrito em JavaScript. |
+| **Spectral CLI 6.16.1** | Um verificador de contratos OpenAPI, operado por linha de comando. Faz para o contrato o que um verificador de estilo faz para o código. | Conferir se o `openapi.yaml` cumpre as regras acordadas. |
+
+A versão do Spectral está fixada em `6.16.1` de propósito: versões diferentes trazem regras diferentes, e fixá-la faz a turma inteira ver a mesma saída.
+
+Essas ferramentas olham para lugares diferentes, e nenhuma substitui as outras. O Bruno mostra uma execução real, sem proteger contra regressão amanhã. O Spectral analisa o documento, sem provar que o servidor obedece a ele. O `TestClient`, usado nos testes, verifica o comportamento da aplicação, mas só nos casos que alguém escreveu. Julgar se o contrato descreve corretamente a intenção do negócio continua sendo trabalho humano.
 
 ## Pré-requisitos
 
 **Objetivo**
 
-Preparar um ambiente local descartável com Python, Bruno e Node.js. Reserve uma janela com acesso à internet para instalar dependências e para a primeira execução do `npx`. A oficina fixa Spectral CLI em `6.16.1` para tornar regras e diagnósticos reproduzíveis.
+Preparar um ambiente local descartável com Python, Bruno e Node.js. Reserve uma janela com acesso à internet para instalar dependências e para a primeira execução do `npx`, que baixa o Spectral.
 
 **Pré-requisito**
 
 Tenha o repositório disponível e um editor de texto. Todos os comandos partem da raiz do repositório, exceto quando o texto manda entrar em `laboratorios/plataforma-hospitalar`.
+
+### O que é o ambiente virtual que você vai criar
+
+Os comandos adiante criam uma pasta `.venv`. Um **ambiente virtual** é uma instalação de Python isolada, contida numa pasta do próprio projeto. Sem ele, cada biblioteca instalada iria para o Python do sistema, misturando as dependências deste laboratório com as de qualquer outro projeto da máquina — e uma versão que um exige poderia quebrar o outro.
+
+Com o ambiente virtual, tudo o que a oficina instalar fica dentro de `.venv`, e apagar essa pasta desfaz a instalação por completo. É por isso que a limpeza no fim consiste em remover um diretório.
+
+Uma consequência prática aparece nos comandos: eles chamam o interpretador de dentro da pasta (`.venv\Scripts\python.exe` no Windows, `python` após ativação no macOS e Linux). Chamar o `python` do sistema por engano executaria o laboratório sem as bibliotecas instaladas, e o erro seria `ModuleNotFoundError`.
+
+O que exatamente será instalado está declarado em `pyproject.toml`, o arquivo que descreve o pacote deste laboratório:
+
+```toml
+dependencies = [          # necessárias para a aplicação rodar
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  ...
+]
+
+[project.optional-dependencies]
+dev = [                   # necessárias apenas para desenvolver e testar
+  "pytest",
+  "pytest-asyncio",
+  "pyyaml",
+]
+```
+
+O comando de instalação usa `.[dev]`, e cada parte significa algo. O caractere `.` quer dizer "o pacote que está nesta pasta". O `[dev]` acrescenta o grupo opcional, trazendo também as ferramentas de teste. A opção `-e`, de *editable*, instala o pacote como um atalho para o código-fonte: alterar um arquivo em `src/` passa a valer imediatamente, sem reinstalar nada.
 
 ## Instalação
 
