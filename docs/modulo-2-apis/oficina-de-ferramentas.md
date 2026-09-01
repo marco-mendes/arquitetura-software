@@ -15,27 +15,142 @@ O arquivo `src/hospital/api/main.py` inicia a aplicação FastAPI e expõe apena
 
 Os dados aceitos ficam somente na memória do processo. Isso significa que parar ou reiniciar o servidor remove todos os protocolos criados. Esse limite é deliberado: a prática permite comparar contrato, consumo e implementação sem afirmar persistência, idempotência distribuída, autenticação ou integração externa.
 
-Antes de instalar ou executar qualquer coisa, localize a raiz do clone e a pasta do laboratório:
+### Onde cada arquivo mora
+
+Esta é a árvore completa dos arquivos citados na oficina. Os comandos daqui em diante rodam a partir de `plataforma-hospitalar`, e cada caminho mencionado no texto é relativo a ela.
 
 ```text
-arquitetura-software/
+arquitetura-software/                      ← raiz do repositório clonado
 └── laboratorios/
-    └── plataforma-hospitalar/   ← os comandos desta oficina passam a ser executados aqui
-        ├── contratos/openapi.yaml
-        ├── src/hospital/api/main.py
-        └── tests/test_api_contract.py
+    └── plataforma-hospitalar/             ← execute os comandos a partir daqui
+        ├── pyproject.toml                 declara as bibliotecas a instalar
+        ├── .spectral.yaml                 aponta para a configuração de dentro de contratos/
+        ├── contratos/
+        │   ├── openapi.yaml               o contrato escrito à mão
+        │   └── .spectral.yaml             as regras que o contrato deve cumprir
+        ├── src/hospital/api/
+        │   ├── models.py                  os formatos de dados e suas validações
+        │   └── main.py                    a aplicação e as duas rotas
+        ├── tests/
+        │   └── test_api_contract.py       os sete testes de contrato
+        └── evidencias/                    você criará esta pasta na preparação
 ```
 
-Quatro arquivos sustentam a oficina inteira. Vale abrir cada um antes de rodar qualquer comando; os links vão direto ao código no GitHub, para quem está lendo pelo site sem o repositório clonado.
+Os links abaixo abrem cada arquivo no GitHub, para quem está lendo pelo site sem ter clonado o repositório.
 
 | Arquivo | O que ele faz | Onde isso aparece na teoria |
 | --- | --- | --- |
-| [`contratos/openapi.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/openapi.yaml) | O contrato escrito à mão: as duas operações, os schemas e os exemplos que a API promete a quem consome. | É o **contrato** de [interface, contrato e implementação](conceitos.md), publicado num documento que existe independente do código. |
+| [`contratos/openapi.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/openapi.yaml) | O contrato escrito à mão: as duas operações, os formatos de dados e os exemplos que a API promete a quem consome. | É o **contrato** de [interface, contrato e implementação](conceitos.md), publicado num documento que existe independente do código. |
 | [`src/hospital/api/models.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/models.py) | Os modelos Pydantic. O tipo declarado em cada campo é a própria regra de validação. | Onde o contrato deixa de ser documento e passa a ser código executável. |
 | [`src/hospital/api/main.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/main.py) | A aplicação FastAPI: as duas rotas, o `202` com `Location` e os erros estruturados. | A **implementação**, que pode mudar por dentro sem quebrar quem consome, desde que o contrato fique de pé. |
 | [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_api_contract.py) | Sete testes: cinco exercitam a API pela porta da frente, dois comparam o contrato publicado com o que o FastAPI gera. | A verificação de que a promessa publicada e o comportamento real não divergiram. |
+| [`.spectral.yaml` e `contratos/.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/.spectral.yaml) | As regras que o verificador de contrato aplica ao `openapi.yaml`. | A política de contrato que uma equipe acorda e automatiza. |
 
-Cada teste desse arquivo abre com uma explicação do que ele prova e por que aquilo importa. Ler os testes antes de rodá-los costuma ensinar mais sobre o contrato do que ler o próprio `openapi.yaml`.
+### Os códigos de status HTTP usados aqui
+
+Toda resposta HTTP começa por um número de três dígitos que diz, antes de qualquer conteúdo, como a requisição terminou. O primeiro dígito define a família:
+
+| Família | Significado | Quem errou |
+| --- | --- | --- |
+| `2xx` | Deu certo | ninguém |
+| `4xx` | A requisição está errada | quem chamou |
+| `5xx` | O servidor falhou ao processar | quem atende |
+
+Essa divisão importa porque ela atribui responsabilidade. Devolver `500` para um pedido malformado transfere ao provedor a culpa por um erro do consumidor, e devolver `400` para um defeito interno faz o contrário.
+
+Esta API usa quatro códigos, e cada escolha tem um motivo:
+
+| Código | Nome | Por que este contrato o escolheu |
+| --- | --- | --- |
+| `200` | OK | Resposta padrão de sucesso. Aqui, o `GET` devolve `200` porque o recurso existe e está sendo entregue na hora. |
+| `202` | Accepted | "Recebi e ainda vou processar." O `POST` usa `202` em vez de `200` ou `201` porque a decisão de elegibilidade depende da operadora e não sai na mesma chamada. O corpo traz um protocolo para consultar depois. |
+| `404` | Not Found | O protocolo informado não existe. É `4xx` porque quem chamou pediu algo inexistente. |
+| `422` | Unprocessable Content | O corpo é JSON bem formado, mas viola uma regra do contrato: falta `cpf`, ou ele não tem onze dígitos. Difere do `400`, que se usa quando a requisição sequer pôde ser interpretada. |
+
+A diferença entre `202` e `201` costuma confundir. `201 Created` afirma que o recurso já existe em definitivo; `202 Accepted` afirma apenas que o pedido entrou na fila, e por isso não promete resultado nenhum ainda.
+
+### As duas rotas, linha a linha
+
+Este é o `POST` completo, como está em `src/hospital/api/main.py`:
+
+```python
+@app.post(
+    "/elegibilidades",
+    response_model=ElegibilidadeAceita,          # formato da resposta de sucesso
+    status_code=status.HTTP_202_ACCEPTED,        # 202, e não 200: ainda vai processar
+    responses={
+        202: {"headers": {"Location": {...}}},   # declara o cabeçalho no contrato
+        422: {"model": ErroAPI},                 # declara o formato do erro
+    },
+    operation_id="criarElegibilidade",           # nome usado por geradores de cliente
+    summary="Aceita uma consulta de elegibilidade",
+)
+def criar_elegibilidade(
+    _pedido: PedidoElegibilidade, response: Response
+) -> ElegibilidadeAceita:
+    aceita = ElegibilidadeAceita(
+        protocolo=str(uuid4()),                  # identificador único do pedido
+        situacao="recebida",
+        criado_em=datetime.now(timezone.utc),
+    )
+    _elegibilidades[aceita.protocolo] = aceita   # guarda em memória
+    response.headers["Location"] = f"/elegibilidades/{aceita.protocolo}"
+    return aceita
+```
+
+Quatro decisões aparecem aqui. A anotação `_pedido: PedidoElegibilidade` faz o FastAPI validar o corpo recebido **antes** de a função rodar: se o CPF não tiver onze dígitos, esta linha nunca é alcançada. O `status_code` fixa o `202` para toda resposta bem-sucedida. O `Location` é escrito à mão, montando o endereço de consulta a partir do protocolo recém-gerado. E o bloco `responses` existe só para documentação: ele não muda o comportamento, mas faz o cabeçalho e o formato de erro aparecerem no contrato gerado.
+
+E este é o `GET`:
+
+```python
+@app.get(
+    "/elegibilidades/{protocolo}",               # {protocolo} vira parâmetro da função
+    response_model=ElegibilidadeAceita,
+    responses={404: {"model": ErroAPI}},
+    operation_id="consultarElegibilidade",
+)
+def consultar_elegibilidade(protocolo: str):
+    encontrada = _elegibilidades.get(protocolo)
+    if encontrada is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={
+                "codigo": "elegibilidade_nao_encontrada",
+                "mensagem": "Protocolo de elegibilidade não encontrado.",
+                "detalhes": [],
+            },
+        )
+    return encontrada
+```
+
+O trecho `{protocolo}` no caminho é um parâmetro: o valor que vier ali na URL chega à função no argumento de mesmo nome. Quando o protocolo não existe, a função monta um `404` no **mesmo formato** de erro do `422`, com `codigo`, `mensagem` e `detalhes`. Um formato único de erro por API é o que permite ao consumidor escrever um só tratador para todas as falhas.
+
+### O erro `422` é montado num lugar só
+
+Nenhuma das duas rotas trata erro de validação. Isso acontece num interceptador registrado à parte:
+
+```python
+@app.exception_handler(RequestValidationError)
+async def tratar_erro_de_validacao(_request, error) -> JSONResponse:
+    detalhes = [
+        {
+            "campo": ".".join(str(part) for part in item["loc"]),  # ex.: body.cpf
+            "mensagem": item["msg"],
+            "tipo": item["type"],
+        }
+        for item in error.errors()
+    ]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={
+            "codigo": "dados_invalidos",
+            "mensagem": "A requisição não atende ao contrato.",
+            "detalhes": detalhes,
+        },
+    )
+```
+
+Sempre que a validação do Pydantic falha em qualquer rota, o FastAPI desvia para esta função. Ela percorre os erros encontrados e monta a lista `detalhes`, transformando a localização interna do campo no texto `body.cpf` que você verá na resposta. Centralizar isso garante que toda falha de validação da API tenha exatamente o mesmo formato, sem depender de cada rota lembrar de fazê-lo.
 
 A preparação termina quando quatro condições valem ao mesmo tempo. Existe uma pasta `.venv` e o interpretador dela responde com a versão do Python. O comando `python -m pytest tests/test_api_contract.py -q` termina com os testes aprovados. E o servidor, ao subir, informa que está atendendo em `http://127.0.0.1:8000`. Só então vale abrir `/docs` ou o Bruno.
 
