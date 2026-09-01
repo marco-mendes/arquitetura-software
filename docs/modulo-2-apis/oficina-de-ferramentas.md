@@ -37,7 +37,7 @@ Quatro arquivos sustentam a oficina inteira. Vale abrir cada um antes de rodar q
 
 Cada teste desse arquivo abre com uma explicação do que ele prova e por que aquilo importa. Ler os testes antes de rodá-los costuma ensinar mais sobre o contrato do que ler o próprio `openapi.yaml`.
 
-Ao final da preparação, a condição inicial verificável será: existe uma pasta `.venv`; o interpretador dela informa versão de Python; `python -m pytest tests/test_api_contract.py -q` termina com testes aprovados; e, ao iniciar o servidor, o terminal informa `http://127.0.0.1:8000`. Só então abra `http://127.0.0.1:8000/docs` ou o Bruno.
+A preparação termina quando quatro condições valem ao mesmo tempo. Existe uma pasta `.venv` e o interpretador dela responde com a versão do Python. O comando `python -m pytest tests/test_api_contract.py -q` termina com os testes aprovados. E o servidor, ao subir, informa que está atendendo em `http://127.0.0.1:8000`. Só então vale abrir `/docs` ou o Bruno.
 
 ## Ferramenta
 
@@ -159,8 +159,6 @@ Se `remote-add` falhar, execute `flatpak remotes` e confirme se `flathub` já ex
 
 ## Preparação do laboratório
 
-### Essencial em aula
-
 **Execute**
 
 Confirme que está em `laboratorios/plataforma-hospitalar`. Crie uma pasta para evidências e execute todos os testes atuais.
@@ -181,35 +179,89 @@ python -m pytest tests -q
 
 **Resultado esperado**
 
-O pytest encerra com todos os testes aprovados. O número total pode crescer em módulos posteriores; neste encontro, procure especificamente os sete testes de `test_api_contract.py`.
+A última linha traz a contagem. É isso que você deve ver:
+
+```text
+.......                                                                  [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+7 passed, 1 warning in 0.73s
+```
+
+Cada `.` na primeira linha representa um teste aprovado, e são sete. O aviso sobre `httpx` vem de dentro do FastAPI e não indica problema no laboratório. O número total pode crescer em módulos posteriores; neste encontro, procure os sete testes de `test_api_contract.py`.
 
 **Contingência**
 
-Se `hospital.api` não for encontrado, repita a instalação editável com o interpretador da `.venv`. Se uma porta estiver ocupada, os testes ainda funcionam porque `TestClient` não abre servidor.
+Se `hospital.api` não for encontrado, repita a instalação editável com o interpretador da `.venv`.
 
 **Observe**
 
-Abra `contratos/openapi.yaml`, `src/hospital/api/models.py`, `src/hospital/api/main.py` e `tests/test_api_contract.py`. Localize as duas operações, os schemas `PedidoElegibilidade`, `ElegibilidadeAceita` e `ErroAPI`, o status `202` e o cabeçalho `Location`.
+O mesmo contrato aparece em quatro formas nesta pasta, e vale ver como cada uma expressa a mesma regra.
 
-### Exploração em dupla
+Em `src/hospital/api/models.py`, a regra é o tipo. O campo `cpf` é declarado como `Field(pattern=r"^\d{11}$")`, exigindo onze dígitos. Essa linha executa a validação por si mesma, sem precisar de código adicional que a interprete. `codigo_operadora` e `matricula_plano` declaram limites de tamanho da mesma maneira. E `model_config = ConfigDict(extra="forbid")` é o que faz um campo não previsto ser recusado em vez de silenciosamente ignorado.
 
-**Execute**
+Em `src/hospital/api/main.py`, a rota `POST` declara `status_code=status.HTTP_202_ACCEPTED` e, mais abaixo, escreve o cabeçalho `Location` à mão com o endereço do protocolo recém-criado. O `404` da rota `GET` também aparece ali, montado no mesmo formato de erro do `422`.
 
-Uma pessoa lê somente o OpenAPI e prevê as respostas. A outra lê somente os testes e identifica o que é comprovado. Depois comparem listas. Registrem uma promessa documentada que o teste ainda não verifica e uma asserção do teste que depende do contrato.
+Em `contratos/openapi.yaml`, essas mesmas decisões estão escritas para quem consome, sem depender de ler Python. `PedidoElegibilidade` é o que se envia, `ElegibilidadeAceita` é o que volta no `202` e `ErroAPI` é o formato único de erro da API inteira.
+
+Em `tests/test_api_contract.py`, cada uma dessas promessas vira uma verificação executável.
 
 **Compare**
 
-Contrato, teste e implementação têm sobreposição, mas não são equivalentes. A descrição explica intenção; o teste escolhe amostras; o código executa muitos casos possíveis.
+Nenhuma dessas quatro formas torna as outras dispensáveis, e é comum tratá-las como se fossem intercambiáveis. O `openapi.yaml` é a única que quem consome consegue ler sem acesso ao código, mas ele não executa nada: pode prometer um comportamento que a aplicação abandonou meses atrás. Os testes executam, só que apenas nas amostras que alguém teve o trabalho de escrever. Já o código atende qualquer caso que apareça, sem explicar em lugar nenhum por que aquele limite de onze dígitos existe.
 
-### Extensão
+## O que os testes estão verificando
 
-**Execute**
+Esta é a parte do laboratório que costuma ser executada sem ser lida. Vale abrir [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_api_contract.py) antes de rodar o pytest, porque o arquivo é a descrição executável do contrato que você acabou de ler em YAML.
 
-Abra `.spectral.yaml`. As regras exigem tags, descrição e `operationId` em cada operação. Explique como cada item ajuda consumidores ou automação e identifique uma regra semântica que o linter não conseguiria decidir sozinho.
+Três elementos aparecem no topo do arquivo e explicam o resto:
+
+- O `TestClient` chama a aplicação FastAPI diretamente, em memória, sem abrir porta nem subir Uvicorn. Por isso os testes rodam mesmo com a porta 8000 ocupada, e por isso um erro de conexão neles indica que você executou outro cliente por engano.
+- O `setup_function` roda antes de cada teste e limpa os pedidos guardados. Como a aplicação mantém tudo em memória, sem essa limpeza um teste enxergaria os protocolos criados pelo anterior e passaria a depender da ordem de execução.
+- O `PEDIDO_VALIDO` é o corpo sintético reaproveitado pelos testes, com CPF e matrícula que não existem fora deste laboratório.
+
+Os sete testes se dividem em dois grupos, e a diferença entre eles é o assunto do módulo:
+
+| Grupo | Testes | O que provam |
+| --- | --- | --- |
+| Comportamento da API | os cinco primeiros | Que a aplicação responde o que promete: `202` com `Location`, recuperação pelo `GET`, `422` com corpo estruturado para campo ausente e para campo a mais, `404` no mesmo formato de erro, e a distinção entre processo vivo e pronto para receber tráfego. |
+| Acordo entre os dois contratos | os dois últimos | Que o `openapi.yaml` publicado e o contrato que o FastAPI gera a partir do código dizem a mesma coisa, e que os exemplos declarados no YAML são aceitos pela aplicação de verdade. |
+
+O segundo grupo é o que pega o erro mais caro do módulo: alguém altera o código, o contrato gerado acompanha automaticamente, e o documento publicado continua prometendo o formato antigo para quem consome. Cada teste do arquivo abre com um texto explicando o que prova e por quê.
+
+Vale saber também o que esses testes **não** cobrem. Eles comparam operações, campos obrigatórios e a resposta `202`, e não os dois documentos inteiros — uma comparação total quebraria a cada diferença de formatação. Descrições divergentes em outras respostas, exemplos ausentes e mudanças de significado num campo que manteve o mesmo tipo passariam sem alarme.
+
+## As regras que o Spectral aplica
+
+O **Spectral** é um verificador de contratos: ele lê um documento OpenAPI e reclama do que estiver fora das regras. Serve para o contrato, assim como um verificador de estilo de código serve para o código. Quem define essas regras é um arquivo de configuração, e neste laboratório ele está dividido em dois.
+
+O `.spectral.yaml` da raiz tem apenas duas linhas úteis: ele aponta para o arquivo de dentro de `contratos/`. Essa indireção existe para que os comandos possam ser executados da raiz do laboratório enquanto a configuração vive ao lado do contrato que ela governa.
+
+O `contratos/.spectral.yaml` é onde as decisões estão:
+
+```yaml
+extends: spectral:oas
+
+rules:
+  operation-operationId: error
+  operation-description: error
+  operation-tags: error
+```
+
+A primeira linha herda o conjunto de regras que o próprio Spectral distribui para OpenAPI, chamado `spectral:oas`. São dezenas de verificações prontas, e é dele que vem o `oas3-valid-media-example` que aparecerá mais adiante quando quebrarmos um exemplo de propósito.
+
+O bloco `rules` acrescenta três exigências e as marca como `error`, e não como aviso. A diferença importa: `error` faz o comando terminar com código diferente de zero, o que reprova uma esteira de integração contínua. Aviso apenas imprime texto e deixa passar.
+
+Cada uma das três exigências atende a um interessado concreto. O `operationId` é um identificador único da operação, e geradores de cliente o usam para nomear o método que vão criar — sem ele, o método sai com nome automático e ilegível. A descrição atende quem vai ler a documentação e decidir se aquela operação serve. As tags agrupam operações, o que só faz diferença quando a API cresce e a página de documentação precisa de navegação.
+
+O que o Spectral **não** consegue fazer é julgar significado. Ele verifica que existe uma descrição, sem ter como saber se ela descreve a operação corretamente: um `POST /elegibilidades` descrito como "remove um beneficiário" passa na verificação. Decidir se o contrato diz a verdade sobre a intenção continua sendo trabalho humano, e é por isso que revisão de contrato não se automatiza inteira.
 
 ## Execução
 
-### Essencial em aula
+Os blocos a seguir sobem a API e observam o contrato de três ângulos: pela documentação que o próprio FastAPI gera, por um cliente HTTP externo e pelos testes automatizados. Cada ângulo enxerga uma coisa que os outros dois não enxergam.
 
 **Execute**
 
@@ -227,7 +279,18 @@ python -m uvicorn hospital.api.main:app --reload
 
 **Resultado esperado**
 
-Uvicorn informa que está atendendo em `http://127.0.0.1:8000`. Mantenha esse terminal aberto.
+O terminal fica ocupado pelo servidor e mostra:
+
+```text
+INFO:     Will watch for changes in these directories: ['.../plataforma-hospitalar']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [41287] using StatReload
+INFO:     Started server process [41289]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+`Application startup complete` é a linha que confirma que a API está no ar. O terminal não volta ao prompt: ele fica preso servindo requisições, e é assim mesmo. Deixe essa janela aberta e use outra para os comandos seguintes. Cada chamada que você fizer aparecerá aqui como uma linha de log.
 
 **Contingência**
 
@@ -239,9 +302,13 @@ Abra `http://127.0.0.1:8000/docs`. Expanda `POST /elegibilidades`, use **Try it 
 
 A documentação mostra `202`, corpo com protocolo e o cabeçalho `location`. Copie o protocolo para a evidência.
 
+**Observe**
+
+Essa página não foi escrita por ninguém. O FastAPI a monta em tempo de execução a partir dos modelos Pydantic e das assinaturas das rotas, e é por isso que ela nunca fica desatualizada em relação ao código. É o **contrato gerado**, e ele descreve o que a aplicação faz hoje. Note que ele coexiste com o `openapi.yaml` escrito à mão, que é a promessa publicada — os dois podem divergir, e os dois últimos testes existem exatamente para detectar isso.
+
 **Contingência**
 
-Se `/docs` não abrir, confira o log do terminal e acesse `http://127.0.0.1:8000/openapi.json`. Se o JSON abrir, recarregue `/docs`; se não abrir, a aplicação não está atendendo.
+Se `/docs` não abrir, acesse `http://127.0.0.1:8000/openapi.json`. Se o JSON abrir, recarregue `/docs`; se não abrir, a aplicação não está atendendo.
 
 Abra o Bruno e escolha a opção de importar uma coleção a partir de OpenAPI. Selecione `contratos/openapi.yaml`, escolha uma pasta dentro de `evidencias/bruno` e confirme a importação. Defina a URL base como `http://127.0.0.1:8000` se o importador não a definir.
 
@@ -249,9 +316,13 @@ Abra o Bruno e escolha a opção de importar uma coleção a partir de OpenAPI. 
 
 Bruno cria requisições para `POST /elegibilidades` e `GET /elegibilidades/{protocolo}`.
 
+**Observe**
+
+O que acabou de acontecer é a razão de o contrato existir em formato de máquina. O Bruno nunca viu esta API nem teve acesso ao código. Ele leu o `openapi.yaml` e montou sozinho as duas requisições, com os campos certos. Um consumidor real faz o mesmo para gerar clientes em outra linguagem. É isso que se perde quando a documentação é apenas um texto em prosa.
+
 **Contingência**
 
-Se a interface não localizar o importador, consulte a opção **Import Collection** e escolha **OpenAPI**. Se o arquivo não for aceito, valide-o com Spectral no passo seguinte antes de alterar a coleção.
+Se a interface não localizar o importador, consulte a opção **Import Collection** e escolha **OpenAPI**.
 
 No Bruno, envie o `POST` com:
 
@@ -265,7 +336,18 @@ No Bruno, envie o `POST` com:
 
 **Resultado esperado**
 
-A resposta é `202 Accepted`, contém `situacao` igual a `recebida` e apresenta `Location`. Copie o protocolo para o parâmetro do `GET` e envie a consulta; o resultado é `200 OK` com o mesmo protocolo.
+A resposta completa, com cabeçalhos e corpo:
+
+```text
+HTTP/1.1 202 Accepted
+server: uvicorn
+content-type: application/json
+location: /elegibilidades/3d1bbeb6-92a7-4aab-a7ec-62df7296a580
+
+{"protocolo":"3d1bbeb6-92a7-4aab-a7ec-62df7296a580","situacao":"recebida","criado_em":"2026-09-01T00:26:22.639666Z"}
+```
+
+O identificador será diferente no seu computador, porque é gerado a cada pedido. Repare que o valor depois de `location:` é o mesmo `protocolo` do corpo, montado como caminho. Copie o protocolo para o parâmetro do `GET` e envie a consulta: o resultado é `200 OK` com exatamente o mesmo corpo.
 
 **Observe**
 
@@ -283,7 +365,23 @@ Remova `cpf` do corpo e envie outro `POST`.
 
 **Resultado esperado**
 
-A resposta é `422 Unprocessable Entity`, com `codigo` igual a `dados_invalidos` e um detalhe cujo `campo` é `body.cpf`.
+A resposta é `422 Unprocessable Entity`, e o corpo detalha o motivo:
+
+```json
+{
+  "codigo": "dados_invalidos",
+  "mensagem": "A requisição não atende ao contrato.",
+  "detalhes": [
+    {
+      "campo": "body.cpf",
+      "mensagem": "Field required",
+      "tipo": "missing"
+    }
+  ]
+}
+```
+
+O campo `detalhes` aponta exatamente onde está o problema: `body.cpf`, ausente. Um cliente consegue tratar isso programaticamente, destacando o campo no formulário do usuário.
 
 **Observe**
 
@@ -314,7 +412,13 @@ npx @stoplight/spectral-cli@6.16.1 lint contratos/openapi.yaml 2>&1 | tee eviden
 
 **Resultado esperado**
 
-Spectral termina com `No results with a severity of 'error' found!` e código zero. Na primeira execução, `npx` pode obter exatamente a versão `6.16.1`.
+Uma única linha, e é a que você quer ver:
+
+```text
+No results with a severity of 'error' found!
+```
+
+O comando também termina com código de saída zero, que é o que uma esteira de integração contínua verifica. Na primeira execução o `npx` baixa a versão `6.16.1` e demora mais.
 
 **Contingência**
 
@@ -351,7 +455,9 @@ Compare o alcance de cada ferramenta desta oficina. O Spectral olha o documento 
 
 Leia o primeiro teste que falhou. Erro de conexão indica que você executou outro cliente, pois `TestClient` não depende de Uvicorn. Erro de exemplo indica possível divergência entre YAML e aplicação.
 
-### Exploração em dupla
+## Uma falha deliberada no contrato
+
+Até aqui tudo passou. Um contrato só se mostra útil quando alguém quebra e o mecanismo acusa, então este bloco introduz um erro de propósito e observa quem o detecta.
 
 **Execute**
 
@@ -399,21 +505,30 @@ printf 'Código esperado: %s\n' "$spectral_exit"
 
 **Resultado esperado**
 
-Spectral mostra `oas3-valid-media-example`, a mensagem `"cpf" property must match pattern "^\d{11}$"` e código `1`. Essa falha é a evidência desejada.
+Desta vez o Spectral acusa, e a saída aponta o lugar exato:
+
+```text
+/caminho/para/evidencias/openapi-experimento.yaml
+ 35:24  error  oas3-valid-media-example  "cpf" property must match pattern "^\d{11}$"  paths./elegibilidades.post.requestBody.content.application/json.examples.pedidoValido.value.cpf
+
+✖ 1 problem (1 error, 0 warnings, 0 infos, 0 hints)
+```
+
+Vale ler essa saída por partes. O `35:24` é linha e coluna do erro. O `oas3-valid-media-example` é o nome da regra violada, herdada do conjunto `spectral:oas`. A mensagem diz qual restrição foi quebrada, e o caminho ao final localiza o campo dentro da estrutura do documento. O comando termina com código `1`, que é o que reprovaria uma esteira de integração contínua. **Essa falha é a evidência que você deve guardar.**
 
 **Contingência**
 
 Se não houver falha, confirme o caminho `paths./elegibilidades.post.requestBody.content.application/json.examples.pedidoValido.value.cpf`, preserve aspas em `'123'` e verifique se `.spectral.yaml` está na raiz do laboratório. Alterar `components.schemas.PedidoElegibilidade.examples` não exercita a regra de exemplo de mídia. No servidor, `cpf` igual a `123` também deve produzir `422`.
 
+**Observe**
+
+O erro foi detectado sem que a API fosse chamada. O Spectral leu apenas o documento e percebeu que o exemplo publicado viola o padrão declarado pelo próprio contrato. Um exemplo desatualizado é pior que exemplo nenhum, porque quem consome copia e não funciona.
+
 **Compare**
 
-Explique por que o contrato alterado falha antes de chamar a API e por que o servidor continua rejeitando o mesmo valor. Depois restaure a cópia ou mantenha-a somente como evidência da falha deliberada; não substitua `contratos/openapi.yaml`.
+Compare os dois momentos em que esse `cpf` inválido seria barrado. O Spectral barra na leitura do documento, antes de qualquer execução. O servidor barra na chamada, devolvendo `422`. São defesas em camadas diferentes, e a primeira é mais barata porque acontece antes de o código rodar.
 
-### Extensão
-
-**Execute**
-
-Leia `app.openapi()` no teste e acrescente, em uma cópia de estudo, uma comparação entre os status documentados e gerados. Não altere a API pública. Discuta que divergências são incompatibilidades e quais são apenas diferenças de descrição.
+Mantenha a cópia como evidência da falha deliberada e não substitua `contratos/openapi.yaml`.
 
 ## Extensão: gateway de API com Ocelot em .NET
 
