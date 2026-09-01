@@ -506,6 +506,13 @@ def _access_classification_errors(
         ):
             continue
         level = len(heading.group(0)) - len(heading.group(0).lstrip("#"))
+        # O título da página (nível 1) não delimita uma seção sobre acesso a
+        # ferramentas: numa página chamada "Oficina de ferramentas — X", ele
+        # abarcaria o documento inteiro e reprovaria qualquer uso das palavras
+        # cobrança, crédito ou cartão no domínio do caso. A regra existe para
+        # barrar ferramenta que exija pagamento, e isso é dito em seções.
+        if level == 1:
+            continue
         end = len(folded)
         for following in headings[index + 1 :]:
             following_level = len(following.group(0)) - len(

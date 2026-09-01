@@ -233,6 +233,44 @@ Definir um contrato.
                 )
             )
 
+    def test_page_titled_workshop_may_use_domain_words_for_billing(self):
+        """O título da página não transforma o documento inteiro em seção de acesso.
+
+        A regra existe para barrar ferramenta que exija pagamento. Numa página
+        chamada "Oficina de ferramentas — …", o título de nível 1 abarcaria o
+        arquivo todo e reprovaria cobrança, crédito ou cartão usados no domínio
+        do caso, que é vocabulário legítimo de um caso hospitalar.
+        """
+        with TemporaryDirectory() as temporary:
+            docs = Path(temporary)
+            page = docs / "oficina-de-ferramentas.md"
+
+            page.write_text(
+                "# Oficina de ferramentas: mensageria e consumidor idempotente\n\n"
+                "O mesmo evento entregue duas vezes gera uma única cobrança.\n",
+                encoding="utf-8",
+            )
+            self.assertFalse(
+                any(
+                    "classificação de acesso" in error
+                    for error in validate_document(page, docs)
+                )
+            )
+
+            # A intenção original da regra segue valendo dentro de uma seção.
+            page.write_text(
+                "# Oficina de ferramentas: mensageria\n\n"
+                "## Instalação\n\n"
+                "Requer cartão.\n",
+                encoding="utf-8",
+            )
+            self.assertTrue(
+                any(
+                    "classificação de acesso" in error
+                    for error in validate_document(page, docs)
+                )
+            )
+
     def test_validator_checks_local_links_anchors_and_figure_accessibility(self):
         with TemporaryDirectory() as temporary:
             docs = Path(temporary)
