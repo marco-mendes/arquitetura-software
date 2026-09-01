@@ -1,6 +1,8 @@
 # Oficina de ferramentas: contrato, execução e comparação
 
-Esta oficina usa dados sintéticos e dura aproximadamente noventa minutos na trilha essencial. Você executará a API FastAPI, observará `/docs`, importará OpenAPI no Bruno, validará o contrato com Spectral e rodará testes com `TestClient`. Nenhuma integração externa é chamada. Ao final há uma extensão opcional em .NET que coloca um gateway de API com Ocelot na frente de dois serviços.
+Esta oficina leva cerca de noventa minutos e usa apenas dados inventados, sem chamar nenhum sistema externo. O objetivo é ver um contrato de API sob quatro ângulos diferentes: o documento que o descreve, a aplicação que o implementa, um cliente que o consome e os testes que verificam se tudo isso concorda.
+
+Você vai colocar uma API no ar na sua própria máquina, ler a documentação que ela gera sozinha, consumi-la por um programa cliente, submeter o contrato a um verificador automático e rodar a suíte de testes. Cada ferramenta citada adiante é apresentada antes de ser usada, na seção **Ferramenta**. Ao final há uma extensão opcional em .NET que coloca um *gateway* de API na frente de dois serviços.
 
 ## O que existe antes de você abrir o terminal
 
@@ -41,7 +43,7 @@ Os links abaixo abrem cada arquivo no GitHub, para quem está lendo pelo site se
 | Arquivo | O que ele faz | Onde isso aparece na teoria |
 | --- | --- | --- |
 | [`contratos/openapi.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/openapi.yaml) | O contrato escrito à mão: as duas operações, os formatos de dados e os exemplos que a API promete a quem consome. | É o **contrato** de [interface, contrato e implementação](conceitos.md), publicado num documento que existe independente do código. |
-| [`src/hospital/api/models.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/models.py) | Os modelos Pydantic. O tipo declarado em cada campo é a própria regra de validação. | Onde o contrato deixa de ser documento e passa a ser código executável. |
+| [`src/hospital/api/models.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/models.py) | Os modelos de dados escritos com **Pydantic**, a biblioteca que o FastAPI usa para validar. O tipo declarado em cada campo é a própria regra de validação. | Onde o contrato deixa de ser documento e passa a ser código executável. |
 | [`src/hospital/api/main.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/main.py) | A aplicação FastAPI: as duas rotas, o `202` com `Location` e os erros estruturados. | A **implementação**, que pode mudar por dentro sem quebrar quem consome, desde que o contrato fique de pé. |
 | [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_api_contract.py) | Sete testes: cinco exercitam a API pela porta da frente, dois comparam o contrato publicado com o que o FastAPI gera. | A verificação de que a promessa publicada e o comportamento real não divergiram. |
 | [`.spectral.yaml` e `contratos/.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/.spectral.yaml) | As regras que o verificador de contrato aplica ao `openapi.yaml`. | A política de contrato que uma equipe acorda e automatiza. |
@@ -695,7 +697,7 @@ Até aqui tudo passou. Um contrato só se mostra útil quando alguém quebra e o
 
 **Execute**
 
-Copie o contrato para não modificar a baseline. No PowerShell:
+Copie o contrato antes de mexer nele, para preservar intacta a versão de referência. No PowerShell:
 
 ```powershell
 Copy-Item contratos\openapi.yaml evidencias\openapi-experimento.yaml
@@ -855,7 +857,11 @@ app.Run();
 }
 ```
 
-Cada rota declara o caminho público (`UpstreamPathTemplate`) e o destino interno (`DownstreamPathTemplate`, esquema, host e porta). Para repassar subcaminhos inteiros a um serviço, o Ocelot aceita o coringa `{everything}` nos dois templates — por exemplo, `/api/clientes/{everything}` para `/clientes/{everything}`.
+Duas palavras do Ocelot precisam de tradução antes de o arquivo fazer sentido. **Upstream** é o lado de quem chega, ou seja, o caminho público que o consumidor enxerga. **Downstream** é o lado de quem atende, o serviço interno para onde a requisição será encaminhada. A nomenclatura vem da metáfora do rio: a requisição entra rio acima e desce até o serviço.
+
+Cada rota, então, declara um par. O `UpstreamPathTemplate` é o endereço público (`/api/clientes`), e o `DownstreamPathTemplate` mais o host e a porta formam o destino interno (`localhost:5001/clientes`). O consumidor nunca conhece a porta 5001: para ele existe apenas a porta 4000 do gateway. É isso que permite mover o serviço para outra máquina alterando só este arquivo.
+
+O bloco `GlobalConfiguration` define o endereço do próprio gateway. Para repassar subcaminhos inteiros, o Ocelot aceita o coringa `{everything}` nos dois modelos, como em `/api/clientes/{everything}` para `/clientes/{everything}`.
 
 Inicie cada processo no próprio terminal, sempre a partir da pasta de trabalho:
 
