@@ -57,8 +57,6 @@ Além disso, das quatro famílias de sinais que o módulo discute, esta oficina 
 
 ## Pré-requisitos
 
-### Essencial em aula
-
 **Objetivo**
 
 Preparar um ambiente isolado e confirmar ferramentas antes de iniciar contêineres.
@@ -210,8 +208,6 @@ Repare no que nenhuma dessas linhas faz: decidir elegibilidade. O gateway sabe r
 
 ## Preparação do laboratório
 
-### Essencial em aula
-
 **Objetivo**
 
 Validar a configuração declarativa antes de criar recursos e fixar endereços para este terminal.
@@ -259,8 +255,6 @@ Defina `BENEFICIARIO_ID` com o identificador sintético provisionado pela base l
 - Qual rede impede Kong de chegar ao banco de Elegibilidade?
 - Por que a variável OTLP é recebida pelo serviço e não pelo banco?
 
-### Exploração em dupla
-
 **Objetivo**
 
 Ler a política antes de executá-la e atribuir ownership a cada decisão.
@@ -271,7 +265,7 @@ Abra `infra/kong/kong.yml` e `infra/observabilidade/otel-collector.yml`.
 
 **Execute**
 
-Uma pessoa descreve o que ocorre na borda; a outra descreve os spans. Troquem descrições e localizem cada afirmação no arquivo.
+Percorra os dois arquivos separando o que acontece na borda do que acontece na telemetria, e localize no texto a linha exata que sustenta cada afirmação.
 
 **Observe**
 
@@ -285,8 +279,6 @@ Classifique cada linha como política de borda, de serviço, transporte ou evid�
 
 - Em que arquivo ficaria uma exceção para plano hospitalar?
 - Que mudança de limite exigiria avisar consumidores?
-
-### Extensão
 
 **Objetivo**
 
@@ -314,8 +306,6 @@ Compare decisão registrada com alteração feita apenas no terminal.
 - Qual sinal indica falsa recusa de tráfego legítimo?
 
 ## Execução
-
-### Essencial em aula
 
 **Objetivo**
 
@@ -392,8 +382,6 @@ Compare `200` direto com `200` governado. O segundo acrescenta política de bord
 - Qual caminho um consumidor externo deve usar?
 - Por que o cabeçalho não prova autorização de domínio?
 
-### Exploração em dupla
-
 **Objetivo**
 
 Exceder deliberadamente o limite declarado e interpretar a recusa.
@@ -464,8 +452,6 @@ Compare `429` com `503`: o primeiro pede redução de ritmo; o segundo comunica 
 
 - Que cliente deveria usar espera progressiva ao receber `429`?
 - Qual política adicional protegeria uma rota de escrita idempotente?
-
-### Extensão
 
 **Objetivo**
 
@@ -565,10 +551,6 @@ Guarde em `evidencias/modulo-4`:
 - `testes-integracao.txt` com `python -m pytest tests/test_gateway_policy.py -q`;
 - `limpeza.txt` com remoção ou contingência explícita.
 
-### Exploração em dupla
-
 Relacione cada arquivo a rota, correlação, limite, propagação ou limpeza. Identifiquem uma afirmação ainda não demonstrada e a política necessária.
-
-### Extensão
 
 Proponha um SLO para Elegibilidade: indicador, objetivo, janela, fonte, dono e comportamento quando orçamento de erro for consumido. Não adicione dado clínico a logs ou traces.

@@ -58,8 +58,6 @@ Se `py` (Windows) ou `python3` (macOS/Linux) não for reconhecido, instale Pytho
 
 ## Execução
 
-### Essencial em aula
-
 ## Experimento 1 — Camadas: agenda clínica (30 minutos)
 
 **Objetivo:**
@@ -111,15 +109,11 @@ Compare a trajetória de uma chamada bem-sucedida com a de um conflito, e verá 
 
 Repare também no que o repositório entrega: uma lista em memória. Trocá-la por um banco real exigiria alterar `repositorios.py` e mais nada — nem o domínio, nem o serviço, nem a apresentação. É a promessa do estilo sendo verificável em três minutos de leitura.
 
-### Exploração em dupla
-
 Questões exploratórias:
 
 1. Onde a entrada é convertida em uma chamada ao serviço e onde a resposta HTTP é formatada?
 2. Qual regra impede o conflito de agenda? Que objeto do domínio ajuda a expressá-la?
 3. Que dependência precisaria mudar para substituir o armazenamento em memória, e qual camada deveria permanecer estável?
-
-### Extensão reversível
 
 Antes de alterar qualquer condição, copie o exemplo para sua entrega. No PowerShell, a partir de `<raiz-do-clone>`:
 
@@ -216,8 +210,6 @@ Questões exploratórias:
 2. Em que etapas itens deixam de seguir pelo pipe? Em que etapa eles são transformados sem descarte?
 3. Por que o ranking pertence ao fim do fluxo? Que efeito teria reorganizar filtros?
 
-### Extensão reversível
-
 Copie antes de experimentar. No PowerShell, a partir de `<raiz-do-clone>`:
 
 ```powershell
@@ -311,8 +303,6 @@ Questões exploratórias:
 1. Que contrato o núcleo conhece e quais detalhes ele deixa para os plugins?
 2. Como a ordem por categoria afeta o total e a notificação?
 3. Quais regras contribuem para uma fatura de SP, uma de RJ e uma de valor alto? Onde a saída mostra isso?
-
-### Extensão reversível
 
 Crie uma cópia antes de investigar. No PowerShell, a partir de `<raiz-do-clone>`:
 

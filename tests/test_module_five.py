@@ -166,8 +166,11 @@ class ModuleFiveTest(unittest.TestCase):
             "RABBITMQ_MANAGEMENT_PORT",
         ):
             self.assertIn(fragment, workshop)
+        # Kafka entra como comparação conceitual, sem ser executado na oficina.
+        # O contrato é o conteúdo, e não um cabeçalho de trilha: as oficinas
+        # deixaram de rotular atividade por formato de turma.
         self.assertIn("Kafka", workshop)
-        self.assertIn("Extensão", workshop)
+        self.assertIn("extensão", workshop.casefold())
 
     def test_workshop_names_the_local_demonstration_before_runtime_commands(self):
         workshop = read_module_page("modulo-5-eventos", "oficina-de-ferramentas.md")

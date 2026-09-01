@@ -33,8 +33,6 @@ AMQP usa `RABBITMQ_PORT` e management usa `RABBITMQ_MANAGEMENT_PORT`; os padrõe
 
 ## Pré-requisitos
 
-### Essencial em aula
-
 **Objetivo**
 
 Confirmar que Docker, Compose e Python estão disponíveis e que a execução ocorrerá com dados sintéticos.
@@ -129,8 +127,6 @@ Se o socket do Docker recusar conexão, siga a orientação pós-instalação da
 
 ## Preparação do laboratório
 
-### Essencial em aula
-
 **Objetivo**
 
 Escolher portas, validar o Compose e iniciar um broker isolado.
@@ -176,8 +172,6 @@ Compare a porta AMQP 15672 com a porta web 15673. A primeira é usada por `aio-p
 - Por que alterar variável de porta é mais seguro que editar um arquivo compartilhado?
 - O que o healthcheck confirma e o que ele não confirma?
 
-### Exploração em dupla
-
 **Objetivo**
 
 Ler a topologia antes de enviar mensagens.
@@ -188,7 +182,7 @@ Abra `src/hospital/eventos/publicador.py`, `src/hospital/eventos/consumidor.py` 
 
 **Execute**
 
-Uma pessoa identifica publicação, exchange e routing key; a outra identifica fila, DLX, DLQ e momento da confirmação. Troquem as explicações.
+Localize no publicador a publicação, a exchange e a chave de roteamento. Depois, no consumidor, localize a fila, a DLX, a DLQ e o instante exato em que a confirmação é enviada ao broker.
 
 **Observe**
 
@@ -202,8 +196,6 @@ Compare o que a infraestrutura roteia com o que `ProcessedEventStore` decide. O 
 
 - Qual mudança exigiria uma nova versão do evento?
 - Por que o store pertence ao consumidor, não à exchange?
-
-### Extensão
 
 **Objetivo**
 
@@ -231,8 +223,6 @@ Compare uma fila de Faturamento, que distribui trabalho pendente, com um log Kaf
 - Qual efeito externo ainda exigiria chave de idempotência?
 
 ## Execução
-
-### Essencial em aula
 
 **Objetivo**
 
@@ -295,8 +285,6 @@ Compare “duas mensagens recebidas” com “duas cobranças”. O primeiro é 
 - Em qual etapa uma queda poderia gerar redelivery?
 - Por que confirmar antes do SQLite seria inseguro?
 
-### Exploração em dupla
-
 **Objetivo**
 
 Inspecionar o estado persistido sem revelar dados clínicos.
@@ -347,8 +335,6 @@ Compare a tabela de tentativas com a de efeitos: a primeira mede entrega vista; 
 
 - Como a tabela mudaria se o `event_id` fosse novo?
 - Que restrição única seria necessária em um banco compartilhado?
-
-### Extensão
 
 **Objetivo**
 
@@ -450,8 +436,6 @@ O ambiente termina com RabbitMQ saudável, `hospital.events`, `billing.resultado
 O experimento demonstra entrega pelo menos uma vez, não exactly-once. SQLite evita duplicação entre execuções; em sistemas distribuídos, trate-a com banco e efeitos externos. O Compose não é produção: não inclui cluster, TLS, credenciais, backup ou retenção. Use evidência para discutir semântica.
 
 ## Limpeza e contingência
-
-### Essencial em aula
 
 **Objetivo**
 

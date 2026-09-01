@@ -132,8 +132,6 @@ Pods são efêmeros: nascem, morrem e trocam de endereço a cada substituição.
 
 ## Pré-requisitos
 
-### Essencial em aula
-
 **Objetivo**
 
 Confirmar um ambiente local antes de criar recursos.
@@ -199,8 +197,6 @@ Se o socket recusar acesso, aplique a orientação oficial da distribuição. N�
 
 ## Preparação do laboratório
 
-### Essencial em aula
-
 **Objetivo**
 
 Validar manifests, criar o cluster e disponibilizar a imagem dentro dele.
@@ -242,8 +238,6 @@ O dry-run confirma sintaxe aceita pelo cliente; ele não executa Pods. A sequên
 - Por que `IfNotPresent` faz sentido para a imagem carregada no kind?
 - Que evidência adicional uma CI produziria para uma imagem de produção?
 
-### Exploração em dupla
-
 **Objetivo**
 
 Ler o estado desejado antes de aplicá-lo.
@@ -254,7 +248,7 @@ Abra `infra/k8s/deployment.yaml`, `service.yaml`, `hpa.yaml` e `infra/kind/clust
 
 **Execute**
 
-Uma pessoa localiza labels e selector; a outra localiza porta, resources, readiness, liveness, `RollingUpdate` e faixa do HPA. Troquem as explicações e formulem uma hipótese para cada valor.
+Localize nos manifestos os rótulos e o seletor que ligam o Service aos Pods. Depois localize a porta, os recursos, as duas verificações de saúde, a estratégia `RollingUpdate` e a faixa de réplicas, formulando uma hipótese para cada valor escolhido.
 
 **Observe**
 
@@ -270,8 +264,6 @@ Compare um Pod existente com um Pod pronto: somente o pronto deve receber tráfe
 - Por que duas réplicas no kind não equivalem a duas zonas?
 
 ## Execução
-
-### Essencial em aula
 
 **Objetivo**
 
@@ -313,8 +305,6 @@ Compare `kubectl get pods` com `curl`: o primeiro descreve estado do cluster; o 
 
 - Que sinal complementar mostraria que o endpoint ainda atende com uma réplica fora?
 - Como requests de CPU participam do cálculo de utilização do HPA?
-
-### Exploração em dupla
 
 **Objetivo**
 
@@ -358,8 +348,6 @@ Compare falha de imagem (nem inicia) com falha de readiness (inicia, mas não en
 
 - Que parte de uma migração de banco `rollout undo` não desfaria?
 - Qual política de CI evitaria chegar a uma tag inexistente?
-
-### Extensão
 
 **Objetivo**
 

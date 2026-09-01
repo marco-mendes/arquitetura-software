@@ -768,7 +768,7 @@ Mantenha a cópia como evidência da falha deliberada e não substitua `contrato
 
 ## Extensão: gateway de API com Ocelot em .NET
 
-Esta extensão é opcional e independente da trilha essencial: nada do que segue altera a API de elegibilidades. Ela demonstra o padrão de **gateway de API** com o [Ocelot](https://ocelot.readthedocs.io/), um gateway leve para .NET configurado por um arquivo JSON declarativo. Um processo na porta 4000 vira a única entrada para duas APIs internas nas portas 5001 e 5002, reescrevendo os caminhos públicos `/api/...` para os serviços de destino.
+Esta parte é independente do que veio antes: nada do que segue altera a API de elegibilidades. Ela demonstra o padrão de **gateway de API** com o [Ocelot](https://ocelot.readthedocs.io/), um gateway leve para .NET configurado por um arquivo JSON declarativo. Um processo na porta 4000 vira a única entrada para duas APIs internas nas portas 5001 e 5002, reescrevendo os caminhos públicos `/api/...` para os serviços de destino.
 
 **Objetivo**
 
@@ -899,7 +899,7 @@ O gateway não tem lógica de negócio: as rotas são dados, não código. Versi
 
 **Compare**
 
-A restrição REST de sistema em camadas aparece aqui na prática: o consumidor não sabe se fala com o serviço final ou com um intermediário. Na trilha essencial, o contrato OpenAPI protege a fronteira de um serviço; o gateway organiza a fronteira do conjunto. Ao terminar, encerre os três processos com `Ctrl+C` em cada terminal.
+A restrição REST de sistema em camadas aparece aqui na prática: o consumidor não sabe se fala com o serviço final ou com um intermediário. O contrato OpenAPI, visto antes, protege a fronteira de um serviço; o gateway organiza a fronteira do conjunto. Ao terminar, encerre os três processos com `Ctrl+C` em cada terminal.
 
 ## Resultado esperado
 
