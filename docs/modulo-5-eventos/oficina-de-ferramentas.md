@@ -1,6 +1,19 @@
 # Oficina de ferramentas: RabbitMQ e consumidor idempotente
 
-Oficina local: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponibilizado.v1`, efeito SQLite e dead-letter queue. Kafka é extensão comparativa. Use dados sintéticos.
+Esta oficina responde na prática à pergunta que sustenta o módulo: **se a mesma mensagem pode chegar duas vezes, como garantir que o efeito no negócio aconteça uma só?**
+
+Você vai subir um serviço de mensageria na sua máquina, publicar duas vezes o mesmo evento de resultado de exame, e verificar no banco de dados que houve duas entregas e um único lançamento de faturamento. Depois vai publicar uma mensagem deliberadamente inválida e observar para onde ela vai, em vez de sumir em silêncio.
+
+O laboratório usa apenas dados inventados e nada sai da sua máquina. Kafka não é executado aqui: ele aparece ao final como comparação, quando já houver base para discutir o que mudaria.
+
+### O que você vai observar, e por que importa
+
+| O que a oficina mostra | O conceito do livro-texto |
+| --- | --- |
+| O mesmo evento entregue duas vezes gera um único lançamento | [Entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia) |
+| Uma mensagem fora do contrato é recusada antes de virar efeito | [Esquema, compatibilidade e evolução](padroes-e-decisoes.md#esquema-compatibilidade-e-evolucao) |
+| A mensagem recusada fica visível para inspeção | [Fila de erros como evidência](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito) |
+| Quem publica não conhece quem consome | [Broker e mediator](conceitos.md#broker-e-mediator) |
 
 ## Mapa da demonstração local
 
