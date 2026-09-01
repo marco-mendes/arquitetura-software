@@ -87,15 +87,29 @@ Leia os arquivos na ordem que fizer mais sentido para você; os links permitem c
 
 **Execute**
 
-Execute o comando indicado na tabela.
+Execute o comando da tabela acima, a partir do diretório do exemplo.
 
 **Observe**
 
-Registre as linhas de agendamento e conflito.
+O programa imprime três blocos. No primeiro, três agendamentos válidos retornam `HTTP 201 CREATED`:
+
+```text
+HTTP 201 CREATED → {'id': 1, 'medico': 'Dra. Ana Silva', 'paciente': 'Maria Santos', 'horario': '09:00–09:30', 'status': 'agendada'}
+```
+
+No segundo, uma tentativa de marcar consulta em horário já ocupado retorna:
+
+```text
+HTTP 409 CONFLICT → {'erro': 'Dr(a). Dra. Ana Silva já tem consulta das 09:00 às 09:30.'}
+```
+
+O detalhe que interessa não é o `409` em si, e sim **onde ele nasce**. A regra que detecta a sobreposição está em `dominio.py`, junto do conceito de horário. Quem a traduz para um código HTTP é `apresentacao.py`, na borda. O domínio não sabe o que é HTTP, e a apresentação não sabe o que faz dois horários conflitarem.
 
 **Compare**
 
-Relacione cada resultado às responsabilidades dos arquivos.
+Compare a trajetória de uma chamada bem-sucedida com a de um conflito, e verá que ambas atravessam as mesmas quatro camadas na mesma ordem: apresentação recebe, serviço coordena, domínio decide, repositório guarda. Essa disciplina de sentido único é o que o módulo chama de [camadas](padroes-e-decisoes.md#camadas). Se a apresentação pudesse consultar o repositório diretamente para "otimizar", a camada de serviço deixaria de ser o lugar único onde o caso de uso está descrito.
+
+Repare também no que o repositório entrega: uma lista em memória. Trocá-la por um banco real exigiria alterar `repositorios.py` e mais nada — nem o domínio, nem o serviço, nem a apresentação. É a promessa do estilo sendo verificável em três minutos de leitura.
 
 ### Exploração em dupla
 
@@ -167,6 +181,35 @@ Abra o orquestrador e os quatro tipos de filtro:
 | --- | --- | --- | --- |
 | `main.py`, `framework.py` e os filtros producer, tester, transformer e consumer | Windows: `Set-Location .; Set-Location ".\codigos\cap01-estilos-fundamentais\1.3-pipes-and-filters"; py main.py`<br>macOS/Linux: `cd . && cd "./codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters" && python3 main.py` | Mensagens de descarte ou reprovação surgem antes do relatório; campos são normalizados e os aprovados aparecem ranqueados por score. | Confirme o diretório e revise a sequência de `.adicionar(...)` em `main.py`. Um resultado diferente pode decorrer de ordem, critérios ou dados de entrada: localize qual filtro produz a linha inesperada. |
 
+**Observe**
+
+Logo no início, o programa imprime a composição do fluxo, e essa linha é o mapa do estilo inteiro:
+
+```text
+Pipeline: Pipeline(LeitorDeCurriculos → ValidadorDeCurriculo → NormalizadorDeCampos →
+          FiltroPorExperienciaMinima → FiltroPorPretensaoSalarial → CalculadorDeScore → RelatorioDeTriagem)
+```
+
+Depois vêm as saídas dos seis currículos processados:
+
+```text
+  [DESCARTADO] Currículo id=3: nome ausente
+  [REPROVADO] Bruno Rocha: 1 ano(s) < mínimo 3
+  [REPROVADO] Clara Mendes: pretensão R$22,000 > máximo R$18,000
+
+════════════════════════════════════════════════════════════
+  TRIAGEM CONCLUÍDA — 3 candidato(s) aprovado(s)
+════════════════════════════════════════════════════════════
+```
+
+Repare na diferença entre `[DESCARTADO]` e `[REPROVADO]`. O primeiro sai por dado ausente, no validador; o segundo sai por critério de negócio, nos filtros seguintes. Cada item sai do fluxo no estágio que sabe julgá-lo, e nenhum estágio precisa conhecer os critérios dos outros.
+
+**Compare**
+
+Compare esta arquitetura com a de camadas do experimento anterior. Lá, uma chamada atravessava as quatro camadas e voltava; o desenho era vertical e de ida e volta. Aqui o dado atravessa uma sequência e **não volta**: cada filtro recebe, decide e passa adiante. É a diferença entre organizar por responsabilidade técnica e organizar por etapa de transformação, tratada em [pipes and filters](padroes-e-decisoes.md#pipes-and-filters).
+
+A propriedade que dá nome ao estilo aparece na linha da composição: os filtros são independentes o bastante para serem reordenados, removidos ou acrescentados sem tocar nos vizinhos, porque todos falam o mesmo formato de dado. Trocar a ordem de dois filtros muda o resultado sem quebrar o programa — e é justamente esse experimento que a extensão adiante propõe.
+
 Questões exploratórias:
 
 1. Qual parte recebe dados brutos e qual parte apresenta o resultado final?
@@ -235,6 +278,33 @@ Observe o núcleo e extensões concretas:
 | O que abrir | O que executar | O que observar | Se algo sair diferente |
 | --- | --- | --- | --- |
 | `main.py`, `nucleo.py` e os plugins listados | Windows: `Set-Location .; Set-Location ".\codigos\cap01-estilos-fundamentais\1.4-microkernel"; py main.py`<br>macOS/Linux: `cd . && cd "./codigos/cap01-estilos-fundamentais/1.4-microkernel" && python3 main.py` | O registro mostra plugins por categoria; o núcleo executa impostos, frete e notificação nessa ordem; cada regra só contribui quando seu contexto se aplica. | Verifique se está usando o `main.py` do microkernel. Compare `ORDEM_CATEGORIAS` em `nucleo.py`, os plugins registrados e os dados da fatura que ativam cada regra. |
+
+**Observe**
+
+A primeira coisa que o programa faz é registrar os plugins, e a saída torna esse momento visível:
+
+```text
+Registrando plugins...
+  [Registry] Plugin 'ICMS-SP' registrado em 'impostos'
+  [Registry] Plugin 'ISS-SP' registrado em 'impostos'
+  [Registry] Plugin 'ICMS-RJ' registrado em 'impostos'
+  [Registry] Plugin 'Frete-Padrão' registrado em 'frete'
+  [Registry] Plugin 'Notificação-Email' registrado em 'notificacao'
+
+Plugins ativos: {'impostos': ['ICMS-SP', 'ISS-SP', 'ICMS-RJ'], 'frete': ['Frete-Padrão'], 'notificacao': ['Notificação-Email']}
+```
+
+Esse registro é o mecanismo central do estilo. O núcleo não tem nenhuma menção a ICMS, ISS ou São Paulo no seu código: ele conhece apenas as categorias e a ordem em que executá-las. Quem sabe calcular imposto paulista é o plugin, que se anuncia ao núcleo em tempo de execução.
+
+Em seguida, ao processar cada fatura, apenas os plugins cujo contexto se aplica contribuem. Uma fatura de São Paulo ativa `ICMS-SP` e `ISS-SP`; uma do Rio ativa `ICMS-RJ`. Nenhum `if` sobre estado aparece no núcleo.
+
+**Compare**
+
+Compare o custo de uma mudança nos três estilos que você acabou de rodar. Para atender um novo estado, o microkernel pede um arquivo novo de plugin e uma linha de registro, sem tocar no núcleo. Na versão em camadas, uma regra nova entraria no domínio, que é código compartilhado por todos os casos. E no fluxo de filtros, entraria um estágio novo na sequência.
+
+É essa a propriedade que o módulo atribui ao [microkernel](padroes-e-decisoes.md#microkernel): o sistema cresce por adição, e não por modificação. O preço aparece na mesma saída — existe um contrato de extensão a manter, e o núcleo precisa de um mecanismo de registro que os outros dois estilos dispensam. Quando esse contrato precisa mudar, todos os plugins mudam junto.
+
+Os três experimentos, juntos, sustentam a tese central de [comparar sem eleger um vencedor](conceitos.md#comparar-nao-eleger-um-vencedor-universal): o mesmo domínio hospitalar poderia ser escrito em qualquer um dos três, e o que muda é onde a mudança futura vai doer.
 
 Questões exploratórias:
 
