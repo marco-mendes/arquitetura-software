@@ -129,7 +129,7 @@ Você é a pessoa arquiteta responsável pela recomendação. A equipe implement
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende uma das quatro alternativas, em uma frase.
 2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do problema descrito e o que ela cobra em troca.
@@ -172,7 +172,7 @@ Você conduz a investigação antes de qualquer correção. Reiniciar o consumid
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escreva duas hipóteses diferentes que explicam o crescimento da fila, e diga que sinal disponível separaria uma da outra.
 2. O fato 3 tornou um campo opcional. Explique por que uma mudança que afrouxa uma regra pode quebrar um consumidor, em vez de facilitar a vida dele.
@@ -222,7 +222,7 @@ Você emite o parecer sobre como atender a Qualidade sem prejudicar os dois cons
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Declare de três a quatro critérios de julgamento e diga qual pesa mais, justificando pelo risco de errar.
 2. Avalie os três mecanismos contra os seus critérios, um parágrafo por mecanismo, dizendo o que cada um resolve e o que cobra.
@@ -274,7 +274,7 @@ Você propõe o caminho de evolução. A proposta será executada por três equi
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escolha um dos três caminhos e defenda a escolha citando pelo menos duas das quatro restrições.
 2. Sobre os dois caminhos que você não escolheu, escreva duas frases cada: o que ganhariam e o que custariam.

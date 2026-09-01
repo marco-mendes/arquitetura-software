@@ -113,7 +113,7 @@ Você é a pessoa arquiteta responsável pela recomendação. A equipe de infrae
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende um dos quatro modelos, em uma frase.
 2. Sobre cada um dos quatro, escreva duas frases: o que ele resolve do problema descrito e o que ele cobra em troca.
@@ -156,7 +156,7 @@ Você conduz a resposta ao incidente. A decisão precisa sair antes das 18h, e e
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Explique por que o serviço continua no ar mesmo com metade das réplicas presas, e diga que configuração de atualização produz esse comportamento.
 2. Escreva duas hipóteses diferentes para a mensagem `ImagePullBackOff`, e diga que verificação separaria uma da outra.
@@ -209,7 +209,7 @@ Você emite o parecer que a diretoria vai usar para aprovar o orçamento.
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Declare de três a quatro critérios de julgamento e diga qual pesa mais, justificando pela exigência de residência de dado.
 2. Avalie os três modelos contra os seus critérios, um parágrafo por modelo, dizendo o que cada um transfere ao provedor e o que permanece com o hospital.
@@ -259,7 +259,7 @@ Você propõe o desenho da evolução. A proposta será lida por quem opera o se
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escolha um dos três desenhos e defenda a escolha citando pelo menos duas das quatro restrições.
 2. Explique por que o primeiro desenho entra em conflito com a restrição 1, detalhando o que acontece com o histórico quando uma réplica é substituída.

@@ -141,7 +141,7 @@ Você é a pessoa arquiteta chamada para recomendar a estrutura. A equipe implem
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende um dos quatro estilos para a operadora, em uma frase.
 2. Sobre cada um dos quatro, escreva duas frases: o que ele resolve do problema descrito e o que ele cobra em troca.
@@ -176,7 +176,7 @@ Você conduz a análise antes de qualquer decisão de estrutura. Separar o que �
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Das seis exigências apuradas, escolha as três que mais restringem a estrutura e explique, em uma frase cada, por que restringem.
 2. Sobre cada uma das quatro estruturas, escreva duas frases: o que ela resolve e o que ela cobra em troca.
@@ -217,7 +217,7 @@ Você emite o parecer que o comitê vai ler. Pode aprovar uma proposta, recusar 
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Declare de três a cinco critérios de julgamento e diga qual deles pesa mais para uma secretaria de saúde. Justifique o peso pelo risco de errar, e não por gosto técnico.
 2. Avalie as duas propostas contra os seus critérios, um parágrafo por proposta, dizendo o que cada uma protege e o que ela expõe.
@@ -250,7 +250,7 @@ Você propõe a estrutura inicial. Outra equipe vai continuar o trabalho nos pr�
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escolha um dos três esboços e defenda a escolha citando pelo menos duas restrições do hospital.
 2. Sobre os dois esboços que você não escolheu, escreva duas frases cada: o que eles ganhariam e o que custariam a esta equipe, neste prazo.

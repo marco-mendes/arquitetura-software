@@ -125,7 +125,7 @@ Você é a pessoa arquiteta responsável pela recomendação. As três equipes i
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende uma das quatro alternativas para a plataforma, em uma frase.
 2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do problema descrito e o que ela cobra em troca.
@@ -169,7 +169,7 @@ Você conduz a investigação. A diretoria quer saber o que aconteceu, e a equip
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Explique por que a latência média pode ficar estável enquanto dois por cento das chamadas falham, e diga que medida mostraria o problema que a média esconde.
 2. Escreva duas hipóteses diferentes que explicariam os fatos 1 e 2 ao mesmo tempo, e diga o que distinguiria uma da outra.
@@ -231,7 +231,7 @@ Você recomenda a política que entra em vigor na segunda-feira, sabendo que ela
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Declare de três a quatro critérios de julgamento e diga qual pesa mais, justificando pelo efeito sobre o atendimento presencial.
 2. Avalie as quatro políticas contra os seus critérios, um parágrafo por política, dizendo quem é protegido e quem é prejudicado em cada uma.
@@ -284,7 +284,7 @@ Você propõe o pacote de governança que acompanha o lançamento. Exigir demais
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escolha um dos três níveis e defenda a escolha, citando a condição imposta pela diretoria e o tamanho da equipe de plataforma.
 2. Sobre os dois níveis que você não escolheu, escreva duas frases cada: o que ganhariam e o que custariam neste lançamento.

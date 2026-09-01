@@ -125,7 +125,7 @@ Você é a pessoa arquiteta responsável pela recomendação de contrato. A impl
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende uma das quatro alternativas, em uma frase.
 2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do problema descrito e o que ela cobra em troca.
@@ -179,7 +179,7 @@ Você conduz a análise antes de qualquer mudança de contrato. Nenhum parceiro 
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Explique por que o parceiro B produz horários repetidos e horários invisíveis, ligando o defeito ao fato 2.
 2. Diga se o mesmo defeito aparece com o parceiro A, e por quê. Depois faça o mesmo para o parceiro C.
@@ -234,7 +234,7 @@ Você emite o parecer que o comitê vai discutir. Pode aprovar uma proposta, rec
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Declare de três a cinco critérios de julgamento e diga qual pesa mais neste caso, justificando pelo risco de errar.
 2. Avalie as três propostas contra os seus critérios, um parágrafo por proposta, dizendo o que cada uma protege e o que expõe.
@@ -285,7 +285,7 @@ Você propõe o contrato inicial. Ele será a fronteira pública do hospital por
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escolha um dos três esboços e defenda a escolha citando pelo menos duas das necessidades descritas.
 2. Sobre os dois esboços que você não escolheu, escreva duas frases cada: o que ganhariam e o que custariam.

@@ -196,7 +196,7 @@ Você é a pessoa arquiteta convidada a recomendar um caminho. A equipe da clín
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende uma das quatro alternativas para a clínica, em uma frase.
 2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do incidente da semana passada e o que ela cobra em troca.
@@ -263,7 +263,7 @@ Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de có
 
 **O que fazer**
 
-Escreva em prosa, um parágrafo por resposta. Sempre que afirmar algo, diga se está apoiado num dos sete fatos ou se é inferência sua.
+Escreva em texto corrido, um parágrafo por resposta. Sempre que afirmar algo, diga se está apoiado num dos sete fatos ou se é inferência sua.
 
 1. Três sintomas foram relatados: um campo novo exigiu quatro implantações coordenadas, Cadastro e Atendimento saem sempre juntos, e Atendimento espera Faturamento para responder. Explique o mecanismo de cada um e diga que tipo de acoplamento ele revela.
 2. Explique por que quatro painéis marcando 99,9% convivem com um fluxo de 99,6%, e diga o que essa conta revela sobre medir disponibilidade serviço por serviço.
@@ -327,7 +327,7 @@ Você é a pessoa arquiteta que apresenta a recomendação ao comitê. A decisã
 
 **O que fazer**
 
-Escreva em prosa. O comitê vai ler o documento antes da reunião, então cada resposta precisa se sustentar sozinha.
+Escreva em texto corrido. O comitê vai ler o documento antes da reunião, então cada resposta precisa se sustentar sozinha.
 
 1. Antes de comparar, declare os critérios que você vai usar e diga qual deles pesa mais nesta decisão. Justifique a ponderação pelo risco do domínio, e não por preferência técnica.
 2. Avalie as quatro alternativas contra os seus critérios, uma por parágrafo, dizendo o que cada uma protege e o que ela expõe.
@@ -388,7 +388,7 @@ Você é a pessoa arquiteta responsável pela proposta inicial. Ela será discut
 
 **O que fazer**
 
-Escreva em prosa, com um título por resposta. A proposta é um documento de decisão; o detalhe técnico fica para a equipe que implementa.
+Escreva em texto corrido, com um título por resposta. A proposta é um documento de decisão; o detalhe técnico fica para a equipe que implementa.
 
 1. Escolha uma das três topologias e defenda a escolha usando pelo menos três das cinco restrições, citando cada uma pelo número.
 2. Explique o que as outras duas topologias custariam, uma por parágrafo, para deixar registrado que foram consideradas.

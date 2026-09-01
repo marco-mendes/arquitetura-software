@@ -1,6 +1,6 @@
 # Oficina de ferramentas: política declarada, trace verificável
 
-Esta oficina responde a uma pergunta que o módulo levanta em prosa: **como provar que uma política de governança está de fato valendo?** Uma decisão registrada em ata não governa nada; o que governa é a política aplicada em execução, deixando evidência que alguém consegue consultar depois.
+Esta oficina responde a uma pergunta que o livro-texto levanta: **como provar que uma política de governança está de fato valendo?** Uma decisão registrada em ata não governa nada; o que governa é a política aplicada em execução, deixando evidência que alguém consegue consultar depois.
 
 Você vai colocar um *gateway* na frente do serviço de Elegibilidade, declarar três políticas num arquivo de configuração e então verificar cada uma pelo seu efeito observável: um cabeçalho de correlação que aparece na resposta, um `429` quando o limite de chamadas é excedido, e um rastro da requisição consultável numa ferramenta de observabilidade.
 

@@ -4,7 +4,7 @@ Oficina local: RabbitMQ, publicação repetida de `ResultadoLaboratorialDisponib
 
 ## Mapa da demonstração local
 
-Esta oficina implementa em código o que os módulos de [Conceitos](conceitos.md) e [Padrões e decisões](padroes-e-decisoes.md) descrevem em prosa. Antes de rodar qualquer comando, abra os arquivos abaixo. Você está lendo esta página pelo site publicado, sem o repositório clonado, então os links vão direto ao código no GitHub.
+Esta oficina implementa em código o que as páginas de [Conceitos](conceitos.md) e [Padrões e decisões](padroes-e-decisoes.md) descrevem no livro-texto. Antes de rodar qualquer comando, abra os arquivos abaixo. Você está lendo esta página pelo site publicado, sem o repositório clonado, então os links vão direto ao código no GitHub.
 
 Duas siglas aparecem várias vezes a partir daqui. Uma **dead-letter exchange** (DLX) é a exchange para a qual o RabbitMQ redireciona uma mensagem rejeitada. Uma **dead-letter queue** (DLQ) é a fila ligada a essa DLX, onde a mensagem rejeitada fica disponível para inspeção em vez de reentregue em loop ou descartada.
 

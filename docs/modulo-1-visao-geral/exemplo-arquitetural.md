@@ -25,7 +25,7 @@ Uma organização recebe JSON, CSV e XML para validação, normalização, enriq
 
 Prioridades são throughput e rastreabilidade; modificabilidade é média. Durante a carga, a solução deve processar sessenta itens por segundo e identificar a etapa de cada rejeição.
 
-Os dois parágrafos acima são um cenário de atributo de qualidade escrito em prosa. Nas seis partes de [atributos de qualidade](../referencia/atributos-de-qualidade.md#como-usar-na-decisao): a **fonte** são os sistemas parceiros; o **estímulo** é a chegada de documentos em três formatos; o **ambiente** é a carga esperada de duzentos mil documentos por hora; o **artefato** é a capacidade de processamento; a **resposta** é transformar e identificar a etapa de cada rejeição; a **medida** são sessenta itens por segundo com etapa registrada. O exercício começa aqui porque nenhuma das estruturas seguintes pode ser comparada sem uma medida comum.
+Os dois parágrafos acima são um cenário de atributo de qualidade escrito em texto corrido. Nas seis partes de [atributos de qualidade](../referencia/atributos-de-qualidade.md#como-usar-na-decisao): a **fonte** são os sistemas parceiros; o **estímulo** é a chegada de documentos em três formatos; o **ambiente** é a carga esperada de duzentos mil documentos por hora; o **artefato** é a capacidade de processamento; a **resposta** é transformar e identificar a etapa de cada rejeição; a **medida** são sessenta itens por segundo com etapa registrada. O exercício começa aqui porque nenhuma das estruturas seguintes pode ser comparada sem uma medida comum.
 
 ## Alternativas comparadas
 

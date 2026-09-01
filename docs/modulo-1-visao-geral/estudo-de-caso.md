@@ -278,7 +278,7 @@ Depois do diagrama vêm as três partes textuais:
 - **legenda** — numera e credita;
 - **leitura textual** — percorre as relações do desenho com os mesmos nomes.
 
-Se a leitura textual mencionar uma seta que não existe no diagrama, o desenho está incompleto ou a prosa se adiantou.
+Se a leitura textual mencionar uma seta que não existe no diagrama, o desenho está incompleto ou o texto se adiantou.
 
 **Como conduzir**
 

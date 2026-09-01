@@ -1,6 +1,6 @@
 # Oficina de ferramentas: dois serviços, dois bancos e uma falha parcial
 
-Esta oficina coloca no ar dois serviços separados, cada um com seu próprio banco de dados, e provoca de propósito a situação que define arquitetura distribuída: **um serviço cai e o outro continua funcionando pela metade**. Não é um exercício de Docker. É a chance de ver, em execução, três decisões que o módulo discute em prosa — propriedade de dados, fronteira física e falha parcial.
+Esta oficina coloca no ar dois serviços separados, cada um com seu próprio banco de dados, e provoca de propósito a situação que define arquitetura distribuída: **um serviço cai e o outro continua funcionando pela metade**. Não é um exercício de Docker. É a chance de ver, em execução, três decisões que o livro-texto discute em teoria: propriedade de dados, fronteira física e falha parcial.
 
 O caso é o mesmo das páginas anteriores. **Elegibilidade** decide se um beneficiário pode usar o plano. **Exames** registra uma solicitação clínica, e para isso precisa consultar a decisão de Elegibilidade. São duas capacidades de negócio distintas, com dados e ciclos de mudança próprios, e é por isso que servem para demonstrar uma fronteira.
 
