@@ -211,7 +211,20 @@ O `docker ps` lista o que está em execução agora. O `curl` devolve a página 
 
 **Compare**
 
-Rode `docker images` e depois `docker ps`. A primeira lista mostra pacotes guardados, a segunda mostra execuções vivas. Essa é a distinção entre imagem e contêiner, e ela vale para tudo que vem adiante.
+Rode `docker images` e depois `docker ps`. A primeira lista mostra pacotes guardados, a segunda mostra execuções vivas.
+
+```mermaid
+flowchart LR
+    I[Imagem nginx:1.27<br/>pacote imutável, aparece em docker images] --> C1[Contêiner web<br/>execução, aparece em docker ps]
+    I --> C2[Contêiner web-2<br/>outra execução da mesma imagem]
+    C1 -. docker rm .-> F[removido, a imagem continua]
+```
+
+**Texto alternativo:** uma imagem ligada a dois contêineres criados a partir dela, e uma seta tracejada mostrando que remover um contêiner não remove a imagem.
+
+*Figura 18 — Uma imagem, muitos contêineres. Fonte: curso.*
+
+**Leitura textual da figura:** à esquerda, a imagem `nginx:1.27`, que é o pacote imutável listado por `docker images`. Dela saem duas setas para dois contêineres diferentes, `web` e `web-2`, cada um uma execução independente da mesma imagem, listados por `docker ps`. Uma seta tracejada sai do primeiro contêiner indicando a remoção por `docker rm`, e o destino registra que a imagem permanece na máquina. A relação é de um para muitos, do mesmo jeito que uma classe produz muitos objetos.
 
 **Questões exploratórias**
 
@@ -559,7 +572,21 @@ Reprovar na verificação de **prontidão** tira o Pod da lista de destinos do S
 
 Confundir as duas produz um defeito clássico. Se a verificação de vitalidade consultasse o banco de dados, uma lentidão no banco reiniciaria todos os Pods em cadeia, transformando um problema de dependência numa queda geral. É por isso que `/health/live` responde sem consultar nada externo, enquanto `/health/ready` pode ser mais exigente.
 
-O Service, por sua vez, resolve outro problema. Pods são efêmeros e trocam de endereço a cada substituição. O `selector` por rótulo é o que dá estabilidade ao conjunto. Qualquer Pod marcado como `app: hospital-api` entra automaticamente no balanceamento, e quem chama nunca precisa saber quantos são nem onde estão.
+O Service, por sua vez, resolve outro problema. Pods são efêmeros e trocam de endereço a cada substituição. O `selector` por rótulo é o que dá estabilidade ao conjunto.
+
+```mermaid
+flowchart LR
+    CL[Cliente em 127.0.0.1:18080] --> SV[Service hospital-api<br/>selector app=hospital-api]
+    SV --> P1[Pod 10.244.0.7<br/>rótulo app=hospital-api<br/>readiness ok]
+    SV --> P2[Pod 10.244.0.9<br/>rótulo app=hospital-api<br/>readiness ok]
+    SV -. não encaminha .-> P3[Pod 10.244.0.11<br/>readiness falhando]
+```
+
+**Texto alternativo:** um cliente chega ao Service, que encaminha para dois Pods cujo rótulo casa com o seletor e cuja prontidão está satisfeita, e uma seta tracejada indica um terceiro Pod que não recebe tráfego por estar reprovando a verificação de prontidão.
+
+*Figura 19 — Como o Service escolhe para onde encaminhar. Fonte: curso.*
+
+**Leitura textual da figura:** o cliente chama sempre o mesmo endereço local, e o Service resolve o resto. Ele não guarda endereços de Pod, guarda um seletor de rótulo, e qualquer Pod marcado como `app: hospital-api` entra no conjunto automaticamente. Dois Pods com endereços diferentes aparecem recebendo tráfego, porque cumprem o rótulo e passaram na verificação de prontidão. Um terceiro Pod, ligado por seta tracejada, tem o rótulo certo e está reprovando a prontidão, por isso fica fora do encaminhamento sem ser reiniciado. Os endereços mudam a cada substituição, e o cliente nunca precisa saber quantos Pods existem.
 
 ## Execução
 
@@ -668,6 +695,22 @@ Os Pods novos ficam em `ErrImagePull` ou `ImagePullBackOff`, porque a imagem ped
 **Compare**
 
 Compare a falha de imagem, em que o contêiner nem inicia, com uma falha de prontidão, em que ele inicia e não entra no Service. As duas bloqueiam a atualização, e a evidência e a correção são diferentes.
+
+```mermaid
+flowchart TB
+    R1[Revisão 1: 2 Pods com hospital-api:1.0.0<br/>atendendo] --> U[kubectl set image<br/>tag inexistente]
+    U --> N[Pod novo em ImagePullBackOff]
+    U --> M[maxUnavailable 0<br/>mantém as 2 antigas no ar]
+    N --> T[rollout status expira]
+    T --> B[kubectl rollout undo]
+    B --> R1
+```
+
+**Texto alternativo:** a revisão saudável com dois Pods recebe uma troca de imagem para uma tag inexistente, o Pod novo entra em erro de download, a configuração de indisponibilidade zero mantém os dois antigos atendendo, o status do rollout expira e o comando de desfazer retorna à revisão saudável.
+
+*Figura 20 — Por que o serviço não caiu durante a atualização bloqueada. Fonte: curso.*
+
+**Leitura textual da figura:** o percurso parte da revisão saudável, com dois Pods na versão 1.0.0 atendendo. A troca de imagem para uma tag inexistente produz dois efeitos ao mesmo tempo. De um lado, o Pod novo entra em erro de download da imagem e nunca fica pronto. De outro, a configuração de indisponibilidade zero impede o controlador de remover qualquer Pod antigo antes de o novo ficar pronto, e por isso os dois continuam atendendo. O status do rollout esgota o tempo, o comando de desfazer é executado e o desenho retorna à revisão inicial. O serviço não caiu em nenhum instante, e isso é consequência de uma linha de configuração.
 
 **Questões exploratórias**
 
