@@ -4,9 +4,7 @@
 
 Nuvem oferece recursos de computação que podem ser provisionados e medidos como serviço. O benefício arquitetural está em diminuir o tempo e o custo de obter capacidade, desde que a equipe consiga descrevê-la, controlá-la e recuperá-la. Uma máquina virtual criada em minutos ainda exige imagem, acesso, atualização e monitoramento. Um banco gerenciado reduz tarefas de operação do motor, mas não decide retenção, modelo de dados ou quem pode consultar um resultado.
 
-Em **on-premise**, a organização mantém a infraestrutura em instalações próprias ou sob contrato dedicado e assume, em maior grau, espaço, hardware, capacidade e operação. Isso pode ser a decisão adequada para uma restrição de dados ou latência, mas não elimina automação, observabilidade ou recuperação. Em **IaaS** (Infrastructure as a Service), a organização consome computação, rede e armazenamento virtualizados. Normalmente administra sistema operacional, runtime, aplicação e dados. Em **PaaS** (Platform as a Service), o provedor também opera um runtime ou plataforma de entrega e a equipe concentra-se no código, configuração e dados. Em **SaaS** (Software as a Service), o produto pronto é consumido por configuração e integração. Uma ferramenta de agenda pode ser SaaS para o hospital, enquanto sua própria API roda on-premise, em IaaS ou PaaS. Os modelos podem coexistir na mesma solução.
-
-A maneira mais direta de enxergar a diferença é empilhar as camadas de um sistema e perguntar, para cada uma, quem a opera.
+A maneira mais direta de enxergar a diferença entre os modelos é empilhar as camadas de um sistema e perguntar, para cada uma, quem a opera.
 
 ![Pilha de nove camadas, da rede à aplicação, com as faixas de responsabilidade de IaaS, PaaS, SaaS e on-premise marcadas à esquerda e à direita.](https://github.com/user-attachments/assets/5cc37b22-7a21-450d-bddc-4a95e6202a10)
 
@@ -14,7 +12,37 @@ A maneira mais direta de enxergar a diferença é empilhar as camadas de um sist
 
 **Leitura textual da figura:** nove camadas aparecem empilhadas, de baixo para cima: rede, armazenamento, servidores, virtualização, sistemas operacionais, middleware, ambiente de execução de aplicações, dados e aplicação. Três colchetes marcam até onde vai a gestão do provedor em cada modelo. A infraestrutura gerida em nuvem cobre as quatro camadas de baixo, da rede à virtualização, que é o alcance de IaaS. A plataforma gerida em nuvem sobe até o ambiente de execução, incorporando sistemas operacionais e middleware, que é o alcance de PaaS. O software gerido em nuvem cobre a pilha inteira, incluindo dados e aplicação, que é o alcance de SaaS. Um quarto colchete, à direita, marca o auto-hospedado, ou on-premise, em que a organização responde por todas as nove camadas.
 
-Os produtos de mercado ajudam a fixar cada faixa. Em IaaS entram Amazon EC2, Google Compute Engine e as máquinas virtuais do Azure. Em PaaS entram Google App Engine, AWS Elastic Beanstalk e Azure App Services. Em SaaS entram Google Workspace, Microsoft 365 e Salesforce. Nomear o produto não classifica a solução, porque o mesmo fornecedor costuma vender ofertas nas três faixas.
+### Os quatro modelos, um a um
+
+**On-premise (auto-hospedado).** A organização mantém a infraestrutura em instalações próprias ou sob contrato dedicado e assume, em maior grau, espaço, hardware, capacidade e operação.
+
+- *O que a organização opera:* as nove camadas da figura, da rede à aplicação.
+- *Exemplos gerais:* um servidor de arquivos num data center próprio, um ERP instalado em máquinas da empresa, um banco relacional mantido pela equipe de infraestrutura.
+- *Quando faz sentido:* restrição de residência de dados, exigência de latência muito baixa até um equipamento local, ou investimento em hardware que ainda não se pagou.
+- *O que não desaparece:* automação, observabilidade e recuperação continuam sendo trabalho da equipe.
+
+**IaaS (Infrastructure as a Service).** O provedor opera os elementos básicos e entrega capacidade virtualizada sob demanda.
+
+- *O que o provedor opera:* rede, armazenamento, servidores e virtualização.
+- *O que a organização opera:* sistema operacional, middleware, ambiente de execução, aplicação e dados.
+- *Exemplos gerais:* Amazon EC2, Google Compute Engine, máquinas virtuais do Azure.
+- *Quando faz sentido:* a equipe precisa escolher a versão do sistema operacional, instalar agentes próprios ou controlar regras de rede.
+
+**PaaS (Platform as a Service).** O provedor sobe mais um degrau e passa a operar também o ambiente onde a aplicação executa.
+
+- *O que o provedor opera:* tudo de IaaS mais sistema operacional, middleware e ambiente de execução.
+- *O que a organização opera:* aplicação e dados.
+- *Exemplos gerais:* Google App Engine, AWS Elastic Beanstalk, Azure App Services.
+- *Quando faz sentido:* o contrato de implantação da aplicação cabe no que a plataforma aceita, e a equipe quer deixar de cuidar de host.
+
+**SaaS (Software as a Service).** O produto chega pronto e é consumido por configuração e integração.
+
+- *O que o provedor opera:* a pilha inteira, incluindo a própria aplicação.
+- *O que a organização opera:* configuração, integração e a classificação dos dados que envia.
+- *Exemplos gerais:* Google Workspace, Microsoft 365, Salesforce.
+- *Quando faz sentido:* a capacidade não é diferencial competitivo e um contrato bem lido resolve.
+
+Nomear o produto não classifica a solução, porque o mesmo fornecedor costuma vender ofertas nas três faixas. Os modelos também coexistem: uma organização pode comprar uma agenda como SaaS, executar sua própria aplicação em PaaS e manter um banco legado em IaaS.
 
 | Camada | IaaS | PaaS | SaaS | Decisão que continua interna |
 | --- | --- | --- | --- | --- |
@@ -41,7 +69,7 @@ A nuvem oferece escala e custo inicial menor com menos manutenção. O on-premis
 
 Uma **região** é uma área geográfica ou administrativa onde um provedor oferece recursos. Uma **zona** é uma unidade de isolamento dentro dela. Os nomes e garantias dependem do provedor, portanto não se deve inferir que “duas zonas” resolvem qualquer indisponibilidade. Separar réplicas entre zonas pode reduzir impacto de uma falha local, mas banco, fila, DNS, identidade e operação de deploy continuam sendo dependências a analisar.
 
-Para o hospital, região envolve latência, residência de dados, contratos e caminho de recuperação. Zona envolve domínio de falha. Uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó. Um plano honesto declara o cenário. Duas réplicas em nós distintos, com anti-affinity se necessário. Dados replicados com recuperação testada. Procedimentos escritos para indisponibilidade regional. A arquitetura não deveria esconder essas condições atrás de “multi-AZ”.
+Escolher uma região é decidir sobre latência, residência de dados, contratos e caminho de recuperação. Escolher uma zona é decidir sobre domínio de falha. Uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó. Um plano honesto declara o cenário. Duas réplicas em nós distintos, com anti-affinity se necessário. Dados replicados com recuperação testada. Procedimentos escritos para indisponibilidade regional. A arquitetura não deveria esconder essas condições atrás de “multi-AZ”.
 
 **Texto alternativo:** uma região contém duas zonas. Cada zona recebe uma réplica, enquanto os dados mantêm uma política de recuperação própria.
 
@@ -61,13 +89,13 @@ flowchart TB
 
 ## Contêiner, imagem e orquestração
 
-![Resiliência na nuvem: um cluster local executa duas réplicas da API hospitalar, aplica readiness e liveness, atualiza gradualmente e pode fazer rollback.](../assets/images/m06-resiliencia-nuvem.png)
+Os modelos de serviço respondem quem opera cada camada. Falta responder como a camada de aplicação, que fica com a equipe em IaaS e em PaaS, é empacotada e executada. É aí que entram contêiner e orquestração, e os dois resolvem problemas diferentes.
 
-*Figura 7 — Estado desejado e recuperação de uma API em cluster. Fonte: curso.*
+O contêiner resolve o empacotamento. Ele fixa, num artefato só, a fronteira entre a aplicação e as camadas de baixo da Figura 11. A orquestração resolve a operação. Ela automatiza, sobre um conjunto de máquinas, o trabalho manual que sobra para quem contrata IaaS, e é também o mecanismo que coloca réplicas em zonas diferentes, como a Figura 6 mostrou.
 
-**Leitura textual da figura:** o cluster local mantém duas réplicas da API hospitalar. A verificação de readiness decide quando uma réplica pode receber tráfego. A de liveness permite reiniciar um processo travado. Durante uma atualização gradual, uma nova versão substitui réplicas progressivamente, e o rollback retorna à versão anterior quando a evidência indica falha. Configuração e imagem versionada dão contexto a esse estado desejado.
+### Imagem e contêiner
 
-Uma **imagem** de contêiner empacota filesystem, dependências e metadados imutáveis identificados por tag ou digest. Um **contêiner** é uma execução dessa imagem, isolada em processos e recursos do host. Ele não é uma máquina virtual completa e compartilha o kernel do host. Docker é uma ferramenta comum para construir e executar imagens. Portabilidade significa que a imagem reduz diferenças de empacotamento. Diferença de CPU, política de rede, permissões e serviço externo continuam por conta de quem implanta.
+Uma **imagem** de contêiner empacota filesystem, dependências e metadados imutáveis identificados por tag ou digest. Um **contêiner** é uma execução dessa imagem, isolada em processos e recursos do host. Ele não é uma máquina virtual completa e compartilha o kernel do host. Portabilidade significa que a imagem reduz diferenças de empacotamento. Diferença de CPU, política de rede, permissões e serviço externo continuam por conta de quem implanta.
 
 Contêinerização é uma forma leve de virtualização. A comparação com a máquina virtual explica de onde vem essa leveza.
 
@@ -77,15 +105,87 @@ Contêinerização é uma forma leve de virtualização. A comparação com a m�
 
 **Leitura textual da figura:** à esquerda, a implantação baseada em máquinas virtuais mostra três VMs sobre uma camada de virtualização com hipervisor, que por sua vez está sobre a infraestrutura de servidores, armazenamento e rede. Cada VM carrega sua própria aplicação, suas dependências de execução e um sistema operacional completo. À direita, a implantação baseada em contêineres mostra três contêineres sobre um motor de contêineres, um único sistema operacional e a mesma infraestrutura. Cada contêiner carrega aplicação e dependências de execução, sem sistema operacional próprio. A diferença entre as duas pilhas está nas três cópias de sistema operacional que desaparecem à direita.
 
+As duas pilhas da Figura 12 são um recorte das camadas da Figura 11. A virtualização com hipervisor é a camada que o provedor opera em IaaS. O motor de contêineres fica acima dela, entre o sistema operacional e a aplicação.
+
 O hipervisor aloca recursos de hardware para cada instância e entrega isolamento forte, ao custo de memória e processamento. O motor de contêineres, como o Docker, executa processos isolados sobre um kernel compartilhado. Daí vêm as propriedades que levam a arquitetura a preferir contêineres em muitos cenários: consumo menor de recursos, inicialização em segundos, replicação barata e execução de várias aplicações na mesma máquina sem interferência. A portabilidade entra na mesma lista, com a ressalva já registrada acima.
 
 Essas propriedades explicam onde a tecnologia pegou. No desenvolvimento, porque replicar um ambiente de teste vira baixar uma imagem. Na nuvem, porque microsserviços precisam de unidades de implantação independentes e substituíveis. Na computação de borda, porque o recurso disponível no dispositivo raramente comporta uma VM.
 
-Vale separar duas ferramentas que aparecem juntas e resolvem problemas diferentes. Docker constrói, envia e executa contêineres individuais. Kubernetes orquestra muitos contêineres em um ambiente distribuído, cuidando de escala e disponibilidade em produção. Usar Docker sem orquestrador é comum em desenvolvimento. Usar Kubernetes sem entender a imagem que ele executa costuma terminar em incidente.
+### Docker em três comandos
 
-**Orquestração** coordena muitas execuções: agenda Pods, mantém número desejado de réplicas, expõe rede, faz atualizações e tenta recuperar processos. Kubernetes declara o estado desejado, e seus controladores trabalham para aproximar o estado atual. Um Deployment cria ReplicaSets e permite atualização gradual. Um Service oferece um nome estável e seleciona Pods por rótulo. O orquestrador pode reiniciar um processo, mas não corrige uma regra de negócio nem descobre por conta própria uma imagem inadequada.
+**Docker** é o motor de contêineres mais difundido. Três comandos bastam para ver a distinção entre imagem e contêiner funcionando. O exemplo usa o servidor web Nginx, que é a imagem pública mais comum em demonstrações.
 
-Readiness pergunta “esta instância deve receber tráfego agora?”. Liveness pergunta “o processo continua vivo o bastante para ser reiniciado se travar?”. Na API do laboratório, `/health/ready` e `/health/live` são separados para preservar essa semântica. Não use uma liveness que dependa de banco ou serviço remoto: uma falha compartilhada poderia reiniciar todos os Pods justamente quando a dependência precisa estabilizar.
+```sh
+docker pull nginx:1.27
+docker run --name web -d -p 8080:80 nginx:1.27
+docker ps
+```
+
+O primeiro comando baixa a imagem e a guarda na máquina. Ele não executa nada. O segundo cria um contêiner a partir dessa imagem, com o nome `web`, em segundo plano, e liga a porta 8080 da máquina à porta 80 de dentro do contêiner. O terceiro lista o que está em execução. Executar `docker run` de novo, com outro nome, cria um segundo contêiner a partir da mesma imagem, o que torna visível a relação de um para muitos entre as duas coisas.
+
+### Da execução isolada à orquestração
+
+O Docker sozinho executa contêineres numa máquina. Ele não decide em qual máquina de um conjunto o contêiner deve rodar, não recria o que morreu e não reparte tráfego entre réplicas. Esse é o trabalho do orquestrador.
+
+**Orquestração** coordena muitas execuções: agenda unidades de execução, mantém o número desejado de réplicas, expõe rede, faz atualizações e tenta recuperar processos. **Kubernetes** é o orquestrador dominante. Ele declara o estado desejado, e seus controladores trabalham para aproximar o estado atual. Um Deployment cria ReplicaSets e permite atualização gradual. Um Service oferece um nome estável e seleciona Pods por rótulo. O orquestrador pode reiniciar um processo, mas não corrige uma regra de negócio nem descobre por conta própria uma imagem inadequada.
+
+A divisão de trabalho é essa. Docker constrói, envia e executa contêineres individuais. Kubernetes gerencia escala e disponibilidade de muitos contêineres em um ambiente distribuído. Usar Docker sem orquestrador é comum em desenvolvimento. Usar Kubernetes sem entender a imagem que ele executa costuma terminar em incidente.
+
+### Kubernetes em um manifesto
+
+O equivalente ao `docker run` acima, em Kubernetes, é declarar o estado desejado num arquivo e entregá-lo ao cluster. O manifesto abaixo pede três réplicas do mesmo Nginx.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+```
+
+```sh
+kubectl apply -f web.yaml
+kubectl get pods
+kubectl scale deployment web --replicas=5
+```
+
+A diferença de natureza está no verbo. `docker run` é uma ordem, executada uma vez. `kubectl apply` registra uma intenção, e o cluster passa a persegui-la. Apagar um Pod à mão faz o controlador criar outro, porque o estado declarado continua pedindo três. Mudar `--replicas` para cinco não cria dois contêineres, altera o número desejado e deixa o controlador chegar lá.
+
+**Texto alternativo:** o estado desejado alimenta um controlador, que compara com o estado atual e cria ou remove réplicas até os dois coincidirem.
+
+*Figura 17 — O laço de reconciliação que sustenta a orquestração. Fonte: curso.*
+
+```mermaid
+flowchart LR
+    D[Estado desejado declarado] --> C{Controlador compara}
+    A[Estado atual observado] --> C
+    C -->|falta réplica| M[Cria réplica]
+    C -->|sobra réplica| R[Remove réplica]
+    M --> A
+    R --> A
+```
+
+**Leitura textual da figura:** o estado desejado, declarado em arquivo, e o estado atual, observado no cluster, chegam a um controlador que os compara. Quando falta réplica, o controlador cria uma. Quando sobra, remove uma. Os dois resultados voltam a alimentar o estado atual, fechando um laço que se repete continuamente. Nenhuma seta parte do controlador para o estado desejado, porque ele nunca altera a intenção declarada.
+
+### Prontidão e vitalidade
+
+Duas verificações diferentes decidem o que o orquestrador faz com uma réplica. Readiness pergunta “esta instância deve receber tráfego agora?”. Liveness pergunta “o processo continua vivo o bastante para ser reiniciado se travar?”. Separar os dois endpoints, por convenção `/health/ready` e `/health/live`, preserva essa semântica.
+
+A separação tem consequência prática. Uma liveness que dependa de banco ou serviço remoto transforma uma falha compartilhada em reinício coletivo, justamente quando a dependência precisa estabilizar. A dependência externa pertence à readiness, ou a uma resposta degradada, conforme o contrato do serviço.
 
 ## Vocabulário de revisão
 

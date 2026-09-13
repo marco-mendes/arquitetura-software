@@ -56,6 +56,14 @@ Readiness consulta `/health/ready` cedo e frequentemente. Enquanto falhar, o Pod
 
 ## Atualização controlada
 
+![Resiliência na nuvem: um cluster local executa duas réplicas da API hospitalar, aplica readiness e liveness, atualiza gradualmente e pode fazer rollback.](../assets/images/m06-resiliencia-nuvem.png)
+
+*Figura 7 — Estado desejado e recuperação da API de elegibilidade em cluster. Fonte: curso.*
+
+**Leitura textual da figura:** à esquerda, os sistemas do hospital consomem a API por um balanceador de carga, que distribui requisições apenas para as réplicas prontas. Ao centro, o cluster local mantém a configuração em ConfigMaps e Secrets e duas réplicas da API na versão 1.0, cada uma com readiness, que verifica se está pronta para receber tráfego, e liveness, que verifica se está viva e reinicia quando necessário. Uma das réplicas aparece com readiness ainda não satisfeita e, por isso, fora do balanceamento. À direita, o percurso da atualização gradual mostra uma nova réplica na versão 2.0 sendo implantada e validada, a falha na atualização quando a nova versão não fica estável, e o rollback que restaura a versão 1.0 anterior com duas réplicas prontas.
+
+
+
 A estratégia `RollingUpdate` usa `maxUnavailable: 0` e `maxSurge: 1`. O controlador cria no máximo uma instância adicional, espera que a nova passe readiness e só então reduz uma antiga. Com duas réplicas, isso mantém duas prontas durante a transição se o cluster tiver capacidade. Se a imagem estiver ausente, a nova réplica entra em `ImagePullBackOff`. A revisão não se completa, e a versão existente permanece. O estudante observa esse estado antes de executar rollback, em vez de supor que uma mensagem de erro demonstra a causa.
 
 O laboratório provoca a falha alterando apenas a imagem para `hospital-api:imagem-propositalmente-ausente`, registra `kubectl get pods` e `kubectl describe`, e executa `kubectl rollout undo deployment/hospital-api -n hospital`. O rollback restaura a revisão anterior e sua imagem. Para uma mudança real que inclua schema, este procedimento só é seguro se o schema for compatível ou se houver plano de migração independente. Assim, “tem rollback” vira uma propriedade condicionada a um schema compatível.
