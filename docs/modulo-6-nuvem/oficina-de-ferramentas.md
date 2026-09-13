@@ -4,13 +4,13 @@ Esta oficina cria e remove um cluster local descartável. Ela usa a imagem da AP
 
 ## Leia antes de executar comandos
 
-O `Dockerfile` descreve como produzir a imagem imutável: parte de Python 3.12, instala a aplicação, cria um usuário sem privilégios e expõe a porta 8000. A construção local materializa esse pacote; a tag `hospital-api:1.0.0` é a revisão usada pelo Deployment e não um endereço de registry de produção. Um contêiner só aparece quando essa imagem é executada.
+O `Dockerfile` descreve como produzir a imagem imutável: parte de Python 3.12, instala a aplicação, cria um usuário sem privilégios e expõe a porta 8000. A construção local materializa esse pacote. A tag `hospital-api:1.0.0` é a revisão usada pelo Deployment, sem relação com um endereço de registry de produção. Um contêiner só aparece quando essa imagem é executada.
 
-O arquivo `infra/kind/cluster.yaml` instrui o **kind** a criar o cluster Kubernetes `hospital-local` em contêineres Docker, com um nó de controle e a porta 30080 limitada a `127.0.0.1:18080`. Ele cria um **cluster local descartável** para a oficina; não deve ser usado em um cluster compartilhado, nem os comandos desta página devem ser apontados para qualquer contexto compartilhado.
+O arquivo `infra/kind/cluster.yaml` instrui o **kind** a criar o cluster Kubernetes `hospital-local` em contêineres Docker, com um nó de controle e a porta 30080 limitada a `127.0.0.1:18080`. Ele cria um **cluster local descartável** para a oficina. Ele não deve ser usado em um cluster compartilhado, nem os comandos desta página devem ser apontados para qualquer contexto compartilhado.
 
-Os manifestos expressam o estado inicial, antes de serem aplicados ao cluster: `namespace.yaml` cria a fronteira `hospital`; `configmap.yaml` fornece somente `APP_ENV=local-kind`; `deployment.yaml` pede duas réplicas da imagem, recursos e atualização gradual; `service.yaml` seleciona os Pods por `app: hospital-api`; e `hpa.yaml` declara a faixa de duas a cinco réplicas, dependente de métricas disponíveis. Nada disso cria dados clínicos ou tolerância a falhas de zona.
+Os manifestos expressam o estado inicial, antes de serem aplicados ao cluster: `namespace.yaml` cria a fronteira `hospital`. `configmap.yaml` fornece somente `APP_ENV=local-kind`. `deployment.yaml` pede duas réplicas da imagem, recursos e atualização gradual. `service.yaml` seleciona os Pods por `app: hospital-api`. `hpa.yaml` declara a faixa de duas a cinco réplicas, dependente de métricas disponíveis. Nada disso cria dados clínicos ou tolerância a falhas de zona.
 
-As probes deixam a condição observável. `readiness` consulta `/health/ready` e mantém um Pod fora dos endpoints enquanto ele não pode receber tráfego. `liveness` consulta `/health/live` para permitir reinício de um processo travado; ela não deve depender de banco ou de uma API remota. O estado inicial esperado é: nenhum recurso do namespace `hospital` aplicado, nenhuma imagem no nó kind e nenhum contexto `kind-hospital-local` até que o cluster seja criado e a imagem seja carregada.
+As probes deixam a condição observável. `readiness` consulta `/health/ready` e mantém um Pod fora dos endpoints enquanto ele não pode receber tráfego. `liveness` consulta `/health/live` para permitir reinício de um processo travado. Ela não deve depender de banco ou de uma API remota. O estado inicial esperado é: nenhum recurso do namespace `hospital` aplicado, nenhuma imagem no nó kind e nenhum contexto `kind-hospital-local` até que o cluster seja criado e a imagem seja carregada.
 
 ### O que você vai observar, e por que importa
 
@@ -21,6 +21,12 @@ As probes deixam a condição observável. `readiness` consulta `/health/ready` 
 | A faixa de réplicas é declarada uma vez e ajustada pelo cluster | [Elasticidade e escalabilidade](padroes-e-decisoes.md#elasticidade-e-escalabilidade) |
 | A atualização troca Pods sem derrubar o serviço | [Resiliência, rollout e rollback](padroes-e-decisoes.md#resiliencia-rollout-e-rollback) |
 | Duas verificações de saúde com finalidades distintas | [Região, zona e fronteiras de falha](conceitos.md#regiao-zona-e-fronteiras-de-falha) |
+
+![Percurso da imagem Docker ao serviço local e ciclo de reconciliação do Kubernetes](../assets/images/m06-oficina-kind-reconciliacao.png)
+
+*Figura 10 — Da imagem imutável ao estado declarado que o cluster mantém sozinho. Fonte: curso.*
+
+**Leitura textual da figura:** a faixa superior numera sete etapas em sequência, do `Dockerfile` à imagem `hospital-api:1.0.0`, dela ao `kind load`, ao cluster `hospital-local`, ao namespace `hospital`, ao Deployment com duas réplicas, ao Service e finalmente ao acesso local em `127.0.0.1:18080`. Sob as etapas aparecem os comandos que produzem evidência de cada uma: `docker image inspect`, `kind get clusters` e `kubectl`. Ao centro, o ciclo de reconciliação parte do estado desejado de duas réplicas, passa pelo Pod apagado, pelo novo Pod criado e retorna ao estado desejado. À direita, readiness consulta `/health/ready` e retira o Pod dos endpoints, enquanto liveness consulta `/health/live` e reinicia o processo.
 
 ### Onde cada arquivo mora
 
@@ -62,7 +68,7 @@ Cada ferramenta deixa uma evidência própria, e vale saber de antemão qual com
 
 A diferença que dá sentido à oficina inteira: você não vai mandar o Kubernetes criar dois Pods. Você vai **declarar que devem existir dois**, e ele passa a garantir isso. Apagar um Pod à mão faz o orquestrador criar outro, e é esse comportamento que se chama reconciliação.
 
-O Service usa uma porta fixa mapeada pelo kind apenas em `127.0.0.1:18080`. A escala automática pode exibir `<unknown>` na coluna de métricas quando o cluster não tem coletor instalado; isso não impede a lição sobre pedidos de recurso, tetos e configuração declarativa.
+O Service usa uma porta fixa mapeada pelo kind apenas em `127.0.0.1:18080`. A escala automática pode exibir `<unknown>` na coluna de métricas quando o cluster não tem coletor instalado. A lição sobre pedidos de recurso, tetos e configuração declarativa continua valendo.
 
 ## O `deployment.yaml` linha a linha
 
@@ -94,7 +100,7 @@ O segundo bloco declara o que cada réplica precisa de recursos:
               memory: 256Mi
 ```
 
-A distinção entre pedido e teto costuma confundir, e as consequências são bem diferentes. O **pedido** é usado para decidir em qual nó o Pod cabe: o Kubernetes só o agenda onde houver 100 milicores livres. O **teto** é o que o Pod não pode ultrapassar em execução; exceder o teto de memória faz o contêiner ser encerrado.
+A distinção entre pedido e teto costuma confundir, e as consequências são bem diferentes. O **pedido** é usado para decidir em qual nó o Pod cabe: o Kubernetes só o agenda onde houver 100 milicores livres. O **teto** é o que o Pod não pode ultrapassar em execução. Exceder o teto de memória faz o contêiner ser encerrado.
 
 Declarar os dois é o que permite ao orquestrador distribuir carga sem que um serviço consuma a máquina inteira, e é a base sobre a qual a escala automática decide acrescentar réplicas.
 
@@ -128,7 +134,7 @@ spec:
       nodePort: 30080
 ```
 
-Pods são efêmeros: nascem, morrem e trocam de endereço a cada substituição. O `selector` por rótulo é o que dá estabilidade ao conjunto — qualquer Pod marcado como `app: hospital-api` entra automaticamente no balanceamento, e quem chama nunca precisa saber quantos são nem onde estão.
+Pods são efêmeros: nascem, morrem e trocam de endereço a cada substituição. O `selector` por rótulo é o que dá estabilidade ao conjunto. Qualquer Pod marcado como `app: hospital-api` entra automaticamente no balanceamento, e quem chama nunca precisa saber quantos são nem onde estão.
 
 ## Pré-requisitos
 
@@ -146,11 +152,11 @@ Verifique versões e contexto. No macOS/Linux use `docker version`, `kind versio
 
 **Observe**
 
-Docker deve mostrar Client e Server. `kubectl config current-context` pode mostrar outro contexto antes do cluster; não aplique manifest até o contexto `kind-hospital-local` existir.
+Docker deve mostrar Client e Server. `kubectl config current-context` pode mostrar outro contexto antes do cluster. Não aplique manifest até o contexto `kind-hospital-local` existir.
 
 **Compare**
 
-Ter o cliente `kubectl` não confirma um cluster; ter um cluster não confirma que a imagem local está nele.
+Ter o cliente `kubectl` não confirma um cluster. Ter um cluster não confirma que a imagem local está nele.
 
 **Questões exploratórias**
 
@@ -161,11 +167,11 @@ Ter o cliente `kubectl` não confirma um cluster; ter um cluster não confirma q
 
 ### Windows
 
-Instale [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/), [kubectl](https://kubernetes.io/docs/tasks/tools/) e [kind](https://kind.sigs.k8s.io/docs/user/quick-start/). Em PowerShell, após iniciar Docker Desktop, execute `docker version`, `kind version`, `kubectl version --client` e `py --version`; depois, entre em `laboratorios\plataforma-hospitalar`.
+Instale [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/), [kubectl](https://kubernetes.io/docs/tasks/tools/) e [kind](https://kind.sigs.k8s.io/docs/user/quick-start/). Em PowerShell, após iniciar Docker Desktop, execute `docker version`, `kind version`, `kubectl version --client` e `py --version`. Depois, entre em `laboratorios\plataforma-hospitalar`.
 
 **Resultado esperado**
 
-As versões aparecem; Docker mostra servidor em execução.
+As versões aparecem, e Docker mostra servidor em execução.
 
 **Contingência**
 
@@ -181,7 +187,7 @@ Docker responde e os três executáveis estão no `PATH`.
 
 **Contingência**
 
-Em Mac com recurso insuficiente, feche cargas locais e tente novamente; não remova imagens ou clusters de colegas. Se kind não puder criar o nó, faça a validação estática descrita na limpeza e registre a limitação.
+Em Mac com recurso insuficiente, feche cargas locais e tente novamente. Não remova imagens ou clusters de colegas. Se kind não puder criar o nó, faça a validação estática descrita na limpeza e registre a limitação.
 
 ### Linux
 
@@ -203,7 +209,7 @@ Validar manifests, criar o cluster e disponibilizar a imagem dentro dele.
 
 **Pré-requisito**
 
-Esteja em `laboratorios/plataforma-hospitalar`; Docker deve responder. Confirme que não há cluster local de mesmo nome com `kind get clusters`.
+Esteja em `laboratorios/plataforma-hospitalar`, com Docker respondendo. Confirme que não há cluster local de mesmo nome com `kind get clusters`.
 
 **Execute**
 
@@ -227,11 +233,11 @@ No PowerShell, os mesmos comandos são seguros:
 
 **Observe**
 
-O dry-run confirma sintaxe aceita pelo cliente; ele não executa Pods. A sequência valida primeiro o namespace e, depois, os recursos que pertencem a `hospital`. O contexto final precisa ser `kind-hospital-local`. O carregamento explícito é necessário porque a imagem existe inicialmente apenas no Docker local.
+O dry-run confirma sintaxe aceita pelo cliente. Ele não executa Pods. A sequência valida primeiro o namespace e, depois, os recursos que pertencem a `hospital`. O contexto final precisa ser `kind-hospital-local`. O carregamento explícito é necessário porque a imagem existe inicialmente apenas no Docker local.
 
 **Compare**
 
-`docker build` produz uma imagem; `kind load` a torna disponível no nó. Nenhum dos dois cria o Deployment.
+`docker build` produz uma imagem. `kind load` a torna disponível no nó. Nenhum dos dois cria o Deployment.
 
 **Questões exploratórias**
 
@@ -252,7 +258,7 @@ Localize nos manifestos os rótulos e o seletor que ligam o Service aos Pods. De
 
 **Observe**
 
-O Service só enxerga Pods com `app: hospital-api`. Readiness usa `/health/ready`; liveness usa `/health/live`.
+O Service só enxerga Pods com `app: hospital-api`. Readiness usa `/health/ready`. Liveness usa `/health/live`.
 
 **Compare**
 
@@ -295,11 +301,11 @@ No PowerShell:
 
 **Observe**
 
-O rollout informa que duas réplicas estão disponíveis; o endpoint devolve `{"status":"ready"}`. `EndpointSlice` contém os endereços prontos. O HPA pode não ter métrica atual no kind básico; registre esse fato em vez de inventar escalonamento.
+O rollout informa que duas réplicas estão disponíveis, e o endpoint devolve `{"status":"ready"}`. `EndpointSlice` contém os endereços prontos. O HPA pode não ter métrica atual no kind básico. Registre esse fato em vez de inventar escalonamento.
 
 **Compare**
 
-Compare `kubectl get pods` com `curl`: o primeiro descreve estado do cluster; o segundo prova que o caminho local até readiness respondeu.
+Compare `kubectl get pods` com `curl`. O primeiro descreve estado do cluster. O segundo prova que o caminho local até readiness respondeu.
 
 **Questões exploratórias**
 
@@ -312,7 +318,7 @@ Observar uma atualização bloqueada e restaurar a revisão saudável sem tocar 
 
 **Pré-requisito**
 
-O rollout inicial está concluído. A única alteração abaixo é uma tag de imagem propositalmente ausente; não use uma tag de ambiente real.
+O rollout inicial está concluído. A única alteração abaixo é uma tag de imagem propositalmente ausente. Não use uma tag de ambiente real.
 
 **Execute**
 
@@ -338,7 +344,7 @@ No PowerShell, a falha do status aparece em `$LASTEXITCODE`, mas os comandos seg
 
 **Observe**
 
-Os Pods novos apresentam `ErrImagePull` ou `ImagePullBackOff`, e o rollout esgota o timeout. A revisão anterior permanece disponível por `maxUnavailable: 0`; após undo, a tag volta a `hospital-api:1.0.0` e liveness responde.
+Os Pods novos apresentam `ErrImagePull` ou `ImagePullBackOff`, e o rollout esgota o timeout. A revisão anterior permanece disponível por `maxUnavailable: 0`. Após o undo, a tag volta a `hospital-api:1.0.0` e liveness responde.
 
 **Compare**
 
@@ -359,7 +365,7 @@ O cluster está saudável e você não modificará a quantidade de réplicas man
 
 **Execute**
 
-Execute `kubectl describe hpa hospital-api -n hospital` e registre se há métrica de CPU. Investigue em documentação do kind/Kubernetes o que seria necessário para Metrics Server; não instale add-ons durante a aula sem acordo de escopo.
+Execute `kubectl describe hpa hospital-api -n hospital` e registre se há métrica de CPU. Investigue em documentação do kind/Kubernetes o que seria necessário para Metrics Server. Não instale add-ons durante a aula sem acordo de escopo.
 
 **Observe**
 
@@ -376,16 +382,30 @@ Compare uma política declarada com uma evidência de aumento automático ocorri
 
 ## Resultado esperado
 
-Ao fim, o namespace `hospital` foi criado antes de ConfigMap, Deployment, Service e HPA; o Deployment `hospital-api` tem duas réplicas prontas e o Service é acessível somente em `127.0.0.1:18080`. Há uma revisão saudável, uma tentativa bloqueada por imagem ausente, eventos descritos e rollback confirmado. O resultado não afirma tolerância a falha de zona, autoscaling ativo sem métrica ou prontidão de produção.
+Ao fim, o namespace `hospital` foi criado antes de ConfigMap, Deployment, Service e HPA. O Deployment `hospital-api` tem duas réplicas prontas, e o Service é acessível somente em `127.0.0.1:18080`. Há uma revisão saudável, uma tentativa bloqueada por imagem ausente, eventos descritos e rollback confirmado. O resultado não afirma tolerância a falha de zona, autoscaling ativo sem métrica ou prontidão de produção.
 
 ## Interpretação
 
-O Deployment mostrou reconciliação e atualização gradual; o Service, descoberta por labels; as probes, a separação entre receber tráfego e manter o processo vivo. A tag ausente confirmou que Kubernetes não conserta uma imagem inválida por conta própria. Rollback é procedimento de contenção quando a revisão anterior é compatível. Para produção, some autenticação, políticas de rede, secrets, registro de imagem, backup e exercícios de falha ao desenho.
+O Deployment mostrou reconciliação e atualização gradual. O Service mostrou descoberta por labels. As probes mostraram a separação entre receber tráfego e manter o processo vivo. A tag ausente confirmou que Kubernetes não conserta uma imagem inválida por conta própria. Rollback é procedimento de contenção quando a revisão anterior é compatível. Para produção, some autenticação, políticas de rede, secrets, registro de imagem, backup e exercícios de falha ao desenho.
 
 ## Limpeza e contingência
 
-Colete a evidência antes de apagar. Depois, no macOS/Linux ou PowerShell, execute `kind delete cluster --name hospital-local`. O comando remove somente o cluster criado pela oficina. A imagem `hospital-api:1.0.0` pode permanecer no Docker para próxima aula; remova-a apenas se você a construiu e não precisa dela: `docker image rm hospital-api:1.0.0`. Se kind não puder rodar nesta máquina, valide primeiro `namespace.yaml` com `kubectl apply --dry-run=client -f infra/k8s/namespace.yaml`, depois os quatro manifests namespaced com os quatro `-f` explícitos acima, e execute `python -m pytest tests/test_k8s_manifests.py -q` dentro do laboratório. Registre que a validação foi estática; não tente usar um cluster remoto como substituto.
+Colete a evidência antes de apagar. Depois, no macOS/Linux ou PowerShell, execute `kind delete cluster --name hospital-local`. O comando remove somente o cluster criado pela oficina. A imagem `hospital-api:1.0.0` pode permanecer no Docker para próxima aula. Remova-a apenas se você a construiu e não precisa dela, com `docker image rm hospital-api:1.0.0`. Se kind não puder rodar nesta máquina, valide primeiro `namespace.yaml` com `kubectl apply --dry-run=client -f infra/k8s/namespace.yaml`, depois os quatro manifests namespaced com os quatro `-f` explícitos acima, e execute `python -m pytest tests/test_k8s_manifests.py -q` dentro do laboratório. Registre que a validação foi estática. Não tente usar um cluster remoto como substituto.
 
 ## Evidência a entregar
 
-Entregue texto ou capturas sem dados pessoais contendo: versões de Docker/kind/kubectl; saída do dry-run; contexto `kind-hospital-local`; imagem carregada; rollout inicial; lista de Pods/Service; resposta de readiness; trecho de `describe` com `ImagePullBackOff`; comando e status do rollback; resposta de liveness; e confirmação da remoção do cluster. Acrescente duas conclusões: uma garantia obtida e um limite que o laboratório não prova.
+Entregue texto ou capturas sem dados pessoais contendo:
+
+- versões de Docker, kind e kubectl.
+- saída do dry-run.
+- contexto `kind-hospital-local`.
+- imagem carregada.
+- rollout inicial.
+- lista de Pods e do Service.
+- resposta de readiness.
+- trecho de `describe` com `ImagePullBackOff`.
+- comando e status do rollback.
+- resposta de liveness.
+- confirmação da remoção do cluster.
+
+Acrescente duas conclusões: uma garantia obtida e um limite que o laboratório não prova.

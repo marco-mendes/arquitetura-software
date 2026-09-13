@@ -19,7 +19,7 @@ Você prepara um glossário de revisão.
 <details>
 <summary>Ver resposta</summary>
 
-IaaS entrega infraestrutura virtualizada; PaaS entrega runtime operado; SaaS entrega produto configurável; on-premise mantém infraestrutura sob maior responsabilidade interna. Nenhum modelo elimina o owner de dados, configuração e continuidade.
+IaaS entrega infraestrutura virtualizada. PaaS entrega runtime operado. SaaS entrega produto configurável. On-premise mantém infraestrutura sob maior responsabilidade interna. Nenhum modelo elimina o owner de dados, configuração e continuidade.
 </details>
 
 2\. Diferencie região, zona, contêiner, imagem e orquestração.
@@ -27,7 +27,7 @@ IaaS entrega infraestrutura virtualizada; PaaS entrega runtime operado; SaaS ent
 <details>
 <summary>Ver resposta</summary>
 
-Região e zona delimitam localização e falha; imagem é o pacote versionado; contêiner é sua execução; orquestração reconcilia execuções com o estado declarado.
+Região e zona delimitam localização e falha. Imagem é o pacote versionado. Contêiner é sua execução. Orquestração reconcilia execuções com o estado declarado.
 </details>
 
 3\. Explique readiness, liveness, elasticidade, resiliência e rollback. Para cada termo, relacione uma decisão ou arquivo do caso.
@@ -55,7 +55,7 @@ Você explica o efeito dessa proposta a quem opera o cluster.
 <details>
 <summary>Ver resposta</summary>
 
-O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a ele; isso não confirma que a regra de negócio está correta.
+O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a ele. Esse comportamento não confirma que a regra de negócio está correta.
 </details>
 
 2\. Descreva o que acontece quando liveness falha e quando a dependência compartilhada está indisponível.
@@ -63,7 +63,7 @@ O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a
 <details>
 <summary>Ver resposta</summary>
 
-Falha de liveness permite reinício do contêiner. Se uma dependência remota cai, usá-la como liveness pode reiniciar todas as réplicas e ampliar o incidente; ela deve orientar readiness ou degradação conforme o contrato.
+Falha de liveness permite reinício do contêiner. Se uma dependência remota cai, usá-la como liveness pode reiniciar todas as réplicas e ampliar o incidente. Ela deve orientar readiness ou degradação conforme o contrato.
 </details>
 
 3\. Diferencie processo vivo, pronto para tráfego e resposta de negócio correta. Explique por que reiniciar todas as réplicas pode piorar o incidente.
@@ -71,7 +71,7 @@ Falha de liveness permite reinício do contêiner. Se uma dependência remota ca
 <details>
 <summary>Ver resposta</summary>
 
-Vivo significa processo executando; pronto significa elegível ao tráfego; correto requer validação de negócio. Reinícios coletivos removem capacidade enquanto a dependência externa ainda está indisponível.
+Vivo significa processo executando. Pronto significa elegível ao tráfego. Correto requer validação de negócio. Reinícios coletivos removem capacidade enquanto a dependência externa ainda está indisponível.
 </details>
 
 ## Aplicar
@@ -91,7 +91,7 @@ A área de infraestrutura pediu uma recomendação de modelo de execução.
 
 Seis fatos foram apurados na operadora:
 
-1. A rajada dura cerca de duas horas por mês; no restante, o uso é quase nulo.
+1. A rajada dura cerca de duas horas por mês. No restante do tempo, o uso é quase nulo.
 2. Cada emissão leva de três a quarenta segundos, porque depende de um serviço externo lento.
 3. A equipe tem duas pessoas e nenhuma experiência com orquestração de contêineres.
 4. O documento gerado é gravado em armazenamento de objetos, e o processo não guarda estado local.
@@ -144,7 +144,7 @@ São 17h30 de sexta-feira. A equipe de plantão termina às 18h.
 
 Cinco fatos valem para a análise:
 
-1. Duas réplicas antigas atendem normalmente; duas novas não iniciam.
+1. Duas réplicas antigas atendem normalmente. Duas novas não iniciam.
 2. A mensagem apresentada é `ImagePullBackOff`.
 3. A revisão anterior continua registrada e pode ser restabelecida.
 4. Nenhuma alteração de banco acompanhou a versão nova.

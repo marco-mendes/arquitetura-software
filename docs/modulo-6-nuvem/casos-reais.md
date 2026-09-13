@@ -12,7 +12,7 @@ O incidente não começou com o comando errado. Começou com uma sequência de c
 
 O GitLab.com rodava com **um primário e uma réplica** em espera quente, usada apenas para *failover*, a assunção automática do papel de primário. Um único banco aguentava toda a carga, e o *post-mortem* reconhece que isso não era ideal.
 
-Às 17h20 daquele dia, um engenheiro tirou um instantâneo LVM do banco de produção para carregar no ambiente de teste — ele queria uma cópia mais recente que a automática das 01h00, para testar o pgpool-II.
+Às 17h20 daquele dia, um engenheiro tirou um instantâneo LVM do banco de produção para carregar no ambiente de teste. Ele queria uma cópia mais recente que a automática das 01h00, para testar o pgpool-II.
 
 Às 19h00, a carga do banco disparou. A suspeita registrada é spam. Parte do peso vinha de um processo em segundo plano tentando remover um funcionário do GitLab e os dados associados, porque a conta dele tinha sido marcada por abuso e agendada para remoção por engano.
 
@@ -22,7 +22,7 @@ O GitLab.com rodava com **um primário e uma réplica** em espera quente, usada 
 
 O `pg_basebackup` travava sem produzir saída, mesmo com a opção `--verbose` ligada. Depois de algumas tentativas, informou que não conseguia conectar porque o primário não tinha conexões de replicação disponíveis.
 
-A equipe aumentou `max_wal_senders` de 3 para 32. O PostgreSQL então se recusou a reiniciar, reclamando de semáforos demais — efeito de `max_connections` estar em 8000, um valor absurdo que estava aplicado havia quase um ano e vinha funcionando. Baixaram para 2000 e o banco subiu.
+A equipe aumentou `max_wal_senders` de 3 para 32. O PostgreSQL então se recusou a reiniciar, reclamando de semáforos demais. A causa era `max_connections` em 8000, um valor absurdo que estava aplicado havia quase um ano e vinha funcionando. Baixaram para 2000 e o banco subiu.
 
 O `pg_basebackup` continuou sem iniciar a replicação. Um engenheiro rodou `strace` e viu o processo parado numa chamada `poll`, sem mais informação.
 
@@ -66,7 +66,7 @@ flowchart TB
 
 Restaurar o instantâneo LVM parece simples e não foi.
 
-O ambiente de teste do GitLab rodava em Azure clássico, sem armazenamento premium, escolha feita para economizar. Os discos eram de rede e limitados a cerca de 60 Mbps. Copiar o diretório de dados do ambiente de teste para o de produção **levou aproximadamente 18 horas**. Não havia gargalo de rede nem de processador; o gargalo eram os discos, e não existia caminho para mover aquilo para armazenamento mais rápido.
+O ambiente de teste do GitLab rodava em Azure clássico, sem armazenamento premium, escolha feita para economizar. Os discos eram de rede e limitados a cerca de 60 Mbps. Copiar o diretório de dados do ambiente de teste para o de produção **levou aproximadamente 18 horas**. Não havia gargalo de rede nem de processador. O gargalo eram os discos, e não existia caminho para mover aquilo para armazenamento mais rápido.
 
 Em 1º de fevereiro, às 17h00 UTC, o banco foi restaurado ao estado de 31 de janeiro às 17h20. Um detalhe do processo merece registro: como o procedimento de cópia para o ambiente de teste **remove os *webhooks*** (as chamadas automáticas que o sistema dispara para endereços externos) para não disparar chamadas por acidente, a equipe teve de montar um segundo banco a partir do mesmo instantâneo, sem essa remoção, só para recuperá-los. E incrementou todas as sequências do banco em 100.000, para que nenhum identificador já usado fosse reaproveitado.
 

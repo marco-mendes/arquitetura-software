@@ -2,9 +2,9 @@
 
 ## Nuvem como modelo operacional
 
-Nuvem oferece recursos de computação que podem ser provisionados e medidos como serviço. O benefício arquitetural não é um logotipo: é diminuir o tempo e o custo de obter capacidade, desde que a equipe consiga descrevê-la, controlá-la e recuperá-la. Uma máquina virtual criada em minutos ainda exige imagem, acesso, atualização e monitoramento. Um banco gerenciado reduz tarefas de operação do motor, mas não decide retenção, modelo de dados ou quem pode consultar um resultado.
+Nuvem oferece recursos de computação que podem ser provisionados e medidos como serviço. O benefício arquitetural está em diminuir o tempo e o custo de obter capacidade, desde que a equipe consiga descrevê-la, controlá-la e recuperá-la. Uma máquina virtual criada em minutos ainda exige imagem, acesso, atualização e monitoramento. Um banco gerenciado reduz tarefas de operação do motor, mas não decide retenção, modelo de dados ou quem pode consultar um resultado.
 
-Em **on-premise**, a organização mantém a infraestrutura em instalações próprias ou sob contrato dedicado e assume, em maior grau, espaço, hardware, capacidade e operação. Isso pode ser a decisão adequada para uma restrição de dados ou latência, mas não elimina automação, observabilidade ou recuperação. Em **IaaS** (Infrastructure as a Service), a organização consome computação, rede e armazenamento virtualizados; normalmente administra sistema operacional, runtime, aplicação e dados. Em **PaaS** (Platform as a Service), o provedor também opera um runtime ou plataforma de entrega e a equipe concentra-se no código, configuração e dados. Em **SaaS** (Software as a Service), o produto pronto é consumido por configuração e integração. Uma ferramenta de agenda pode ser SaaS para o hospital, enquanto sua própria API roda on-premise, em IaaS ou PaaS. Os modelos podem coexistir na mesma solução.
+Em **on-premise**, a organização mantém a infraestrutura em instalações próprias ou sob contrato dedicado e assume, em maior grau, espaço, hardware, capacidade e operação. Isso pode ser a decisão adequada para uma restrição de dados ou latência, mas não elimina automação, observabilidade ou recuperação. Em **IaaS** (Infrastructure as a Service), a organização consome computação, rede e armazenamento virtualizados. Normalmente administra sistema operacional, runtime, aplicação e dados. Em **PaaS** (Platform as a Service), o provedor também opera um runtime ou plataforma de entrega e a equipe concentra-se no código, configuração e dados. Em **SaaS** (Software as a Service), o produto pronto é consumido por configuração e integração. Uma ferramenta de agenda pode ser SaaS para o hospital, enquanto sua própria API roda on-premise, em IaaS ou PaaS. Os modelos podem coexistir na mesma solução.
 
 | Camada | IaaS | PaaS | SaaS | Decisão que continua interna |
 | --- | --- | --- | --- | --- |
@@ -13,15 +13,15 @@ Em **on-premise**, a organização mantém a infraestrutura em instalações pr�
 | Aplicação e configuração | equipe | equipe | configuração do cliente | contrato, testes e acesso |
 | Dados e classificação | equipe | equipe | equipe usuária | finalidade, retenção e autorização |
 
-Esta tabela é uma simplificação intencional: contratos variam. **Responsabilidade compartilhada** significa ler limites concretos. O provedor pode responder por uma zona física; a organização responde por credenciais, configuração pública acidental, dados enviados ao SaaS e requisitos de continuidade. Delegar uma tarefa não elimina a obrigação de verificar que ela é executada.
+Esta tabela é uma simplificação intencional: contratos variam. **Responsabilidade compartilhada** significa ler limites concretos. O provedor pode responder por uma zona física. A organização responde por credenciais, configuração pública acidental, dados enviados ao SaaS e requisitos de continuidade. Delegar uma tarefa não elimina a obrigação de verificar que ela é executada.
 
 ## Região, zona e fronteiras de falha
 
-Uma **região** é uma área geográfica ou administrativa onde um provedor oferece recursos; uma **zona** é uma unidade de isolamento dentro dela. Os nomes e garantias dependem do provedor, portanto não se deve inferir que “duas zonas” resolvem qualquer indisponibilidade. Separar réplicas entre zonas pode reduzir impacto de uma falha local, mas banco, fila, DNS, identidade e operação de deploy continuam sendo dependências a analisar.
+Uma **região** é uma área geográfica ou administrativa onde um provedor oferece recursos. Uma **zona** é uma unidade de isolamento dentro dela. Os nomes e garantias dependem do provedor, portanto não se deve inferir que “duas zonas” resolvem qualquer indisponibilidade. Separar réplicas entre zonas pode reduzir impacto de uma falha local, mas banco, fila, DNS, identidade e operação de deploy continuam sendo dependências a analisar.
 
-Para o hospital, região envolve latência, residência de dados, contratos e caminho de recuperação. Zona envolve domínio de falha. Uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó. Um plano honesto declara o cenário: duas réplicas em nós distintos, com anti-affinity se necessário; dados replicados com recuperação testada; e procedimentos para indisponibilidade regional. A arquitetura não deveria esconder essas condições atrás de “multi-AZ”.
+Para o hospital, região envolve latência, residência de dados, contratos e caminho de recuperação. Zona envolve domínio de falha. Uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó. Um plano honesto declara o cenário. Duas réplicas em nós distintos, com anti-affinity se necessário. Dados replicados com recuperação testada. Procedimentos escritos para indisponibilidade regional. A arquitetura não deveria esconder essas condições atrás de “multi-AZ”.
 
-**Texto alternativo:** uma região contém duas zonas; cada zona recebe uma réplica, enquanto os dados mantêm uma política de recuperação própria.
+**Texto alternativo:** uma região contém duas zonas. Cada zona recebe uma réplica, enquanto os dados mantêm uma política de recuperação própria.
 
 *Figura 6 — Réplicas entre domínios de falha e dados com política independente. Fonte: curso.*
 
@@ -35,7 +35,7 @@ flowchart TB
     DB --- N2
 ```
 
-**Leitura textual da figura:** uma região contém zonas. Colocar réplicas em zonas diferentes reduz um domínio de falha para a camada de execução, mas o armazenamento tem política e testes próprios; o desenho não presume que ele já seja resiliente.
+**Leitura textual da figura:** uma região contém zonas. Colocar réplicas em zonas diferentes reduz um domínio de falha para a camada de execução, mas o armazenamento tem política e testes próprios. O desenho não presume que ele já seja resiliente.
 
 ## Contêiner, imagem e orquestração
 
@@ -43,11 +43,11 @@ flowchart TB
 
 *Figura 7 — Estado desejado e recuperação de uma API em cluster. Fonte: curso.*
 
-**Leitura textual da figura:** o cluster local mantém duas réplicas da API hospitalar. A verificação de readiness decide quando uma réplica pode receber tráfego; a de liveness permite reiniciar um processo travado. Durante uma atualização gradual, uma nova versão substitui réplicas progressivamente; se a evidência indicar falha, o rollback retorna à versão anterior. Configuração e imagem versionada dão contexto a esse estado desejado.
+**Leitura textual da figura:** o cluster local mantém duas réplicas da API hospitalar. A verificação de readiness decide quando uma réplica pode receber tráfego. A de liveness permite reiniciar um processo travado. Durante uma atualização gradual, uma nova versão substitui réplicas progressivamente, e o rollback retorna à versão anterior quando a evidência indica falha. Configuração e imagem versionada dão contexto a esse estado desejado.
 
-Uma **imagem** de contêiner empacota filesystem, dependências e metadados imutáveis identificados por tag ou digest. Um **contêiner** é uma execução dessa imagem, isolada em processos e recursos do host; ele não é uma máquina virtual completa e compartilha o kernel do host. Docker é uma ferramenta comum para construir e executar imagens. Portabilidade significa que a imagem reduz diferenças de empacotamento, não que elimina diferença de CPU, política de rede, permissões ou serviço externo.
+Uma **imagem** de contêiner empacota filesystem, dependências e metadados imutáveis identificados por tag ou digest. Um **contêiner** é uma execução dessa imagem, isolada em processos e recursos do host. Ele não é uma máquina virtual completa e compartilha o kernel do host. Docker é uma ferramenta comum para construir e executar imagens. Portabilidade significa que a imagem reduz diferenças de empacotamento. Diferença de CPU, política de rede, permissões e serviço externo continuam por conta de quem implanta.
 
-**Orquestração** coordena muitas execuções: agenda Pods, mantém número desejado de réplicas, expõe rede, faz atualizações e tenta recuperar processos. Kubernetes declara o estado desejado; seus controladores trabalham para aproximar o estado atual. Um Deployment cria ReplicaSets e permite atualização gradual; um Service oferece um nome estável e seleciona Pods por rótulo. O orquestrador pode reiniciar um processo, mas não corrige uma regra de negócio nem descobre por conta própria uma imagem inadequada.
+**Orquestração** coordena muitas execuções: agenda Pods, mantém número desejado de réplicas, expõe rede, faz atualizações e tenta recuperar processos. Kubernetes declara o estado desejado, e seus controladores trabalham para aproximar o estado atual. Um Deployment cria ReplicaSets e permite atualização gradual. Um Service oferece um nome estável e seleciona Pods por rótulo. O orquestrador pode reiniciar um processo, mas não corrige uma regra de negócio nem descobre por conta própria uma imagem inadequada.
 
 Readiness pergunta “esta instância deve receber tráfego agora?”. Liveness pergunta “o processo continua vivo o bastante para ser reiniciado se travar?”. Na API do laboratório, `/health/ready` e `/health/live` são separados para preservar essa semântica. Não use uma liveness que dependa de banco ou serviço remoto: uma falha compartilhada poderia reiniciar todos os Pods justamente quando a dependência precisa estabilizar.
 
