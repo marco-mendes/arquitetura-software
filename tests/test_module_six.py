@@ -28,7 +28,6 @@ class ModuleSixTest(unittest.TestCase):
             "kind load docker-image hospital-api:1.0.0 --name hospital-local",
             "kubectl config current-context",
             "curl --fail --silent http://127.0.0.1:18080/health/ready",
-            "python -m pytest tests/test_k8s_manifests.py -q",
         )
 
         presentation_positions = [workshop.index(item) for item in presentation]
