@@ -1,5 +1,27 @@
 # Exemplo arquitetural: elegibilidade implantada como capacidade
 
+## Uma arquitetura de referência em nuvem
+
+Antes de olhar a fatia hospitalar, vale ter à vista um desenho completo, com as peças que uma plataforma em nuvem costuma reunir. A figura abaixo é o modelo de referência usado na disciplina.
+
+![Plataforma de computação em nuvem com camada de acessibilidade, microgateways mobile e web, API do plano de controle, microsserviços de integração, banco de dados em nuvem, LMS virtualizado e serviços SaaS externos.](https://github.com/user-attachments/assets/00237923-6329-4b53-bdc2-03a135c8a47c)
+
+*Figura 15 — Modelo de referência de uma plataforma em nuvem orientada a microsserviços. Fonte: curso.*
+
+**Leitura textual da figura:** um cliente móvel e um cliente web chegam, de fora, a uma plataforma de computação em nuvem delimitada por uma borda tracejada. A primeira peça interna é o software de acessibilidade, rotulado como Ingress Controller, Firewall ou Proxy, que recebe os dois clientes. Dele saem dois caminhos, um para a API do Microgateway Mobile e outro para a API do Microgateway Web. Cada microgateway está dentro de uma caixa marcada como conjunto de escala. À esquerda, a API do Plano de Controle fica em seu próprio conjunto de escalabilidade e aponta para o microgateway Mobile. Abaixo dos microgateways, dois microsserviços de integração, cada um em seu conjunto de escala, ligam-se aos gateways e, mais abaixo, a um banco de dados em nuvem, a dois microsserviços especializados e a um LMS executado em máquina virtual. À direita, fora da borda da plataforma, três nuvens representam serviços de terceiros: videoconferência, cobrança e CRM, alcançados a partir de um dos microsserviços de integração.
+
+A camada de entrada concentra segurança e roteamento do tráfego externo. Ela aparece com três nomes porque três tecnologias diferentes ocupam esse lugar conforme o contexto. Um **Ingress Controller** age como balanceador do tráfego que entra num cluster Kubernetes e centraliza regras de roteamento, TLS e autorização dos serviços expostos. Um **firewall** monitora e controla o tráfego de entrada e de saída por regras declaradas, barrando o que não foi autorizado. Um **proxy** intermedeia clientes e servidores, servindo para filtragem, cache e anonimato, e na forma de proxy reverso distribui requisições entre vários servidores de retaguarda.
+
+Depois vêm os **microgateways**, um por canal. Um microgateway é uma versão reduzida do gateway de API tradicional, projetada para operar perto dos microsserviços. Ele cuida de autenticação, autorização, registro de log e controle de tráfego em granularidade fina, o que descentraliza a gestão de APIs em vez de concentrá-la numa peça única. Separar o canal mobile do canal web permite escalar e versionar cada um conforme sua própria demanda.
+
+A **API do plano de controle** é dedicada ao gerenciamento do fluxo de chamadas, e não ao atendimento do usuário final. Ela carrega políticas de segurança, controle de taxa de requisição e regras de escala. Mantê-la separada evita que uma mudança de política exija implantar de novo um serviço de negócio.
+
+Os **microsserviços de integração** conectam APIs internas e externas, e são eles que alcançam os serviços de terceiros à direita do desenho. Os demais microsserviços atendem funcionalidades específicas. Cada um é replicado de forma independente, que é o significado prático das caixas de conjunto de escala espalhadas pelo desenho: a unidade de escala é o serviço, e não a plataforma inteira.
+
+O **banco de dados em nuvem** é gerenciado pelo provedor e também é replicado, o que distribui carga de leitura e escrita. O **LMS** executa numa máquina virtual dentro do mesmo conjunto de escala, exemplo de carga legada que convive com microsserviços sem ter sido reescrita. Já os serviços de terceiros, entre eles videoconferência, cobrança e CRM, são consumidos como SaaS, com a responsabilidade sobre dados e continuidade recaindo sobre quem integra.
+
+O exemplo hospitalar a seguir é uma fatia desse modelo. Ele materializa o caminho que vai do cliente ao microsserviço, com Service e réplicas, e deixa de fora plano de controle, integrações externas e banco gerenciado, que continuam sendo decisões a tomar em produção.
+
 ## Decisão e fronteira
 
 A plataforma hospitalar recebe uma solicitação de elegibilidade e devolve um protocolo. O percurso anterior da disciplina já separou API, serviço, governança e eventos. Aqui a mudança é operacional: a capacidade HTTP é empacotada na imagem `hospital-api:1.0.0` e declarada em Kubernetes como `Deployment` no namespace `hospital`. O namespace é uma fronteira organizacional local, não um mecanismo de segurança completo. Ele permite nomear, consultar e limpar os recursos da oficina sem atingir outros namespaces.

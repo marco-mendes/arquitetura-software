@@ -4,7 +4,7 @@
 
 Nuvem é uma escolha de obtenção e operação de capacidade. IaaS entrega infraestrutura virtualizada. PaaS entrega uma plataforma operada. SaaS entrega software configurável. A responsabilidade compartilhada não deixa lacuna: identidade, classificação de dados, configuração, disponibilidade desejada e continuidade precisam de owner. Região e zona ajudam a modelar localização e domínio de falha, mas uma réplica extra no mesmo nó não prova tolerância a falha regional.
 
-Contêiner empacota uma execução. Docker constrói e executa imagens. Kubernetes orquestra estado desejado, rede e réplicas. Stateless facilita substituir réplicas porque o estado relevante vive em recurso externo com política explícita. Stateful exige identidade, persistência, ordem, backup e recuperação próprios. Os doze fatores orientam configuração, processos, dependências, logs e ciclo de entrega. Eles não substituem segurança nem decisões de domínio.
+Contêiner empacota uma execução. A máquina virtual carrega um sistema operacional por instância sobre um hipervisor, enquanto o contêiner compartilha um único sistema operacional sob o motor de contêineres, e daí vêm leveza, inicialização rápida e replicação barata. Docker constrói e executa imagens. Kubernetes orquestra estado desejado, rede e réplicas, e o Docker Swarm resolve o mesmo problema com custo operacional menor e extensibilidade menor. Stateless facilita substituir réplicas porque o estado relevante vive em recurso externo com política explícita. Stateful exige identidade, persistência, ordem, backup e recuperação próprios. Os doze fatores orientam configuração, processos, dependências, logs e ciclo de entrega. Eles não substituem segurança nem decisões de domínio.
 
 Elasticidade só existe quando métrica, capacidade e limites suportam ajuste. Requests e limits tornam pressupostos de recurso auditáveis. O HPA é política dependente de métricas, sem garantia de desempenho. Resiliência combina isolamento de falha, probes, rollout, observação e recuperação. Readiness retira instância do tráfego. Liveness detecta processo travado. Rollback restaura uma revisão, mas não apaga efeitos irreversíveis nem substitui migração compatível.
 
@@ -19,6 +19,11 @@ Custo inclui recursos, tráfego, retenção, observabilidade e operação. Lock-
 - [kind: quick start](https://kind.sigs.k8s.io/docs/user/quick-start/) descreve clusters Kubernetes locais e carregamento de imagens.
 - [Docker: imagens](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/) explica a distinção entre imagem e contêiner.
 - [The Twelve-Factor App](https://12factor.net/) apresenta as doze práticas para aplicações entregues como serviço.
+- [Docker: modo Swarm](https://docs.docker.com/engine/swarm/) descreve nós gerenciadores, nós trabalhadores e serviços replicados.
+- [Kubernetes: componentes do cluster](https://kubernetes.io/docs/concepts/overview/components/) detalha plano de controle, kubelet e kube-proxy.
+- [Minikube: começar](https://minikube.sigs.k8s.io/docs/start/) apresenta a alternativa local ao kind.
+- [AWS: visão geral de produtos](https://aws.amazon.com/products/) mantém o catálogo atualizado dos serviços citados no estudo de caso.
+- [Cloudcraft](https://www.cloudcraft.co/) desenha arquiteturas de nuvem no nível de detalhe pedido no exercício de diagramação.
 
 ## Perguntas de saída
 

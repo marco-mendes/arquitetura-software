@@ -409,3 +409,104 @@ Entregue texto ou capturas sem dados pessoais contendo:
 - confirmação da remoção do cluster.
 
 Acrescente duas conclusões: uma garantia obtida e um limite que o laboratório não prova.
+
+## Rotas complementares, fora da entrega
+
+As três sequências abaixo não fazem parte da evidência a entregar. Elas existem porque a prática do módulo usa um caminho só, kind mais kubectl, e convém conhecer o que existe antes e ao lado dele. Execute-as depois da entrega, se quiser, e nunca contra um cluster compartilhado.
+
+### Imagens e contêineres sem orquestrador
+
+Antes de qualquer cluster, o Docker sozinho já mostra a diferença entre imagem e contêiner. A imagem é o pacote imutável com sistema de arquivos, dependências, configuração e binários. O contêiner é uma execução dessa imagem, efêmera, que se inicia, para e remove em segundos.
+
+Confirme a instalação e liste o que já existe na máquina.
+
+```sh
+docker --version
+docker images
+```
+
+Baixe uma imagem que ainda não esteja local. O Docker verifica se ela existe na máquina, busca no Docker Hub quando não existe e a guarda para execuções futuras.
+
+```sh
+docker pull mysql:latest
+```
+
+Execute um contêiner a partir dela. O comando cria o contêiner `mysql-container`, define a senha do usuário administrador e mapeia a porta 3306 do contêiner para a máquina.
+
+```sh
+docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=admin -d -p 3306:3306 mysql:latest
+```
+
+A saída é o identificador do contêiner criado. Confirme que ele está em execução e consulte o banco por dentro.
+
+```sh
+docker ps
+docker exec -it mysql-container mysql -uroot -padmin -e "SHOW DATABASES;"
+```
+
+A segunda chamada deve listar `information_schema`, `mysql`, `performance_schema` e `sys`. Remover o contêiner ao final é `docker rm -f mysql-container`.
+
+### Docker Swarm, a orquestração nativa
+
+O Swarm transforma um host Docker em nó gerenciador e permite criar um cluster sem instalar nada além do próprio Docker. A figura do Swarm em [Padrões e decisões](padroes-e-decisoes.md) descreve a repartição entre gerenciadores e trabalhadores.
+
+```sh
+docker swarm init
+docker info | grep Swarm
+```
+
+A saída do segundo comando deve conter `Swarm: active`. O primeiro comando devolve um token de adesão, usado no nó que vai entrar no cluster.
+
+```sh
+docker swarm join --token <TOKEN> <IP_DO_MANAGER>:2377
+docker node ls
+```
+
+Com o cluster de pé, um serviço replicado distribui réplicas entre os nós disponíveis.
+
+```sh
+docker service create --name webserver -p 8080:80 --replicas 3 nginx
+docker service ls
+docker service ps webserver
+curl http://localhost:8080
+```
+
+`docker service ls` mostra a proporção de réplicas ativas, no formato `3/3`. `docker service ps` mostra em qual nó cada réplica está, que é a evidência de distribuição. Para desfazer, execute `docker swarm leave --force` no nó que sai.
+
+### Minikube, um Kubernetes local alternativo
+
+O Minikube resolve o mesmo problema que o kind e usa uma máquina virtual ou um contêiner como nó. A sequência abaixo repete, com outros comandos, o que a oficina fez com kind.
+
+```sh
+minikube start
+kubectl cluster-info
+kubectl create deployment webserver --image=nginx
+kubectl get deployments
+kubectl get pods -o wide
+```
+
+Pods não são alcançáveis de fora por padrão, então um Service precisa expor o Deployment. Anote a porta atribuída na coluna `PORT(S)`.
+
+```sh
+kubectl expose deployment webserver --type=NodePort --port=80
+kubectl get services
+```
+
+O Minikube atribui um endereço próprio ao nó, e a chamada abaixo monta o endereço completo a partir dele e da porta exposta.
+
+```sh
+minikube ip
+curl http://$(minikube ip):$(kubectl get service webserver -o=jsonpath='{.spec.ports[0].nodePort}')
+kubectl port-forward svc/webserver 8080:80 &
+```
+
+Escalar para três réplicas e observar os ReplicaSets fecha a comparação com a reconciliação vista na oficina.
+
+```sh
+kubectl scale deployment webserver --replicas=3
+kubectl get pods -o wide
+kubectl get rs
+minikube delete
+```
+
+O último comando remove o cluster inteiro, com seus Deployments e Services.

@@ -270,3 +270,33 @@ Escreva em texto corrido, uma resposta por item.
 **Evidência esperada**
 
 O arquivo entregue traz o desenho escolhido com duas restrições citadas, o conflito entre estado local e publicação sem interrupção explicado, a alternativa restante avaliada, o comportamento do aviso durante indisponibilidade e a fronteira explícita entre o que é prometido e o que ainda não foi testado.
+
+### Diagramar a arquitetura de referência num provedor
+
+**Objetivo**
+
+Traduzir o modelo de referência de plataforma em nuvem para o portfólio de um provedor concreto, produzindo um diagrama defensável.
+
+**Situação**
+
+O modelo de referência apresentado em [Exemplo arquitetural](exemplo-arquitetural.md) descreve uma plataforma com camada de acessibilidade, microgateways por canal, API de plano de controle, microsserviços de integração, banco gerenciado, uma carga legada em máquina virtual e três serviços de terceiros consumidos como SaaS.
+
+A diretoria pediu uma representação desse modelo na AWS, para discutir custo e responsabilidade com o fornecedor. O catálogo de serviços básicos está em [Estudo de caso](estudo-de-caso.md), organizado por categoria.
+
+A atividade é de desenho. Nada é provisionado no provedor, e nenhum recurso real é criado.
+
+**Seu papel**
+
+Você produz o diagrama e a justificativa que o acompanha. Quem lê vai perguntar por que cada serviço foi escolhido, então a resposta precisa vir junto do desenho.
+
+**O que fazer**
+
+1. Represente o modelo de referência usando serviços do catálogo da AWS. A ferramenta Cloudcraft, apresentada em aula, produz diagramas no nível de detalhe da Figura 16, e qualquer editor de diagramas serve.
+2. Marque no desenho as duas zonas de disponibilidade e o que fica replicado entre elas.
+3. Para cada serviço escolhido, escreva uma linha no formato atributo, princípio e serviço. Exemplo: reduzir operação de runtime, delegar o host da aplicação, AWS Fargate.
+4. Aponte as três peças do modelo de referência que você deixou de fora e explique por quê.
+5. Indique qual escolha do seu desenho seria a mais cara de reverter, e o que precisaria estar documentado hoje para que essa reversão fosse possível.
+
+**Evidência esperada**
+
+O arquivo entregue traz o diagrama, a lista de serviços com atributo e princípio associados a cada um, as peças omitidas com justificativa e a dependência identificada como mais difícil de trocar, acompanhada do que a tornaria reversível.

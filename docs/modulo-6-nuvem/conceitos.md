@@ -6,6 +6,16 @@ Nuvem oferece recursos de computação que podem ser provisionados e medidos com
 
 Em **on-premise**, a organização mantém a infraestrutura em instalações próprias ou sob contrato dedicado e assume, em maior grau, espaço, hardware, capacidade e operação. Isso pode ser a decisão adequada para uma restrição de dados ou latência, mas não elimina automação, observabilidade ou recuperação. Em **IaaS** (Infrastructure as a Service), a organização consome computação, rede e armazenamento virtualizados. Normalmente administra sistema operacional, runtime, aplicação e dados. Em **PaaS** (Platform as a Service), o provedor também opera um runtime ou plataforma de entrega e a equipe concentra-se no código, configuração e dados. Em **SaaS** (Software as a Service), o produto pronto é consumido por configuração e integração. Uma ferramenta de agenda pode ser SaaS para o hospital, enquanto sua própria API roda on-premise, em IaaS ou PaaS. Os modelos podem coexistir na mesma solução.
 
+A maneira mais direta de enxergar a diferença é empilhar as camadas de um sistema e perguntar, para cada uma, quem a opera.
+
+![Pilha de nove camadas, da rede à aplicação, com as faixas de responsabilidade de IaaS, PaaS, SaaS e on-premise marcadas à esquerda e à direita.](https://github.com/user-attachments/assets/5cc37b22-7a21-450d-bddc-4a95e6202a10)
+
+*Figura 11 — Onde termina a responsabilidade do provedor em cada modelo de serviço. Fonte: curso.*
+
+**Leitura textual da figura:** nove camadas aparecem empilhadas, de baixo para cima: rede, armazenamento, servidores, virtualização, sistemas operacionais, middleware, ambiente de execução de aplicações, dados e aplicação. Três colchetes marcam até onde vai a gestão do provedor em cada modelo. A infraestrutura gerida em nuvem cobre as quatro camadas de baixo, da rede à virtualização, que é o alcance de IaaS. A plataforma gerida em nuvem sobe até o ambiente de execução, incorporando sistemas operacionais e middleware, que é o alcance de PaaS. O software gerido em nuvem cobre a pilha inteira, incluindo dados e aplicação, que é o alcance de SaaS. Um quarto colchete, à direita, marca o auto-hospedado, ou on-premise, em que a organização responde por todas as nove camadas.
+
+Os produtos de mercado ajudam a fixar cada faixa. Em IaaS entram Amazon EC2, Google Compute Engine e as máquinas virtuais do Azure. Em PaaS entram Google App Engine, AWS Elastic Beanstalk e Azure App Services. Em SaaS entram Google Workspace, Microsoft 365 e Salesforce. Nomear o produto não classifica a solução, porque o mesmo fornecedor costuma vender ofertas nas três faixas.
+
 | Camada | IaaS | PaaS | SaaS | Decisão que continua interna |
 | --- | --- | --- | --- | --- |
 | Hardware e rede física | provedor | provedor | provedor | critérios de uso e conectividade |
@@ -14,6 +24,18 @@ Em **on-premise**, a organização mantém a infraestrutura em instalações pr�
 | Dados e classificação | equipe | equipe | equipe usuária | finalidade, retenção e autorização |
 
 Esta tabela é uma simplificação intencional: contratos variam. **Responsabilidade compartilhada** significa ler limites concretos. O provedor pode responder por uma zona física. A organização responde por credenciais, configuração pública acidental, dados enviados ao SaaS e requisitos de continuidade. Delegar uma tarefa não elimina a obrigação de verificar que ela é executada.
+
+A mesma pilha, lida pelos atributos que costumam decidir a escolha, mostra por que nenhum modelo domina os demais.
+
+| Característica | IaaS | PaaS | SaaS | On-premise |
+| --- | --- | --- | --- | --- |
+| Gestão pelo usuário | sistema operacional, middleware e aplicações | aplicação e dados | apenas uso do software | a pilha inteira |
+| Flexibilidade | alta | média | baixa | muito alta |
+| Manutenção | média | baixa | nenhuma | alta |
+| Custo inicial | médio | baixo | nenhum | alto |
+| Controle | alto | médio | baixo | total |
+
+A nuvem oferece escala e custo inicial menor com menos manutenção. O on-premise oferece controle e personalização maiores, ao preço de equipe especializada e investimento em data center próprio. Modelos híbridos combinam os dois, e a escolha depende das restrições concretas de dados, latência e capacidade da organização.
 
 ## Região, zona e fronteiras de falha
 
@@ -46,6 +68,20 @@ flowchart TB
 **Leitura textual da figura:** o cluster local mantém duas réplicas da API hospitalar. A verificação de readiness decide quando uma réplica pode receber tráfego. A de liveness permite reiniciar um processo travado. Durante uma atualização gradual, uma nova versão substitui réplicas progressivamente, e o rollback retorna à versão anterior quando a evidência indica falha. Configuração e imagem versionada dão contexto a esse estado desejado.
 
 Uma **imagem** de contêiner empacota filesystem, dependências e metadados imutáveis identificados por tag ou digest. Um **contêiner** é uma execução dessa imagem, isolada em processos e recursos do host. Ele não é uma máquina virtual completa e compartilha o kernel do host. Docker é uma ferramenta comum para construir e executar imagens. Portabilidade significa que a imagem reduz diferenças de empacotamento. Diferença de CPU, política de rede, permissões e serviço externo continuam por conta de quem implanta.
+
+Contêinerização é uma forma leve de virtualização. A comparação com a máquina virtual explica de onde vem essa leveza.
+
+![Duas pilhas lado a lado: implantação baseada em máquinas virtuais, com um sistema operacional por VM sobre um hipervisor, e implantação baseada em contêineres, com um único sistema operacional sob o motor de contêineres.](https://github.com/user-attachments/assets/7603b818-4a70-42cb-8f24-73926590f0c0)
+
+*Figura 12 — O que cada contêiner deixa de carregar em relação a uma máquina virtual. Fonte: curso.*
+
+**Leitura textual da figura:** à esquerda, a implantação baseada em máquinas virtuais mostra três VMs sobre uma camada de virtualização com hipervisor, que por sua vez está sobre a infraestrutura de servidores, armazenamento e rede. Cada VM carrega sua própria aplicação, suas dependências de execução e um sistema operacional completo. À direita, a implantação baseada em contêineres mostra três contêineres sobre um motor de contêineres, um único sistema operacional e a mesma infraestrutura. Cada contêiner carrega aplicação e dependências de execução, sem sistema operacional próprio. A diferença entre as duas pilhas está nas três cópias de sistema operacional que desaparecem à direita.
+
+O hipervisor aloca recursos de hardware para cada instância e entrega isolamento forte, ao custo de memória e processamento. O motor de contêineres, como o Docker, executa processos isolados sobre um kernel compartilhado. Daí vêm as propriedades que levam a arquitetura a preferir contêineres em muitos cenários: consumo menor de recursos, inicialização em segundos, replicação barata e execução de várias aplicações na mesma máquina sem interferência. A portabilidade entra na mesma lista, com a ressalva já registrada acima.
+
+Essas propriedades explicam onde a tecnologia pegou. No desenvolvimento, porque replicar um ambiente de teste vira baixar uma imagem. Na nuvem, porque microsserviços precisam de unidades de implantação independentes e substituíveis. Na computação de borda, porque o recurso disponível no dispositivo raramente comporta uma VM.
+
+Vale separar duas ferramentas que aparecem juntas e resolvem problemas diferentes. Docker constrói, envia e executa contêineres individuais. Kubernetes orquestra muitos contêineres em um ambiente distribuído, cuidando de escala e disponibilidade em produção. Usar Docker sem orquestrador é comum em desenvolvimento. Usar Kubernetes sem entender a imagem que ele executa costuma terminar em incidente.
 
 **Orquestração** coordena muitas execuções: agenda Pods, mantém número desejado de réplicas, expõe rede, faz atualizações e tenta recuperar processos. Kubernetes declara o estado desejado, e seus controladores trabalham para aproximar o estado atual. Um Deployment cria ReplicaSets e permite atualização gradual. Um Service oferece um nome estável e seleciona Pods por rótulo. O orquestrador pode reiniciar um processo, mas não corrige uma regra de negócio nem descobre por conta própria uma imagem inadequada.
 

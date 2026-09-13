@@ -35,6 +35,32 @@ Resiliência é continuar ou recuperar serviço dentro de um objetivo explícito
 
 Um **rollback** retorna o Deployment à revisão anterior. Ele é útil se existe uma versão anterior saudável, mas não desfaz efeitos irreversíveis em banco, mensagens ou integrações. A migração de dados deve ter compatibilidade de ida e volta ou procedimento separado. Na oficina, a falha é segura: muda-se somente a imagem para uma tag propositalmente ausente. Os novos Pods ficam indisponíveis, e `kubectl rollout undo` restaura a imagem local conhecida. Não se altera dado hospitalar.
 
+## Orquestradores: Swarm e Kubernetes
+
+Orquestrar contêineres é automatizar cinco responsabilidades que, feitas à mão, não sobrevivem à escala. Gerenciar muitos contêineres distribuídos entre máquinas. Aumentar ou reduzir instâncias conforme a demanda. Distribuir carga entre os serviços. Monitorar e reiniciar o que falhou. Repartir recursos entre os nós de um cluster. Um orquestrador é a peça que transforma essas cinco em configuração declarada.
+
+Duas opções aparecem com frequência, e elas não têm o mesmo peso operacional.
+
+O **Docker Swarm** é a orquestração nativa do Docker e usa o mesmo vocabulário de quem já constrói imagens.
+
+![Cluster Docker Swarm com três nós gerenciadores num grupo de consenso Raft sobre um repositório de estado distribuído, e sete nós trabalhadores numa rede gossip.](https://github.com/user-attachments/assets/8cc1d428-9e49-4755-8765-ff5c1dc0f869)
+
+*Figura 13 — Como o Swarm reparte decisão e execução entre nós. Fonte: Docker.*
+
+**Leitura textual da figura:** na parte de cima, uma área tracejada rotulada como grupo de consenso Raft contém três nós gerenciadores, ligados entre si, e um repositório interno de estado distribuído que os três compartilham. Na parte de baixo, outra área tracejada rotulada como rede gossip contém sete nós trabalhadores. Setas de mão dupla ligam cada trabalhador a gerenciadores diferentes, sem que um trabalhador dependa de um gerenciador específico. A decisão sobre o estado desejado vive no grupo de consenso, e a execução vive nos trabalhadores.
+
+Na prática, `docker swarm init` transforma um host em nó gerenciador e devolve um token de adesão. `docker swarm join` liga trabalhadores ao cluster, e `docker node ls` lista os nós com seu papel. Um serviço replicado nasce com `docker service create --name webserver -p 8080:80 --replicas 3 nginx`, e `docker service ps webserver` mostra em qual nó cada réplica está. Sair do cluster é `docker swarm leave --force`.
+
+O **Kubernetes** paga um custo operacional maior e entrega um modelo de extensão bem mais amplo.
+
+![Cluster Kubernetes com o plano de controle contendo servidor de API, etcd, escalonador e gerenciadores de controladores, e três nós de trabalho com kubelet e kube-proxy.](https://github.com/user-attachments/assets/39f5105e-6892-4248-8ef6-106af52f6e71)
+
+*Figura 14 — Os componentes que sustentam a reconciliação em um cluster Kubernetes. Fonte: Kubernetes.*
+
+**Leitura textual da figura:** uma área tracejada à esquerda delimita o plano de controle e contém o servidor de API ao centro, o etcd como repositório de persistência, o escalonador, o gerenciador de controladores e o gerenciador de controladores de nuvem, este último ligado por uma seta à API do provedor de nuvem. À direita, três nós de trabalho aparecem lado a lado, cada um com um kubelet e um kube-proxy. Setas partem dos nós em direção ao servidor de API, que concentra as leituras e escritas do estado. Nenhum componente conversa com o etcd diretamente, exceto o servidor de API.
+
+A escolha entre os dois segue o mesmo critério das demais decisões deste módulo. Para poucas cargas e uma equipe pequena, o Swarm entrega replicação e balanceamento com um custo de aprendizado baixo. Para muitas cargas que precisam de políticas comuns, extensões e controle fino de rollout, o Kubernetes justifica a operação. A oficina deste módulo usa kind, que é Kubernetes local e descartável, justamente para tornar a reconciliação observável sem contratar um cluster gerenciado.
+
 ## Custo e lock-in
 
 Custo inclui recursos ociosos, armazenamento, tráfego, observabilidade, suporte, licenças, operação e teste de continuidade. “Pague pelo uso” não significa custo baixo quando um recurso nunca reduz, logs crescem sem retenção ou uma saída de dados é frequente. Etiquetas de custo, orçamento, limite de ambiente e decisão de desligamento são arquitetura. Um SLO mais exigente pode justificar redundância. A justificativa deve mostrar valor e custo marginal.
