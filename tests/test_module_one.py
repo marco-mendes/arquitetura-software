@@ -255,10 +255,12 @@ class ModuleOneTest(unittest.TestCase):
 
     def test_workshop_experiments_declare_setup_and_keep_shell_commands_copyable(self):
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        # A oficina parte de uma pasta vazia. O artefato de cada experimento é a
+        # pasta que o aluno cria, e não um caminho dentro de um clone do repositório.
         expected_artifacts = (
-            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas",
-            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters",
-            "<raiz-do-clone>/codigos/cap01-estilos-fundamentais/1.4-microkernel",
+            "oficina-estilos/camadas",
+            "oficina-estilos/pipes-and-filters",
+            "oficina-estilos/microkernel",
         )
 
         experiments = re.split(r"(?m)^## Experimento [1-3] — ", workshop)[1:]
@@ -271,7 +273,7 @@ class ModuleOneTest(unittest.TestCase):
                 rf"\*\*Artefato:\*\*\n\n`{re.escape(artifact)}`",
             )
             self.assertIn("**Pré-condição:**", before_table_or_command)
-            self.assertIn("terminal aberto na raiz do clone", before_table_or_command.casefold())
+            self.assertIn("terminal aberto na pasta da oficina", before_table_or_command.casefold())
             self.assertIn("Python 3.10+ confirmado", before_table_or_command)
 
         shell_blocks = re.findall(r"```(?:powershell|bash)\n(.*?)```", workshop, re.DOTALL)
@@ -289,7 +291,9 @@ class ModuleOneTest(unittest.TestCase):
         ):
             self.assertEqual(3, workshop.count(command), command)
 
-    def test_workshop_links_each_style_to_real_chapter_one_source_files(self):
+    def test_workshop_delivers_every_file_with_a_canonical_link(self):
+        """Cada arquivo aparece inteiro na página e aponta para a cópia do repositório."""
+
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
         for filename in (
             "apresentacao.py", "servicos.py", "dominio.py", "repositorios.py",
@@ -297,7 +301,13 @@ class ModuleOneTest(unittest.TestCase):
             "nucleo.py", "plugins/impostos_sp.py", "plugins/frete.py",
         ):
             self.assertIn(filename, workshop)
-        self.assertGreaterEqual(workshop.count("github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais"), 10)
+        self.assertGreaterEqual(
+            workshop.count("github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-1"), 10
+        )
+        # O capítulo 1 segue citado como leitura complementar.
+        self.assertGreaterEqual(
+            workshop.count("github.com/marco-mendes/arquitetura-software/blob/main/codigos/cap01-estilos-fundamentais"), 3
+        )
 
     def test_diagrams_have_textual_readings(self):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in MODULE.glob("*.md"))

@@ -6,6 +6,12 @@ A aplicação é uma API mínima de elegibilidade, escrita para caber em trinta 
 
 Todos os nomes e portas são fixos ao longo da página: pasta `oficina-nuvem`, imagem `hospital-api:1.0.0`, cluster `hospital-local`, namespace `hospital`, Deployment e Service `hospital-api`, porta do contêiner `8000` e acesso local em `http://127.0.0.1:18080`. Não aponte estes comandos para um cluster compartilhado.
 
+## Uso seguro dos arquivos
+
+Todos os arquivos desta oficina são seus, criados numa pasta nova. Não há material do curso a preservar, e para desfazer uma alteração basta copiar o arquivo de novo desta página.
+
+O que exige cuidado é o que não é seu. O cluster criado aqui é descartável e local, e os comandos desta página nunca devem ser apontados para um contexto compartilhado. Antes de aplicar qualquer coisa, confirme que o contexto ativo é `kind-hospital-local`, o que os Pré-requisitos adiante mostram como verificar. Em máquina compartilhada, não remova imagens, contêineres ou clusters que você não criou.
+
 ## Ferramenta
 
 Quatro peças entram aqui, e vale saber o que cada uma faz antes de instalar qualquer coisa.
