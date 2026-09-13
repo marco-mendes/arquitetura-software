@@ -221,6 +221,46 @@ Escreva em texto corrido, uma resposta por item.
 
 O parecer traz critérios escritos antes da escolha, os três modelos julgados com a divisão de responsabilidade explicitada, a exigência de residência tratada modelo a modelo, o custo de saída estimado e o sinal de revisão observável.
 
+### Escolher o R de cada aplicação do portfólio
+
+**Objetivo**
+
+Aplicar o vocabulário dos seis Rs a três aplicações reais de um mesmo portfólio, escolhendo uma estratégia por aplicação e defendendo a escolha com fatos do caso.
+
+**Situação**
+
+O contrato do data center do hospital vence em dezoito meses e não será renovado. A diretoria pediu uma decisão por aplicação, e três delas chegaram primeiro. As descrições de [Padrões e decisões](padroes-e-decisoes.md) sobre rehost, replatform, refactor, rebuild, retire e retain bastam para decidir.
+
+A primeira é o **sistema de faturamento**. Ele roda em dois servidores físicos, foi escrito há dezoito anos numa linguagem que ninguém da equipe atual domina, e não recebe mudança funcional há quatro anos. Ele funciona. A auditoria externa exige que o histórico permaneça consultável por mais dois anos, e nenhum outro sistema sabe produzir os relatórios que ele produz.
+
+A segunda é o **portal de agendamento**. É um monolito Java que atende bem no dia a dia, mas satura no pico das manhãs de segunda-feira e derruba requisições. A publicação de uma versão nova leva seis horas e acontece de madrugada, uma vez por mês. A equipe conhece o código, e o banco relacional que ele usa é padrão de mercado.
+
+A terceira é o **controle de estoque da farmácia**. Quatro pessoas o usam. O ERP corporativo implantado no ano passado já cobre a entrada de notas, a contagem e o inventário, que são três das cinco funções do sistema antigo. As duas funções restantes são relatórios que a farmácia imprime uma vez por mês.
+
+Três restrições valem para as três decisões:
+
+1. O data center precisa ser esvaziado em dezoito meses.
+2. A equipe tem cinco pessoas e opera as três aplicações ao mesmo tempo.
+3. Nenhuma das três pode ficar indisponível durante horário de atendimento.
+
+**Seu papel**
+
+Você apresenta a recomendação à diretoria. Quem lê vai comparar as três decisões entre si, então a justificativa de cada uma precisa citar os fatos que a sustentam.
+
+**O que fazer**
+
+Escreva em texto corrido, uma resposta por item.
+
+1. Escolha um R para o sistema de faturamento e defenda a escolha citando dois fatos do caso. Diga também qual R você quase escolheu e o que o desqualificou.
+2. Escolha um R para o portal de agendamento. Explique por que replatform e refactor levam a resultados diferentes para o problema do pico de segunda-feira, e diga qual dos dois resolve o problema da publicação de seis horas.
+3. Escolha um R para o controle de estoque da farmácia e descreva o que precisa acontecer com as duas funções que o ERP ainda não cobre antes que a escolha seja executável.
+4. As três decisões competem pela mesma equipe de cinco pessoas. Ordene as três aplicações por ordem de execução e justifique a ordem pela restrição de dezoito meses.
+5. Para a aplicação que você colocou em primeiro lugar, escreva a evidência que, seis meses depois, confirmaria que o R escolhido foi o certo, e a evidência que indicaria que foi o errado.
+
+**Evidência esperada**
+
+O arquivo entregue traz um R por aplicação, cada um com dois fatos do caso citados e a alternativa descartada nomeada, a distinção entre replatform e refactor aplicada ao portal, a condição de saída do sistema da farmácia, a ordem de execução justificada pelo prazo e o par de evidências que confirmaria ou refutaria a primeira decisão.
+
 ## Criar
 ### Propor a evolução resiliente da elegibilidade
 
