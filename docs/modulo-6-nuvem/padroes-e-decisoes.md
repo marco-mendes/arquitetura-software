@@ -10,22 +10,95 @@ Uma aplicação **stateful** conserva identidade ou estado ligado à réplica: b
 
 Os **doze fatores** são um conjunto de heurísticas para aplicações entregues como serviço, publicado por Adam Wiggins em 2011 a partir da operação da plataforma Heroku. O texto de referência está em [12factor.net](https://12factor.net/pt_br/), com tradução para português, e cada fator tem sua própria página. A lista abaixo traz o nome do fator, o que ele exige e a consequência prática de ignorá-lo num ambiente de nuvem.
 
-| Fator | O que exige | Consequência de ignorar |
+| Fator | O que fazer no código | Sintoma de que foi violado |
 | --- | --- | --- |
-| [1. Base de código](https://12factor.net/pt_br/codebase) | uma base de código versionada, com muitos deploys | não se sabe qual código está em produção |
-| [2. Dependências](https://12factor.net/pt_br/dependencies) | declarar e isolar dependências explicitamente | a aplicação funciona numa máquina e falha em outra |
-| [3. Configurações](https://12factor.net/pt_br/config) | guardar configuração no ambiente, fora do código | promover uma versão entre ambientes exige recompilar |
-| [4. Serviços de apoio](https://12factor.net/pt_br/backing-services) | tratar banco, fila e cache como recursos anexados | trocar uma dependência vira mudança de código |
-| [5. Build, release, run](https://12factor.net/pt_br/build-release-run) | separar estritamente as três etapas | não há artefato para retornar num rollback |
-| [6. Processos](https://12factor.net/pt_br/processes) | executar a aplicação como processos sem estado | substituir uma réplica perde a sessão do usuário |
-| [7. Vínculo de portas](https://12factor.net/pt_br/port-binding) | exportar o serviço por vínculo de porta | a aplicação depende de um servidor externo já instalado |
-| [8. Concorrência](https://12factor.net/pt_br/concurrency) | escalar horizontalmente pelo modelo de processos | crescer exige máquina maior em vez de mais réplicas |
-| [9. Descartabilidade](https://12factor.net/pt_br/disposability) | iniciar rápido e desligar de forma limpa | cada implantação derruba requisições em andamento |
-| [10. Paridade dev/prod](https://12factor.net/pt_br/dev-prod-parity) | manter ambientes o mais parecidos possível | o erro só aparece em produção |
-| [11. Logs](https://12factor.net/pt_br/logs) | tratar logs como fluxo de eventos | o diagnóstico morre junto com o contêiner |
-| [12. Processos administrativos](https://12factor.net/pt_br/admin-processes) | rodar tarefas administrativas como processos efêmeros | a migração de schema roda de dentro de uma réplica viva |
+| [1. Base de código](https://12factor.net/pt_br/codebase) | um repositório por aplicação, e o mesmo commit segue para homologação e produção | pastas separadas por ambiente no repositório, ou um `if ambiente == "prod"` no meio da regra |
+| [2. Dependências](https://12factor.net/pt_br/dependencies) | declarar versões em `pom.xml`, `requirements.txt` ou `package.json` e isolar o ambiente | funciona numa máquina porque a biblioteca já estava instalada no sistema operacional dela |
+| [3. Configurações](https://12factor.net/pt_br/config) | ler endereço, credencial e chave de variável de ambiente | um `application-prod.properties` versionado com a senha do banco |
+| [4. Serviços de apoio](https://12factor.net/pt_br/backing-services) | tratar banco, fila e cache como recurso anexado, trocável pela configuração | `localhost:5432` escrito no código, ou um cliente instanciado com endereço fixo |
+| [5. Build, release, run](https://12factor.net/pt_br/build-release-run) | gerar artefato imutável com tag ou digest, e formar o release como artefato mais configuração | `git pull` seguido de recompilação dentro do servidor de produção |
+| [6. Processos](https://12factor.net/pt_br/processes) | guardar sessão em token assinado ou em cache compartilhado | `HttpSession` com carrinho em memória, sustentado por sessão fixa no balanceador |
+| [7. Vínculo de portas](https://12factor.net/pt_br/port-binding) | a aplicação sobe o próprio servidor HTTP e escuta numa porta | um WAR que só roda se houver um servidor de aplicação instalado e configurado antes |
+| [8. Concorrência](https://12factor.net/pt_br/concurrency) | crescer subindo mais processos iguais | aumentar `-Xmx` ou o tamanho da máquina toda vez que a fila cresce |
+| [9. Descartabilidade](https://12factor.net/pt_br/disposability) | tratar `SIGTERM`, terminar o que está em andamento e devolver a mensagem à fila | cada implantação derruba requisições em curso e gera erro no cliente |
+| [10. Paridade dev/prod](https://12factor.net/pt_br/dev-prod-parity) | mesma imagem e mesmos serviços de apoio em desenvolvimento e produção | SQLite na máquina do desenvolvedor e Postgres em produção |
+| [11. Logs](https://12factor.net/pt_br/logs) | escrever em `stdout` e deixar a coleta com a plataforma | rotação de arquivo dentro do contêiner, com o log morrendo junto com ele |
+| [12. Processos administrativos](https://12factor.net/pt_br/admin-processes) | rodar migração como job separado, a partir do mesmo artefato | executar a migração por `kubectl exec` dentro de uma réplica que está atendendo tráfego |
 
-Quatro fatores explicam boa parte do que este módulo pratica. O sexto, processos sem estado, é o que torna a substituição de réplica segura. O terceiro, configuração no ambiente, é o que permite promover a mesma imagem entre ambientes. O quinto, separação entre build, release e run, é o que dá ao rollback uma revisão anterior para onde voltar. O nono, descartabilidade, é o que faz a atualização gradual não derrubar requisições em andamento.
+Quatro fatores explicam boa parte do que este módulo pratica, e vale ver cada um deles em código.
+
+**Fator 3, configuração no ambiente.** É o que permite promover a mesma imagem entre ambientes sem recompilar.
+
+```python
+# Viola o fator 3: o endereço e a credencial vivem no código versionado.
+DATABASE_URL = "postgresql://app:s3nh4@10.0.1.20:5432/pedidos"
+
+# Atende ao fator 3: o código não conhece o ambiente em que roda.
+import os
+
+DATABASE_URL = os.environ["DATABASE_URL"]
+```
+
+Usar `os.environ[...]` em vez de `os.environ.get(...)` é deliberado. A aplicação falha ao iniciar quando a configuração está ausente, em vez de subir e falhar mais tarde, no meio de uma requisição.
+
+**Fator 6, processos sem estado.** É o que torna a substituição de uma réplica indolor.
+
+```python
+# Viola o fator 6: o carrinho vive na memória desta réplica.
+carrinhos: dict[str, list] = {}
+
+def adicionar(cliente_id: str, item: dict) -> None:
+    carrinhos.setdefault(cliente_id, []).append(item)
+
+# Atende ao fator 6: o estado vive fora, e qualquer réplica atende o mesmo cliente.
+def adicionar(cliente_id: str, item: dict) -> None:
+    carrinho = cache.get(f"carrinho:{cliente_id}") or []
+    carrinho.append(item)
+    cache.set(f"carrinho:{cliente_id}", carrinho, ttl=3600)
+```
+
+A primeira versão obriga o balanceador a mandar o mesmo cliente sempre para a mesma réplica. Quando essa réplica é substituída numa atualização gradual, o carrinho some. A segunda versão torna as réplicas intercambiáveis, que é a condição para a reconciliação funcionar.
+
+**Fator 5, separação entre build, release e run.** É o que dá ao rollback uma revisão anterior para onde voltar.
+
+```sh
+# Viola o fator 5: build e run acontecem no mesmo lugar, sem artefato identificável.
+ssh servidor-prod "cd /opt/app && git pull && mvn package && systemctl restart app"
+
+# Atende ao fator 5: o artefato nasce uma vez, com identidade, e é promovido.
+docker build -t registry.exemplo/app:1.4.2 .
+docker push registry.exemplo/app:1.4.2
+kubectl set image deployment/app app=registry.exemplo/app:1.4.2
+```
+
+Na primeira forma, a pergunta “voltar para qual versão?” fica sem resposta, porque o que está no servidor é um diretório atualizado no lugar. Na segunda, `1.4.2` é um endereço para onde se pode retornar.
+
+**Fator 9, descartabilidade.** É o que faz a atualização gradual não derrubar requisições em andamento.
+
+```python
+import signal
+
+encerrando = False
+
+def _encerrar(signum, frame):
+    global encerrando
+    encerrando = True  # o readiness passa a responder 503 e a réplica sai do balanceamento
+
+signal.signal(signal.SIGTERM, _encerrar)
+```
+
+```yaml
+spec:
+  terminationGracePeriodSeconds: 30
+  containers:
+    - name: app
+      lifecycle:
+        preStop:
+          exec:
+            command: ["sleep", "5"]
+```
+
+Os dois lados são necessários. O `preStop` dá ao balanceador tempo de parar de mandar tráfego novo antes de o processo começar a encerrar, e o tratamento de `SIGTERM` faz a aplicação recusar trabalho novo enquanto termina o que já aceitou. Sem esse par, `maxUnavailable: 0` protege a capacidade e ainda assim o usuário vê erro.
 
 Eles não substituem análise de domínio nem decisão de segurança. A regra de configuração, por exemplo, não autoriza pôr segredo em ConfigMap. Para isso há mecanismo próprio e controle de acesso.
 
