@@ -23,17 +23,538 @@ O laboratório usa apenas dados inventados e nada sai da sua máquina. Kafka nã
 
 ## Mapa da demonstração local
 
-Esta oficina implementa em código o que as páginas de [Conceitos](conceitos.md) e [Padrões e decisões](padroes-e-decisoes.md) descrevem no livro-texto. Antes de rodar qualquer comando, abra os arquivos abaixo. Você está lendo esta página pelo site publicado, sem o repositório clonado, então os links vão direto ao código no GitHub.
+Esta oficina implementa em código o que as páginas de [Conceitos](conceitos.md) e [Padrões e decisões](padroes-e-decisoes.md) descrevem no livro-texto. Você vai começar numa pasta vazia e escrever os sete arquivos abaixo. Cada um aparece nesta página inteiro, pronto para copiar, e o título de cada bloco é um link para o mesmo arquivo no repositório do curso, byte a byte igual ao que está aqui.
 
 Duas siglas aparecem várias vezes a partir daqui. Uma **dead-letter exchange** (DLX) é a exchange para a qual o RabbitMQ redireciona uma mensagem rejeitada. Uma **dead-letter queue** (DLQ) é a fila ligada a essa DLX, onde a mensagem rejeitada fica disponível para inspeção em vez de reentregue em loop ou descartada.
 
 | Arquivo | O que ele faz | Onde isso aparece na teoria |
 | --- | --- | --- |
-| [`infra/compose.eventos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/compose.eventos.yml) | Sobe um RabbitMQ 4 isolado, com plugin de management e healthcheck, e declara as portas AMQP e HTTP que os comandos desta oficina vão usar. | A infraestrutura por trás do [broker](conceitos.md#broker-e-mediator): aqui ele é uma exchange `hospital.events` e uma fila de trabalho `billing.resultados.v1`. |
-| [`src/hospital/eventos/publicador.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/eventos/publicador.py) | Define o contrato `ResultadoLaboratorialDisponibilizadoV1` (modelo Pydantic) e publica na exchange `hospital.events`, com confirmação de publicação ligada. | O que [evento, comando e mensagem](conceitos.md#evento-comando-e-mensagem) chama de publicador: ele afirma um fato e não conhece quem vai reagir a ele. |
-| [`src/hospital/eventos/consumidor.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/eventos/consumidor.py) | Declara a fila `billing.resultados.v1`, valida o schema recebido, grava tentativa e efeito no SQLite `processed-events.sqlite3` por `event_id`, e liga a fila de rejeitados `billing.resultados.v1.dlq` à DLX `hospital.events.dlx`. | A implementação de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia) e de [dead-letter queue](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito). |
-| [`tests/test_event_idempotency.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_event_idempotency.py) | Teste automatizado que publica o mesmo evento duas vezes e verifica, por código, que existe só um efeito de negócio e duas tentativas registradas. | A prova de que a garantia de repetição sem duplicidade de efeito, descrita na teoria, se sustenta neste código específico. |
-| [`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/pyproject.toml) | Declara as dependências do pacote (`aio-pika` para AMQP assíncrono, `pydantic` para o contrato, `pytest` para o teste) e o torna instalável. | Por que o comando de instalação, mais adiante, não pede nenhum argumento além do caminho do pacote. |
+| [`infra/compose.eventos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/infra/compose.eventos.yml) | Sobe um RabbitMQ 4 isolado, com plugin de management e healthcheck, e declara as portas AMQP e HTTP que os comandos desta oficina vão usar. | A infraestrutura por trás do [broker](conceitos.md#broker-e-mediator): aqui ele é uma exchange `hospital.events` e uma fila de trabalho `billing.resultados.v1`. |
+| [`src/hospital/eventos/publicador.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/publicador.py) | Define o contrato `ResultadoLaboratorialDisponibilizadoV1` (modelo Pydantic) e publica na exchange `hospital.events`, com confirmação de publicação ligada. | O que [evento, comando e mensagem](conceitos.md#evento-comando-e-mensagem) chama de publicador: ele afirma um fato e não conhece quem vai reagir a ele. |
+| [`src/hospital/eventos/consumidor.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/consumidor.py) | Declara a fila `billing.resultados.v1`, valida o schema recebido, grava tentativa e efeito no SQLite `processed-events.sqlite3` por `event_id`, e liga a fila de rejeitados `billing.resultados.v1.dlq` à DLX `hospital.events.dlx`. | A implementação de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia) e de [dead-letter queue](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito). |
+| [`tests/test_event_idempotency.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/tests/test_event_idempotency.py) | Teste automatizado que publica o mesmo evento duas vezes e verifica, por código, que existe só um efeito de negócio e duas tentativas registradas. | A prova de que a garantia de repetição sem duplicidade de efeito, descrita na teoria, se sustenta neste código específico. |
+| [`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/pyproject.toml) | Declara as dependências do pacote (`aio-pika` para AMQP assíncrono, `pydantic` para o contrato, `pytest` para o teste) e o torna instalável. | Por que o comando de instalação, mais adiante, não pede nenhum argumento além do caminho do pacote. |
+
+### O caminho de uma entrega duplicada
+
+```mermaid
+flowchart TB
+    PUB[publicador.py<br/>publica o fato] --> EX[exchange hospital.events]
+    EX --> Q[fila billing.resultados.v1]
+    Q --> CON{consumidor.py<br/>schema válido?}
+    CON -->|não| DLX[DLX hospital.events.dlx<br/>leva à DLQ, disponível para inspeção]
+    CON -->|sim| ID{event_id já processado?}
+    ID -->|não| EF[grava tentativa e efeito<br/>processed=True attempts=1]
+    ID -->|sim| SE[grava só a tentativa<br/>processed=False attempts=2]
+```
+
+**Texto alternativo:** o publicador envia à exchange, que entrega à fila, e o consumidor decide em dois passos: primeiro se o schema é válido, encaminhando o inválido à fila de erros, e depois se o identificador do evento já foi processado, gravando efeito apenas na primeira vez.
+
+*Figura 18 — As duas decisões do consumidor, na ordem em que ele as toma. Fonte: curso.*
+
+**Leitura textual:** o publicador afirma um fato e o entrega à exchange, que o roteia para a fila de trabalho. O consumidor então decide duas coisas, em ordem. A primeira é se a mensagem cumpre o schema. Quando não cumpre, ela segue para a dead-letter exchange e daí para a fila de erros, onde fica disponível para inspeção em vez de desaparecer ou voltar em laço. Quando cumpre, vem a segunda decisão: se aquele identificador de evento já foi processado antes. Na primeira vez, o consumidor grava a tentativa e o efeito de negócio, e imprime processado com uma tentativa. Na repetição, ele grava apenas a tentativa, e imprime não processado com duas tentativas. A ordem importa: validar antes de consultar o registro de idempotência evita gravar identificador de mensagem que nunca deveria ter entrado.
+
+### Os sete arquivos, um a um
+
+Crie a estrutura antes de escrever. No macOS e no Linux:
+
+```bash
+mkdir -p oficina-eventos/infra oficina-eventos/src/hospital/eventos oficina-eventos/tests
+cd oficina-eventos
+```
+
+No PowerShell:
+
+```powershell
+mkdir oficina-eventos\infra, oficina-eventos\src\hospital\eventos, oficina-eventos\tests
+cd oficina-eventos
+```
+
+[`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/pyproject.toml)
+
+```toml
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eventos-hospitalares"
+version = "0.1.0"
+description = "Publicador, consumidor idempotente e DLQ, oficina do módulo 5"
+requires-python = ">=3.11"
+dependencies = [
+  "aio-pika",
+  "pydantic",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+  "httpx",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+```
+
+Os dois `__init__.py` ficam vazios e existem para tornar as pastas pacotes Python importáveis.
+
+[`src/hospital/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/__init__.py)
+
+```python
+
+```
+
+[`src/hospital/eventos/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/__init__.py)
+
+```python
+
+```
+
+O `publicador.py` define o contrato do evento e o publica. Ele não conhece nenhum consumidor.
+
+[`src/hospital/eventos/publicador.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/publicador.py)
+
+```python
+"""Publica o fato de domínio que disponibiliza um resultado laboratorial."""
+
+import argparse
+import asyncio
+import json
+import os
+from datetime import UTC, datetime
+
+import aio_pika
+from pydantic import BaseModel, ConfigDict
+
+
+EVENT_NAME = "ResultadoLaboratorialDisponibilizado.v1"
+EXCHANGE_NAME = "hospital.events"
+ROUTING_KEY = "laboratory.result.available.v1"
+
+
+class ResultadoLaboratorialDisponibilizadoV1(BaseModel):
+    """Contrato mínimo e versionado do fato publicado pelo laboratório."""
+
+    model_config = ConfigDict(extra="forbid", title=EVENT_NAME)
+
+    event_id: str
+    occurred_at: datetime
+    exam_id: str
+    patient_id: str
+    result_reference: str
+
+
+def amqp_url() -> str:
+    return os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:15672/")
+
+
+async def publicar_resultado(
+    event: ResultadoLaboratorialDisponibilizadoV1,
+    url: str | None = None,
+) -> None:
+    """Publica uma cópia persistente do evento na exchange de domínio."""
+
+    await publicar_json(event.model_dump(mode="json"), url=url)
+
+
+async def publicar_json(payload: dict[str, object], url: str | None = None) -> None:
+    """Publica JSON para permitir demonstrar rejeição de esquema no consumidor."""
+
+    connection = await aio_pika.connect_robust(url or amqp_url())
+    try:
+        channel = await connection.channel(publisher_confirms=True)
+        exchange = await channel.declare_exchange(
+            EXCHANGE_NAME, aio_pika.ExchangeType.TOPIC, durable=True
+        )
+        body = json.dumps(payload, default=str, sort_keys=True).encode("utf-8")
+        await exchange.publish(
+            aio_pika.Message(
+                body,
+                content_type="application/json",
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                type=EVENT_NAME,
+                message_id=str(payload.get("event_id", "invalid-event")),
+            ),
+            routing_key=ROUTING_KEY,
+        )
+    finally:
+        await connection.close()
+
+
+def _event_from_arguments(args: argparse.Namespace) -> ResultadoLaboratorialDisponibilizadoV1:
+    return ResultadoLaboratorialDisponibilizadoV1(
+        event_id=args.event_id,
+        occurred_at=datetime.now(UTC),
+        exam_id="exam-sintetico-001",
+        patient_id="patient-sintetico-001",
+        result_reference="resultados/exam-sintetico-001",
+    )
+
+
+async def _main_async(args: argparse.Namespace) -> None:
+    event = _event_from_arguments(args)
+    if args.invalid:
+        payload = event.model_dump(mode="json")
+        payload.pop("result_reference")
+        await publicar_json(payload)
+    else:
+        await publicar_resultado(event)
+    print(f"Publicado: {EVENT_NAME} event_id={event.event_id}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Publica um resultado sintético.")
+    parser.add_argument("--event-id", required=True)
+    parser.add_argument(
+        "--invalid", action="store_true", help="omite result_reference para a DLQ"
+    )
+    asyncio.run(_main_async(parser.parse_args()))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+O `consumidor.py` é o arquivo central da oficina, e é nele que as duas decisões da Figura 18 estão escritas.
+
+[`src/hospital/eventos/consumidor.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/consumidor.py)
+
+```python
+"""Consumidor de faturamento com deduplicação durável por event_id."""
+
+import argparse
+import asyncio
+import sqlite3
+from dataclasses import dataclass
+from pathlib import Path
+
+import aio_pika
+from pydantic import ValidationError
+
+from hospital.eventos.publicador import (
+    EVENT_NAME,
+    EXCHANGE_NAME,
+    ROUTING_KEY,
+    ResultadoLaboratorialDisponibilizadoV1,
+    amqp_url,
+)
+
+
+QUEUE_NAME = "billing.resultados.v1"
+DLX_NAME = "hospital.events.dlx"
+DLQ_NAME = "billing.resultados.v1.dlq"
+
+
+@dataclass(frozen=True)
+class ProcessResult:
+    processed: bool
+    attempts: int
+
+
+class ProcessedEventStore:
+    """Tabela local para a demonstração; em produção, pertence ao consumidor."""
+
+    def __init__(self, path: Path | str):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self._connect() as connection:
+            connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS processed_events (
+                    event_id TEXT PRIMARY KEY,
+                    attempts INTEGER NOT NULL,
+                    processed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS billing_effects (
+                    event_id TEXT PRIMARY KEY,
+                    exam_id TEXT NOT NULL,
+                    patient_id TEXT NOT NULL,
+                    result_reference TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                """
+            )
+
+    def _connect(self) -> sqlite3.Connection:
+        return sqlite3.connect(self.path)
+
+    def record(self, event: ResultadoLaboratorialDisponibilizadoV1) -> ProcessResult:
+        """Registra toda tentativa e produz o efeito apenas na primeira entrega."""
+
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT attempts FROM processed_events WHERE event_id = ?", (event.event_id,)
+            ).fetchone()
+            if row:
+                attempts = int(row[0]) + 1
+                connection.execute(
+                    "UPDATE processed_events SET attempts = ? WHERE event_id = ?",
+                    (attempts, event.event_id),
+                )
+                return ProcessResult(processed=False, attempts=attempts)
+            connection.execute(
+                "INSERT INTO processed_events(event_id, attempts) VALUES (?, 1)",
+                (event.event_id,),
+            )
+            connection.execute(
+                """INSERT INTO billing_effects(event_id, exam_id, patient_id, result_reference)
+                   VALUES (?, ?, ?, ?)""",
+                (event.event_id, event.exam_id, event.patient_id, event.result_reference),
+            )
+            return ProcessResult(processed=True, attempts=1)
+
+    def attempts_for(self, event_id: str) -> int:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT attempts FROM processed_events WHERE event_id = ?", (event_id,)
+            ).fetchone()
+        return int(row[0]) if row else 0
+
+    def business_effect_count(self) -> int:
+        with self._connect() as connection:
+            return int(connection.execute("SELECT COUNT(*) FROM billing_effects").fetchone()[0])
+
+
+class ConsumidorFaturamento:
+    def __init__(self, store: ProcessedEventStore):
+        self.store = store
+
+    def processar_evento(self, event: ResultadoLaboratorialDisponibilizadoV1) -> ProcessResult:
+        return self.store.record(event)
+
+    async def declarar_fila(self, channel: aio_pika.abc.AbstractChannel):
+        exchange = await channel.declare_exchange(
+            EXCHANGE_NAME, aio_pika.ExchangeType.TOPIC, durable=True
+        )
+        dlx = await channel.declare_exchange(DLX_NAME, aio_pika.ExchangeType.DIRECT, durable=True)
+        queue = await channel.declare_queue(
+            QUEUE_NAME,
+            durable=True,
+            arguments={"x-dead-letter-exchange": DLX_NAME},
+        )
+        dlq = await channel.declare_queue(DLQ_NAME, durable=True)
+        await queue.bind(exchange, routing_key=ROUTING_KEY)
+        await dlq.bind(dlx, routing_key=ROUTING_KEY)
+        return queue
+
+    async def consumir_uma(self, queue: aio_pika.abc.AbstractQueue) -> ProcessResult | None:
+        message = await queue.get(fail=False)
+        if message is None:
+            return None
+        try:
+            event = ResultadoLaboratorialDisponibilizadoV1.model_validate_json(message.body)
+        except ValidationError as error:
+            await message.reject(requeue=False)
+            print(f"Mensagem rejeitada para DLQ: schema inválido ({error.error_count()} erro)")
+            return None
+        async with message.process(requeue=False):
+            result = self.processar_evento(event)
+            print(
+                f"{EVENT_NAME} event_id={event.event_id} "
+                f"processed={result.processed} attempts={result.attempts}"
+            )
+            return result
+
+
+async def consumir_uma_da_broker(store_path: Path) -> ProcessResult | None:
+    connection = await aio_pika.connect_robust(amqp_url())
+    try:
+        channel = await connection.channel()
+        consumer = ConsumidorFaturamento(ProcessedEventStore(store_path))
+        queue = await consumer.declarar_fila(channel)
+        return await consumer.consumir_uma(queue)
+    finally:
+        await connection.close()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Consome um resultado sintético.")
+    parser.add_argument("--store", default=".state/processed-events.sqlite3")
+    parser.add_argument("--once", action="store_true", help="consome no máximo uma mensagem")
+    args = parser.parse_args()
+    if not args.once:
+        parser.error("use --once nesta oficina para produzir evidência finita")
+    asyncio.run(consumir_uma_da_broker(Path(args.store)))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+O `infra/compose.eventos.yml` sobe um RabbitMQ isolado, com o plugin de administração e verificação de saúde.
+
+[`infra/compose.eventos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/infra/compose.eventos.yml)
+
+```yaml
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "${RABBITMQ_PORT:-15672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15673}:15672"
+    volumes:
+      - rabbitmq_eventos_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  rabbitmq_eventos_data:
+```
+
+O `tests/test_event_idempotency.py` prova por código o que os comandos mostram na tela.
+
+[`tests/test_event_idempotency.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/tests/test_event_idempotency.py)
+
+```python
+from datetime import UTC, datetime
+import asyncio
+import base64
+import json
+import os
+from pathlib import Path
+import sys
+from tempfile import TemporaryDirectory
+from urllib.request import Request, urlopen
+
+
+LAB = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(LAB / "src"))
+
+import aio_pika
+import pytest
+
+from hospital.eventos.consumidor import DLQ_NAME, ConsumidorFaturamento, ProcessedEventStore
+from hospital.eventos.publicador import (
+    ResultadoLaboratorialDisponibilizadoV1,
+    amqp_url,
+    publicar_json,
+)
+
+
+class InvalidMessage:
+    def __init__(self):
+        self.body = json.dumps({"event_id": "missing-fields"}).encode("utf-8")
+        self.rejected_with_requeue = None
+
+    async def reject(self, requeue: bool):
+        self.rejected_with_requeue = requeue
+
+
+class QueueWithInvalidMessage:
+    def __init__(self, message: InvalidMessage):
+        self.message = message
+
+    async def get(self, fail: bool):
+        return self.message
+
+
+def _dlq_management_details() -> dict[str, object]:
+    port = os.getenv("RABBITMQ_MANAGEMENT_PORT", "15673")
+    credentials = base64.b64encode(b"guest:guest").decode("ascii")
+    request = Request(
+        f"http://localhost:{port}/api/queues/%2F/{DLQ_NAME}",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    with urlopen(request, timeout=2) as response:
+        return json.load(response)
+
+
+def test_duplicate_event_has_one_business_effect_and_two_attempts():
+    event = ResultadoLaboratorialDisponibilizadoV1(
+        event_id="3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        occurred_at=datetime(2026, 7, 17, 12, 0, tzinfo=UTC),
+        exam_id="exam-sintetico-001",
+        patient_id="patient-sintetico-001",
+        result_reference="resultados/exam-sintetico-001",
+    )
+
+    with TemporaryDirectory() as directory:
+        store = ProcessedEventStore(Path(directory) / "processed-events.sqlite3")
+        consumer = ConsumidorFaturamento(store)
+
+        first = consumer.processar_evento(event)
+        second = consumer.processar_evento(event)
+
+        assert first.processed is True
+        assert second.processed is False
+        assert store.business_effect_count() == 1
+        assert store.attempts_for(event.event_id) == 2
+
+
+def test_invalid_event_is_rejected_without_crashing_consumer():
+    with TemporaryDirectory() as directory:
+        consumer = ConsumidorFaturamento(
+            ProcessedEventStore(Path(directory) / "processed-events.sqlite3")
+        )
+        message = InvalidMessage()
+
+        result = asyncio.run(consumer.consumir_uma(QueueWithInvalidMessage(message)))
+
+        assert result is None
+        assert message.rejected_with_requeue is False
+
+
+@pytest.mark.skipif(
+    os.getenv("COMPOSE_LIVE") != "1",
+    reason="requer RabbitMQ local iniciado pelo Compose",
+)
+def test_live_invalid_event_reaches_dead_letter_queue():
+    async def exercise_broker() -> None:
+        connection = await aio_pika.connect_robust(amqp_url())
+        try:
+            channel = await connection.channel()
+            with TemporaryDirectory() as directory:
+                consumer = ConsumidorFaturamento(
+                    ProcessedEventStore(Path(directory) / "processed-events.sqlite3")
+                )
+                queue = await consumer.declarar_fila(channel)
+                dlq = await channel.declare_queue(DLQ_NAME, durable=True)
+                await queue.purge()
+                await dlq.purge()
+                event = ResultadoLaboratorialDisponibilizadoV1(
+                    event_id="65e95d82-4f8c-4e93-9bb3-3e0e92deaf1d",
+                    occurred_at=datetime(2026, 7, 17, 12, 0, tzinfo=UTC),
+                    exam_id="exam-sintetico-001",
+                    patient_id="patient-sintetico-001",
+                    result_reference="resultados/exam-sintetico-001",
+                )
+                payload = event.model_dump(mode="json")
+                payload.pop("result_reference")
+
+                await publicar_json(payload, url=amqp_url())
+                assert await consumer.consumir_uma(queue) is None
+
+                for _ in range(50):
+                    details = await asyncio.to_thread(_dlq_management_details)
+                    if details.get("messages", 0) >= 1:
+                        break
+                    await asyncio.sleep(0.2)
+                else:
+                    pytest.fail("a mensagem inválida não chegou à DLQ")
+                assert details["messages"] >= 1
+
+                dead_letter = await dlq.get(fail=False)
+                assert dead_letter is not None
+                assert json.loads(dead_letter.body) == payload
+                await dead_letter.ack()
+        finally:
+            await connection.close()
+
+    asyncio.run(exercise_broker())
+```
 
 **Estado inicial**
 
@@ -58,7 +579,7 @@ Confirmar que Docker, Compose e Python estão disponíveis e que a execução oc
 
 **Pré-requisito**
 
-Tenha o repositório local e Docker iniciado. Execute a partir de `laboratorios/plataforma-hospitalar`; o pacote já declara `aio-pika`, Pydantic e a dependência de desenvolvimento.
+Tenha Docker iniciado e a pasta `oficina-eventos` já criada com os sete arquivos. Execute a partir dela. o pacote já declara `aio-pika`, Pydantic e a dependência de desenvolvimento.
 
 **Execute**
 
@@ -87,7 +608,7 @@ Instale Docker Desktop pelas [instruções oficiais](https://docs.docker.com/des
 docker version
 docker compose version
 py --version
-cd laboratorios\plataforma-hospitalar
+cd oficina-eventos
 py -m pip install -e ".[dev]"
 New-Item -ItemType Directory -Force evidencias\modulo-5
 ```
@@ -108,7 +629,7 @@ Instale Docker Desktop pelas [instruções oficiais](https://docs.docker.com/des
 docker version
 docker compose version
 python3 --version
-cd laboratorios/plataforma-hospitalar
+cd oficina-eventos
 python3 -m pip install -e ".[dev]"
 mkdir -p evidencias/modulo-5
 ```
@@ -129,7 +650,7 @@ Instale Docker Engine e o plugin Compose pelas [instruções oficiais](https://d
 docker version
 docker compose version
 python3 --version
-cd laboratorios/plataforma-hospitalar
+cd oficina-eventos
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
@@ -152,7 +673,7 @@ Escolher portas, validar o Compose e iniciar um broker isolado.
 
 **Pré-requisito**
 
-Permaneça em `laboratorios/plataforma-hospitalar`. Escolha portas livres; se as sugestões estiverem ocupadas, altere apenas os valores do terminal.
+Permaneça em `oficina-eventos`. Escolha portas livres; se as sugestões estiverem ocupadas, altere apenas os valores do terminal.
 
 **Execute**
 
@@ -462,7 +983,7 @@ Remover os recursos locais criados pela oficina sem afetar outros projetos.
 
 **Pré-requisito**
 
-A evidência desejada foi copiada para local apropriado e o terminal ainda está em `laboratorios/plataforma-hospitalar`.
+A evidência desejada foi copiada para local apropriado e o terminal ainda está em `oficina-eventos`.
 
 **Execute**
 

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eventos-hospitalares"
+version = "0.1.0"
+description = "Publicador, consumidor idempotente e DLQ, oficina do módulo 5"
+requires-python = ">=3.11"
+dependencies = [
+  "aio-pika",
+  "pydantic",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+  "httpx",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

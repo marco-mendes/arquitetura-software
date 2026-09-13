@@ -1,0 +1,19 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "${RABBITMQ_PORT:-15672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15673}:15672"
+    volumes:
+      - rabbitmq_eventos_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  rabbitmq_eventos_data:
