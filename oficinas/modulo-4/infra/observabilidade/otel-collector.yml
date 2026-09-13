@@ -1,0 +1,50 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  attributes/redact_raw_request_path:
+    actions:
+      - key: http.url
+        action: delete
+      - key: http.target
+        action: delete
+      - key: url.full
+        action: delete
+      - key: url.path
+        action: delete
+      - key: http.path
+        action: delete
+      - key: http.request.path
+        action: delete
+      - key: http.request.uri
+        action: delete
+      - key: http.request.url
+        action: delete
+      - key: http.uri
+        action: delete
+  batch:
+
+exporters:
+  debug:
+    verbosity: basic
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [attributes/redact_raw_request_path, batch]
+      exporters: [otlp/jaeger, debug]

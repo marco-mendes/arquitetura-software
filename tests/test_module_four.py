@@ -20,6 +20,23 @@ def read_module_page(module: str, page: str) -> str:
     return (ROOT / "docs" / module / page).read_text(encoding="utf-8")
 
 
+ENTREGA_DE_ARQUIVO = re.compile(
+    r"\[`[^`]+`\]\(https://github\.com/marco-mendes/arquitetura-software/blob/main/"
+    r"oficinas/[^)]+\)\n\n```[a-z]*\n.*?```",
+    re.DOTALL,
+)
+
+
+def _sem_arquivos_entregues(pagina: str) -> str:
+    """Remove os blocos que reproduzem arquivos do laboratório.
+
+    Eles são verificados por test_workshop_files.py contra o arquivo em disco.
+    O que resta é a instrução que o aluno lê e os comandos que ele digita.
+    """
+
+    return ENTREGA_DE_ARQUIVO.sub("", pagina)
+
+
 class ModuleFourTest(unittest.TestCase):
     def test_unit_four_explains_governance_as_contract_policy_and_evidence(self):
         text = read_module_page(
@@ -106,6 +123,11 @@ class ModuleFourTest(unittest.TestCase):
         kong = KONG.read_text(encoding="utf-8")
         collector = COLLECTOR.read_text(encoding="utf-8")
         workshop = (MODULE / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
+        # A oficina entrega os arquivos do laboratório inteiros. O dado semeado
+        # em init.sql e a constante do teste citam um identificador sintético, e
+        # isso é diferente de a página ensinar o aluno a colocá-lo numa URL. A
+        # regra vale para o texto e para os comandos, fora dos blocos entregues.
+        instrucoes = _sem_arquivos_entregues(workshop)
 
         self.assertIn('"/elegibilidades/{beneficiario_id}"', telemetry)
         self.assertNotIn("request.url.path", telemetry)
@@ -130,7 +152,7 @@ class ModuleFourTest(unittest.TestCase):
         ):
             self.assertIn(raw_attribute, collector)
         self.assertNotIn("paciente-001", kong)
-        self.assertNotIn("paciente-001", workshop)
+        self.assertNotIn("paciente-001", instrucoes)
         self.assertIn("métricas são um sinal conceitual", workshop.casefold())
         self.assertIn("não coleta nem consulta métricas", workshop.casefold())
 

@@ -1,0 +1,37 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: elegibilidade
+    url: http://elegibilidade:8000
+    routes:
+      - name: elegibilidades-publicas
+        paths:
+          - /hospital
+        strip_path: true
+        methods:
+          - GET
+
+plugins:
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid
+      echo_downstream: true
+  - name: rate-limiting
+    config:
+      second: 3
+      policy: local
+      limit_by: ip
+      fault_tolerant: false
+      hide_client_headers: false
+  - name: opentelemetry
+    config:
+      traces_endpoint: http://otel-collector:4318/v1/traces
+      resource_attributes:
+        service.name: kong-gateway
+      sampling_rate: 1
+      propagation:
+        default_format: w3c
+        extract: [w3c]
+        inject: [w3c]

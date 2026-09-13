@@ -28,7 +28,7 @@ ENTREGA = re.compile(
 # Módulos já convertidos para o formato "pasta vazia, arquivos entregues um a um".
 # A lista cresce conforme cada oficina é convertida, e o que não está aqui ainda
 # pede o repositório clonado. Converter um módulo é acrescentá-lo a esta tupla.
-CONVERTIDOS = ("modulo-1-visao-geral", "modulo-2-apis", "modulo-3-servicos", "modulo-6-nuvem")
+CONVERTIDOS = ("modulo-1-visao-geral", "modulo-2-apis", "modulo-3-servicos", "modulo-4-governanca", "modulo-6-nuvem")
 
 
 def _oficinas_publicadas() -> list[Path]:
@@ -83,7 +83,7 @@ class WorkshopFilesTest(unittest.TestCase):
         todas = {p.parent.name for p in DOCS.glob("modulo-*/oficina-de-ferramentas.md")}
         pendentes = sorted(todas - set(CONVERTIDOS))
         self.assertEqual(
-            ["modulo-4-governanca", "modulo-5-eventos"],
+            ["modulo-5-eventos"],
             pendentes,
             "atualize CONVERTIDOS ao converter uma oficina",
         )

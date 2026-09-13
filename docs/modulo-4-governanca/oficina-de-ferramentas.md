@@ -19,29 +19,674 @@ Você vai colocar um *gateway* na frente do serviço de Elegibilidade, declarar 
 
 **Leitura textual da figura:** à esquerda, o arquivo `kong.yml` lista quatro declarações: a rota `/hospital` com `strip_path`, o plugin `correlation-id`, o plugin `rate-limiting` e o plugin `opentelemetry`. Setas ligam cada declaração à evidência correspondente, respectivamente o cabeçalho `X-Correlation-ID`, a resposta 429 na quarta chamada e o trace visível no Jaeger. Acima, o percurso completo vai do consumidor ao Kong, dele para o serviço de Elegibilidade, daí para o coletor OpenTelemetry e por fim para o Jaeger. O rodapé registra o limite deliberado: o gateway roteia, conta e propaga, sem decidir elegibilidade.
 
-### Onde cada arquivo mora
+### O caminho de uma requisição pela borda
 
-Todos os comandos rodam a partir de `laboratorios/plataforma-hospitalar`.
-
-```text
-plataforma-hospitalar/
-├── infra/
-│   ├── compose.governanca.yml           ← os cinco contêineres da pilha
-│   ├── kong/kong.yml                    ← as três políticas de borda
-│   └── observabilidade/
-│       └── otel-collector.yml           encaminhamento da telemetria
-├── src/hospital/servicos/
-│   └── elegibilidade.py                 o serviço por trás do gateway
-└── tests/
-    └── test_gateway_policy.py           verificação automatizada das políticas
+```mermaid
+flowchart TB
+    C[Consumidor chama<br/>localhost:18000/hospital/elegibilidades/{id}] --> K[Kong]
+    K --> R[rota /hospital com strip_path<br/>encaminha /elegibilidades/{id}]
+    K --> CID[plugin correlation-id<br/>gera X-Correlation-ID e devolve ao cliente]
+    K --> RL{plugin rate-limiting<br/>3 por segundo por IP}
+    RL -->|dentro do limite| EL[serviço elegibilidade<br/>responde 200]
+    RL -->|acima do limite| T[429 Too Many Requests<br/>o serviço nem é chamado]
+    K --> OT[plugin opentelemetry<br/>envia o rastro]
+    EL --> OT
+    OT --> COL[coletor OpenTelemetry<br/>remove o caminho bruto da URL]
+    COL --> J[Jaeger]
 ```
 
-| Arquivo | O que ele faz |
-| --- | --- |
-| [`infra/compose.governanca.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/compose.governanca.yml) | Declara os cinco contêineres: o banco, o serviço, o gateway, o coletor de telemetria e a ferramenta de consulta de rastros. |
-| [`infra/kong/kong.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/kong/kong.yml) | O arquivo mais importante da oficina: declara a rota pública e as três políticas, em vinte linhas de YAML. |
-| [`infra/observabilidade/otel-collector.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/observabilidade/otel-collector.yml) | Diz ao coletor de onde receber telemetria e para onde encaminhá-la. |
-| [`tests/test_gateway_policy.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_gateway_policy.py) | Verifica as políticas por código, sem depender de inspeção manual. |
+**Texto alternativo:** o consumidor chama o Kong, que aplica quatro declarações do seu arquivo de configuração, encaminha ao serviço quando está dentro do limite de taxa, devolve 429 quando está acima, e envia o rastro ao coletor, que o repassa ao Jaeger depois de remover o caminho bruto da URL.
+
+*Figura 12 — Onde cada política age, e o que sobra para o serviço decidir. Fonte: curso.*
+
+**Leitura textual:** a requisição chega ao Kong pelo endereço público. Quatro declarações do arquivo de configuração agem ali, antes de qualquer regra de negócio. A rota remove o prefixo do caminho e encaminha o resto ao serviço. O plugin de correlação gera um identificador e o devolve ao cliente no cabeçalho. O plugin de limite de taxa decide entre duas saídas: dentro do limite, a requisição segue ao serviço de elegibilidade, que responde 200. Acima do limite, o Kong devolve 429 e o serviço não chega a ser chamado, o que é o significado prático de proteger a dependência na borda. O plugin de telemetria envia o rastro, que passa pelo coletor antes de chegar ao Jaeger, e é no coletor que o caminho bruto da URL é removido, para que o identificador do beneficiário não fique registrado na ferramenta de consulta.
+
+### Onde cada arquivo mora
+
+Você vai criar uma pasta vazia e escrever os arquivos abaixo. Todos os comandos rodam a partir de `oficina-governanca`.
+
+```text
+oficina-governanca/                      ← execute os comandos a partir daqui
+├── pyproject.toml                        declara as bibliotecas e torna o pacote instalável
+├── Dockerfile                            a imagem do serviço de elegibilidade
+├── infra/
+│   ├── compose.governanca.yml            os cinco contêineres da pilha
+│   ├── postgres/
+│   │   ├── Dockerfile                    imagem do banco, com o script de carga
+│   │   └── init.sql                      papéis restritos, tabela e dados sintéticos
+│   ├── kong/
+│   │   ├── Dockerfile                    imagem do gateway, com a configuração embutida
+│   │   └── kong.yml                      as três políticas de borda
+│   └── observabilidade/
+│       ├── Dockerfile                    imagem do coletor, com a configuração embutida
+│       └── otel-collector.yml            encaminhamento da telemetria
+├── src/hospital/
+│   ├── __init__.py                       vazio, torna hospital um pacote
+│   ├── telemetria.py                     instrumentação mínima do serviço
+│   └── servicos/
+│       ├── __init__.py                   vazio, torna servicos um pacote
+│       └── elegibilidade.py              o serviço por trás do gateway
+└── tests/
+    └── test_gateway_policy.py            verificação automatizada das políticas
+```
+
+Cada arquivo aparece nesta página inteiro, pronto para copiar. O título de cada bloco é um link para o mesmo arquivo no repositório do curso, byte a byte igual ao que está aqui.
+
+Crie a estrutura antes de escrever. No macOS e no Linux:
+
+```bash
+mkdir -p oficina-governanca/infra/{postgres,kong,observabilidade} oficina-governanca/src/hospital/servicos oficina-governanca/tests
+cd oficina-governanca
+```
+
+No PowerShell:
+
+```powershell
+mkdir oficina-governanca\infra\postgres, oficina-governanca\infra\kong, oficina-governanca\infra\observabilidade, oficina-governanca\src\hospital\servicos, oficina-governanca\tests
+cd oficina-governanca
+```
+
+[`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/pyproject.toml)
+
+```toml
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "governanca-hospitalar"
+version = "0.1.0"
+description = "Gateway, políticas e rastros, oficina do módulo 4"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "httpx",
+  "psycopg[binary]",
+  "pydantic",
+  "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp-proto-http",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+```
+
+[`Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/Dockerfile)
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY src ./src
+RUN python -m pip install --no-cache-dir .
+
+RUN useradd --create-home --uid 10001 app
+USER app
+
+EXPOSE 8000
+```
+
+Os dois `__init__.py` ficam vazios e existem para tornar as pastas pacotes Python importáveis.
+
+[`src/hospital/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/src/hospital/__init__.py)
+
+```python
+
+```
+
+[`src/hospital/servicos/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/src/hospital/servicos/__init__.py)
+
+```python
+
+```
+
+O `telemetria.py` instrumenta o serviço. Repare que ele registra o contrato da rota, e não o caminho concreto da requisição, que é a primeira barreira contra vazar identificador de beneficiário para a telemetria.
+
+[`src/hospital/telemetria.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/src/hospital/telemetria.py)
+
+```python
+"""Telemetria mínima e opt-in para os processos didáticos do hospital."""
+
+import json
+import logging
+import os
+
+from fastapi import FastAPI, Request
+from opentelemetry import propagate, trace
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+
+LOGGER = logging.getLogger("hospital.telemetria")
+if not LOGGER.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    LOGGER.addHandler(handler)
+    LOGGER.setLevel(logging.INFO)
+    LOGGER.propagate = False
+
+
+def _route_template(request: Request) -> str:
+    """Retorna o contrato da rota, como "/elegibilidades/{beneficiario_id}"."""
+
+    route = request.scope.get("route")
+    return getattr(route, "path", "/rota-desconhecida")
+
+
+def instrumentar_app(app: FastAPI, service_name: str) -> None:
+    """Emite spans HTTP quando a oficina informa um endpoint OTLP.
+
+    Sem a variável de ambiente, os serviços continuam independentes de um
+    coletor; assim os testes locais anteriores não passam a exigir Docker.
+    """
+
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+    if not endpoint:
+        return
+
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+
+    provider = TracerProvider(resource=Resource.create({SERVICE_NAME: service_name}))
+    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+    trace.set_tracer_provider(provider)
+    tracer = trace.get_tracer(service_name)
+
+    @app.middleware("http")
+    async def registrar_requisicao(request: Request, call_next):
+        contexto = propagate.extract(dict(request.headers))
+        correlation_id = request.headers.get("X-Correlation-ID", "")
+        with tracer.start_as_current_span("HTTP request", context=contexto) as span:
+            span.set_attribute("http.request.method", request.method)
+            if correlation_id:
+                span.set_attribute("correlation.id", correlation_id)
+            response = await call_next(request)
+            route_template = _route_template(request)
+            span.update_name(f"{request.method} {route_template}")
+            span.set_attribute("http.route", route_template)
+            span.set_attribute("http.response.status_code", response.status_code)
+        LOGGER.info(
+            json.dumps(
+                {
+                    "correlation_id": correlation_id,
+                    "event": "http_request_completed",
+                    "method": request.method,
+                    "route": route_template,
+                    "service": service_name,
+                    "status_code": response.status_code,
+                },
+                sort_keys=True,
+            )
+        )
+        if correlation_id:
+            response.headers.setdefault("X-Correlation-ID", correlation_id)
+        return response
+```
+
+O `elegibilidade.py` é o serviço por trás do gateway. Ele continua o mesmo do módulo anterior, com a telemetria ligada.
+
+[`src/hospital/servicos/elegibilidade.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/src/hospital/servicos/elegibilidade.py)
+
+```python
+import os
+
+from fastapi import FastAPI, HTTPException, status
+import psycopg
+
+from hospital.telemetria import instrumentar_app
+
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://elegibilidade:elegibilidade@localhost:5433/elegibilidade",
+)
+
+app = FastAPI(title="Serviço de elegibilidade", version="1.0.0")
+instrumentar_app(app, "elegibilidade")
+
+
+def abrir_conexao():
+    return psycopg.connect(DATABASE_URL)
+
+
+@app.get("/health")
+def health():
+    try:
+        with abrir_conexao() as connection:
+            connection.execute("SELECT 1")
+    except psycopg.Error as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"codigo": "banco_indisponivel"},
+        ) from error
+    return {"status": "ok", "servico": "elegibilidade"}
+
+
+@app.get("/elegibilidades/{beneficiario_id}")
+def consultar_elegibilidade(beneficiario_id: str):
+    with abrir_conexao() as connection:
+        row = connection.execute(
+            "SELECT elegivel FROM elegibilidade.beneficiarios WHERE id = %s",
+            (beneficiario_id,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"codigo": "beneficiario_nao_encontrado"},
+        )
+    return {"beneficiario_id": beneficiario_id, "elegivel": row[0]}
+```
+
+O `init.sql` e o `Dockerfile` do Postgres são os mesmos do módulo 3, e criam papéis sem privilégio de superusuário.
+
+[`infra/postgres/init.sql`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/infra/postgres/init.sql)
+
+```sql
+SELECT current_database() = 'elegibilidade' AS is_elegibilidade \gset
+SELECT current_database() = 'exames' AS is_exames \gset
+
+\if :is_elegibilidade
+CREATE ROLE elegibilidade LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD 'elegibilidade';
+CREATE SCHEMA AUTHORIZATION elegibilidade;
+SET ROLE elegibilidade;
+CREATE TABLE elegibilidade.beneficiarios (
+    id text PRIMARY KEY,
+    elegivel boolean NOT NULL
+);
+INSERT INTO elegibilidade.beneficiarios (id, elegivel)
+VALUES ('paciente-001', true), ('paciente-002', false);
+RESET ROLE;
+\elif :is_exames
+CREATE ROLE exames LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD 'exames';
+CREATE SCHEMA AUTHORIZATION exames;
+SET ROLE exames;
+CREATE TABLE exames.solicitacoes (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    beneficiario_id text NOT NULL,
+    codigo_exame text NOT NULL,
+    criado_em timestamptz NOT NULL DEFAULT now()
+);
+RESET ROLE;
+\else
+\echo 'O banco deve se chamar elegibilidade ou exames'
+\quit
+\endif
+```
+
+[`infra/postgres/Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/infra/postgres/Dockerfile)
+
+```dockerfile
+FROM postgres:16-alpine
+
+COPY infra/postgres/init.sql /docker-entrypoint-initdb.d/init.sql
+```
+
+O `infra/kong/kong.yml` é o arquivo mais importante da oficina. Ele declara, em pouco mais de trinta linhas, uma rota e três políticas, e é o que a Figura 12 desenha.
+
+[`infra/kong/kong.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/infra/kong/kong.yml)
+
+```yaml
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: elegibilidade
+    url: http://elegibilidade:8000
+    routes:
+      - name: elegibilidades-publicas
+        paths:
+          - /hospital
+        strip_path: true
+        methods:
+          - GET
+
+plugins:
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid
+      echo_downstream: true
+  - name: rate-limiting
+    config:
+      second: 3
+      policy: local
+      limit_by: ip
+      fault_tolerant: false
+      hide_client_headers: false
+  - name: opentelemetry
+    config:
+      traces_endpoint: http://otel-collector:4318/v1/traces
+      resource_attributes:
+        service.name: kong-gateway
+      sampling_rate: 1
+      propagation:
+        default_format: w3c
+        extract: [w3c]
+        inject: [w3c]
+```
+
+[`infra/kong/Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/infra/kong/Dockerfile)
+
+```dockerfile
+FROM kong:3.8.0
+
+COPY kong.yml /kong/kong.yml
+```
+
+O `otel-collector.yml` diz ao coletor de onde receber telemetria e para onde encaminhá-la. O bloco de atributos no meio dele é o que remove o caminho bruto da URL antes de o rastro chegar ao Jaeger.
+
+[`infra/observabilidade/otel-collector.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/infra/observabilidade/otel-collector.yml)
+
+```yaml
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  attributes/redact_raw_request_path:
+    actions:
+      - key: http.url
+        action: delete
+      - key: http.target
+        action: delete
+      - key: url.full
+        action: delete
+      - key: url.path
+        action: delete
+      - key: http.path
+        action: delete
+      - key: http.request.path
+        action: delete
+      - key: http.request.uri
+        action: delete
+      - key: http.request.url
+        action: delete
+      - key: http.uri
+        action: delete
+  batch:
+
+exporters:
+  debug:
+    verbosity: basic
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [attributes/redact_raw_request_path, batch]
+      exporters: [otlp/jaeger, debug]
+```
+
+[`infra/observabilidade/Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/infra/observabilidade/Dockerfile)
+
+```dockerfile
+FROM otel/opentelemetry-collector-contrib:0.111.0
+
+COPY otel-collector.yml /etc/otelcol-contrib/config.yaml
+```
+
+O `compose.governanca.yml` declara os cinco contêineres e a ordem em que eles ficam prontos.
+
+[`infra/compose.governanca.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/infra/compose.governanca.yml)
+
+```yaml
+services:
+  db_elegibilidade:
+    build:
+      context: ..
+      dockerfile: infra/postgres/Dockerfile
+    environment:
+      POSTGRES_DB: elegibilidade
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local-elegibilidade-admin
+    volumes:
+      - elegibilidade_governanca_data:/var/lib/postgresql/data
+    networks: [elegibilidade-db-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d elegibilidade"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  elegibilidade:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "hospital.servicos.elegibilidade:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+    environment:
+      DATABASE_URL: postgresql://elegibilidade:elegibilidade@db_elegibilidade:5432/elegibilidade
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+    ports:
+      - "${ELEGIBILIDADE_PORT:-18001}:8000"
+    depends_on:
+      db_elegibilidade:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    networks: [application-net, elegibilidade-db-net]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  kong:
+    build: ./kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_TRACING_INSTRUMENTATIONS: request
+      KONG_PROXY_ACCESS_LOG: "off"
+      KONG_ADMIN_ACCESS_LOG: "off"
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "off"
+    ports:
+      - "${GATEWAY_PORT:-18000}:8000"
+    depends_on:
+      elegibilidade:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    networks: [application-net]
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  otel-collector:
+    build: ./observabilidade
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    networks: [application-net]
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "${JAEGER_PORT:-16686}:16686"
+    networks: [application-net]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:16686/"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  elegibilidade_governanca_data:
+
+networks:
+  application-net:
+  elegibilidade-db-net:
+    internal: true
+```
+
+O `test_gateway_policy.py` verifica as políticas por código, sem depender de inspeção manual.
+
+[`tests/test_gateway_policy.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/tests/test_gateway_policy.py)
+
+```python
+"""Integração real: requer o Compose de governança ativo.
+
+O teste não cria dados em serviços externos nem depende de painel manual. Ele usa a
+API HTTP do Jaeger para observar o mesmo trace id que foi enviado ao gateway.
+"""
+
+import json
+import math
+import os
+import subprocess
+import time
+from pathlib import Path
+from uuid import uuid4
+
+import httpx
+import pytest
+
+
+GATEWAY_URL = os.getenv("GATEWAY_URL", "http://localhost:18000")
+JAEGER_URL = os.getenv("JAEGER_URL", "http://localhost:16686")
+SERVICE_URL = os.getenv("SERVICE_URL", "http://localhost:18001")
+RESOURCE_PATH = "/hospital/elegibilidades/paciente-001"
+LAB = Path(__file__).resolve().parents[1]
+
+
+def _running_client() -> httpx.Client:
+    client = httpx.Client(timeout=3.0)
+    try:
+        response = client.get(f"{SERVICE_URL}/health")
+        response.raise_for_status()
+    except httpx.HTTPError:
+        client.close()
+        pytest.skip("Compose de governança não está ativo; execute o comando da oficina.")
+    return client
+
+
+def _traceparent(trace_id: str) -> str:
+    return f"00-{trace_id}-{uuid4().hex[:16]}-01"
+
+
+def _wait_for_fresh_rate_window() -> None:
+    """Entra no começo da próxima janela de um segundo do limite local."""
+
+    next_window = math.floor(time.time()) + 1.15
+    time.sleep(max(0, next_window - time.time()))
+
+
+def _service_logs() -> str:
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            "infra/compose.governanca.yml",
+            "logs",
+            "--no-color",
+            "elegibilidade",
+        ],
+        cwd=LAB,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout + result.stderr
+
+
+def _wait_for_trace(trace_id: str) -> dict:
+    deadline = time.monotonic() + 20
+    with httpx.Client(timeout=3.0) as client:
+        while time.monotonic() < deadline:
+            response = client.get(f"{JAEGER_URL}/api/traces/{trace_id}")
+            if response.status_code == 200 and response.json().get("data"):
+                trace = response.json()["data"][0]
+                services = {
+                    process.get("serviceName")
+                    for process in trace.get("processes", {}).values()
+                }
+                if {"kong-gateway", "elegibilidade"}.issubset(services):
+                    return trace
+            time.sleep(1)
+    pytest.fail(f"Jaeger não recebeu o trace {trace_id} dentro de 20 segundos.")
+
+
+def test_gateway_adds_correlation_limits_traffic_and_propagates_trace():
+    trace_id = uuid4().hex
+    correlation_id = f"aula-{uuid4()}"
+    headers = {
+        "X-Correlation-ID": correlation_id,
+        "traceparent": _traceparent(trace_id),
+    }
+
+    client = _running_client()
+    try:
+        first = client.get(f"{GATEWAY_URL}{RESOURCE_PATH}", headers=headers)
+        assert first.status_code == 200
+        assert first.headers["X-Correlation-ID"] == correlation_id
+
+        _wait_for_fresh_rate_window()
+        responses = [
+            client.get(f"{GATEWAY_URL}{RESOURCE_PATH}", headers=headers)
+            for _ in range(4)
+        ]
+        assert [response.status_code for response in responses] == [200, 200, 200, 429]
+
+        _wait_for_fresh_rate_window()
+        reset = client.get(f"{GATEWAY_URL}{RESOURCE_PATH}", headers=headers)
+        assert reset.status_code == 200
+    finally:
+        client.close()
+
+    trace = _wait_for_trace(trace_id)
+    processes = {
+        process.get("serviceName") for process in trace.get("processes", {}).values()
+    }
+    assert {"kong-gateway", "elegibilidade"}.issubset(processes)
+    spans = [span for span in trace.get("spans", []) if span.get("tags")]
+    assert any(
+        any(tag.get("value") == correlation_id for tag in span["tags"])
+        for span in spans
+    )
+    serialized_trace = json.dumps(trace, sort_keys=True)
+    assert "paciente-001" not in serialized_trace
+    assert RESOURCE_PATH not in serialized_trace
+    assert "/elegibilidades/{beneficiario_id}" in serialized_trace
+    logs = _service_logs()
+    assert correlation_id in logs
+    assert '"route": "/elegibilidades/{beneficiario_id}"' in logs
+    assert "paciente-001" not in logs
+```
+
 
 ## Ferramenta
 
@@ -69,7 +714,7 @@ Preparar um ambiente isolado e confirmar ferramentas antes de iniciar contêiner
 
 **Pré-requisito**
 
-Tenha o repositório local, Docker com Compose v2 e Python 3.11 ou superior. Execute os comandos a partir de `laboratorios/plataforma-hospitalar`. Escolha portas livres; os valores abaixo evitam colisão com o Compose do módulo anterior.
+Tenha Docker com Compose v2 e Python 3.11 ou superior, e a pasta `oficina-governanca` já criada com os arquivos da seção anterior. Execute os comandos a partir dela. Escolha portas livres; os valores abaixo evitam colisão com o Compose do módulo anterior.
 
 **Execute**
 
@@ -98,7 +743,7 @@ Instale Docker Desktop pelas [instruções oficiais](https://docs.docker.com/des
 docker version
 docker compose version
 py --version
-cd laboratorios\plataforma-hospitalar
+cd oficina-governanca
 py -m pip install -e ".[dev]"
 New-Item -ItemType Directory -Force evidencias\modulo-4
 ```
@@ -119,7 +764,7 @@ Instale Docker Desktop pelas [instruções oficiais](https://docs.docker.com/des
 docker version
 docker compose version
 python3 --version
-cd laboratorios/plataforma-hospitalar
+cd oficina-governanca
 python3 -m pip install -e ".[dev]"
 mkdir -p evidencias/modulo-4
 ```
@@ -140,7 +785,7 @@ Instale Docker Engine e o plugin Compose pelas [instruções oficiais](https://d
 docker version
 docker compose version
 python3 --version
-cd laboratorios/plataforma-hospitalar
+cd oficina-governanca
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
@@ -220,7 +865,7 @@ Validar a configuração declarativa antes de criar recursos e fixar endereços 
 
 **Pré-requisito**
 
-Permaneça em `laboratorios/plataforma-hospitalar` e assegure portas livres.
+Permaneça em `oficina-governanca` e assegure portas livres.
 
 **Execute**
 

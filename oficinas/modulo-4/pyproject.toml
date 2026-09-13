@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "governanca-hospitalar"
+version = "0.1.0"
+description = "Gateway, políticas e rastros, oficina do módulo 4"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "httpx",
+  "psycopg[binary]",
+  "pydantic",
+  "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp-proto-http",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
