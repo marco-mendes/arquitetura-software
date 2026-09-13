@@ -12,6 +12,12 @@ O caso é o mesmo das páginas anteriores. **Elegibilidade** decide se um benefi
 | Exames responde `200` na verificação de saúde e `503` na operação | [Falha parcial](conceitos.md#chamadas-sincronas-e-falhas-parciais): o sistema não cai inteiro, degrada em partes |
 | A chamada entre serviços tem prazo de espera e traduz o erro do vizinho | O custo da [fronteira física](conceitos.md#fronteira-logica-e-fronteira-fisica), que a chamada local não tinha |
 
+![Serviços e bancos isolados com degradação durante uma falha parcial](../assets/images/m03-oficina-falha-parcial.png)
+
+*Figura 5 — Fronteira de dados por construção da rede, e um serviço que degrada em vez de cair. Fonte: curso.*
+
+**Leitura textual da figura:** três faixas horizontais representam redes distintas. Na rede de serviços, a API de Exames chama a API de Elegibilidade por httpx com prazo de espera declarado. Na rede de banco de dados, cada serviço tem seu próprio Postgres privado, e não existe caminho de rede entre os dois bancos. Abaixo, o resultado observável durante a falha: `GET /health` responde 200 enquanto a operação responde 503, porque Elegibilidade está fora do ar e Exames continua respondendo de forma degradada.
+
 ### Onde cada arquivo mora
 
 Todos os comandos rodam a partir de `laboratorios/plataforma-hospitalar`.

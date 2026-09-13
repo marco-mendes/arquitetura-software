@@ -4,6 +4,12 @@ Esta oficina leva cerca de noventa minutos e usa apenas dados inventados, sem ch
 
 Você vai colocar uma API no ar na sua própria máquina, ler a documentação que ela gera sozinha, consumi-la por um programa cliente, submeter o contrato a um verificador automático e rodar a suíte de testes. Cada ferramenta citada adiante é apresentada antes de ser usada, na seção **Ferramenta**. Ao final há uma extensão opcional em .NET que coloca um *gateway* de API na frente de dois serviços.
 
+![Contrato de API observado como documento, implementação, consumo e verificação](../assets/images/m02-oficina-contrato-quatro-angulos.png)
+
+*Figura 10 — O mesmo contrato sob quatro ângulos: documento, implementação, consumo e verificação. Fonte: curso.*
+
+**Leitura textual da figura:** no centro está o contrato, com a operação `POST /elegibilidades`, a resposta `202 Accepted` e o cabeçalho `Location`. Quatro ângulos apontam para ele. Acima, `contratos/openapi.yaml` como documento. À direita, `main.py` e `models.py` como implementação em FastAPI. À esquerda, o cliente HTTP e a página `/docs` como consumo. Abaixo, Spectral e sete testes como verificação, alimentados por um caso de entrada inválida em que o CPF `12345678901` é submetido como `123`.
+
 ## O que existe antes de você abrir o terminal
 
 Você trabalhará no repositório desta disciplina, dentro de `laboratorios/plataforma-hospitalar`. Essa pasta contém uma aplicação didática local chamada **API de elegibilidades da plataforma hospitalar**. Ela não consulta uma operadora real, não acessa prontuários e não envia dados para fora do seu computador. Seu objetivo é tornar observável um contrato HTTP pequeno, não simular uma plataforma hospitalar completa.

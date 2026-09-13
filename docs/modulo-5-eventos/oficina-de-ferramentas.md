@@ -15,6 +15,12 @@ O laboratório usa apenas dados inventados e nada sai da sua máquina. Kafka nã
 | A mensagem recusada fica visível para inspeção | [Fila de erros como evidência](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito) |
 | Quem publica não conhece quem consome | [Broker e mediator](conceitos.md#broker-e-mediator) |
 
+![Entrega duplicada tratada com idempotência e mensagem inválida encaminhada à DLQ](../assets/images/m05-oficina-idempotencia-dlq.png)
+
+*Figura 17 — Duas entregas, uma cobrança, e a mensagem inválida visível na fila de erros. Fonte: curso.*
+
+**Leitura textual da figura:** `publicador.py` publica o evento e origina três caminhos. Nos dois primeiros, a mesma mensagem `ResultadoLaboratorialDisponibilizadoV1` com `event_id: A42` é entregue duas vezes e percorre `hospital.events`, depois `billing.resultados.v1`, até o consumidor. O banco `processed-events.sqlite3` registra duas tentativas e um único efeito, que é a idempotência funcionando. No terceiro caminho, uma mensagem fora do contrato é barrada na validação, nunca entra em `hospital.events` e segue para `hospital.events.dlx` e `billing.resultados.v1.dlq`, onde fica disponível para inspeção.
+
 ## Mapa da demonstração local
 
 Esta oficina implementa em código o que as páginas de [Conceitos](conceitos.md) e [Padrões e decisões](padroes-e-decisoes.md) descrevem no livro-texto. Antes de rodar qualquer comando, abra os arquivos abaixo. Você está lendo esta página pelo site publicado, sem o repositório clonado, então os links vão direto ao código no GitHub.

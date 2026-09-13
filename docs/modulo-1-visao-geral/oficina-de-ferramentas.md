@@ -2,6 +2,12 @@
 
 Reserve aproximadamente **120 minutos**. Você executará três programas já presentes no capítulo 1, observará a saída e conectará o que ela mostra às responsabilidades de cada estilo arquitetural. Os exemplos usam somente a biblioteca padrão do Python; não crie ambiente virtual e não instale pacotes.
 
+![Três estilos arquiteturais e suas diferentes evidências no terminal](../assets/images/m01-oficina-tres-estilos.png)
+
+*Figura 25 — Três estilos, três formas de repartir responsabilidade, três evidências no terminal. Fonte: curso.*
+
+**Leitura textual da figura:** três painéis lado a lado, um por estilo. No primeiro, camadas na agenda clínica, com Apresentação, Serviço, Domínio e Repositório empilhados de cima para baixo e o retorno subindo até a apresentação. A evidência no terminal é uma resposta HTTP com conflito de horário. No segundo, pipes and filters na triagem, com Produtor, Validação, Transformação e Consumo ligados em sequência e um desvio de descarte saindo da Validação. A evidência é o ranking impresso. No terceiro, microkernel no faturamento, com um núcleo cercado por um contrato e três módulos plug-in conectados a ele. A evidência são categorias e contribuições.
+
 ## Ferramenta
 
 Python 3.10+ executa os três programas; um editor permite ler e alterar somente as cópias de entrega. A oficina não requer pacotes, contêineres ou ferramentas adicionais.

@@ -13,6 +13,12 @@ Você vai colocar um *gateway* na frente do serviço de Elegibilidade, declarar 
 | Cada política declarada tem um efeito que se consegue medir | [Política como hipótese executável](conceitos.md#politica-como-hipotese-executavel) |
 | O gateway limita tráfego, e não decide elegibilidade | O [limite deliberado](index.md#limite-deliberado) entre borda técnica e regra de negócio |
 
+![Políticas declaradas no gateway ligadas às evidências observáveis](../assets/images/m04-oficina-politica-trace.png)
+
+*Figura 7 — Cada política declarada em configuração, e a evidência que prova que ela está valendo. Fonte: curso.*
+
+**Leitura textual da figura:** à esquerda, o arquivo `kong.yml` lista quatro declarações: a rota `/hospital` com `strip_path`, o plugin `correlation-id`, o plugin `rate-limiting` e o plugin `opentelemetry`. Setas ligam cada declaração à evidência correspondente, respectivamente o cabeçalho `X-Correlation-ID`, a resposta 429 na quarta chamada e o trace visível no Jaeger. Acima, o percurso completo vai do consumidor ao Kong, dele para o serviço de Elegibilidade, daí para o coletor OpenTelemetry e por fim para o Jaeger. O rodapé registra o limite deliberado: o gateway roteia, conta e propaga, sem decidir elegibilidade.
+
 ### Onde cada arquivo mora
 
 Todos os comandos rodam a partir de `laboratorios/plataforma-hospitalar`.
