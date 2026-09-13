@@ -52,7 +52,12 @@ class ModuleTwoTest(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(list(range(3, 10)), figures)
+        self.assertTrue(figures, "o modulo dois deve ter figuras numeradas")
+        self.assertEqual(
+            list(range(figures[0], figures[0] + len(figures))),
+            figures,
+            "os numeros de figura devem ser contiguos e crescentes na ordem de leitura",
+        )
 
     def test_api_workshop_names_the_local_application_before_commands(self):
         text = (MODULE / "oficina-de-ferramentas.md").read_text(

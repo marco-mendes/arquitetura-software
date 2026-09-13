@@ -86,6 +86,12 @@ _HTML_ATTRIBUTE = re.compile(
 _HEADING = re.compile(r"^#{1,6}[ \t]+(?P<title>.+?)[ \t]*#*[ \t]*$", re.MULTILINE)
 _EXPLICIT_ANCHOR = re.compile(r"\{[ \t]*#(?P<anchor>[A-Za-z][\w:.-]*)[^}]*\}")
 _TEXTUAL_EQUIVALENT = "**Leitura textual da figura:**"
+# Rótulos de acessibilidade acompanham a descrição na mesma linha, por exigência
+# de _has_proximal_textual_equivalent. Ficam fora da regra de rótulo procedimental,
+# que existe para "Objetivo", "Resultado esperado" e afins ficarem sozinhos na linha.
+_ACCESSIBILITY_LABELS = frozenset(
+    {"Leitura textual da figura:", "Texto alternativo:"}
+)
 _FIGURE_CAPTION = re.compile(
     r"^(?:\*(?:Figura|Fonte)\b[^\n]*\*|_(?:Figura|Fonte)\b[^\n]*_|"
     r"<figcaption\b[^>]*>.*?</figcaption>)",
@@ -478,6 +484,8 @@ def _validate_procedural_labels(path: Path, docs_root: Path, text: str) -> list[
     for index, line in enumerate(lines):
         match = _PROCEDURAL_LABEL.match(line)
         if not match:
+            continue
+        if match.group("label").strip() in _ACCESSIBILITY_LABELS:
             continue
         followed_by_blank = index + 1 < len(lines) and not lines[index + 1].strip()
         if match.group("tail").strip() or not followed_by_blank:
