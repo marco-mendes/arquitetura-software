@@ -18,27 +18,576 @@ O caso é o mesmo das páginas anteriores. **Elegibilidade** decide se um benefi
 
 **Leitura textual da figura:** três faixas horizontais representam redes distintas. Na rede de serviços, a API de Exames chama a API de Elegibilidade por httpx com prazo de espera declarado. Na rede de banco de dados, cada serviço tem seu próprio Postgres privado, e não existe caminho de rede entre os dois bancos. Abaixo, o resultado observável durante a falha: `GET /health` responde 200 enquanto a operação responde 503, porque Elegibilidade está fora do ar e Exames continua respondendo de forma degradada.
 
+### A topologia que você vai montar
+
+O desenho abaixo é o que o arquivo de composição declara, e vale entendê-lo antes de escrever qualquer linha.
+
+```mermaid
+flowchart TB
+    CL[Você, pelo terminal<br/>portas 18001 e 18002] --> AN[rede application-net]
+    AN --> EL[serviço elegibilidade]
+    AN --> EX[serviço exames]
+    EX -->|httpx com prazo de 2s| EL
+    EL --> RE[rede elegibilidade-db-net<br/>internal: true]
+    EX --> RX[rede exames-db-net<br/>internal: true]
+    RE --> DE[(Postgres elegibilidade)]
+    RX --> DX[(Postgres exames)]
+```
+
+**Texto alternativo:** o terminal alcança os dois serviços por uma rede de aplicação, exames chama elegibilidade por HTTP com prazo de espera, e cada serviço tem uma rede interna própria que leva ao seu banco, sem ligação entre as duas redes de banco.
+
+*Figura 11 — Três redes, e por que um serviço não alcança o banco do outro. Fonte: curso.*
+
+**Leitura textual da figura:** você chega pelo terminal às portas publicadas dos dois serviços, que estão na rede de aplicação. Nessa mesma rede, o serviço de exames chama o de elegibilidade por HTTP, com prazo de espera declarado de dois segundos. Cada serviço pertence também a uma segunda rede, marcada como interna, que leva ao seu próprio Postgres. As duas redes de banco não se tocam e não têm saída para fora, e é por isso que o serviço de exames não consegue nem resolver o nome do banco de elegibilidade. A fronteira de dados aqui não depende de disciplina do programador, ela está na construção da rede.
+
 ### Onde cada arquivo mora
 
-Todos os comandos rodam a partir de `laboratorios/plataforma-hospitalar`.
+Você vai criar uma pasta vazia e escrever os nove arquivos abaixo. Todos os comandos rodam a partir de `oficina-servicos`.
 
 ```text
-plataforma-hospitalar/
+oficina-servicos/                   ← execute os comandos a partir daqui
+├── pyproject.toml                  declara as bibliotecas e torna o pacote instalável
+├── Dockerfile                      a imagem compartilhada pelos dois serviços
 ├── infra/
-│   └── compose.servicos.yml        ← define os quatro contêineres e as redes
-├── src/hospital/servicos/
-│   ├── elegibilidade.py            o serviço que decide
-│   └── exames.py                   o serviço que depende do primeiro
+│   ├── compose.servicos.yml        define os quatro contêineres e as três redes
+│   └── postgres/
+│       ├── Dockerfile              imagem do banco, com o script de carga
+│       └── init.sql                cria papéis restritos, tabelas e dados sintéticos
+├── src/hospital/
+│   ├── __init__.py                 vazio, torna hospital um pacote
+│   └── servicos/
+│       ├── __init__.py             vazio, torna servicos um pacote
+│       ├── elegibilidade.py        o serviço que decide
+│       └── exames.py               o serviço que depende do primeiro
+├── tests/
+│   └── test_service_boundaries.py  os quatro testes de fronteira
 └── evidencias/modulo-3/            você criará esta pasta na preparação
 ```
 
-| Arquivo | O que ele faz |
-| --- | --- |
-| [`infra/compose.servicos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/compose.servicos.yml) | Descreve os quatro contêineres, as três redes e as verificações de saúde. É onde a fronteira entre os serviços fica declarada. |
-| [`src/hospital/servicos/elegibilidade.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/servicos/elegibilidade.py) | O serviço que responde se um beneficiário é elegível, consultando apenas a própria base. |
-| [`src/hospital/servicos/exames.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/servicos/exames.py) | O serviço que chama Elegibilidade por HTTP e grava na própria base. É aqui que o tratamento de falha parcial está escrito. |
+Cada arquivo aparece nesta página inteiro, pronto para copiar. O título de cada bloco é um link para o mesmo arquivo no repositório do curso, byte a byte igual ao que está aqui.
 
-As senhas do laboratório valem só para esta demonstração local e os dados são inventados. Ao final, `down -v` remove contêineres, redes e volumes.
+Crie a estrutura antes de escrever. No macOS e no Linux:
+
+```bash
+mkdir -p oficina-servicos/infra/postgres oficina-servicos/src/hospital/servicos oficina-servicos/tests
+cd oficina-servicos
+```
+
+No PowerShell:
+
+```powershell
+mkdir oficina-servicos\infra\postgres, oficina-servicos\src\hospital\servicos, oficina-servicos\tests
+cd oficina-servicos
+```
+
+O `pyproject.toml` declara as bibliotecas e torna o pacote instalável, o que faz `hospital.servicos.exames` resolver tanto dentro do contêiner quanto nos testes.
+
+[`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/pyproject.toml)
+
+```toml
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "servicos-hospitalares"
+version = "0.1.0"
+description = "Dois serviços com bancos próprios, oficina do módulo 3"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "httpx",
+  "psycopg[binary]",
+  "pydantic",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+```
+
+O `Dockerfile` produz a imagem que os dois serviços compartilham. Eles diferem apenas no comando que o arquivo de composição passa a cada um.
+
+[`Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/Dockerfile)
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY src ./src
+RUN python -m pip install --no-cache-dir .
+
+RUN useradd --create-home --uid 10001 app
+USER app
+
+EXPOSE 8000
+```
+
+Os dois `__init__.py` ficam vazios e existem para tornar as pastas pacotes Python importáveis.
+
+[`src/hospital/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/src/hospital/__init__.py)
+
+```python
+
+```
+
+[`src/hospital/servicos/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/src/hospital/servicos/__init__.py)
+
+```python
+
+```
+
+O `elegibilidade.py` é o serviço que decide. Ele consulta somente a própria base e não conhece exames.
+
+[`src/hospital/servicos/elegibilidade.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/src/hospital/servicos/elegibilidade.py)
+
+```python
+import os
+
+from fastapi import FastAPI, HTTPException, status
+import psycopg
+
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://elegibilidade:elegibilidade@localhost:5433/elegibilidade",
+)
+
+app = FastAPI(title="Serviço de elegibilidade", version="1.0.0")
+
+
+def abrir_conexao():
+    return psycopg.connect(DATABASE_URL)
+
+
+@app.get("/health")
+def health():
+    try:
+        with abrir_conexao() as connection:
+            connection.execute("SELECT 1")
+    except psycopg.Error as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"codigo": "banco_indisponivel"},
+        ) from error
+    return {"status": "ok", "servico": "elegibilidade"}
+
+
+@app.get("/elegibilidades/{beneficiario_id}")
+def consultar_elegibilidade(beneficiario_id: str):
+    with abrir_conexao() as connection:
+        row = connection.execute(
+            "SELECT elegivel FROM elegibilidade.beneficiarios WHERE id = %s",
+            (beneficiario_id,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"codigo": "beneficiario_nao_encontrado"},
+        )
+    return {"beneficiario_id": beneficiario_id, "elegivel": row[0]}
+```
+
+O `exames.py` é o serviço que depende do primeiro, e é onde o tratamento de falha parcial está escrito. Repare que cada situação do vizinho vira um código de resposta diferente: indisponibilidade vira `503`, beneficiário desconhecido vira `422`, e resposta fora do contrato vira `502`.
+
+[`src/hospital/servicos/exames.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/src/hospital/servicos/exames.py)
+
+```python
+import os
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException, status
+import httpx
+from pydantic import BaseModel, Field
+import psycopg
+
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://exames:exames@localhost:5434/exames"
+)
+ELIGIBILIDADE_URL = os.getenv("ELIGIBILIDADE_URL", "http://localhost:8001")
+
+app = FastAPI(title="Serviço de exames", version="1.0.0")
+
+
+class PedidoExame(BaseModel):
+    beneficiario_id: str = Field(min_length=1)
+    codigo_exame: str = Field(min_length=1)
+
+
+class ExameSolicitado(PedidoExame):
+    solicitacao_id: int
+    situacao: str
+
+
+def abrir_conexao():
+    return psycopg.connect(DATABASE_URL)
+
+
+def obter_cliente_elegibilidade():
+    with httpx.Client(base_url=ELIGIBILIDADE_URL, timeout=2.0) as client:
+        yield client
+
+
+def registrar_solicitacao(beneficiario_id: str, codigo_exame: str) -> int:
+    with abrir_conexao() as connection:
+        row = connection.execute(
+            """
+            INSERT INTO exames.solicitacoes (beneficiario_id, codigo_exame)
+            VALUES (%s, %s)
+            RETURNING id
+            """,
+            (beneficiario_id, codigo_exame),
+        ).fetchone()
+    assert row is not None
+    return row[0]
+
+
+@app.get("/health")
+def health():
+    try:
+        with abrir_conexao() as connection:
+            connection.execute("SELECT 1")
+    except psycopg.Error as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"codigo": "banco_indisponivel"},
+        ) from error
+    return {"status": "ok", "servico": "exames"}
+
+
+@app.post(
+    "/exames",
+    response_model=ExameSolicitado,
+    status_code=status.HTTP_201_CREATED,
+)
+def solicitar_exame(
+    pedido: PedidoExame,
+    cliente: Annotated[httpx.Client, Depends(obter_cliente_elegibilidade)],
+):
+    try:
+        response = cliente.get(f"/elegibilidades/{pedido.beneficiario_id}")
+    except httpx.HTTPError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"codigo": "dependencia_indisponivel"},
+        ) from error
+    if response.status_code >= 500:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"codigo": "dependencia_indisponivel"},
+        )
+    if response.status_code == 404:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={"codigo": "beneficiario_desconhecido"},
+        )
+    try:
+        response.raise_for_status()
+        elegibilidade = response.json()
+    except (httpx.HTTPError, ValueError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"codigo": "contrato_invalido"},
+        ) from error
+    if elegibilidade.get("beneficiario_id") != pedido.beneficiario_id or not isinstance(
+        elegibilidade.get("elegivel"), bool
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"codigo": "contrato_invalido"},
+        )
+    if not elegibilidade["elegivel"]:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={"codigo": "beneficiario_inelegivel"},
+        )
+    try:
+        solicitacao_id = registrar_solicitacao(
+            pedido.beneficiario_id, pedido.codigo_exame
+        )
+    except psycopg.Error as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"codigo": "banco_indisponivel"},
+        ) from error
+    return ExameSolicitado(
+        solicitacao_id=solicitacao_id,
+        beneficiario_id=pedido.beneficiario_id,
+        codigo_exame=pedido.codigo_exame,
+        situacao="solicitado",
+    )
+```
+
+O `infra/postgres/init.sql` roda na primeira subida de cada banco. O mesmo arquivo serve aos dois, e o bloco condicional no topo decide o que criar conforme o nome do banco. Repare nos papéis: eles nascem sem privilégio de superusuário e sem poder criar banco, papel ou replicação.
+
+[`infra/postgres/init.sql`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/infra/postgres/init.sql)
+
+```sql
+SELECT current_database() = 'elegibilidade' AS is_elegibilidade \gset
+SELECT current_database() = 'exames' AS is_exames \gset
+
+\if :is_elegibilidade
+CREATE ROLE elegibilidade LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD 'elegibilidade';
+CREATE SCHEMA AUTHORIZATION elegibilidade;
+SET ROLE elegibilidade;
+CREATE TABLE elegibilidade.beneficiarios (
+    id text PRIMARY KEY,
+    elegivel boolean NOT NULL
+);
+INSERT INTO elegibilidade.beneficiarios (id, elegivel)
+VALUES ('paciente-001', true), ('paciente-002', false);
+RESET ROLE;
+\elif :is_exames
+CREATE ROLE exames LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD 'exames';
+CREATE SCHEMA AUTHORIZATION exames;
+SET ROLE exames;
+CREATE TABLE exames.solicitacoes (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    beneficiario_id text NOT NULL,
+    codigo_exame text NOT NULL,
+    criado_em timestamptz NOT NULL DEFAULT now()
+);
+RESET ROLE;
+\else
+\echo 'O banco deve se chamar elegibilidade ou exames'
+\quit
+\endif
+```
+
+O `infra/postgres/Dockerfile` apenas coloca esse script no lugar onde a imagem oficial do Postgres o executa automaticamente.
+
+[`infra/postgres/Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/infra/postgres/Dockerfile)
+
+```dockerfile
+FROM postgres:16-alpine
+
+COPY infra/postgres/init.sql /docker-entrypoint-initdb.d/init.sql
+```
+
+O `infra/compose.servicos.yml` é o arquivo central da oficina. É nele que as três redes ficam declaradas, e é a marcação `internal: true` nas duas redes de banco que produz o isolamento da Figura 11.
+
+[`infra/compose.servicos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/infra/compose.servicos.yml)
+
+```yaml
+services:
+  db_elegibilidade:
+    build:
+      context: ..
+      dockerfile: infra/postgres/Dockerfile
+    environment:
+      POSTGRES_DB: elegibilidade
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local-elegibilidade-admin
+    volumes:
+      - elegibilidade_data:/var/lib/postgresql/data
+    networks:
+      elegibilidade-db-net:
+        aliases:
+          - elegibilidade-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d elegibilidade"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  db_exames:
+    build:
+      context: ..
+      dockerfile: infra/postgres/Dockerfile
+    environment:
+      POSTGRES_DB: exames
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local-exames-admin
+    volumes:
+      - exames_data:/var/lib/postgresql/data
+    networks:
+      exames-db-net:
+        aliases:
+          - exames-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d exames"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  elegibilidade:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "hospital.servicos.elegibilidade:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://elegibilidade:elegibilidade@db_elegibilidade:5432/elegibilidade
+    ports:
+      - "${ELEGIBILIDADE_PORT:-8001}:8000"
+    depends_on:
+      db_elegibilidade:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    networks:
+      - application-net
+      - elegibilidade-db-net
+
+  exames:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["python", "-m", "uvicorn", "hospital.servicos.exames:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://exames:exames@db_exames:5432/exames
+      ELIGIBILIDADE_URL: http://elegibilidade:8000
+    ports:
+      - "${EXAMES_PORT:-8002}:8000"
+    depends_on:
+      db_exames:
+        condition: service_healthy
+      elegibilidade:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    networks:
+      - application-net
+      - exames-db-net
+
+volumes:
+  elegibilidade_data:
+  exames_data:
+
+networks:
+  application-net:
+  elegibilidade-db-net:
+    internal: true
+  exames-db-net:
+    internal: true
+```
+
+O `tests/test_service_boundaries.py` verifica as fronteiras por código, sem depender de inspeção manual.
+
+[`tests/test_service_boundaries.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/tests/test_service_boundaries.py)
+
+```python
+from pathlib import Path
+
+import httpx
+import psycopg
+from fastapi.testclient import TestClient
+
+from hospital.servicos import exames
+
+
+ROOT = Path(__file__).resolve().parents[1]
+EXAMES_SOURCE = ROOT / "src" / "hospital" / "servicos" / "exames.py"
+
+
+def _client_for_eligibility(response: httpx.Response) -> TestClient:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "GET"
+        assert request.url.path == "/elegibilidades/paciente-001"
+        return response
+
+    dependency_client = httpx.Client(
+        transport=httpx.MockTransport(handler), base_url="http://contrato.local"
+    )
+    exames.app.dependency_overrides[exames.obter_cliente_elegibilidade] = (
+        lambda: dependency_client
+    )
+    return TestClient(exames.app)
+
+
+def teardown_function():
+    exames.app.dependency_overrides.clear()
+
+
+def test_exames_consumes_eligibility_only_through_http_contract(monkeypatch):
+    monkeypatch.setattr(exames, "registrar_solicitacao", lambda *_: 41)
+    eligibility_response = httpx.Response(
+        200,
+        json={"beneficiario_id": "paciente-001", "elegivel": True},
+    )
+
+    response = _client_for_eligibility(eligibility_response).post(
+        "/exames",
+        json={"beneficiario_id": "paciente-001", "codigo_exame": "HEM-001"},
+    )
+
+    assert response.status_code == 201
+    assert response.json() == {
+        "solicitacao_id": 41,
+        "beneficiario_id": "paciente-001",
+        "codigo_exame": "HEM-001",
+        "situacao": "solicitado",
+    }
+
+
+def test_exames_makes_partial_failure_observable_when_dependency_is_down():
+    def unavailable(_request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("serviço interrompido")
+
+    dependency_client = httpx.Client(
+        transport=httpx.MockTransport(unavailable), base_url="http://contrato.local"
+    )
+    exames.app.dependency_overrides[exames.obter_cliente_elegibilidade] = (
+        lambda: dependency_client
+    )
+
+    response = TestClient(exames.app).post(
+        "/exames",
+        json={"beneficiario_id": "paciente-001", "codigo_exame": "HEM-001"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["codigo"] == "dependencia_indisponivel"
+
+
+def test_exames_makes_its_own_database_failure_observable(monkeypatch):
+    eligibility_response = httpx.Response(
+        200,
+        json={"beneficiario_id": "paciente-001", "elegivel": True},
+    )
+    client = _client_for_eligibility(eligibility_response)
+
+    def database_unavailable(*_args):
+        raise psycopg.OperationalError("banco de Exames indisponível")
+
+    monkeypatch.setattr(exames, "registrar_solicitacao", database_unavailable)
+
+    response = client.post(
+        "/exames",
+        json={"beneficiario_id": "paciente-001", "codigo_exame": "HEM-001"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["codigo"] == "banco_indisponivel"
+
+
+def test_exames_source_cannot_access_eligibility_table_directly():
+    source = EXAMES_SOURCE.read_text(encoding="utf-8").casefold()
+
+    assert "elegibilidade.beneficiarios" not in source
+    assert "from elegibilidade" not in source
+    assert "join elegibilidade" not in source
+    assert "db_elegibilidade" not in source
+```
+
+As senhas valem só para esta demonstração local e os dados são inventados. Ao final, `down -v` remove contêineres, redes e volumes.
 
 ## Ferramenta
 
@@ -80,10 +629,10 @@ Instale Docker Engine, o plugin Compose e Python 3 pelo método da sua distribui
 
 ## Preparação do laboratório
 
-Na raiz do clone, entre na pasta do laboratório e prepare um local para evidências. Em Windows use `py` no lugar de `python`, se necessário.
+Entre na pasta da oficina e prepare um local para evidências. Em Windows use `py` no lugar de `python`, se necessário.
 
 ```bash
-cd laboratorios/plataforma-hospitalar
+cd oficina-servicos
 python -m pip install -e ".[dev]"
 mkdir -p evidencias/modulo-3
 ```
@@ -286,6 +835,23 @@ docker compose -f infra/compose.servicos.yml stop elegibilidade
 docker compose -f infra/compose.servicos.yml ps
 ```
 
+O desenho abaixo mostra o que acabou de acontecer com o serviço de Exames.
+
+```mermaid
+flowchart TB
+    H[GET /health em Exames] --> BD{Exames alcança<br/>o próprio banco?}
+    BD -->|sim| OK[200 OK<br/>o processo está saudável]
+    OP[POST /exames] --> DEP{Elegibilidade responde?}
+    DEP -->|não, prazo esgotado| ERR[503 Service Unavailable<br/>dependencia_indisponivel]
+    OK -.->|mesma instância, ao mesmo tempo| ERR
+```
+
+**Texto alternativo:** a verificação de saúde de Exames consulta apenas o próprio banco e responde 200, enquanto a operação de negócio depende de Elegibilidade e responde 503, e uma seta tracejada indica que as duas respostas vêm da mesma instância ao mesmo tempo.
+
+*Figura 12 — Por que a mesma instância responde 200 e 503 ao mesmo tempo. Fonte: curso.*
+
+**Leitura textual da figura:** dois caminhos partem do mesmo processo. O primeiro é a verificação de saúde, que só consulta o banco de Exames, encontra tudo no lugar e responde 200. O segundo é a operação de negócio, que precisa perguntar a Elegibilidade se o beneficiário pode ser atendido, não obtém resposta dentro do prazo e devolve 503 com o código de dependência indisponível. Uma seta tracejada liga as duas respostas, registrando que elas saem da mesma instância no mesmo instante. Isso é degradação parcial, e é diferente de o sistema cair. Uma verificação de saúde que também consultasse Elegibilidade apagaria essa distinção e faria o orquestrador reiniciar um processo que está funcionando.
+
 Repita a chamada abaixo. Ela deve retornar `503 Service Unavailable` e o código `dependencia_indisponivel`, enquanto `GET /health` de Exames ainda retorna `200`:
 
 ```bash
@@ -394,4 +960,4 @@ docker compose -f infra/compose.servicos.yml ps -a
 
 ## Evidência a entregar
 
-Guarde em `laboratorios/plataforma-hospitalar/evidencias/modulo-3/` as saídas de versões, health checks, `201`, `503` e testes. Se o daemon nunca respondeu, faça somente `config --quiet` e os testes Python e registre: “Compose validado estaticamente; execução de contêineres não realizada porque o daemon não respondeu”. Não afirme que observou health checks sem uma execução real.
+Guarde em `oficina-servicos/evidencias/modulo-3/` as saídas de versões, health checks, `201`, `503` e testes. Se o daemon nunca respondeu, faça somente `config --quiet` e os testes Python e registre: “Compose validado estaticamente; execução de contêineres não realizada porque o daemon não respondeu”. Não afirme que observou health checks sem uma execução real.
