@@ -90,7 +90,7 @@ _TEXTUAL_EQUIVALENT = "**Leitura textual da figura:**"
 # de _has_proximal_textual_equivalent. Ficam fora da regra de rótulo procedimental,
 # que existe para "Objetivo", "Resultado esperado" e afins ficarem sozinhos na linha.
 _ACCESSIBILITY_LABELS = frozenset(
-    {"Leitura textual da figura:", "Texto alternativo:"}
+    {"Leitura textual da figura:", "Leitura textual:", "Texto alternativo:"}
 )
 _FIGURE_CAPTION = re.compile(
     r"^(?:\*(?:Figura|Fonte)\b[^\n]*\*|_(?:Figura|Fonte)\b[^\n]*_|"

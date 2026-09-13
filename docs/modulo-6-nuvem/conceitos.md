@@ -176,7 +176,7 @@ Três consequências arquiteturais decorrem disso. O estado desejado vira artefa
 *Figura 17 — O laço de reconciliação que sustenta a orquestração. Fonte: curso.*
 
 ```mermaid
-flowchart LR
+flowchart TB
     D[Estado desejado declarado] --> C{Controlador compara}
     A[Estado atual observado] --> C
     C -->|falta réplica| M[Cria réplica]

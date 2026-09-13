@@ -12,7 +12,9 @@ Você vai colocar uma API no ar na sua própria máquina, ler a documentação q
 
 ## O que existe antes de você abrir o terminal
 
-Você trabalhará no repositório desta disciplina, dentro de `laboratorios/plataforma-hospitalar`. Essa pasta contém uma aplicação didática local chamada **API de elegibilidades da plataforma hospitalar**. Ela não consulta uma operadora real, não acessa prontuários e não envia dados para fora do seu computador. Seu objetivo é tornar observável um contrato HTTP pequeno, não simular uma plataforma hospitalar completa.
+Você vai começar numa pasta vazia e escrever os nove arquivos que compõem a **API de elegibilidades da plataforma hospitalar**, uma aplicação didática local. Ela não consulta uma operadora real, não acessa prontuários e não envia dados para fora do seu computador. O objetivo é tornar observável um contrato HTTP pequeno, sem simular uma plataforma hospitalar completa.
+
+Cada arquivo aparece nesta página inteiro, pronto para copiar. O título de cada bloco é um link para o mesmo arquivo no repositório do curso, byte a byte igual ao que está aqui, para quem preferir baixar em vez de copiar.
 
 O arquivo `src/hospital/api/main.py` inicia a aplicação FastAPI e expõe apenas duas operações públicas:
 
@@ -25,34 +27,768 @@ Os dados aceitos ficam somente na memória do processo. Isso significa que parar
 
 ### Onde cada arquivo mora
 
-Esta é a árvore completa dos arquivos citados na oficina. Os comandos daqui em diante rodam a partir de `plataforma-hospitalar`, e cada caminho mencionado no texto é relativo a ela.
+Esta é a árvore que você vai montar. Os comandos daqui em diante rodam a partir de `oficina-contrato`, e cada caminho mencionado no texto é relativo a ela.
 
 ```text
-arquitetura-software/                      ← raiz do repositório clonado
-└── laboratorios/
-    └── plataforma-hospitalar/             ← execute os comandos a partir daqui
-        ├── pyproject.toml                 declara as bibliotecas a instalar
-        ├── .spectral.yaml                 aponta para a configuração de dentro de contratos/
-        ├── contratos/
-        │   ├── openapi.yaml               o contrato escrito à mão
-        │   └── .spectral.yaml             as regras que o contrato deve cumprir
-        ├── src/hospital/api/
-        │   ├── models.py                  os formatos de dados e suas validações
-        │   └── main.py                    a aplicação e as duas rotas
-        ├── tests/
-        │   └── test_api_contract.py       os sete testes de contrato
-        └── evidencias/                    você criará esta pasta na preparação
+oficina-contrato/                      ← execute os comandos a partir daqui
+├── pyproject.toml                     declara as bibliotecas a instalar
+├── .spectral.yaml                     aponta para a configuração de dentro de contratos/
+├── contratos/
+│   ├── openapi.yaml                   o contrato escrito à mão
+│   └── .spectral.yaml                 as regras que o contrato deve cumprir
+├── src/hospital/
+│   ├── __init__.py                    vazio, torna hospital um pacote
+│   └── api/
+│       ├── __init__.py                vazio, torna api um pacote
+│       ├── models.py                  os formatos de dados e suas validações
+│       └── main.py                    a aplicação e as duas rotas
+├── tests/
+│   └── test_api_contract.py           os sete testes de contrato
+└── evidencias/                        você criará esta pasta na preparação
 ```
 
-Os links abaixo abrem cada arquivo no GitHub, para quem está lendo pelo site sem ter clonado o repositório.
+A tabela abaixo diz o papel de cada arquivo. Os arquivos em si vêm logo depois, na seção seguinte.
 
 | Arquivo | O que ele faz | Onde isso aparece na teoria |
 | --- | --- | --- |
-| [`contratos/openapi.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/openapi.yaml) | O contrato escrito à mão: as duas operações, os formatos de dados e os exemplos que a API promete a quem consome. | É o **contrato** de [interface, contrato e implementação](conceitos.md), publicado num documento que existe independente do código. |
-| [`src/hospital/api/models.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/models.py) | Os modelos de dados escritos com **Pydantic**, a biblioteca que o FastAPI usa para validar. O tipo declarado em cada campo é a própria regra de validação. | Onde o contrato deixa de ser documento e passa a ser código executável. |
-| [`src/hospital/api/main.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/src/hospital/api/main.py) | A aplicação FastAPI: as duas rotas, o `202` com `Location` e os erros estruturados. | A **implementação**, que pode mudar por dentro sem quebrar quem consome, desde que o contrato fique de pé. |
-| [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_api_contract.py) | Sete testes: cinco exercitam a API pela porta da frente, dois comparam o contrato publicado com o que o FastAPI gera. | A verificação de que a promessa publicada e o comportamento real não divergiram. |
-| [`.spectral.yaml` e `contratos/.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/contratos/.spectral.yaml) | As regras que o verificador de contrato aplica ao `openapi.yaml`. | A política de contrato que uma equipe acorda e automatiza. |
+| [`contratos/openapi.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/contratos/openapi.yaml) | O contrato escrito à mão: as duas operações, os formatos de dados e os exemplos que a API promete a quem consome. | É o **contrato** de [interface, contrato e implementação](conceitos.md), publicado num documento que existe independente do código. |
+| [`src/hospital/api/models.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/src/hospital/api/models.py) | Os modelos de dados escritos com **Pydantic**, a biblioteca que o FastAPI usa para validar. O tipo declarado em cada campo é a própria regra de validação. | Onde o contrato deixa de ser documento e passa a ser código executável. |
+| [`src/hospital/api/main.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/src/hospital/api/main.py) | A aplicação FastAPI: as duas rotas, o `202` com `Location` e os erros estruturados. | A **implementação**, que pode mudar por dentro sem quebrar quem consome, desde que o contrato fique de pé. |
+| [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/tests/test_api_contract.py) | Sete testes: cinco exercitam a API pela porta da frente, dois comparam o contrato publicado com o que o FastAPI gera. | A verificação de que a promessa publicada e o comportamento real não divergiram. |
+| [`.spectral.yaml` e `contratos/.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/contratos/.spectral.yaml) | As regras que o verificador de contrato aplica ao `openapi.yaml`. | A política de contrato que uma equipe acorda e automatiza. |
+
+O caminho que uma requisição percorre explica por que os arquivos são estes e não outros.
+
+```mermaid
+flowchart TB
+    CL[Cliente envia POST /elegibilidades<br/>com CPF, operadora e matrícula] --> V{models.py<br/>o corpo cumpre o contrato?}
+    V -->|sim| OK[main.py cria protocolo<br/>202 Accepted + cabeçalho Location]
+    V -->|não| ERR[main.py devolve corpo estruturado<br/>422 Unprocessable Entity]
+    OK --> G[Cliente segue o Location<br/>GET /elegibilidades/protocolo]
+    G --> R[200 OK com a representação<br/>ou 404 se o protocolo não existir]
+```
+
+**Texto alternativo:** o cliente envia a requisição, uma decisão verifica se o corpo cumpre o contrato, e daí saem dois caminhos, o de aceitação com 202 e cabeçalho Location e o de recusa com 422 estruturado, seguindo o primeiro para a consulta pelo protocolo.
+
+*Figura 11 — Os dois desfechos de uma requisição e o que cada arquivo decide. Fonte: curso.*
+
+**Leitura textual:** o cliente envia `POST /elegibilidades` com CPF, código de operadora e matrícula. A validação declarada em `models.py` decide o desfecho antes de qualquer código de negócio rodar. Quando o corpo cumpre o contrato, `main.py` cria o protocolo e responde `202 Accepted` com o cabeçalho `Location`. Quando não cumpre, a mesma aplicação devolve `422 Unprocessable Entity` com um corpo estruturado, listando campo, mensagem e tipo do erro. Seguindo o caminho de aceitação, o cliente usa o endereço do `Location` para fazer `GET /elegibilidades/{protocolo}`, que responde `200 OK` com a representação ou `404` quando o protocolo não existe no processo atual.
+
+### Os nove arquivos, um a um
+
+Crie a pasta e a estrutura antes de escrever qualquer coisa. No macOS e no Linux:
+
+```bash
+mkdir -p oficina-contrato/contratos oficina-contrato/src/hospital/api oficina-contrato/tests
+cd oficina-contrato
+```
+
+No PowerShell:
+
+```powershell
+mkdir oficina-contrato\contratos, oficina-contrato\src\hospital\api, oficina-contrato\tests
+cd oficina-contrato
+```
+
+O `pyproject.toml` declara as bibliotecas e torna o pacote instalável. É ele que permite o `pip install -e` mais adiante, e é por isso que nenhum comando precisa passar caminho de código.
+
+[`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/pyproject.toml)
+
+```toml
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "api-elegibilidades"
+version = "0.1.0"
+description = "API de elegibilidades da plataforma hospitalar, oficina do módulo 2"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "httpx",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pyyaml",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+```
+
+Os dois `__init__.py` ficam vazios de propósito. A presença deles é o que torna `hospital` e `hospital.api` pacotes Python importáveis, e é o que faz `hospital.api.main:app` resolver.
+
+[`src/hospital/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/src/hospital/__init__.py)
+
+```python
+
+```
+
+[`src/hospital/api/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/src/hospital/api/__init__.py)
+
+```python
+
+```
+
+O `models.py` declara os formatos de dados com **Pydantic**. O tipo e as restrições de cada campo são a própria regra de validação, e o FastAPI as aplica antes de a sua função ser chamada.
+
+[`src/hospital/api/models.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/src/hospital/api/models.py)
+
+```python
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class PedidoElegibilidade(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "cpf": "12345678901",
+                    "codigo_operadora": "OPS-001",
+                    "matricula_plano": "MAT-2026-001",
+                }
+            ]
+        }
+    )
+
+    cpf: str = Field(pattern=r"^\d{11}$")
+    codigo_operadora: str = Field(min_length=1, max_length=40)
+    matricula_plano: str = Field(min_length=1, max_length=60)
+
+
+class ElegibilidadeAceita(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    protocolo: str
+    situacao: str = Field(pattern=r"^recebida$")
+    criado_em: datetime
+
+
+class DetalheErro(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    campo: str
+    mensagem: str
+    tipo: str
+
+
+class ErroAPI(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    codigo: str
+    mensagem: str
+    detalhes: list[DetalheErro]
+```
+
+O `main.py` monta a aplicação e as duas rotas. Repare no tratador de erro de validação: ele existe para que uma requisição fora do contrato devolva um corpo estruturado em vez do formato padrão do FastAPI.
+
+[`src/hospital/api/main.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/src/hospital/api/main.py)
+
+```python
+from datetime import datetime, timezone
+from uuid import uuid4
+
+from fastapi import FastAPI, Response, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from hospital.api.models import (
+    ElegibilidadeAceita,
+    ErroAPI,
+    PedidoElegibilidade,
+)
+
+
+app = FastAPI(
+    title="API de elegibilidades da plataforma hospitalar",
+    version="1.0.0",
+)
+
+_elegibilidades: dict[str, ElegibilidadeAceita] = {}
+
+
+def limpar_elegibilidades() -> None:
+    """Reinicia o armazenamento efêmero usado nos testes e na oficina."""
+
+    _elegibilidades.clear()
+
+
+@app.get("/health/live", include_in_schema=False)
+def live() -> dict[str, str]:
+    """Indica que o processo atende, sem consultar dependências externas."""
+
+    return {"status": "live"}
+
+
+@app.get("/health/ready", include_in_schema=False)
+def ready() -> dict[str, str]:
+    """Indica que esta instância pode receber tráfego do Service."""
+
+    return {"status": "ready"}
+
+
+@app.exception_handler(RequestValidationError)
+async def tratar_erro_de_validacao(
+    _request, error: RequestValidationError
+) -> JSONResponse:
+    detalhes = [
+        {
+            "campo": ".".join(str(part) for part in item["loc"]),
+            "mensagem": item["msg"],
+            "tipo": item["type"],
+        }
+        for item in error.errors()
+    ]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={
+            "codigo": "dados_invalidos",
+            "mensagem": "A requisição não atende ao contrato.",
+            "detalhes": detalhes,
+        },
+    )
+
+
+@app.post(
+    "/elegibilidades",
+    response_model=ElegibilidadeAceita,
+    status_code=status.HTTP_202_ACCEPTED,
+    response_description="Pedido aceito para processamento.",
+    responses={
+        202: {
+            "headers": {
+                "Location": {
+                    "description": "Caminho do recurso aceito.",
+                    "required": True,
+                    "schema": {"type": "string"},
+                    "example": (
+                        "/elegibilidades/"
+                        "550e8400-e29b-41d4-a716-446655440000"
+                    ),
+                }
+            }
+        },
+        422: {"model": ErroAPI},
+    },
+    operation_id="criarElegibilidade",
+    summary="Aceita uma consulta de elegibilidade",
+)
+def criar_elegibilidade(
+    _pedido: PedidoElegibilidade, response: Response
+) -> ElegibilidadeAceita:
+    aceita = ElegibilidadeAceita(
+        protocolo=str(uuid4()),
+        situacao="recebida",
+        criado_em=datetime.now(timezone.utc),
+    )
+    _elegibilidades[aceita.protocolo] = aceita
+    response.headers["Location"] = f"/elegibilidades/{aceita.protocolo}"
+    return aceita
+
+
+@app.get(
+    "/elegibilidades/{protocolo}",
+    response_model=ElegibilidadeAceita,
+    responses={404: {"model": ErroAPI}},
+    operation_id="consultarElegibilidade",
+    summary="Consulta uma elegibilidade aceita",
+)
+def consultar_elegibilidade(protocolo: str):
+    encontrada = _elegibilidades.get(protocolo)
+    if encontrada is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={
+                "codigo": "elegibilidade_nao_encontrada",
+                "mensagem": "Protocolo de elegibilidade não encontrado.",
+                "detalhes": [],
+            },
+        )
+    return encontrada
+```
+
+O `contratos/openapi.yaml` é o contrato escrito à mão, independente do código. Ele é longo porque descreve tudo que a API promete, incluindo os exemplos.
+
+[`contratos/openapi.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/contratos/openapi.yaml)
+
+```yaml
+openapi: 3.1.0
+info:
+  title: API de elegibilidades da plataforma hospitalar
+  version: 1.0.0
+  contact:
+    name: Disciplina de Arquitetura de Software
+  description: >-
+    Contrato didático para aceitar e recuperar consultas administrativas de
+    elegibilidade. O laboratório mantém dados somente em memória.
+tags:
+  - name: Elegibilidades
+    description: Operações administrativas de elegibilidade.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Servidor local da oficina.
+paths:
+  /elegibilidades:
+    post:
+      tags: [Elegibilidades]
+      operationId: criarElegibilidade
+      summary: Aceita uma consulta de elegibilidade
+      description: >-
+        Valida o pedido, cria um protocolo efêmero e informa onde consultar o
+        recurso aceito.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoElegibilidade'
+            examples:
+              pedidoValido:
+                summary: Pedido sintético válido
+                value:
+                  cpf: '12345678901'
+                  codigo_operadora: OPS-001
+                  matricula_plano: MAT-2026-001
+      responses:
+        '202':
+          description: Pedido aceito para processamento.
+          headers:
+            Location:
+              description: Caminho do recurso aceito.
+              required: true
+              schema:
+                type: string
+              example: /elegibilidades/550e8400-e29b-41d4-a716-446655440000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElegibilidadeAceita'
+              examples:
+                aceita:
+                  summary: Protocolo criado
+                  value:
+                    protocolo: 550e8400-e29b-41d4-a716-446655440000
+                    situacao: recebida
+                    criado_em: '2026-07-17T13:30:00Z'
+        '422':
+          description: Corpo ausente ou incompatível com o contrato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroAPI'
+              examples:
+                cpfAusente:
+                  summary: CPF obrigatório ausente
+                  value:
+                    codigo: dados_invalidos
+                    mensagem: A requisição não atende ao contrato.
+                    detalhes:
+                      - campo: body.cpf
+                        mensagem: Field required
+                        tipo: missing
+  /elegibilidades/{protocolo}:
+    get:
+      tags: [Elegibilidades]
+      operationId: consultarElegibilidade
+      summary: Consulta uma elegibilidade aceita
+      description: Recupera o estado efêmero associado ao protocolo informado.
+      parameters:
+        - name: protocolo
+          in: path
+          required: true
+          description: Identificador retornado na aceitação do pedido.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Elegibilidade localizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElegibilidadeAceita'
+              examples:
+                localizada:
+                  summary: Estado atual
+                  value:
+                    protocolo: 550e8400-e29b-41d4-a716-446655440000
+                    situacao: recebida
+                    criado_em: '2026-07-17T13:30:00Z'
+        '404':
+          description: Protocolo não localizado no processo atual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroAPI'
+              examples:
+                ausente:
+                  summary: Protocolo desconhecido
+                  value:
+                    codigo: elegibilidade_nao_encontrada
+                    mensagem: Protocolo de elegibilidade não encontrado.
+                    detalhes: []
+components:
+  schemas:
+    PedidoElegibilidade:
+      type: object
+      additionalProperties: false
+      required: [cpf, codigo_operadora, matricula_plano]
+      properties:
+        cpf:
+          type: string
+          pattern: '^\d{11}$'
+          description: Identificador sintético com onze dígitos usado no laboratório.
+        codigo_operadora:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: Código da operadora no contexto da plataforma.
+        matricula_plano:
+          type: string
+          minLength: 1
+          maxLength: 60
+          description: Matrícula administrativa no plano.
+      examples:
+        - cpf: '12345678901'
+          codigo_operadora: OPS-001
+          matricula_plano: MAT-2026-001
+    ElegibilidadeAceita:
+      type: object
+      additionalProperties: false
+      required: [protocolo, situacao, criado_em]
+      properties:
+        protocolo:
+          type: string
+          description: Identificador da consulta aceita.
+        situacao:
+          type: string
+          const: recebida
+          description: Estado inicial do pedido.
+        criado_em:
+          type: string
+          format: date-time
+          description: Instante UTC em que o pedido foi aceito.
+    DetalheErro:
+      type: object
+      additionalProperties: false
+      required: [campo, mensagem, tipo]
+      properties:
+        campo:
+          type: string
+        mensagem:
+          type: string
+        tipo:
+          type: string
+    ErroAPI:
+      type: object
+      additionalProperties: false
+      required: [codigo, mensagem, detalhes]
+      properties:
+        codigo:
+          type: string
+          description: Código estável para tratamento pelo consumidor.
+        mensagem:
+          type: string
+          description: Explicação legível do problema.
+        detalhes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetalheErro'
+```
+
+Os dois arquivos do Spectral declaram as regras que o contrato precisa cumprir. O da raiz apenas aponta para o de dentro de `contratos`, o que permite rodar o verificador de qualquer uma das duas pastas.
+
+[`.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/.spectral.yaml)
+
+```yaml
+# CLI verificada: @stoplight/spectral-cli@6.16.1
+extends:
+  - ./contratos/.spectral.yaml
+```
+
+[`contratos/.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/contratos/.spectral.yaml)
+
+```yaml
+# CLI verificada: @stoplight/spectral-cli@6.16.1
+extends: spectral:oas
+
+rules:
+  operation-operationId: error
+  operation-description: error
+  operation-tags: error
+```
+
+O `tests/test_api_contract.py` é a verificação. Cinco testes exercitam a API pela porta da frente e dois comparam o contrato publicado com o que o FastAPI gera sozinho.
+
+[`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/tests/test_api_contract.py)
+
+```python
+"""Testes de contrato da API de elegibilidades.
+
+Este arquivo responde a uma pergunta: **a aplicação faz o que o contrato promete?**
+
+Há dois contratos em jogo, e a diferença entre eles é o assunto do módulo:
+
+- o **contrato explícito**, escrito à mão em `contratos/openapi.yaml`, é a promessa
+  publicada para quem consome a API;
+- o **contrato gerado**, que o FastAPI monta sozinho a partir do código e serve em
+  `/openapi.json`, descreve o que a aplicação realmente faz hoje.
+
+Os cinco primeiros testes exercitam a aplicação pela porta da frente. Os dois
+últimos comparam os dois contratos entre si, que é onde uma divergência costuma
+aparecer sem ninguém notar.
+
+Para rodar apenas este arquivo:
+
+    python -m pytest tests/test_api_contract.py -q
+"""
+
+from datetime import datetime
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+import yaml
+
+from hospital.api.main import app, limpar_elegibilidades
+from hospital.api.models import ElegibilidadeAceita, ErroAPI, PedidoElegibilidade
+
+
+# Caminho do contrato escrito à mão, relativo à raiz do laboratório.
+ROOT = Path(__file__).resolve().parents[1]
+CONTRACT = ROOT / "contratos" / "openapi.yaml"
+
+# Corpo válido reaproveitado por vários testes. CPF e matrícula são sintéticos.
+PEDIDO_VALIDO = {
+    "cpf": "12345678901",
+    "codigo_operadora": "OPS-001",
+    "matricula_plano": "MAT-2026-001",
+}
+
+
+def setup_function():
+    """Roda antes de cada teste.
+
+    A aplicação guarda os pedidos em memória, então um teste enxergaria os
+    protocolos criados pelo anterior. Limpar aqui deixa cada teste independente
+    da ordem de execução.
+    """
+    limpar_elegibilidades()
+
+
+def carregar_contrato_explicito() -> dict:
+    """Lê `contratos/openapi.yaml` como dicionário Python."""
+    return yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
+
+
+def exemplos_da_resposta(contrato: dict, caminho: str, metodo: str, status: str) -> list:
+    """Devolve os exemplos JSON declarados para uma resposta do contrato.
+
+    Existe para evitar a indexação encadeada longa que essa navegação exigiria
+    dentro do teste. A estrutura percorrida é a do OpenAPI:
+    paths → caminho → método → responses → status → content → mídia → examples.
+    """
+    resposta = contrato["paths"][caminho][metodo]["responses"][status]
+    exemplos = resposta["content"]["application/json"]["examples"]
+    return [item["value"] for item in exemplos.values()]
+
+
+def test_post_aceita_pedido_e_get_recupera_pelo_location():
+    """O caminho feliz: `POST` aceita e `GET` recupera pelo endereço devolvido.
+
+    O `202 Accepted` significa "recebi e ainda vou processar", e não "pronto".
+    Por isso a resposta traz um `protocolo` e o cabeçalho `Location` com o
+    endereço onde consultar o andamento — o consumidor não precisa montar essa
+    URL por conta própria.
+    """
+    client = TestClient(app)
+
+    criado = client.post("/elegibilidades", json=PEDIDO_VALIDO)
+
+    assert criado.status_code == 202
+    corpo = criado.json()
+    assert corpo["situacao"] == "recebida"
+    assert corpo["protocolo"]
+
+    # Não compara a data com um valor fixo: só exige que seja ISO 8601 válida.
+    datetime.fromisoformat(corpo["criado_em"].replace("Z", "+00:00"))
+
+    assert criado.headers["location"] == f"/elegibilidades/{corpo['protocolo']}"
+
+    # Seguir o Location é exatamente o que um consumidor bem-comportado faz.
+    recuperado = client.get(criado.headers["location"])
+
+    assert recuperado.status_code == 200
+    assert recuperado.json() == corpo
+
+
+def test_pedido_sem_cpf_recebe_erro_422_estruturado():
+    """Campo obrigatório ausente vira `422` com corpo previsível.
+
+    O erro faz parte do contrato: quem consome precisa conseguir tratar a falha
+    programaticamente, e para isso o corpo traz `codigo`, `mensagem` e a lista
+    `detalhes` apontando o campo problemático.
+    """
+    client = TestClient(app)
+    pedido_incompleto = {
+        "codigo_operadora": "OPS-001",
+        "matricula_plano": "MAT-2026-001",
+    }
+
+    resposta = client.post("/elegibilidades", json=pedido_incompleto)
+
+    assert resposta.status_code == 422
+    corpo = resposta.json()
+    assert corpo["codigo"] == "dados_invalidos"
+    assert corpo["mensagem"]
+    assert any(detalhe["campo"] == "body.cpf" for detalhe in corpo["detalhes"])
+
+
+def test_pedido_com_campo_fora_do_contrato_e_recusado():
+    """Campo a mais também é violação de contrato, não cortesia.
+
+    Aceitar um campo desconhecido em silêncio faz o consumidor acreditar que ele
+    foi processado. O modelo recusa, e o campo extra aparece em `detalhes`.
+    """
+    client = TestClient(app)
+    pedido_com_extra = PEDIDO_VALIDO | {"campo_nao_contratado": "valor"}
+
+    resposta = client.post("/elegibilidades", json=pedido_com_extra)
+
+    assert resposta.status_code == 422
+    detalhes = resposta.json()["detalhes"]
+    assert any(detalhe["campo"] == "body.campo_nao_contratado" for detalhe in detalhes)
+
+
+def test_protocolo_inexistente_recebe_erro_404_estruturado():
+    """Consultar protocolo que não existe devolve `404` no mesmo formato de erro.
+
+    O corpo segue o mesmo esquema `ErroAPI` do `422`: um formato de erro por API,
+    não um por operação.
+    """
+    client = TestClient(app)
+
+    resposta = client.get("/elegibilidades/protocolo-inexistente")
+
+    assert resposta.status_code == 404
+    assert resposta.json() == {
+        "codigo": "elegibilidade_nao_encontrada",
+        "mensagem": "Protocolo de elegibilidade não encontrado.",
+        "detalhes": [],
+    }
+
+
+def test_health_separa_processo_vivo_de_pronto_para_receber_trafego():
+    """`/health/live` e `/health/ready` respondem perguntas diferentes.
+
+    Vivo significa que o processo não travou. Pronto significa que ele pode
+    receber tráfego. Um orquestrador reinicia com base no primeiro e tira do
+    balanceamento com base no segundo.
+    """
+    client = TestClient(app)
+
+    assert client.get("/health/live").json() == {"status": "live"}
+    assert client.get("/health/ready").json() == {"status": "ready"}
+
+
+def test_contrato_explicito_declara_operacoes_schemas_e_exemplos_validos():
+    """O `openapi.yaml` está bem formado e seus exemplos são de verdade.
+
+    Um exemplo desatualizado no contrato é pior que exemplo nenhum, porque quem
+    consome copia e não funciona. Aqui cada exemplo declarado é validado contra o
+    modelo correspondente, e o exemplo de requisição é enviado à aplicação real.
+    """
+    contrato = carregar_contrato_explicito()
+
+    assert contrato["openapi"] == "3.1.0"
+    assert set(contrato["paths"]) == {
+        "/elegibilidades",
+        "/elegibilidades/{protocolo}",
+    }
+
+    schemas = contrato["components"]["schemas"]
+    for nome in ("PedidoElegibilidade", "ElegibilidadeAceita", "ErroAPI"):
+        assert nome in schemas
+
+    schema_pedido = schemas["PedidoElegibilidade"]
+    assert set(schema_pedido["required"]) == set(PEDIDO_VALIDO)
+
+    # O exemplo publicado precisa ser aceito pela aplicação de verdade.
+    exemplo_pedido = schema_pedido["examples"][0]
+    PedidoElegibilidade.model_validate(exemplo_pedido)
+    assert TestClient(app).post("/elegibilidades", json=exemplo_pedido).status_code == 202
+
+    # Cada exemplo de resposta precisa bater com o modelo daquela resposta.
+    respostas_documentadas = (
+        ("/elegibilidades", "post", "202", ElegibilidadeAceita),
+        ("/elegibilidades", "post", "422", ErroAPI),
+        ("/elegibilidades/{protocolo}", "get", "200", ElegibilidadeAceita),
+        ("/elegibilidades/{protocolo}", "get", "404", ErroAPI),
+    )
+    for caminho, metodo, status, modelo in respostas_documentadas:
+        for exemplo in exemplos_da_resposta(contrato, caminho, metodo, status):
+            modelo.model_validate(exemplo)
+
+
+def test_contrato_explicito_e_contrato_gerado_nao_divergem():
+    """O contrato publicado e o que a aplicação gera dizem a mesma coisa.
+
+    Este é o teste que pega o erro mais caro do módulo: alguém altera o código,
+    o contrato gerado acompanha, e o `openapi.yaml` publicado continua prometendo
+    o formato antigo para quem consome. A comparação é pontual de propósito —
+    operações, campos obrigatórios e a resposta `202` —, porque comparar os dois
+    documentos inteiros quebraria a cada detalhe de formatação.
+    """
+    explicito = carregar_contrato_explicito()
+    gerado = app.openapi()
+
+    for caminho, metodo in (
+        ("/elegibilidades", "post"),
+        ("/elegibilidades/{protocolo}", "get"),
+    ):
+        assert metodo in explicito["paths"][caminho]
+        assert metodo in gerado["paths"][caminho]
+
+    campos_obrigatorios_explicito = set(
+        explicito["components"]["schemas"]["PedidoElegibilidade"]["required"]
+    )
+    campos_obrigatorios_gerado = set(
+        gerado["components"]["schemas"]["PedidoElegibilidade"]["required"]
+    )
+    assert campos_obrigatorios_gerado == campos_obrigatorios_explicito
+
+    aceito_explicito = explicito["paths"]["/elegibilidades"]["post"]["responses"]["202"]
+    aceito_gerado = gerado["paths"]["/elegibilidades"]["post"]["responses"]["202"]
+    assert aceito_gerado["description"] == aceito_explicito["description"]
+    assert aceito_gerado["headers"]["Location"] == aceito_explicito["headers"]["Location"]
+```
+
+Há dois contratos em jogo nesta oficina, e distinguir os dois é o assunto do módulo inteiro.
+
+```mermaid
+flowchart TB
+    H[contratos/openapi.yaml<br/>contrato explícito, escrito à mão<br/>a promessa publicada] --> SP[Spectral<br/>o documento cumpre as regras?]
+    CD[models.py e main.py<br/>o código] --> GER[/openapi.json<br/>contrato gerado pelo FastAPI<br/>o que a aplicação faz hoje]
+    H --> T[test_api_contract.py<br/>dois testes comparam os dois]
+    GER --> T
+    T --> D[divergência aparece aqui<br/>antes de aparecer no consumidor]
+```
+
+**Texto alternativo:** o contrato escrito à mão alimenta o verificador Spectral e também a comparação feita pelos testes, enquanto o código gera o contrato que o FastAPI publica, e a comparação entre os dois revela divergências.
+
+*Figura 12 — Contrato explícito, contrato gerado e onde a divergência é detectada. Fonte: curso.*
+
+**Leitura textual:** à esquerda, o contrato explícito é o arquivo escrito à mão, que representa a promessa publicada a quem consome. Ele segue por dois caminhos. Um vai ao Spectral, que verifica se o documento cumpre as regras acordadas. O outro vai aos testes. Do outro lado, o código dos dois arquivos Python produz o contrato gerado, servido pelo FastAPI, que descreve o que a aplicação realmente faz hoje. Os dois contratos chegam ao arquivo de testes, onde dois dos sete testes os comparam. A saída registra que a divergência aparece ali, antes de aparecer no consumidor, que é a razão de o teste existir.
 
 ### O contrato por dentro: lendo o `openapi.yaml`
 
@@ -274,7 +1010,7 @@ Preparar um ambiente local descartável com Python, Bruno e Node.js. Reserve uma
 
 **Pré-requisito**
 
-Tenha o repositório disponível e um editor de texto. Todos os comandos partem da raiz do repositório, exceto quando o texto manda entrar em `laboratorios/plataforma-hospitalar`.
+Um terminal, um editor de texto e a pasta `oficina-contrato` já criada com os nove arquivos da seção anterior. Todos os comandos partem de dentro dela.
 
 ### O que é o ambiente virtual que você vai criar
 
@@ -327,7 +1063,7 @@ Se `winget` não existir, siga as [instruções oficiais de instalação do Pyth
 Crie o ambiente e instale o laboratório. A ativação é opcional; os passos seguintes usam o interpretador explícito da `.venv`:
 
 ```powershell
-cd laboratorios\plataforma-hospitalar
+cd oficina-contrato
 py -m venv .venv
 .venv\Scripts\python.exe -m pip install --upgrade pip
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
@@ -353,7 +1089,7 @@ Instale primeiro o [Homebrew pelo site oficial](https://brew.sh/) quando ele ain
 ```bash
 brew install python@3.12 node
 brew install bruno
-cd laboratorios/plataforma-hospitalar
+cd oficina-contrato
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -381,7 +1117,7 @@ sudo apt install -y python3 python3-venv python3-pip nodejs npm flatpak
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 flatpak install flathub com.usebruno.Bruno
 flatpak info com.usebruno.Bruno
-cd laboratorios/plataforma-hospitalar
+cd oficina-contrato
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -403,7 +1139,7 @@ Se `remote-add` falhar, execute `flatpak remotes` e confirme se `flathub` já ex
 
 **Execute**
 
-Confirme que está em `laboratorios/plataforma-hospitalar`. Crie uma pasta para evidências e execute todos os testes atuais.
+Confirme que está em `oficina-contrato`. Crie uma pasta para evidências e execute todos os testes atuais.
 
 No PowerShell:
 
@@ -457,7 +1193,7 @@ Nenhuma dessas quatro formas torna as outras dispensáveis, e é comum tratá-la
 
 ## O que os testes estão verificando
 
-Esta é a parte do laboratório que costuma ser executada sem ser lida. Vale abrir [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/tests/test_api_contract.py) antes de rodar o pytest, porque o arquivo é a descrição executável do contrato que você acabou de ler em YAML.
+Esta é a parte do laboratório que costuma ser executada sem ser lida. Vale abrir [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/tests/test_api_contract.py) antes de rodar o pytest, porque o arquivo é a descrição executável do contrato que você acabou de ler em YAML.
 
 Três elementos aparecem no topo do arquivo e explicam o resto:
 
@@ -524,7 +1260,7 @@ python -m uvicorn hospital.api.main:app --reload
 O terminal fica ocupado pelo servidor e mostra:
 
 ```text
-INFO:     Will watch for changes in these directories: ['.../plataforma-hospitalar']
+INFO:     Will watch for changes in these directories: ['.../oficina-contrato']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [41287] using StatReload
 INFO:     Started server process [41289]

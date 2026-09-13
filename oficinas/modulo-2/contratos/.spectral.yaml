@@ -1,0 +1,7 @@
+# CLI verificada: @stoplight/spectral-cli@6.16.1
+extends: spectral:oas
+
+rules:
+  operation-operationId: error
+  operation-description: error
+  operation-tags: error

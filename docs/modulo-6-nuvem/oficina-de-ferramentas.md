@@ -214,8 +214,8 @@ O `docker ps` lista o que está em execução agora. O `curl` devolve a página 
 Rode `docker images` e depois `docker ps`. A primeira lista mostra pacotes guardados, a segunda mostra execuções vivas.
 
 ```mermaid
-flowchart LR
-    I[Imagem nginx:1.27<br/>pacote imutável, aparece em docker images] --> C1[Contêiner web<br/>execução, aparece em docker ps]
+flowchart TB
+    I[Imagem nginx:1.27<br/>pacote imutável<br/>aparece em docker images] --> C1[Contêiner web<br/>execução, aparece em docker ps]
     I --> C2[Contêiner web-2<br/>outra execução da mesma imagem]
     C1 -. docker rm .-> F[removido, a imagem continua]
 ```
@@ -575,7 +575,7 @@ Confundir as duas produz um defeito clássico. Se a verificação de vitalidade 
 O Service, por sua vez, resolve outro problema. Pods são efêmeros e trocam de endereço a cada substituição. O `selector` por rótulo é o que dá estabilidade ao conjunto.
 
 ```mermaid
-flowchart LR
+flowchart TB
     CL[Cliente em 127.0.0.1:18080] --> SV[Service hospital-api<br/>selector app=hospital-api]
     SV --> P1[Pod 10.244.0.7<br/>rótulo app=hospital-api<br/>readiness ok]
     SV --> P2[Pod 10.244.0.9<br/>rótulo app=hospital-api<br/>readiness ok]

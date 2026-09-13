@@ -103,7 +103,7 @@ Nem tudo acompanhou. A plataforma interna Digital by You, usada nos processos fi
 A decomposição seguiu três passos. Workshops de *event storming* identificaram três domínios de negócio. Cada domínio virou um microsserviço com banco de dados próprio. Um barramento de eventos passou a ligar os três, com filas de mensagens mortas e política de reprocessamento para que nenhum evento se perdesse durante uma indisponibilidade.
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph ANTES[Antes: monólito acoplado]
         M[Digital by You] --- BD[(Banco único)]
     end

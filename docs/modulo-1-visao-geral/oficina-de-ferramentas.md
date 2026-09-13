@@ -408,7 +408,7 @@ Terminal aberto na pasta da oficina e Python 3.10+ confirmado com `py --version`
 Aqui o dado atravessa uma sequência e não volta. Cada filtro recebe, decide e passa adiante.
 
 ```mermaid
-flowchart LR
+flowchart TB
     P[producer.py<br/>lê currículos] --> V[testers.py<br/>ValidadorDeCurriculo]
     V --> N[transformers.py<br/>NormalizadorDeCampos]
     N --> F[testers.py<br/>experiência e pretensão]
