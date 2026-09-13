@@ -163,7 +163,13 @@ kubectl get pods
 kubectl scale deployment web --replicas=5
 ```
 
+### O estado futuro desejado
+
 A diferença de natureza está no verbo. `docker run` é uma ordem, executada uma vez. `kubectl apply` registra uma intenção, e o cluster passa a persegui-la. Apagar um Pod à mão faz o controlador criar outro, porque o estado declarado continua pedindo três. Mudar `--replicas` para cinco não cria dois contêineres, altera o número desejado e deixa o controlador chegar lá.
+
+Essa intenção declarada tem nome: **estado futuro desejado**. Em vez de descrever a sequência de passos que leva o sistema de onde ele está para onde se quer que ele fique, descreve-se apenas o destino. Um agente compara continuamente o destino declarado com o estado observado e executa o que faltar para fechar a diferença. O nome desse laço é **reconciliação**, e ele muda o que significa operar: a operação deixa de ser executar procedimentos e passa a ser manter um arquivo correto.
+
+Três consequências arquiteturais decorrem disso. O estado desejado vira artefato versionado, revisável em pull request como qualquer código. A diferença entre o que foi declarado e o que existe passa a ser mensurável, e ganha o nome de desvio, ou *drift*. E a recuperação de uma alteração manual deixa de depender de alguém lembrar do que fez, porque o agente a desfaz sozinho na próxima comparação.
 
 **Texto alternativo:** o estado desejado alimenta um controlador, que compara com o estado atual e cria ou remove réplicas até os dois coincidirem.
 
@@ -181,6 +187,30 @@ flowchart LR
 
 **Leitura textual da figura:** o estado desejado, declarado em arquivo, e o estado atual, observado no cluster, chegam a um controlador que os compara. Quando falta réplica, o controlador cria uma. Quando sobra, remove uma. Os dois resultados voltam a alimentar o estado atual, fechando um laço que se repete continuamente. Nenhuma seta parte do controlador para o estado desejado, porque ele nunca altera a intenção declarada.
 
+#### O mesmo padrão fora do Kubernetes
+
+O Kubernetes aplica o padrão ao que executa dentro de um cluster. Ele não cria a rede, as sub-redes, o banco gerenciado nem as máquinas virtuais onde o cluster vive. Para isso existe a **infraestrutura como código**, que estende a mesma ideia ao restante da pilha. Três nomes aparecem com frequência, e a comunidade de DevOps costuma reparti-los pelo momento do ciclo de vida em que atuam.
+
+**Terraform** é provisionador. O foco dele é o Day 0, criar a infraestrutura básica do zero: redes, sub-redes, regras de firewall, bancos gerenciados e máquinas virtuais. Ele é declarativo, e a ordem em que se escreve o código não importa, porque ele deduz as dependências entre os recursos. Ele também é *stateful*, e essa é a característica que mais o distingue: um arquivo de estado guarda o mapa do que foi criado, o que permite detectar o que sumiu do código e destruir a infraestrutura na ordem correta com um comando só.
+
+**Ansible** é gerenciador de configuração. O foco dele é o Day 1 em diante, entrar em máquinas que já existem para instalar pacotes, atualizar o sistema operacional, ajustar arquivos de configuração e implantar aplicações. Ele não guarda arquivo de estado. A cada execução lê o inventário de máquinas e executa as tarefas na hora. Os playbooks são escritos em YAML e executados em ordem, de cima para baixo, e é daí que vem a caracterização de procedural.
+
+**Argo CD** é controlador de entrega contínua para Kubernetes, no padrão GitOps. Nele, o repositório Git é a fonte da verdade do estado desejado da aplicação. O Argo compara continuamente o estado vivo do cluster com o que está no repositório, marca a aplicação como `OutOfSync` quando os dois divergem, mostra o desvio e sincroniza de volta, de forma automática ou mediante aprovação. É o mesmo laço de reconciliação da Figura 17, com o estado desejado morando fora do cluster.
+
+| Característica | Terraform | Ansible | Argo CD |
+| --- | --- | --- | --- |
+| Foco principal | provisionar a infraestrutura | preparar sistema operacional e aplicações | sincronizar o cluster com o repositório |
+| Momento do ciclo | Day 0 | Day 1 em diante | contínuo, após a implantação |
+| Gerenciamento de estado | *stateful*, com arquivo de estado próprio | *stateless*, lê o inventário a cada execução | o estado desejado é o repositório Git |
+| Abordagem | declarativa, a ordem do código não importa | tarefas em YAML executadas em sequência | declarativa, sobre manifestos Kubernetes |
+| Ciclo de vida completo | destrói recursos na ordem correta com um comando | destruir infraestrutura complexa exige playbook escrito à mão | remove o que saiu do repositório, quando configurado para isso |
+
+Duas ressalvas evitam que essa repartição vire dogma. A primeira é que a rotulagem de Ansible como procedural se refere à ordem de execução das tarefas, e não a uma ausência de intenção declarada: os módulos do Ansible são idempotentes e se escrevem pelo estado que se quer alcançar, como `state: present`. A segunda é que as três não competem entre si. O arranjo comum usa Terraform para criar o cluster e o banco, Ansible para preparar máquinas que ficaram fora do cluster, e Argo CD para manter as aplicações sincronizadas depois. Escolher uma delas raramente é a pergunta certa.
+
+O que as une, e é o que interessa ao arquiteto, é a mesma inversão: alguém escreve o destino num arquivo versionado, e um agente assume a responsabilidade de chegar lá e de permanecer lá. O risco correspondente também é o mesmo. Um estado desejado errado é perseguido com a mesma eficiência de um estado desejado certo.
+
+Fontes destas distinções: [Terraform vs Ansible, Spacelift](https://spacelift.io/blog/ansible-vs-terraform) e a [documentação do Argo CD](https://argo-cd.readthedocs.io/en/stable/).
+
 ### Prontidão e vitalidade
 
 Duas verificações diferentes decidem o que o orquestrador faz com uma réplica. Readiness pergunta “esta instância deve receber tráfego agora?”. Liveness pergunta “o processo continua vivo o bastante para ser reiniciado se travar?”. Separar os dois endpoints, por convenção `/health/ready` e `/health/live`, preserva essa semântica.
@@ -189,4 +219,4 @@ A separação tem consequência prática. Uma liveness que dependa de banco ou s
 
 ## Vocabulário de revisão
 
-Ao ver uma proposta, pergunte: qual camada é IaaS, PaaS ou SaaS? Quem atualiza o runtime? Em qual região estão dados e recuperação? Que falha uma zona diferente reduz? A imagem tem versão reprodutível? Qual rótulo liga Service a Pod? O que readiness protege e o que liveness deve evitar? Se as respostas não aparecem em configuração, contrato e evidência, a nuvem ainda é apenas uma intenção.
+Ao ver uma proposta, pergunte: qual camada é IaaS, PaaS ou SaaS? Quem atualiza o runtime? Em qual região estão dados e recuperação? Que falha uma zona diferente reduz? A imagem tem versão reprodutível? Onde está escrito o estado futuro desejado, e quem o revisa antes de valer? Qual rótulo liga Service a Pod? O que readiness protege e o que liveness deve evitar? Se as respostas não aparecem em configuração, contrato e evidência, a nuvem ainda é apenas uma intenção.
