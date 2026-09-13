@@ -15,13 +15,13 @@ PROTOCOL = "referencia/como-ler-um-caso-publico.md"
 # Todas as páginas de casos reais seguem o formato narrativo.
 NARRATIVE_PAGES = tuple(MODULES)
 
-# iFood e Taco Bell deixaram de ser o caso real do módulo 6 e seguem como
-# contexto de mercado no estudo de caso da unidade.
+# iFood é o caso real do módulo 6. Taco Bell segue como contexto de mercado
+# no estudo de caso da unidade.
 LEGACY_CANONICAL = {
     "3.9.1 O caso Netflix.md": "docs/modulo-3-servicos/casos-reais.md",
     "3.9.1.1 Discussão sobre o caso Netflix.md": "docs/modulo-3-servicos/casos-reais.md",
     "4.3.1 Estudo de Caso LinkedIn - Kafka.md": "docs/modulo-5-eventos/casos-reais.md",
-    "5.5 Estudo de Caso iFood.md": "docs/modulo-6-nuvem/estudo-de-caso.md",
+    "5.5 Estudo de Caso iFood.md": "docs/modulo-6-nuvem/casos-reais.md",
     "5.6 Estudo de Caso TacoBell.md": "docs/modulo-6-nuvem/estudo-de-caso.md",
 }
 
@@ -32,7 +32,7 @@ EXPECTED_SUBJECTS = {
     "modulo-3-servicos": ("Netflix",),
     "modulo-4-governanca": ("Knight Capital",),
     "modulo-5-eventos": ("LinkedIn", "Kafka"),
-    "modulo-6-nuvem": ("GitLab",),
+    "modulo-6-nuvem": ("iFood",),
 }
 
 

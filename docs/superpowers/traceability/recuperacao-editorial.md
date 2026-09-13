@@ -92,9 +92,9 @@ ilumina a decisão central daquele encontro:
 | 3 — Serviços | Netflix | reconstrução na nuvem e falha como estado esperado |
 | 4 — Governança | Knight Capital | implantação, código morto e alerta sem dono |
 | 5 — Eventos | LinkedIn | log distribuído no lugar da cadeia síncrona |
-| 6 — Nuvem | GitLab | backup contra capacidade real de recuperação |
+| 6 — Nuvem | iFood | capacidade obtida como serviço contra capacidade comprada |
 
-Prime Video, Twitter, Knight Capital e GitLab não têm arquivo correspondente no
+Prime Video, Twitter e Knight Capital não têm arquivo correspondente no
 acervo legado; foram pesquisados diretamente na fonte primária. Por isso não
 aparecem na matriz acima, que rastreia apenas o acervo da raiz.
 

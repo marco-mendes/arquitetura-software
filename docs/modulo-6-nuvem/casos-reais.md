@@ -1,110 +1,112 @@
-# GitLab: a noite em que cinco backups não existiam
+# iFood: 22 milhões de pedidos em um fim de semana
 
-Às 23h27 de 31 de janeiro de 2017, um engenheiro do GitLab cansado, no fim de um turno que já durava horas, digitou um comando para limpar o diretório de dados de um servidor PostgreSQL. Ele acreditava estar na réplica. Estava no primário.
+No sábado, 7 de março de 2026, o iFood registrou mais de 7,7 milhões de pedidos em um único dia. No fim de semana inteiro, de sexta a domingo, foram **22,2 milhões de pedidos**, cerca de 5,1 mil transações por minuto, com mais de 200 mil entregadores ativos ao mesmo tempo na plataforma.
 
-Cancelou um ou dois segundos depois de perceber. Dos 310 GB do banco de produção do GitLab.com, restaram **4,5 GB**.
+O recorde diário anterior era de 6,6 milhões de pedidos, em 6 de setembro de 2025. O sábado de março o superou em 18%.
 
-O que aconteceu nas horas seguintes é o motivo pelo qual este caso é ensinado. O GitLab tinha cinco mecanismos de recuperação. Nenhum funcionava. E, em vez de esconder, a empresa transmitiu a recuperação ao vivo no YouTube e publicou um *post-mortem* completo, o relatório aberto de análise do incidente, com nome dos comandos, horários e as próprias falhas de processo.
+Números assim costumam ser lidos como notícia de negócio. Vale lê-los como notícia de arquitetura, porque cada um deles é uma decisão técnica que precisou ser tomada anos antes, por alguém que não sabia o tamanho que a curva ia ter.
 
-## O que estava acontecendo antes
+## A empresa começou em papel
 
-O incidente não começou com o comando errado. Começou com uma sequência de coisas menores, cada uma inofensiva sozinha.
+A origem do iFood é de 1997, e não era digital. Chamava-se Disk Cook, um guia impresso de cardápios com uma central telefônica para onde o cliente ligava e fazia o pedido. Quase quatorze anos depois, em 15 de maio de 2011, a ideia migrou para o meio digital e foi rebatizada.
 
-O GitLab.com rodava com **um primário e uma réplica** em espera quente, usada apenas para *failover*, a assunção automática do papel de primário. Um único banco aguentava toda a carga, e o *post-mortem* reconhece que isso não era ideal.
+Entre 2011 e 2016 a empresa cresceu por aquisição e aporte. A arquitetura acompanhou o crescimento do jeito que arquitetura costuma acompanhar crescimento rápido: acumulando. Os sistemas se falavam por pipelines em lote entre bancos, serviços e aplicações, fortemente acoplados. O relato público da própria empresa descreve a consequência: o erro de um serviço afetava os sistemas seguintes, e a investigação de causa consumia tempo enquanto a operação ficava degradada.
 
-Às 17h20 daquele dia, um engenheiro tirou um instantâneo LVM do banco de produção para carregar no ambiente de teste. Ele queria uma cópia mais recente que a automática das 01h00, para testar o pgpool-II.
+Em 2016, com a expansão acelerada, a empresa concluiu que precisava de escalabilidade de nuvem para lidar com a variação de demanda. Essa é a primeira decisão da história, e ela é do tipo que o Módulo 6 chama de escolha de modelo operacional.
 
-Às 19h00, a carga do banco disparou. A suspeita registrada é spam. Parte do peso vinha de um processo em segundo plano tentando remover um funcionário do GitLab e os dados associados, porque a conta dele tinha sido marcada por abuso e agendada para remoção por engano.
+## A pandemia dobrou a conta em meses
 
-Às 23h00, sob essa carga, a replicação da réplica ficou para trás. Os segmentos de log que ela precisava já tinham sido removidos do primário, e como o GitLab.com não usava arquivamento de WAL, a réplica teria de ser ressincronizada manualmente. Isso significa apagar o diretório de dados da réplica e rodar `pg_basebackup` para copiar tudo de novo a partir do primário.
+O crescimento vinha rápido e previsível. Em 2020 deixou de ser previsível.
 
-## A hora e meia de frustração
+Com o início da pandemia, os pedidos saltaram cerca de 200% em relação a 2019. A plataforma passou a servir mais de 60 milhões de pedidos por mês, em mais de 1.200 cidades brasileiras. A demanda não cresceu em rampa, cresceu em degrau, e degrau é o pior formato possível para quem dimensionou capacidade pela média.
 
-O `pg_basebackup` travava sem produzir saída, mesmo com a opção `--verbose` ligada. Depois de algumas tentativas, informou que não conseguia conectar porque o primário não tinha conexões de replicação disponíveis.
+Aqui aparece a propriedade que o módulo chama de elasticidade, e ela aparece no lugar onde dói. Não existe negociar prazo com um sábado à noite. O pico é o produto.
 
-A equipe aumentou `max_wal_senders` de 3 para 32. O PostgreSQL então se recusou a reiniciar, reclamando de semáforos demais. A causa era `max_connections` em 8000, um valor absurdo que estava aplicado havia quase um ano e vinha funcionando. Baixaram para 2000 e o banco subiu.
+## A resposta foi decompor e orquestrar
 
-O `pg_basebackup` continuou sem iniciar a replicação. Um engenheiro rodou `strace` e viu o processo parado numa chamada `poll`, sem mais informação.
+A empresa hoje opera cerca de **2.000 microsserviços** ligados por pipelines de streaming, o que permitiu desacoplar a arquitetura anterior. A execução desses serviços foi para Kubernetes gerenciado na nuvem, e o resultado publicado pela AWS é direto: **redução de 40% nos custos** com o uso de Kubernetes, atendendo **até 60 milhões de requisições por minuto**.
 
-Aqui está o detalhe cruel. O *post-mortem* revela depois que **aquele era o comportamento normal**: o `pg_basebackup` espera silenciosamente até o primário começar a enviar dados de replicação. Nenhum *runbook* da empresa, o roteiro operacional que a equipe segue em plantão, registrava isso, e a documentação oficial da ferramenta também não deixava claro.
+Um único microsserviço, o que guarda os metadados de cliente, chega a 2 milhões de requisições por minuto no pico. Em 2020, um engenheiro da casa publicou o relato de um serviço projetado para sustentar 30 mil requisições por segundo, e a lição que ele registra é a mais desconfortável da lista: os times projetavam esperando que o uso dobrasse ou triplicasse em poucos meses.
 
-Um engenheiro, achando que tentativas anteriores tinham deixado arquivos no diretório, decidiu limpá-lo. No servidor errado.
+Repare no que a redução de 40% significa. Ela não veio de comprar mais barato. Veio de parar de pagar por capacidade ociosa, que é o que acontece quando a unidade de escala deixa de ser a máquina e passa a ser o serviço.
 
-## Cinco mecanismos, zero recuperações
+## O dado cresceu cem vezes
 
-A parte que transforma um erro humano em desastre é a seguinte. O GitLab tinha, no papel, cinco formas de recuperar.
+A arquitetura de dados teve sua própria crise. O desenho anterior dava conta de 100 milhões de eventos por dia. O volume subiu para algo entre 8 e 10 bilhões de eventos diários, e o desenho anterior parou de dar conta.
 
-**Réplica PostgreSQL.** Existia apenas para *failover*. A essa altura a replicação estava quebrada e os dados já tinham sido apagados dos dois lados.
+A empresa adotou Kafka gerenciado na nuvem e, mesmo assim, encontrou o problema seguinte. Os engenheiros passaram a gastar tempo demais dimensionando cluster, planejando capacidade, configurando autenticação e aplicando atualizações manuais. O trabalho de operar a plataforma estava consumindo o trabalho de construir sobre ela.
 
-**Backup diário com `pg_dump` para o S3.** O *bucket*, o repositório de objetos onde as cópias eram guardadas, estava vazio. A causa é um clássico de configuração: o procedimento rodava `pg_dump` 9.2 contra um banco PostgreSQL 9.6. Diferença de versão maior faz o `pg_dump` abortar com erro. Isso acontecia porque o backup era executado em um servidor de aplicação comum, onde não existe diretório de dados do PostgreSQL, e o empacotamento do GitLab, sem conseguir detectar a versão, assumia 9.2 como padrão.
+A decisão foi trocar por uma plataforma de streaming totalmente gerenciada, hoje sustentando cerca de 700 aplicações. É exatamente o dilema de lock-in que o módulo discute, resolvido de forma explícita: a empresa aceitou depender mais de um fornecedor em troca de devolver horas de engenharia ao produto.
 
-**E o alerta desse erro?** As tarefas agendadas notificavam falha por e-mail. O GitLab.com usa DMARC, e o DMARC não estava configurado para os e-mails dessas tarefas. As mensagens eram rejeitadas pelo destinatário. O *post-mortem* resume: *"This means we were never aware of the backups failing, until it was too late."*
+## O monolito que ficou por último
 
-**Instantâneos de disco do Azure.** Estavam habilitados nos servidores de arquivos, e **não** nos servidores de banco, porque a equipe presumia que os outros mecanismos bastavam.
+Nem tudo virou microsserviço ao mesmo tempo, e o caso mais bem documentado é o da área financeira.
 
-**Instantâneos LVM.** Serviam para copiar produção para o ambiente de teste, e essa era a única finalidade prevista. Havia dois disponíveis: um automático de quase 24 horas antes, e aquele que o engenheiro tinha tirado manualmente às 17h20, **seis horas antes** do apagamento.
+A plataforma interna Digital by You, usada nos processos financeiros que atendem cerca de 100 mil pessoas ligadas ao iFood, continuava monolítica. Os componentes eram fortemente acoplados, e o relato publicado em 17 de outubro de 2023 descreve o efeito em duas grandezas que arquiteto reconhece de longe: taxa de falha mais alta e tempo médio de recuperação mais longo. A entrega de uma funcionalidade nova levava cerca de um mês.
 
-O único caminho de volta era o instantâneo tirado por acaso, para outro propósito, por um engenheiro que queria testar outra coisa.
+A decomposição seguiu três passos. Workshops de *event storming* identificaram três domínios de negócio. Cada domínio virou um microsserviço independente, com banco de dados próprio. Um barramento de eventos passou a ser o canal de comunicação entre eles, com filas de mensagens mortas e políticas de reprocessamento para que nenhum evento se perdesse durante uma indisponibilidade.
 
 ```mermaid
-flowchart TB
-    A[Apagamento do diretório do primário] --> B{Réplica?}
-    B -- replicação quebrada --> C{pg_dump no S3?}
-    C -- bucket vazio, versão errada --> D{Alerta do backup?}
-    D -- e-mail rejeitado por DMARC --> E{Instantâneo Azure?}
-    E -- não habilitado no banco --> F{Instantâneo LVM?}
-    F -- existe, tirado por acaso 6h antes --> G[Recuperação com 6h de perda]
+flowchart LR
+    subgraph ANTES[Antes: monólito acoplado]
+        M[Digital by You] --- BD[(Banco único)]
+    end
+    subgraph DEPOIS[Depois: três domínios]
+        E{{Barramento de eventos}}
+        S1[Dados mestres] --- B1[(Banco próprio)]
+        S2[Provisionamento] --- B2[(Banco próprio)]
+        S3[Requisição] --- B3[(Banco próprio)]
+        E --> S1
+        E --> S2
+        E --> S3
+        E -.-> DLQ[Fila de mensagens mortas]
+    end
+    ANTES -->|event storming| DEPOIS
 ```
 
-**Texto alternativo:** fluxo que parte do apagamento do diretório do primário e percorre cinco mecanismos de recuperação. A réplica falha por replicação quebrada, o backup em S3 por bucket vazio e versão incompatível, o alerta do backup por e-mail rejeitado, o instantâneo do Azure por não estar habilitado no banco, e apenas o instantâneo LVM tirado por acaso seis horas antes permite recuperar, com perda de seis horas de dados.
+**Texto alternativo:** à esquerda, um monólito chamado Digital by You ligado a um banco de dados único. À direita, três microsserviços de domínio, cada um com banco próprio, alimentados por um barramento de eventos que também encaminha o que falha para uma fila de mensagens mortas.
 
-*Figura 1 — Os cinco caminhos de recuperação do GitLab e onde cada um parou. Fonte: curso, a partir do *post-mortem* oficial de 10 de fevereiro de 2017.*
+*Figura 1 — A decomposição do middleware financeiro do iFood em três domínios. Fonte: curso, a partir do relato técnico publicado pela AWS em 17 de outubro de 2023.*
 
-**Leitura textual da figura:** cada losango é um mecanismo que existia na documentação da empresa e falhou por um motivo diferente. Três das cinco falhas são silenciosas: ninguém sabia que o backup não rodava, que o alerta não chegava, nem que o instantâneo não cobria o banco. O único caminho que funcionou não tinha sido projetado para essa finalidade.
+**Leitura textual da figura:** o desenho contrasta dois momentos. Antes, uma aplicação única concentra os processos financeiros sobre um banco de dados compartilhado, e a falha de um componente alcança os demais por esse acoplamento. Depois, o mesmo escopo aparece repartido em três serviços de domínio, dados mestres, provisionamento e requisição, cada um com seu próprio banco. Um barramento de eventos os alimenta, e o que não pode ser processado segue para uma fila de mensagens mortas em vez de desaparecer. A seta entre os dois blocos indica que a separação de domínios veio de workshops de *event storming*, e não de um recorte técnico arbitrário.
 
-## A recuperação levou dezoito horas para copiar arquivos
+Os resultados publicados são estes: disponibilidade da plataforma 30% maior, tempo médio de recuperação 90% menor, e tempo de entrega de funcionalidade reduzido pela metade, de um mês para ciclos de duas semanas.
 
-Restaurar o instantâneo LVM parece simples e não foi.
+## O que o fim de semana de março prova, e o que não prova
 
-O ambiente de teste do GitLab rodava em Azure clássico, sem armazenamento premium, escolha feita para economizar. Os discos eram de rede e limitados a cerca de 60 Mbps. Copiar o diretório de dados do ambiente de teste para o de produção **levou aproximadamente 18 horas**. Não havia gargalo de rede nem de processador. O gargalo eram os discos, e não existia caminho para mover aquilo para armazenamento mais rápido.
+Voltando ao recorde. As 22,2 milhões de pedidos de março de 2026 representaram crescimento de mais de 16% sobre o recorde anterior, de 19,1 milhões, em setembro de 2025.
 
-Em 1º de fevereiro, às 17h00 UTC, o banco foi restaurado ao estado de 31 de janeiro às 17h20. Um detalhe do processo merece registro: como o procedimento de cópia para o ambiente de teste **remove os *webhooks*** (as chamadas automáticas que o sistema dispara para endereços externos) para não disparar chamadas por acidente, a equipe teve de montar um segundo banco a partir do mesmo instantâneo, sem essa remoção, só para recuperá-los. E incrementou todas as sequências do banco em 100.000, para que nenhum identificador já usado fosse reaproveitado.
+O que esses números provam é que a plataforma absorve um degrau de demanda sem que o cliente perceba. O que eles não provam é nada sobre custo por pedido, sobre margem de capacidade restante, nem sobre quanto trabalho de plantão sustentou aquele sábado. Essas três grandezas não aparecem em nota à imprensa, e são justamente as que decidem se a arquitetura está saudável.
 
-## O que se perdeu
+## As três decisões que sustentam o recorde
 
-Modificações feitas entre 17h20 e 00h00 UTC de 31 de janeiro. A estimativa da empresa: cerca de **5.000 projetos, 5.000 comentários e 700 contas novas**. Repositórios de código e wikis ficaram indisponíveis durante a interrupção, e não foram afetados pela perda de dados.
+A primeira é a escolha de modelo operacional, tomada por volta de 2016. Capacidade obtida como serviço, em vez de comprada e instalada, é o que torna possível responder a um degrau de demanda em meses em vez de trimestres.
 
-O *post-mortem* abre com uma frase que vale pelo documento inteiro: *"Losing production data is unacceptable."* E o executivo-chefe pede desculpas em nome próprio e da empresa, no texto.
+A segunda é a unidade de escala. Enquanto a unidade foi a máquina, crescer significava máquina maior e ociosidade paga o mês inteiro. Quando a unidade virou o serviço, replicado por um orquestrador, a redução de 40% no custo virou consequência aritmética.
 
-## As três decisões arquiteturais anteriores ao incidente
-
-É tentador ler o caso como erro humano, e essa leitura não ensina nada. Um engenheiro cansado às 23h vai digitar o comando errado, mais cedo ou mais tarde. A arquitetura é o que decide se isso vira incidente ou catástrofe.
-
-Três decisões arquiteturais aparecem no relato, todas anteriores ao incidente.
-
-Um único primário concentrando toda a carga, com a réplica servindo apenas para *failover*, sem nenhum mecanismo pensado para recuperação de desastre.
-
-Backup tratado como tarefa agendada em vez de capacidade verificada. Ninguém tinha restaurado um backup recentemente, e por isso ninguém sabia que não havia backup.
-
-Escolha de armazenamento barato no ambiente de teste, que só cobrou o preço no dia em que esse ambiente virou a origem da recuperação. Um ambiente secundário tinha se tornado, sem que ninguém decidisse isso, parte do caminho crítico de continuidade.
+A terceira é a mais cara de aprender e aparece duas vezes na história. Operar a plataforma compete com construir o produto. Foi ela que levou o time de dados a trocar o Kafka autogerido por um gerenciado, e foi ela que manteve o middleware financeiro monolítico até 2023, porque mexer nele custava tempo que ninguém tinha.
 
 ## Questões para discussão
 
 Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os fatos, explicar os mecanismos e comparar as escolhas descritas no próprio caso.
 
-**1.** Liste os cinco mecanismos de recuperação que o GitLab tinha documentados e diga por que cada um falhou naquela noite.
+**1.** Liste os três momentos em que a arquitetura do iFood mudou de forma relevante, com o ano de cada um, e diga qual pressão externa provocou cada mudança.
 
-**2.** Explique a cadeia que fez o backup com `pg_dump` falhar em silêncio, ligando a versão do binário, o servidor em que a tarefa rodava e o e-mail de notificação.
+**2.** Explique por que a redução de 40% no custo é apresentada como consequência da adoção de Kubernetes, ligando a afirmação à mudança na unidade de escala.
 
-**3.** O único caminho de recuperação que funcionou não tinha sido projetado para essa finalidade. Explique o que esse fato revela sobre a diferença entre ter backup e ter capacidade de recuperação.
+**3.** O time de dados adotou Kafka gerenciado e ainda assim trocou de solução depois. Explique qual problema permaneceu após a primeira decisão e por que a segunda o resolveu.
 
-**4.** A cópia dos dados levou aproximadamente 18 horas. Explique como uma decisão de custo tomada para o ambiente de teste passou a determinar o tempo de recuperação da produção.
+**4.** Compare os três resultados publicados para o middleware financeiro, disponibilidade, tempo de recuperação e tempo de entrega, e diga qual deles depende mais da separação dos bancos de dados por domínio.
 
-**5.** Compare a réplica em espera quente e o instantâneo LVM quanto à finalidade para a qual cada um foi projetado e quanto ao que cada um teria protegido.
+**5.** O recorde de março de 2026 é evidência de qual atributo de qualidade, e qual evidência adicional seria necessária para afirmar que a plataforma também é eficiente em custo?
 
 ## Fontes
 
-- GitLab, [Postmortem of database outage of January 31](https://about.gitlab.com/blog/postmortem-of-database-outage-of-january-31/) — 10 de fevereiro de 2017. Fonte primária de toda a cronologia, dos cinco mecanismos de recuperação, dos números de perda e das citações.
-- GitLab, [GitLab.com database incident](https://about.gitlab.com/blog/gitlab-dot-com-database-incident/) — 1º de fevereiro de 2017, a comunicação publicada durante o incidente, útil para observar como a informação era conhecida em tempo real.
-- PostgreSQL, [documentação do pg_basebackup](https://www.postgresql.org/docs/current/app-pgbasebackup.html) e [Continuous Archiving and Point-in-Time Recovery](https://www.postgresql.org/docs/current/continuous-archiving.html) — o arquivamento de WAL que não estava em uso e que teria mudado o desfecho.
-- Google, [Site Reliability Engineering, capítulo 26 — Data Integrity](https://sre.google/sre-book/data-integrity/) — tratamento sistemático da diferença entre ter backup e conseguir restaurar.
+- AWS, [iFood case study](https://aws.amazon.com/pt/solutions/case-studies/innovators/ifood/) — redução de 40% de custo com Kubernetes, até 60 milhões de requisições por minuto e os serviços gerenciados citados.
+- AWS, [iFood modernizes its financial middleware to event-driven architecture](https://aws.amazon.com/blogs/industries/ifood-modernizes-its-financial-middleware-to-event-driven-architecture/) — 17 de outubro de 2023, por Ricardo Marques e Abbas Zahid. Fonte dos três domínios, do barramento de eventos e dos resultados de disponibilidade, recuperação e tempo de entrega.
+- Confluent, [iFood scales a cloud-based data flow architecture](https://www.confluent.io/customers/ifood/) — os 2.000 microsserviços, as 700 aplicações, o acoplamento anterior em lote e a decisão de trocar Kafka autogerido por gerenciado.
+- iFood, [recorde de 22,2 milhões de pedidos](https://institucional.ifood.com.br/noticias/ifood-bateu-recorde-de-vendas/) — números do fim de semana de 6 a 8 de março de 2026 e comparação com os recordes de setembro de 2025.
+- Wikipédia, [iFood](https://pt.wikipedia.org/wiki/IFood) — origem em 1997 como Disk Cook e fundação em 15 de maio de 2011.
+- Felipe Volpone, [Developing a microservice to handle over 30k requests per second at iFood](https://medium.com/swlh/developing-a-microservice-to-handle-over-30k-requests-per-second-at-ifood-3e2d7b822b0e) — julho de 2020, relato de engenharia sobre projetar esperando que o uso dobre ou triplique em poucos meses.
+
+Os números de negócio vêm de material publicado pela própria empresa e por seus fornecedores de nuvem. Eles são verificáveis e têm interesse comercial embutido. Números que não aparecem nessas fontes, como custo por pedido e capacidade ociosa, continuam desconhecidos.
