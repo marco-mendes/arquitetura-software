@@ -193,9 +193,124 @@ O Kubernetes aplica o padrão ao que executa dentro de um cluster. Ele não cria
 
 **Terraform** é provisionador. O foco dele é o Day 0, criar a infraestrutura básica do zero: redes, sub-redes, regras de firewall, bancos gerenciados e máquinas virtuais. Ele é declarativo, e a ordem em que se escreve o código não importa, porque ele deduz as dependências entre os recursos. Ele também é *stateful*, e essa é a característica que mais o distingue: um arquivo de estado guarda o mapa do que foi criado, o que permite detectar o que sumiu do código e destruir a infraestrutura na ordem correta com um comando só.
 
+O arquivo abaixo, escrito em HCL, declara um grupo de segurança e uma máquina que o utiliza.
+
+```terraform
+provider "aws" {
+  region = "sa-east-1"
+}
+
+variable "ami_id" {
+  description = "Imagem base da máquina"
+  type        = string
+}
+
+resource "aws_instance" "web" {
+  ami                    = var.ami_id
+  instance_type          = "t3.micro"
+  vpc_security_group_ids = [aws_security_group.web.id]
+
+  tags = {
+    Name = "web"
+  }
+}
+
+resource "aws_security_group" "web" {
+  name        = "web"
+  description = "Entrada HTTP para o servidor web"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+
+```sh
+terraform init
+terraform plan
+terraform apply
+terraform destroy
+```
+
+Repare que `aws_instance` aparece antes de `aws_security_group`, e ainda assim o grupo é criado primeiro. A referência `aws_security_group.web.id`, dentro da máquina, é o que estabelece a dependência, e o Terraform a resolve sozinho. Essa é a demonstração concreta de que a ordem do arquivo não importa. `terraform plan` mostra a diferença entre o estado desejado e o que o arquivo de estado registra, antes de mudar qualquer coisa, e `terraform destroy` usa o mesmo grafo de dependências em sentido inverso. A regra de entrada aberta para `0.0.0.0/0` só se justifica num servidor web público, e num ambiente real ela seria restringida.
+
 **Ansible** é gerenciador de configuração. O foco dele é o Day 1 em diante, entrar em máquinas que já existem para instalar pacotes, atualizar o sistema operacional, ajustar arquivos de configuração e implantar aplicações. Ele não guarda arquivo de estado. A cada execução lê o inventário de máquinas e executa as tarefas na hora. Os playbooks são escritos em YAML e executados em ordem, de cima para baixo, e é daí que vem a caracterização de procedural.
 
+O inventário lista as máquinas que já existem, e o playbook diz o que fazer dentro delas.
+
+```ini
+[web]
+10.0.1.10
+10.0.1.11
+```
+
+```yaml
+- name: Preparar os servidores web
+  hosts: web
+  become: true
+  tasks:
+    - name: Instalar o Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Publicar a página inicial
+      ansible.builtin.copy:
+        src: files/index.html
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: "0644"
+
+    - name: Garantir o serviço em execução
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+```
+
+```sh
+ansible-playbook -i inventario.ini site.yml
+```
+
+As três tarefas executam nessa ordem, sempre, e o Ansible precisa que seja assim, porque publicar a página antes de instalar o Nginx falharia. Ao mesmo tempo, cada tarefa declara o estado alvo em vez do procedimento: `state: present` para o pacote, `state: started` e `enabled: true` para o serviço. Rodar o playbook uma segunda vez não reinstala nada e relata as três tarefas como `ok`. Esse é o sentido exato em que o Ansible é procedural na ordem e declarativo na intenção. E como não existe arquivo de estado, remover uma máquina do inventário apenas faz o Ansible parar de visitá-la, sem desfazer o que já instalou lá.
+
 **Argo CD** é controlador de entrega contínua para Kubernetes, no padrão GitOps. Nele, o repositório Git é a fonte da verdade do estado desejado da aplicação. O Argo compara continuamente o estado vivo do cluster com o que está no repositório, marca a aplicação como `OutOfSync` quando os dois divergem, mostra o desvio e sincroniza de volta, de forma automática ou mediante aprovação. É o mesmo laço de reconciliação da Figura 17, com o estado desejado morando fora do cluster.
+
+O objeto abaixo aponta para o repositório onde o Deployment do Nginx, mostrado mais acima nesta página, está versionado.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: web
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/exemplo/manifestos.git
+    targetRevision: main
+    path: web
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: web
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+```sh
+kubectl apply -f application.yaml
+argocd app get web
+argocd app sync web
+```
+
+O objeto `Application` não contém o estado desejado. Ele contém o endereço onde o estado desejado mora, que é o diretório `web` do repositório, no ramo `main`. Duas chaves de `syncPolicy` fazem o trabalho pesado. Com `selfHeal: true`, alterar o número de réplicas direto no cluster dura até a próxima comparação, quando o Argo restaura o valor do repositório. Com `prune: true`, apagar um manifesto do repositório apaga o recurso correspondente do cluster. Desligar as duas transforma o Argo em detector de desvio, que aponta a divergência e espera aprovação humana para sincronizar, que costuma ser o arranjo inicial de quem está adotando GitOps.
 
 | Característica | Terraform | Ansible | Argo CD |
 | --- | --- | --- | --- |

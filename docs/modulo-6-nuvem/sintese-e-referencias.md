@@ -24,6 +24,9 @@ Custo inclui recursos, tráfego, retenção, observabilidade e operação. Lock-
 - [Minikube: começar](https://minikube.sigs.k8s.io/docs/start/) apresenta a alternativa local ao kind.
 - [AWS: visão geral de produtos](https://aws.amazon.com/products/) mantém o catálogo atualizado dos serviços citados no estudo de caso.
 - [Cloudcraft](https://www.cloudcraft.co/) desenha arquiteturas de nuvem no nível de detalhe pedido no exercício de diagramação.
+- [Terraform: linguagem de configuração](https://developer.hashicorp.com/terraform/language) documenta recursos, variáveis e o grafo de dependências.
+- [Ansible: playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html) descreve inventário, tarefas e idempotência dos módulos.
+- [Argo CD: conceitos básicos](https://argo-cd.readthedocs.io/en/stable/core_concepts/) define estado desejado, estado vivo, sincronização e desvio.
 
 ## Perguntas de saída
 
