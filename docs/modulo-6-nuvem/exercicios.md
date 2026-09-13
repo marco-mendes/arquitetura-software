@@ -8,34 +8,68 @@ As atividades usam a plataforma hospitalar e dados sintéticos. Não existe resp
 
 **Situação**
 
-Uma equipe usa “nuvem”, “Kubernetes” e “PaaS” como sinônimos ao discutir a API de elegibilidade.
+A reunião de abertura do projeto durou quinze minutos e produziu uma ata com quatro frases que ninguém corrigiu na hora.
+
+A primeira foi da liderança técnica: *"a gente vai para a nuvem, então é só subir tudo no Kubernetes"*.
+
+A segunda veio de uma pessoa do time de produto: *"PaaS é quando o fornecedor cuida de tudo, né?"*.
+
+A terceira foi de quem opera a infraestrutura hoje: *"se a gente tiver duas réplicas, já está em alta disponibilidade"*.
+
+A quarta encerrou o assunto: *"imagem e contêiner é a mesma coisa, é só jeito de falar"*.
+
+A ata registrou as quatro como decisões. A reunião seguinte, que vai definir orçamento, acontece em três dias.
 
 **Seu papel**
 
-Você prepara um glossário de revisão.
+Você prepara o glossário de revisão que acompanha a correção da ata. Ele precisa caber em uma página e ser lido por quem não é da área técnica.
 
-1\. Defina IaaS, PaaS, SaaS e on-premise.
+1\. Defina IaaS, PaaS, SaaS e on-premise, dizendo em cada um quem opera o sistema operacional.
 
 <details>
 <summary>Ver resposta</summary>
 
-IaaS entrega infraestrutura virtualizada. PaaS entrega runtime operado. SaaS entrega produto configurável. On-premise mantém infraestrutura sob maior responsabilidade interna. Nenhum modelo elimina o owner de dados, configuração e continuidade.
+IaaS entrega infraestrutura virtualizada, e o sistema operacional fica com a equipe. PaaS entrega runtime operado, e o sistema operacional fica com o provedor. SaaS entrega produto configurável, e a equipe não opera camada nenhuma. On-premise mantém a pilha inteira sob responsabilidade interna. Nenhum modelo elimina o owner de dados, configuração e continuidade, o que desfaz a segunda frase da ata.
 </details>
 
-2\. Diferencie região, zona, contêiner, imagem e orquestração.
+2\. Diferencie região, zona, imagem, contêiner e orquestração.
 
 <details>
 <summary>Ver resposta</summary>
 
-Região e zona delimitam localização e falha. Imagem é o pacote versionado. Contêiner é sua execução. Orquestração reconcilia execuções com o estado declarado.
+Região e zona delimitam localização e domínio de falha. Imagem é o pacote imutável e versionado. Contêiner é uma execução dessa imagem, e a mesma imagem produz muitos contêineres, o que desfaz a quarta frase da ata. Orquestração reconcilia as execuções com o estado declarado.
 </details>
 
-3\. Explique readiness, liveness, elasticidade, resiliência e rollback. Para cada termo, relacione uma decisão ou arquivo do caso.
+3\. Defina readiness, liveness, elasticidade, resiliência e rollback.
 
 <details>
 <summary>Ver resposta</summary>
 
-Readiness controla tráfego, liveness permite reiniciar processo travado, elasticidade ajusta capacidade, resiliência mede continuidade e rollback retorna uma revisão compatível. Os manifests e a oficina fornecem as evidências locais.
+Readiness decide se a instância recebe tráfego agora. Liveness decide se o processo precisa ser reiniciado. Elasticidade é ajustar capacidade conforme a demanda. Resiliência é continuar ou recuperar o serviço dentro de um objetivo declarado. Rollback retorna o Deployment a uma revisão anterior compatível.
+</details>
+
+4\. Diferencie máquina virtual e contêiner pelo que cada um carrega acima da infraestrutura.
+
+<details>
+<summary>Ver resposta</summary>
+
+A máquina virtual carrega aplicação, dependências e um sistema operacional completo por instância, sobre um hipervisor. O contêiner carrega aplicação e dependências, sobre um motor de contêineres e um único sistema operacional compartilhado. A diferença são as cópias de sistema operacional que desaparecem.
+</details>
+
+5\. Defina estado futuro desejado e reconciliação, e diga qual das quatro frases da ata os ignora.
+
+<details>
+<summary>Ver resposta</summary>
+
+Estado futuro desejado é o destino declarado em arquivo, em vez da sequência de passos para chegar lá. Reconciliação é o laço em que um agente compara esse destino com o estado observado e age para fechar a diferença. A primeira frase da ata os ignora, porque tratar a nuvem como lugar onde se sobe o que já existe deixa de fora tanto a declaração do destino quanto quem o mantém.
+</details>
+
+6\. Nomeie os seis Rs da modernização e diga em uma linha o que cada um significa.
+
+<details>
+<summary>Ver resposta</summary>
+
+Rehost move sem alterar código. Replatform move com alteração mínima, trocando a plataforma de execução. Refactor altera o código existente sem mudar o comportamento externo. Rebuild recomeça a aplicação. Retire desativa e desliga. Retain mantém como está, por decisão registrada.
 </details>
 
 ## Compreender
@@ -44,34 +78,78 @@ Readiness controla tráfego, liveness permite reiniciar processo travado, elasti
 
 **Situação**
 
-Alguém propõe usar a mesma chamada ao banco para liveness e readiness porque “se o banco cair, a API morreu”.
+Durante a revisão do manifesto, alguém propôs simplificar as duas verificações de saúde da API de elegibilidade.
+
+A proposta é esta: fazer `/health/live` e `/health/ready` executarem a mesma consulta ao banco de dados, com o argumento de que *"se o banco cair, a API morreu de qualquer jeito"*. Um dos endpoints deixaria de existir.
+
+O contexto que a proposta desconsidera: o serviço roda com quatro réplicas, o banco é compartilhado pelas quatro, e o mesmo banco atende outros dois serviços da casa. No mês passado ele ficou indisponível por sete minutos durante uma manutenção, e as quatro réplicas continuaram no ar respondendo erro tratado.
+
+Quem opera o cluster nunca viu o comportamento dessa configuração sob falha e pediu uma explicação antes de aprovar.
 
 **Seu papel**
 
-Você explica o efeito dessa proposta a quem opera o cluster.
+Você explica o efeito da proposta a quem opera o cluster, usando a indisponibilidade de sete minutos do mês passado como cenário de teste mental.
 
-1\. Descreva o que acontece quando readiness falha.
+1\. Descreva o que acontece com um Pod e com o tráfego quando readiness falha.
 
 <details>
 <summary>Ver resposta</summary>
 
-O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a ele. Esse comportamento não confirma que a regra de negócio está correta.
+O Pod pode continuar em execução, mas o Service deixa de encaminhar tráfego a ele, porque ele sai da lista de endpoints. O processo segue vivo, e nada é reiniciado. Esse comportamento não confirma que a regra de negócio está correta, apenas que a instância se declarou inelegível ao tráfego.
 </details>
 
-2\. Descreva o que acontece quando liveness falha e quando a dependência compartilhada está indisponível.
+2\. Descreva o que aconteceria nos sete minutos do mês passado se a proposta já estivesse valendo.
 
 <details>
 <summary>Ver resposta</summary>
 
-Falha de liveness permite reinício do contêiner. Se uma dependência remota cai, usá-la como liveness pode reiniciar todas as réplicas e ampliar o incidente. Ela deve orientar readiness ou degradação conforme o contrato.
+A falha de liveness leva ao reinício do contêiner. Como as quatro réplicas consultam o mesmo banco, as quatro falhariam a verificação ao mesmo tempo e seriam reiniciadas juntas, repetidamente, enquanto a manutenção durasse. O serviço perderia a capacidade que ainda tinha para responder erro tratado, e o incidente do banco viraria também um incidente da API. A dependência remota pertence à readiness ou a uma resposta degradada, conforme o contrato.
 </details>
 
-3\. Diferencie processo vivo, pronto para tráfego e resposta de negócio correta. Explique por que reiniciar todas as réplicas pode piorar o incidente.
+3\. Diferencie processo vivo, pronto para tráfego e resposta de negócio correta, e diga qual das três nenhuma probe consegue verificar.
 
 <details>
 <summary>Ver resposta</summary>
 
-Vivo significa processo executando. Pronto significa elegível ao tráfego. Correto requer validação de negócio. Reinícios coletivos removem capacidade enquanto a dependência externa ainda está indisponível.
+Vivo significa que o processo está executando e responde ao endpoint de vitalidade. Pronto significa elegível a receber tráfego agora. Correto significa que a resposta de negócio está certa, e é a única das três que nenhuma probe verifica, porque ela depende de regra de domínio e de dados, não de sinal de processo. Uma versão logicamente errada responde saúde normalmente.
+</details>
+
+### Explicar por que o cluster desfez a alteração manual
+
+**Situação**
+
+Na madrugada de sábado, com o serviço sob pressão, a pessoa de plantão executou `kubectl scale deployment web --replicas=8` e o serviço estabilizou. Ela registrou a ação no canal do time e foi dormir.
+
+Na manhã de segunda-feira, o Deployment estava de volta em três réplicas. Ninguém tinha mexido nele desde sábado. O time usa Argo CD, com o repositório de manifestos como fonte da verdade e `selfHeal` ativado.
+
+A pessoa de plantão está convencida de que alguém reverteu a mudança dela sem avisar, e abriu uma discussão sobre confiança no time.
+
+**Seu papel**
+
+Você explica o que aconteceu de fato, e depois explica o que deveria ter sido feito naquela madrugada.
+
+1\. Explique o mecanismo que devolveu o Deployment a três réplicas, sem atribuir a ação a uma pessoa.
+
+<details>
+<summary>Ver resposta</summary>
+
+O estado desejado do serviço vive no repositório Git, que continua declarando três réplicas. O Argo CD compara continuamente esse destino declarado com o estado observado no cluster, e o comando manual criou uma divergência. Com `selfHeal` ativado, a sincronização desfez a divergência restaurando o valor do repositório. Nenhuma pessoa reverteu nada, o laço de reconciliação fez o que foi configurado para fazer.
+</details>
+
+2\. Explique por que o registro no canal do time não impediu o desfazimento, e o que teria impedido.
+
+<details>
+<summary>Ver resposta</summary>
+
+O agente de reconciliação lê o repositório, e não o canal de conversa. A alteração ficou fora da única fonte que o sistema consulta. O que teria persistido é a mudança do número de réplicas no manifesto versionado, aprovada e sincronizada. Em situação de urgência, a alternativa é suspender a sincronização automática do serviço enquanto dura o incidente, deixando registro dessa suspensão.
+</details>
+
+3\. Diferencie o papel de Terraform, Ansible e Argo CD neste cenário, dizendo qual deles teria agido e quais não.
+
+<details>
+<summary>Ver resposta</summary>
+
+O Argo CD é o que agiu, porque cuida do estado das aplicações dentro do cluster e mantém o repositório como fonte da verdade. O Terraform não agiria, porque o escopo dele é provisionar a infraestrutura em que o cluster existe, e o número de réplicas de um Deployment não está no arquivo de estado dele. O Ansible também não agiria, porque ele executa tarefas quando é chamado e não guarda estado nem observa o cluster continuamente.
 </details>
 
 ## Aplicar
