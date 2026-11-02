@@ -401,3 +401,193 @@ Escreva em texto corrido, com um título por resposta. A proposta é um document
 **Evidência esperada**
 
 O documento traz a topologia escolhida com pelo menos três restrições citadas pelo número, as outras duas avaliadas e descartadas, um dono declarado para cada dado, o caminho de sucesso descrito com o orçamento de tempo, três falhas parciais com o que o paciente observa e o destino da reserva, e dois sinais de mudança em direções opostas.
+
+## Questões de múltipla escolha
+
+As vinte questões a seguir formam a atividade de fixação da Unidade 3 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+
+### Questões simples
+
+#### Questão 1 [Simples]
+
+O que é uma capacidade de negócio?
+
+- (a) Algo que a organização sabe fazer para produzir um resultado, independentemente da tela ou da tecnologia atual.
+- (b) Um mecanismo técnico, como salvar no PostgreSQL ou enviar JSON.
+- (c) Um microsserviço implantado de forma independente.
+- (d) Uma tabela do banco de dados compartilhada entre equipes.
+
+#### Questão 2 [Simples]
+
+Em Domain-Driven Design, o que delimita um bounded context?
+
+- (a) O conjunto de servidores em que um serviço é implantado.
+- (b) A área em que um modelo e sua linguagem têm significado consistente.
+- (c) O número máximo de linhas de código de um microsserviço.
+- (d) O grupo de tabelas acessadas por uma mesma transação.
+
+#### Questão 3 [Simples]
+
+Qual tipo de acoplamento ocorre quando o consumidor precisa que o provedor esteja disponível no momento da chamada?
+
+- (a) De contrato.
+- (b) De dados.
+- (c) Temporal.
+- (d) Organizacional.
+
+#### Questão 4 [Simples]
+
+O que significa o padrão banco por serviço?
+
+- (a) Que cada serviço precisa de um servidor físico de banco de dados próprio.
+- (b) Que cada serviço deve usar uma tecnologia de banco diferente.
+- (c) Que todos os serviços escrevem em um banco central com tabelas separadas por prefixo.
+- (d) Que somente o serviço proprietário acessa diretamente seu armazenamento, e os demais usam contratos, eventos ou réplicas projetadas.
+
+#### Questão 5 [Simples]
+
+Como o módulo define uma falha parcial?
+
+- (a) Uma falha em que uma parte do sistema distribuído funciona e outra não.
+- (b) Uma falha que afeta apenas uma parte dos usuários por erro de interface.
+- (c) Uma falha corrigida automaticamente por repetição.
+- (d) Uma falha que ocorre apenas durante a implantação.
+
+#### Questão 6 [Simples]
+
+O que é uma SAGA?
+
+- (a) Uma transação ACID distribuída entre vários bancos.
+- (b) Um padrão que separa modelos de leitura e de escrita.
+- (c) Um log imutável de eventos usado para reconstruir o estado.
+- (d) Uma sequência de transações locais coordenadas, com ações compensatórias quando uma etapa posterior falha.
+
+#### Questão 7 [Simples]
+
+O que o padrão CQRS separa?
+
+- (a) O banco de dados de produção e o de testes.
+- (b) O código do serviço e o código do gateway.
+- (c) Os modelos de comando e de consulta.
+- (d) As equipes de desenvolvimento e de operação.
+
+#### Questão 8 [Simples]
+
+O que faz o padrão estrangulador (strangler)?
+
+- (a) Interrompe chamadas a uma dependência instável depois de um número de falhas.
+- (b) Encaminha gradualmente partes de uma interface antiga para uma implementação nova, preservando o contrato.
+- (c) Reúne capacidades transversais, como logs e autenticação, em uma base comum.
+- (d) Divide o banco de dados em partições por cliente.
+
+### Questões médias
+
+#### Questão 9 [Média]
+
+No laboratório, Exames chama Elegibilidade de forma síncrona antes de gravar uma solicitação, mas não lê a tabela de Elegibilidade. Quais acoplamentos Exames aceita e evita?
+
+- (a) Aceita acoplamento temporal e evita acoplamento de dados.
+- (b) Aceita acoplamento de dados e evita acoplamento temporal.
+- (c) Aceita acoplamento de implantação e evita acoplamento de contrato.
+- (d) Evita todos os tipos de acoplamento por usar HTTP.
+
+#### Questão 10 [Média]
+
+Elegibilidade parou, e Exames não consegue aceitar novas solicitações. Qual resposta o módulo considera adequada para tornar essa condição observável?
+
+- (a) 500 genérico, para não expor detalhes internos.
+- (b) 503 Service Unavailable com o código dependencia_indisponivel.
+- (c) 201, registrando a solicitação como concluída e corrigindo depois.
+- (d) 200 com elegibilidade positiva presumida.
+
+#### Questão 11 [Média]
+
+Uma organização tem dezenas de serviços, mas toda alteração exige publicação coordenada e vários deles escrevem no mesmo banco. Como o módulo classifica essa situação?
+
+- (a) Como uma arquitetura de microsserviços madura.
+- (b) Como um monólito modular.
+- (c) Como um monólito distribuído, com custos remotos sem os benefícios do isolamento.
+- (d) Como um macrosserviço bem delimitado.
+
+#### Questão 12 [Média]
+
+A palavra situação significa vigência cadastral em Elegibilidade e etapa operacional em Exames. O que o módulo recomenda?
+
+- (a) Unificar o termo em um modelo único para toda a organização.
+- (b) Proibir o uso da palavra nos dois serviços.
+- (c) Compartilhar a tabela de situações entre os dois serviços.
+- (d) Manter cada significado dentro do seu bounded context e fazer tradução explícita entre os contextos.
+
+#### Questão 13 [Média]
+
+Um relatório gerencial precisa combinar dados de Elegibilidade e de Exames. Qual abordagem respeita a propriedade dos dados?
+
+- (a) Dar ao serviço de relatório credenciais de leitura nos dois bancos.
+- (b) Fazer JOIN entre as tabelas dos dois serviços em uma visão compartilhada.
+- (c) Usar composição por API, eventos, réplica analítica ou modelo de leitura, declarando defasagem e origem.
+- (d) Copiar manualmente as tabelas para o banco de Exames toda noite, sem registro.
+
+#### Questão 14 [Média]
+
+Uma equipe quer adotar persistência poliglota e dar um tipo de banco diferente a cada serviço novo. Como o módulo avalia a proposta?
+
+- (a) Adequada, porque cada serviço deve ter tecnologia própria.
+- (b) Inadequada, porque persistência poliglota significa escolher mecanismos diferentes apenas quando a forma do dado e seus acessos justificam o custo operacional.
+- (c) Adequada, porque bancos diferentes eliminam o acoplamento de dados.
+- (d) Inadequada, porque o padrão banco por serviço proíbe mais de uma tecnologia na organização.
+
+#### Questão 15 [Média]
+
+Uma equipe propõe usar CQRS e afirma que, para isso, precisa de dois bancos de dados e de mensageria. O que o módulo afirma?
+
+- (a) Que CQRS não exige dois bancos, mensageria ou Event Sourcing, e a separação pode começar em objetos e interfaces no mesmo processo.
+- (b) Que CQRS exige dois bancos, mas não mensageria.
+- (c) Que CQRS exige Event Sourcing.
+- (d) Que CQRS só funciona com SAGA orquestrada.
+
+### Questões difíceis
+
+#### Questão 16 [Difícil]
+
+Como o módulo interpreta o teorema CAP em um sistema distribuído real?
+
+- (a) Como a escolha permanente de duas entre três propriedades, feita pelo fornecedor do banco.
+- (b) Como a garantia de que sistemas com consistência e disponibilidade não sofrem partições.
+- (c) Como uma justificativa para qualquer dado desatualizado em integrações.
+- (d) Como uma decisão sobre o comportamento durante uma partição, entre recusar ou atrasar operações e responder aceitando possível divergência.
+
+#### Questão 17 [Difícil]
+
+Um sistema aceita escritas durante uma partição, e duas réplicas recebem alterações concorrentes no registro de um paciente. O critério para decidir qual versão vale é clínico. Qual estratégia de resolução é a única capaz de acertar nesse caso?
+
+- (a) Última escrita vence, pelo carimbo de tempo.
+- (b) CRDTs, porque convergem por construção.
+- (c) Descartar as duas versões e restaurar o último backup.
+- (d) Função de mesclagem do domínio, com regra explícita definida pela aplicação.
+
+#### Questão 18 [Difícil]
+
+Em uma SAGA, o passo de autorizar procedimento falhou depois que a agenda já havia sido reservada e confirmada. Qual afirmação descreve corretamente a compensação?
+
+- (a) A compensação desfaz a reserva como se ela nunca tivesse existido, igual a um rollback ACID.
+- (b) A compensação é dispensável, porque a SAGA garante atomicidade entre os serviços.
+- (c) A compensação é uma ação de negócio que neutraliza o efeito da reserva, pode falhar e não apaga estados intermediários já observados.
+- (d) A compensação deve ser executada pelo banco de dados, sem regra de negócio.
+
+#### Questão 19 [Difícil]
+
+Um fluxo de agendamento tem muitas ramificações e a equipe de suporte precisa saber, em um único lugar, em que estado está cada agendamento. Qual forma de coordenação da SAGA é mais indicada, e qual custo ela traz?
+
+- (a) Coreografia, ao custo de concentrar a lógica em um componente central.
+- (b) Orquestração, ao custo de manter um componente que se torna dependência de todos os passos.
+- (c) Coreografia, ao custo de exigir transação distribuída.
+- (d) Orquestração, ao custo de eliminar as operações compensatórias.
+
+#### Questão 20 [Difícil]
+
+No estudo de caso do módulo, a equipe precisava de consistência forte nas regras de elegibilidade, que estavam espalhadas em vários serviços. Qual decisão o módulo descreve e por quê?
+
+- (a) Reunir as regras fortemente relacionadas em um macrosserviço, recuperando uma transação local e deixando a consistência eventual só onde a defasagem era aceitável.
+- (b) Introduzir uma SAGA orquestrada, porque é o padrão para consistência forte entre serviços.
+- (c) Adotar CQRS com dois bancos, porque separa leitura e escrita.
+- (d) Replicar o banco de elegibilidade em todos os serviços consumidores.

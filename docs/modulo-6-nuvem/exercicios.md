@@ -418,3 +418,193 @@ Você produz o diagrama e a justificativa que o acompanha. Quem lê vai pergunta
 **Evidência esperada**
 
 O arquivo entregue traz o diagrama, a lista de serviços com atributo e princípio associados a cada um, as peças omitidas com justificativa e a dependência identificada como mais difícil de trocar, acompanhada do que a tornaria reversível.
+
+## Questões de múltipla escolha
+
+As vinte questões a seguir formam a atividade de fixação da Unidade 6 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+
+### Questões simples
+
+#### Questão 1 [Simples]
+
+No modelo PaaS, o que a organização continua operando?
+
+- (a) Rede, armazenamento e servidores.
+- (b) Aplicação e dados.
+- (c) Sistema operacional e middleware.
+- (d) Nenhuma camada, porque o provedor opera a pilha inteira.
+
+#### Questão 2 [Simples]
+
+Qual exemplo corresponde ao modelo SaaS?
+
+- (a) Amazon EC2.
+- (b) Google App Engine.
+- (c) Um servidor em data center próprio.
+- (d) Microsoft 365.
+
+#### Questão 3 [Simples]
+
+Qual é a diferença entre uma imagem e um contêiner?
+
+- (a) A imagem empacota filesystem, dependências e metadados imutáveis, e o contêiner é uma execução isolada dessa imagem.
+- (b) A imagem é uma máquina virtual completa, e o contêiner é o hipervisor.
+- (c) A imagem roda em produção, e o contêiner roda apenas em desenvolvimento.
+- (d) Não há diferença, os dois termos são sinônimos.
+
+#### Questão 4 [Simples]
+
+O que a probe de readiness pergunta ao orquestrador?
+
+- (a) Se o processo deve ser reiniciado por estar travado.
+- (b) Se a imagem tem versão reprodutível.
+- (c) Se esta instância deve receber tráfego agora.
+- (d) Se o cluster tem capacidade para mais réplicas.
+
+#### Questão 5 [Simples]
+
+Como o módulo define elasticidade?
+
+- (a) A capacidade de crescer mantendo comportamento aceitável.
+- (b) O ajuste da capacidade em resposta à demanda.
+- (c) A troca de recursos da mesma réplica.
+- (d) A replicação de dados entre regiões.
+
+#### Questão 6 [Simples]
+
+O que é uma zona, no vocabulário de nuvem do módulo?
+
+- (a) Uma área geográfica onde o provedor oferece recursos.
+- (b) Um grupo de contêineres com o mesmo rótulo.
+- (c) Uma unidade de isolamento de falha dentro de uma região.
+- (d) Um contrato de nível de serviço.
+
+#### Questão 7 [Simples]
+
+Na formulação dos seis Rs de modernização, o que significa rehost?
+
+- (a) Mover a aplicação sem alterar o código, também chamado de lift and shift.
+- (b) Recomeçar a aplicação do zero.
+- (c) Desativar e desligar a aplicação.
+- (d) Alterar o código sem mudar o comportamento externo.
+
+#### Questão 8 [Simples]
+
+O que significa que uma aplicação é stateless?
+
+- (a) Que ela não usa banco de dados.
+- (b) Que ela não registra logs.
+- (c) Que ela não pode ser executada em Kubernetes.
+- (d) Que ela não mantém no processo de uma réplica o único estado necessário para atender a próxima requisição.
+
+### Questões médias
+
+#### Questão 9 [Média]
+
+Uma equipe colocou a verificação do banco de dados na probe de liveness. Qual risco o módulo aponta?
+
+- (a) A probe fica lenta e atrasa a implantação.
+- (b) Uma falha compartilhada no banco transforma-se em reinício coletivo das réplicas, justamente quando a dependência precisa estabilizar.
+- (c) O banco passa a receber tráfego indevido.
+- (d) A readiness deixa de funcionar.
+
+#### Questão 10 [Média]
+
+Um Pod foi apagado manualmente, e o Deployment declara três réplicas. O que acontece, e por quê?
+
+- (a) O controlador cria outro Pod, porque o estado desejado declarado continua pedindo três réplicas.
+- (b) Nada, porque a remoção manual tem precedência sobre o manifesto.
+- (c) O cluster reduz o número desejado para duas réplicas.
+- (d) O Service deixa de funcionar até a próxima implantação.
+
+#### Questão 11 [Média]
+
+Uma aplicação Java guarda o carrinho de compras em HttpSession, sustentada por sessão fixa no balanceador. Qual fator dos doze fatores é violado, e qual é a consequência?
+
+- (a) Fator 3, configurações, porque a senha fica no código.
+- (b) Fator 11, logs, porque o log morre com o contêiner.
+- (c) Fator 1, base de código, porque há pastas por ambiente.
+- (d) Fator 6, processos, porque o carrinho some quando a réplica é substituída em uma atualização gradual.
+
+#### Questão 12 [Média]
+
+Uma equipe faz git pull e recompila o código dentro do servidor de produção a cada versão. Por que isso dificulta o rollback, segundo o fator 5?
+
+- (a) Porque o git não permite voltar versões.
+- (b) Porque a recompilação apaga os logs.
+- (c) Porque não existe um artefato imutável com tag para onde voltar, apenas um diretório atualizado no lugar.
+- (d) Porque o rollback exige mudar de provedor.
+
+#### Questão 13 [Média]
+
+O HPA do laboratório declara de duas a cinco réplicas com alvo de CPU. O que o módulo afirma sobre essa configuração?
+
+- (a) Que ela é uma política, não uma prova, e exige métrica disponível, request de CPU definido e observação de latência, fila, erro e saturação.
+- (b) Que ela prova que a aplicação escala sob qualquer carga.
+- (c) Que ela dispensa a definição de limits.
+- (d) Que ela garante alta disponibilidade entre zonas.
+
+#### Questão 14 [Média]
+
+Qual é a divisão de responsabilidades entre Terraform, Ansible e Argo CD apresentada no módulo?
+
+- (a) Os três fazem a mesma coisa e competem entre si.
+- (b) Terraform sincroniza o cluster, Ansible cria redes e Argo CD instala pacotes.
+- (c) Ansible é stateful com arquivo de estado, e Terraform lê o inventário a cada execução.
+- (d) Terraform provisiona a infraestrutura no Day 0, Ansible prepara sistema operacional e aplicações do Day 1 em diante, e Argo CD sincroniza continuamente o cluster com o repositório.
+
+#### Questão 15 [Média]
+
+Uma organização compra uma agenda como SaaS. Que responsabilidade continua com ela, segundo o modelo de responsabilidade compartilhada?
+
+- (a) Nenhuma, porque o provedor opera a pilha inteira.
+- (b) A atualização do sistema operacional do provedor.
+- (c) A configuração, a integração, as credenciais e a classificação dos dados enviados ao serviço.
+- (d) A manutenção do hardware do provedor.
+
+### Questões difíceis
+
+#### Questão 16 [Difícil]
+
+A API de elegibilidade tem duas réplicas em um cluster kind de um único nó. A equipe afirma que o serviço é altamente disponível. Como o módulo avalia a afirmação?
+
+- (a) Correta, porque duas réplicas garantem alta disponibilidade.
+- (b) Incorreta, porque uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó, e o cluster local não representa falha de zona.
+- (c) Correta, desde que o HPA esteja configurado.
+- (d) Incorreta, porque o kind não permite mais de uma réplica.
+
+#### Questão 17 [Difícil]
+
+Uma nova versão foi implantada, quebrou a gravação de dados e foi revertida com kubectl rollout undo. O que o rollback resolve e o que ele não resolve?
+
+- (a) Resolve tudo, porque restaura o banco ao estado anterior.
+- (b) Não resolve nada, porque o rollback só funciona antes da implantação.
+- (c) Desfaz as mensagens publicadas, mas não restaura a imagem.
+- (d) Retorna o Deployment à revisão anterior, mas não desfaz efeitos irreversíveis já gravados em banco, mensagens ou integrações.
+
+#### Questão 18 [Difícil]
+
+Uma equipe aumenta as réplicas da API para absorver um pico, mas o banco de dados já está saturado de conexões. O que o módulo alerta?
+
+- (a) Que aumentar somente a API pode amplificar uma falha posterior, porque banco, conexões e dependências também limitam a escala.
+- (b) Que a API escala de forma independente das dependências.
+- (c) Que o banco escala automaticamente junto com a API.
+- (d) Que o HPA reduz as conexões ao banco.
+
+#### Questão 19 [Difícil]
+
+Uma equipe quer abstrair todos os serviços gerenciados da nuvem para evitar lock-in. Qual é a orientação do módulo?
+
+- (a) Abstrair tudo desde o início, porque lock-in deve ser sempre evitado.
+- (b) Usar apenas IaaS, porque PaaS e SaaS sempre geram lock-in.
+- (c) Aceitar lock-in quando o benefício específico é conhecido e revisável, registrando no ADR a API proprietária, o formato de dados e a condição mensurável de saída, porque abstrair tudo prematuramente cria uma plataforma paralela.
+- (d) Ignorar o lock-in, porque contratos de nuvem permitem troca a qualquer momento.
+
+#### Questão 20 [Difícil]
+
+No caso real do iFood, em 2018, a maior parte das instâncias EC2 do horário de pico era comprada como spot. Que característica do negócio torna esse arranjo coerente com a elasticidade?
+
+- (a) Demanda constante ao longo do dia, que dispensa ajuste de capacidade.
+- (b) Sazonalidade diária, com picos no almoço e no jantar e demanda baixa entre eles, que é o caso de uso canônico de elasticidade.
+- (c) Exigência de residência de dados no Brasil.
+- (d) Ausência de requisitos de disponibilidade.

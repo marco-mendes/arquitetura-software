@@ -285,3 +285,193 @@ Escreva em texto corrido, uma resposta por item.
 **Evidência esperada**
 
 O arquivo entregue traz o caminho escolhido com duas restrições citadas, os outros dois avaliados, a ordem das etapas com responsável por etapa, o tratamento da repetição durante a coexistência e o sinal de encerramento da transição.
+
+## Questões de múltipla escolha
+
+As vinte questões a seguir formam a atividade de fixação da Unidade 5 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+
+### Questões simples
+
+#### Questão 1 [Simples]
+
+Qual é a diferença entre um evento e um comando?
+
+- (a) O evento descreve um fato de domínio no passado, e o comando expressa uma intenção dirigida a um destinatário que pode aceitar ou rejeitar.
+- (b) O evento é síncrono, e o comando é assíncrono.
+- (c) O evento é transportado por fila, e o comando é transportado por tópico.
+- (d) Não há diferença, os dois termos são sinônimos.
+
+#### Questão 2 [Simples]
+
+Qual é a forma correta de nomear um evento, segundo o módulo?
+
+- (a) GerarCobranca, com verbo no infinitivo.
+- (b) ProcessarPedidoAgora, com verbo no imperativo.
+- (c) PedidoRealizado.v1, com verbo no particípio e linguagem do domínio.
+- (d) PedidoService.publish, com o nome da classe que publica.
+
+#### Questão 3 [Simples]
+
+O que diferencia um broker de um mediator?
+
+- (a) O broker só funciona com Kafka, e o mediator só funciona com RabbitMQ.
+- (b) O broker roteia e entrega sem decidir a ordem do processo, e o mediator conhece o processo e decide a ordem das etapas.
+- (c) O broker guarda regra de negócio, e o mediator apenas encaminha mensagens.
+- (d) O broker é síncrono, e o mediator é assíncrono.
+
+#### Questão 4 [Simples]
+
+O que é uma dead-letter queue (DLQ)?
+
+- (a) Uma fila que apaga automaticamente as mensagens inválidas.
+- (b) Uma fila de alta prioridade para mensagens urgentes.
+- (c) Uma fila que reentrega mensagens indefinidamente até o sucesso.
+- (d) Uma fila que recebe mensagens rejeitadas e as mantém visíveis para inspeção.
+
+#### Questão 5 [Simples]
+
+Em um log distribuído, como o Kafka, o que é o offset?
+
+- (a) O tempo máximo de retenção das mensagens.
+- (b) O número de partições de um tópico.
+- (c) O identificador único de cada evento.
+- (d) A posição de leitura de cada consumidor, que indica até onde ele já leu.
+
+#### Questão 6 [Simples]
+
+O que significa idempotência no consumidor de eventos?
+
+- (a) Que aplicar a mesma ocorrência mais de uma vez tem o mesmo efeito de negócio observável que aplicá-la uma única vez.
+- (b) Que o consumidor nunca recebe a mesma mensagem duas vezes.
+- (c) Que o consumidor processa as mensagens na ordem exata de publicação.
+- (d) Que o broker garante entrega exatamente uma vez.
+
+#### Questão 7 [Simples]
+
+O que distingue um tópico de uma fila?
+
+- (a) O tópico guarda as mensagens para sempre, e a fila guarda por um dia.
+- (b) O tópico copia a mesma publicação para filas distintas com critérios de assinatura próprios, e a fila reparte o trabalho entre réplicas de um consumidor.
+- (c) O tópico só aceita comandos, e a fila só aceita eventos.
+- (d) O tópico exige mediator, e a fila exige broker.
+
+#### Questão 8 [Simples]
+
+Qual garantia de entrega admite repetição da mesma mensagem e exige consumidor idempotente?
+
+- (a) No máximo uma vez.
+- (b) Exatamente uma vez em qualquer escopo.
+- (c) Pelo menos uma vez.
+- (d) Entrega ordenada global.
+
+### Questões médias
+
+#### Questão 9 [Média]
+
+Um consumidor de Faturamento recebe o evento, grava a cobrança e cai antes de confirmar a mensagem ao broker. O que acontece e como o módulo trata a situação?
+
+- (a) A mensagem se perde, e a cobrança deve ser refeita manualmente.
+- (b) O broker descarta a mensagem, porque a cobrança já existe.
+- (c) O broker volta a entregar a mensagem, e o consumidor usa o event_id para não criar uma segunda cobrança.
+- (d) O produtor detecta a falha e cancela a cobrança.
+
+#### Questão 10 [Média]
+
+Uma equipe guarda os event_id já processados em um cache na memória do processo. Por que o módulo considera essa solução insuficiente?
+
+- (a) Porque o cache é lento demais para mensageria.
+- (b) Porque reinício, réplica diferente e expiração permitem duplicidade, e a deduplicação deve ficar no banco do consumidor, na mesma transação do efeito.
+- (c) Porque o event_id não é único.
+- (d) Porque o broker já garante que não haverá repetição.
+
+#### Questão 11 [Média]
+
+O evento de resultado de exame carrega apenas result_reference, e não o laudo. Qual é a principal razão dessa escolha no domínio clínico?
+
+- (a) Controlar o acesso, para que o evento entregue internamente não vire um atalho em torno da autorização de leitura.
+- (b) Reduzir o tamanho da mensagem, que tem limite rígido no broker.
+- (c) Garantir a ordenação dos eventos.
+- (d) Eliminar a necessidade de consultar a origem.
+
+#### Questão 12 [Média]
+
+Depois do evento de pedido, Crédito pode aprovar um limite e Notificação pode preparar um aviso, sem que uma reação dependa da outra. Qual padrão é adequado?
+
+- (a) Mediator, porque toda reação precisa de coordenação central.
+- (b) Chamada síncrona em cadeia, para garantir a ordem.
+- (c) Transação distribuída entre Crédito e Notificação.
+- (d) Broker, porque nenhuma reação precisa comandar a outra e cada serviço reage de forma independente.
+
+#### Questão 13 [Média]
+
+Após o pedido ser publicado, a tela de status mostra confirmação enquanto Faturamento ainda não criou a cobrança. Como o módulo chama essa situação, e o que ela exige da equipe?
+
+- (a) Inconsistência permanente, corrigida por rollback.
+- (b) Consistência eventual, que exige decidir como informar o estado pendente, quanto tempo é aceitável, como reprocessar e quem investiga atrasos.
+- (c) Falha de entrega, que exige reiniciar o broker.
+- (d) Consistência forte, que dispensa qualquer tratamento.
+
+#### Questão 14 [Média]
+
+Uma equipe precisa que dois grupos independentes leiam a mesma sequência de eventos em ritmos diferentes, e que um deles possa reprocessar um trecho já lido. Qual modelo de canal atende esse requisito?
+
+- (a) Fila de trabalho com confirmação destrutiva.
+- (b) Mediator com orquestração central.
+- (c) Chamada HTTP síncrona com repetição.
+- (d) Log distribuído com retenção e offset por consumidor.
+
+#### Questão 15 [Média]
+
+Um evento chega com um campo obrigatório ausente. O que o consumidor deve fazer, segundo o desenho da oficina?
+
+- (a) Rejeitar a mensagem sem confirmá-la como faturada, enviando-a à DLQ para inspeção.
+- (b) Confirmar a mensagem como sucesso e registrar um aviso.
+- (c) Reentregar a mensagem indefinidamente até o produtor corrigir.
+- (d) Completar o campo com um valor padrão e seguir.
+
+### Questões difíceis
+
+#### Questão 16 [Difícil]
+
+Um serviço grava o pedido no banco e, em seguida, publica o evento no broker. Qual problema essa sequência cria, e qual padrão o módulo recomenda?
+
+- (a) Problema de ordenação, resolvido com uma partição única.
+- (b) Problema de latência, resolvido com payload completo.
+- (c) Problema de dupla escrita, resolvido pelo outbox, que grava a mudança e a intenção de publicação na mesma transação local.
+- (d) Problema de autorização, resolvido com DLQ.
+
+#### Questão 17 [Difícil]
+
+No Kafka, a equipe escolheu pedido_id como chave de partição. O que essa escolha garante e o que ela não garante?
+
+- (a) Garante a ordem global de todos os eventos da loja.
+- (b) Garante entrega exatamente uma vez, mas não garante ordem.
+- (c) Garante a ordem dos eventos do mesmo pedido em uma partição, mas não ordena eventos de pedidos diferentes.
+- (d) Garante que cada pedido seja processado por um único consumidor para sempre, mas não garante retenção.
+
+#### Questão 18 [Difícil]
+
+Uma equipe quer mudar a unidade do campo valor de reais para centavos em um evento já publicado, sem alterar o nome nem o tipo. Como o módulo avalia a mudança?
+
+- (a) Compatível, porque o parse continua funcionando.
+- (b) Compatível, desde que o consumidor use esquema estrito.
+- (c) Incompatível apenas para consumidores escritos em outra linguagem.
+- (d) Pode quebrar o negócio sem quebrar o parse, e uma ruptura de semântica pede nova versão no nome, com transição documentada.
+
+#### Questão 19 [Difícil]
+
+A DLQ de Faturamento acumula centenas de mensagens há semanas, sem alerta e sem responsável definido. Qual é a leitura do módulo?
+
+- (a) A DLQ está funcionando como trilha de auditoria geral.
+- (b) A DLQ virou armazenamento silencioso de falhas, porque sem owner, alerta e procedimento de decisão ela não preserva evidência útil.
+- (c) A DLQ deve ser reprocessada automaticamente em loop até esvaziar.
+- (d) A DLQ corrige o schema automaticamente com o tempo.
+
+#### Questão 20 [Difícil]
+
+No caso real do módulo, o LinkedIn substituiu uma cadeia de chamadas síncronas por um log distribuído que deu origem ao Kafka. Que propriedades do log justificam essa troca, segundo o módulo?
+
+- (a) Retenção, leitura não destrutiva e leitura simultânea por vários grupos independentes, sem que a origem conheça os consumidores.
+- (b) Ordem global e ausência de repetição garantidas para todos os eventos.
+- (c) Eliminação da necessidade de idempotência nos consumidores.
+- (d) Consistência forte imediata entre todos os sistemas.

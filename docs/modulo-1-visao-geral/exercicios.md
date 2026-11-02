@@ -261,3 +261,193 @@ Escreva em texto corrido, uma resposta por item.
 **Evidência esperada**
 
 O arquivo entregue traz o esboço escolhido com duas restrições citadas, os outros dois avaliados, um cenário de qualidade com medida observável, o escopo excluído com justificativa, e dois sinais de evolução ligados aos planos já conhecidos.
+
+## Questões de múltipla escolha
+
+As vinte questões a seguir formam a atividade de fixação da Unidade 1 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+
+### Questões simples
+
+#### Questão 1 [Simples]
+
+O que define um estilo arquitetural?
+
+- (a) Um conjunto de frameworks e linguagens recomendados para um tipo de sistema.
+- (b) Uma forma conhecida de organizar elementos, conectores e restrições sobre o que pode depender de quê.
+- (c) A sequência de etapas obrigatórias do processo de desenvolvimento de software.
+- (d) O diagrama de implantação que mostra servidores, redes e bancos de dados.
+
+#### Questão 2 [Simples]
+
+Como se chama o anti-padrão do estilo em camadas em que a requisição atravessa as camadas sem que nenhuma delas decida, valide ou transforme algo?
+
+- (a) Core creep.
+- (b) Estado compartilhado invisível.
+- (c) Sumidouro.
+- (d) Monólito distribuído.
+
+#### Questão 3 [Simples]
+
+Entre os quatro tipos canônicos de filtro do estilo Pipes and Filters, qual avalia os dados contra um critério e descarta os que não passam?
+
+- (a) Producer.
+- (b) Transformer.
+- (c) Consumer.
+- (d) Tester.
+
+#### Questão 4 [Simples]
+
+No estilo Microkernel, o que caracteriza o anti-padrão core creep?
+
+- (a) O núcleo acumula condicionais particulares e lógica que pertence aos plugins.
+- (b) Os plugins passam a se comunicar diretamente entre si, sem o núcleo.
+- (c) O registro de plugins exige reinicialização a cada alteração.
+- (d) Um plugin é implantado como serviço externo na nuvem.
+
+#### Questão 5 [Simples]
+
+O que afirma a Lei de Conway, citada na discussão do estilo em camadas?
+
+- (a) Sistemas tendem a aumentar sua complexidade a cada nova versão.
+- (b) A latência de uma requisição cresce com o número de camadas atravessadas.
+- (c) Organizações produzem arquiteturas que espelham sua estrutura de comunicação.
+- (d) Toda decisão arquitetural deve ser registrada antes da implementação.
+
+#### Questão 6 [Simples]
+
+Qual é a diferença entre uma camada fechada e uma camada aberta?
+
+- (a) A camada fechada não pode ser testada, e a camada aberta pode ser testada em isolamento.
+- (b) A camada fechada obriga a passagem pela camada adjacente, e a camada aberta permite um atalho deliberado.
+- (c) A camada fechada roda em servidor próprio, e a camada aberta roda no mesmo processo.
+- (d) A camada fechada contém regras de negócio, e a camada aberta contém apenas infraestrutura.
+
+#### Questão 7 [Simples]
+
+Segundo a definição de Kamil Grzybek adotada no módulo, o que é um monólito?
+
+- (a) Um sistema com exatamente uma unidade de implantação.
+- (b) Um sistema escrito em uma única linguagem de programação.
+- (c) Um sistema sem separação de camadas ou módulos.
+- (d) Um sistema com um único banco de dados compartilhado por todas as equipes.
+
+#### Questão 8 [Simples]
+
+O que é um ADR (Architecture Decision Record)?
+
+- (a) Um diagrama C4 de contexto que mostra o sistema e seus usuários.
+- (b) Um relatório de testes de desempenho anexado a cada versão.
+- (c) Uma lista de requisitos funcionais aprovada pelo cliente.
+- (d) Um documento versionado com contexto, forças, alternativas, decisão, consequências, evidências e revisão.
+
+### Questões médias
+
+#### Questão 9 [Média]
+
+Em uma API organizada em controller, serviço e repositório, cerca de 85% das requisições passam pelo serviço sem que ele valide, decida ou transforme qualquer dado. Segundo a regra prática de Richards e Ford, o que essa medição indica?
+
+- (a) Que o estilo em camadas provavelmente não é o adequado para esse sistema.
+- (b) Que o sistema precisa de mais uma camada para separar melhor as responsabilidades.
+- (c) Que as camadas devem ser distribuídas em servidores separados para reduzir latência.
+- (d) Que o repositório deve ser substituído por acesso direto ao banco no controller.
+
+#### Questão 10 [Média]
+
+O faturamento hospitalar precisa validar documentos, normalizar códigos, enriquecer os dados do convênio e publicar o resultado, registrando o lote, a etapa e a causa de cada rejeição. Qual estilo atende melhor essa necessidade?
+
+- (a) Microkernel, com um plugin por convênio.
+- (b) Pipes and Filters, com uma etapa por transformação.
+- (c) Camadas, com uma camada por tipo de documento.
+- (d) Monólito modular, com um módulo por etapa.
+
+#### Questão 11 [Média]
+
+Um sistema tributário calcula impostos com regras que variam por estado, mas o fluxo de cálculo é o mesmo. A equipe quer incluir um novo estado sem alterar o código central. Qual estilo atende esse requisito e como?
+
+- (a) Camadas, acrescentando uma camada de regras para o novo estado.
+- (b) Pipes and Filters, inserindo um filtro Tester por estado.
+- (c) Monólito modular, criando um módulo que lê as tabelas do módulo fiscal.
+- (d) Microkernel, registrando um novo plugin para o estado selecionado pelo núcleo.
+
+#### Questão 12 [Média]
+
+Em um monólito modular, o módulo Faturamento passou a consultar diretamente a tabela de agendamentos do módulo Agenda, porque a pasta vizinha estava a um import de distância. Qual regra do estilo foi violada?
+
+- (a) A regra de que módulos devem rodar em processos separados.
+- (b) A regra de que cada módulo deve usar um banco físico próprio.
+- (c) A regra de que um módulo consome outro apenas pela API pública, e cada conjunto de dados tem um único escritor.
+- (d) A regra de que módulos só podem se comunicar por eventos assíncronos.
+
+#### Questão 13 [Média]
+
+Um filtro de um pipeline de logs conta as ocorrências de erro em uma variável interna e usa essa contagem para decidir o que emitir. Qual é o problema e qual é a correção recomendada no módulo?
+
+- (a) Excesso de filtros, corrigido pela fusão de todas as etapas em uma só.
+- (b) Core creep, corrigido pela criação de um plugin de contagem.
+- (c) Sumidouro, corrigido pela inclusão de uma camada de serviço.
+- (d) Estado compartilhado invisível, corrigido por um mecanismo externo declarado, como um state store.
+
+#### Questão 14 [Média]
+
+Uma equipe separou apresentação, negócios e dados em três servidores, mas as responsabilidades continuam misturadas entre as camadas. O que o módulo afirma sobre essa situação?
+
+- (a) Distribuir camadas fisicamente não resolve um acoplamento lógico mal definido.
+- (b) A separação física resolve o acoplamento, porque cada servidor é implantado de forma independente.
+- (c) O sistema passou a ser uma arquitetura de microsserviços.
+- (d) A latência de rede compensa o acoplamento, porque obriga contratos explícitos.
+
+#### Questão 15 [Média]
+
+Por que aplicar o princípio aberto-fechado (OCP) na fronteira com os dados permite trocar MySQL por PostgreSQL sem alterar o serviço de negócio?
+
+- (a) Porque os dois bancos usam a mesma linguagem SQL e dispensam qualquer adaptação.
+- (b) Porque o serviço de negócio acessa o banco por meio do controller.
+- (c) Porque a camada de negócios depende de uma abstração de repositório, e a implementação concreta fica na infraestrutura.
+- (d) Porque o OCP proíbe mudanças em qualquer camada depois da primeira versão.
+
+### Questões difíceis
+
+#### Questão 16 [Difícil]
+
+Uma equipe avalia extrair um módulo de um monólito modular para um serviço separado. Qual conjunto de evidências justifica essa extração segundo o módulo?
+
+- (a) A equipe quer experimentar uma tecnologia nova e o módulo é pequeno o suficiente para isso.
+- (b) Mudanças que exigem coordenação frequente entre módulos, incidentes que atravessam fronteiras, um módulo que domina os recursos do processo ou cadências de mudança muito diferentes, todos medidos.
+- (c) O código do módulo cresceu e a pasta ficou difícil de navegar.
+- (d) Microsserviços são o padrão de mercado e a extração antecipa uma necessidade futura.
+
+#### Questão 17 [Difícil]
+
+Um sistema precisa de alta elasticidade e de implantação independente por equipe. Considerando as avaliações de 1 a 5 apresentadas no módulo, qual conclusão é coerente?
+
+- (a) Camadas é adequado, porque tem custo geral 5 e simplicidade 5.
+- (b) Monólito modular é adequado, porque tem desempenho 4 e modularidade 4.
+- (c) Pipes and Filters é adequado, porque tem testabilidade 5 e modularidade 5.
+- (d) Camadas e monólito modular têm elasticidade 1, e esses requisitos apontam para a decomposição em serviços.
+
+#### Questão 18 [Difícil]
+
+Na Triagem hospitalar organizada em Microkernel, um plugin de uma unidade passou a editar dados internos do núcleo, e o núcleo ganhou uma regra específica para essa unidade. Qual é a leitura correta da situação?
+
+- (a) A situação é esperada, porque plugins podem controlar o estado interno quando a unidade exige.
+- (b) A fronteira entre núcleo e plugins precisa ser revista, porque o plugin deve conhecer apenas capacidades públicas e regra por unidade pertence ao plugin.
+- (c) O problema é de desempenho e deve ser resolvido com plugins fora do processo.
+- (d) O estilo deve ser trocado por Pipes and Filters, porque a triagem é um fluxo de dados.
+
+#### Questão 19 [Difícil]
+
+Em uma arquitetura em camadas fechadas, a equipe propõe abrir uma camada para uma consulta de leitura muito frequente. Em que condição essa abertura é defensável?
+
+- (a) Sempre que reduzir o volume de código, independentemente de medição.
+- (b) Nunca, porque qualquer camada aberta destrói o estilo em camadas.
+- (c) Quando houver evidência de custo, contrato e teste para o atalho, sem contornar regra de negócio, e a decisão for registrada em um ADR.
+- (d) Quando equipes diferentes forem responsáveis pelas duas camadas envolvidas.
+
+#### Questão 20 [Difícil]
+
+A Shopify mantém um grande monólito Ruby on Rails com centenas de implantações por dia. Qual lição arquitetural o módulo extrai desse caso?
+
+- (a) Que o monólito modular escala em código e em equipe quando as fronteiras são verificadas continuamente por ferramenta na integração contínua.
+- (b) Que monólitos só funcionam em equipes pequenas e com poucas implantações.
+- (c) Que a migração para microsserviços é inevitável quando o código passa de certo tamanho.
+- (d) Que a separação em pastas é suficiente para manter os módulos independentes.

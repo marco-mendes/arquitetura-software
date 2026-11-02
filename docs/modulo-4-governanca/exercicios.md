@@ -295,3 +295,193 @@ Escreva em texto corrido, uma resposta por item.
 **Evidência esperada**
 
 O arquivo entregue traz o nível escolhido com justificativa, os outros dois avaliados, uma forma de verificação para cada exigência mantida, a ligação explícita com o problema de descoberta de responsável e o sinal de reforço com a próxima exigência nomeada.
+
+## Questões de múltipla escolha
+
+As vinte questões a seguir formam a atividade de fixação da Unidade 4 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+
+### Questões simples
+
+#### Questão 1 [Simples]
+
+Como o módulo define governança em uma arquitetura distribuída?
+
+- (a) Um comitê que aprova cada mudança antes da implantação.
+- (b) O conjunto de decisões, responsabilidades e políticas verificáveis que torna a arquitetura repetível sem congelá-la.
+- (c) Uma ferramenta de API gateway instalada na borda.
+- (d) Um documento de padrões revisado uma vez por ano.
+
+#### Questão 2 [Simples]
+
+Qual das atividades abaixo pertence à governança em design-time?
+
+- (a) Responder 429 quando o limite de chamadas é excedido.
+- (b) Exportar spans do Collector para o Jaeger.
+- (c) Revisar um contrato OpenAPI e uma convenção de versão.
+- (d) Medir a taxa de respostas 5xx em produção.
+
+#### Questão 3 [Simples]
+
+Qual pergunta os logs respondem, segundo o módulo?
+
+- (a) O que aconteceu neste evento?
+- (b) Com que frequência e em que distribuição?
+- (c) Por onde esta operação passou e onde esperou?
+- (d) Qual indisponibilidade é aceitável?
+
+#### Questão 4 [Simples]
+
+Qual cabeçalho do padrão W3C carrega a relação entre os spans de um trace distribuído?
+
+- (a) X-Correlation-ID.
+- (b) Authorization.
+- (c) Location.
+- (d) traceparent.
+
+#### Questão 5 [Simples]
+
+O que é um SLO?
+
+- (a) Um contrato jurídico com multa por indisponibilidade.
+- (b) Um painel com todos os gráficos do serviço.
+- (c) Uma meta operacional baseada em um indicador, como a proporção de consultas concluídas abaixo de 300 ms em uma janela.
+- (d) Um log estruturado com nível de severidade.
+
+#### Questão 6 [Simples]
+
+Qual código HTTP o plugin de rate limiting do Kong devolve quando o limite é excedido?
+
+- (a) 429 Too Many Requests.
+- (b) 401 Unauthorized.
+- (c) 503 Service Unavailable.
+- (d) 500 Internal Server Error.
+
+#### Questão 7 [Simples]
+
+O que significa ownership de um serviço no catálogo?
+
+- (a) Que o time recebe a culpa automática por qualquer incidente.
+- (b) Que o time é dono do servidor físico onde o serviço roda.
+- (c) Que apenas o time dono pode consumir a API.
+- (d) Que existe alguém com autoridade e contexto para priorizar correção, evolução e retirada do serviço.
+
+#### Questão 8 [Simples]
+
+No laboratório, o Kong roda em modo DB-less. O que isso significa?
+
+- (a) Que o Kong não encaminha requisições para serviços com banco de dados.
+- (b) Que a configuração vem de um arquivo declarativo, kong.yml, e não de um banco ou de um painel.
+- (c) Que o Kong guarda os logs apenas em memória.
+- (d) Que o serviço de Elegibilidade não usa banco de dados.
+
+### Questões médias
+
+#### Questão 9 [Média]
+
+A regra "um beneficiário não pode usar um plano vencido" deve ser aplicada no gateway ou no serviço de Elegibilidade?
+
+- (a) No serviço, porque é uma política de domínio que depende do vocabulário e do estado da capacidade.
+- (b) No gateway, porque toda política deve ficar na borda.
+- (c) No gateway, porque reduz a duplicação de código.
+- (d) Em nenhum dos dois, porque é responsabilidade do banco de dados.
+
+#### Questão 10 [Média]
+
+Uma equipe propõe usar o identificador do paciente como correlation ID, para facilitar a busca nos logs. Como o módulo avalia a proposta?
+
+- (a) Adequada, porque o identificador já é único.
+- (b) Adequada, desde que o identificador também vá para o traceparent.
+- (c) Inadequada, porque o correlation ID deve ser gerado pelo banco de dados.
+- (d) Inadequada, porque revela dado e gera cardinalidade inadequada, e um UUID sem semântica é suficiente.
+
+#### Questão 11 [Média]
+
+O rate limiting foi configurado em três chamadas por segundo por origem. Um colega afirma que, com isso, a autorização de acesso aos resultados de exame está resolvida. O que o módulo afirma?
+
+- (a) Que a afirmação é correta, porque o limite impede acessos indevidos.
+- (b) Que o limite deve ser reduzido para uma chamada por segundo para funcionar como autorização.
+- (c) Que rate limiting é uma proteção contra abuso, não uma autorização, e não decide se uma pessoa tem direito a um recurso.
+- (d) Que a autorização deve ser feita pelo Jaeger.
+
+#### Questão 12 [Média]
+
+Uma métrica de latência usa o identificador do paciente como rótulo. Qual problema o módulo aponta?
+
+- (a) A métrica fica imprecisa porque o identificador muda.
+- (b) Rótulos de cardinalidade ilimitada aumentam o custo e dificultam a consulta, e devem ser substituídos por categorias estáveis.
+- (c) O identificador impede o cálculo de percentis.
+- (d) Não há problema, porque métricas não são armazenadas.
+
+#### Questão 13 [Média]
+
+Qual é a diferença entre correlation ID e traceparent, segundo o módulo?
+
+- (a) São o mesmo identificador com nomes diferentes.
+- (b) O correlation ID é um identificador de busca compreensível entre logs e resposta, e o traceparent descreve a árvore de execução, com trace ID, span pai e sinalizadores.
+- (c) O correlation ID só existe no gateway, e o traceparent só existe no banco.
+- (d) O traceparent substitui o correlation ID em qualquer cenário.
+
+#### Questão 14 [Média]
+
+Uma política de versionamento foi publicada, e uma versão antiga da API vai ser retirada. O que, além de registrar a nova versão, o módulo exige?
+
+- (a) Apenas um aviso por e-mail aos consumidores.
+- (b) Que a versão antiga seja retirada imediatamente para evitar custo.
+- (c) Que todas as versões sejam mantidas indefinidamente.
+- (d) Que o catálogo aponte os consumidores, a política defina a depreciação e os logs mostrem o uso da versão antiga antes da retirada.
+
+#### Questão 15 [Média]
+
+No ADR do laboratório, a equipe decidiu usar Kong DB-less e rejeitou a configuração por API administrativa. Qual foi o motivo da rejeição?
+
+- (a) A API administrativa é mais lenta.
+- (b) A API administrativa não suporta rate limiting.
+- (c) A API administrativa esconderia estado fora do repositório.
+- (d) A API administrativa exige licença comercial.
+
+### Questões difíceis
+
+#### Questão 16 [Difícil]
+
+A rota de Elegibilidade cumpre a meta de latência, mas recusa com 429 parte dos consumidores legítimos. Qual leitura o módulo propõe?
+
+- (a) O indicador de latência isolado não descreve a qualidade, e os indicadores de sucesso, disponibilidade e proteção devem refletir o objetivo do recurso.
+- (b) O serviço está saudável, porque o SLO de latência foi atendido.
+- (c) O limite deve ser removido, porque consumidores legítimos nunca podem ser recusados.
+- (d) A falha é do consumidor, que deve repetir até ser atendido.
+
+#### Questão 17 [Difícil]
+
+O orçamento de erro de um SLO está sendo consumido rapidamente, e o produto quer acrescentar uma nova dependência ao serviço. Qual é a orientação do módulo?
+
+- (a) Acrescentar a dependência e revisar o SLO depois.
+- (b) Priorizar a confiabilidade antes de acrescentar tráfego ou novas dependências.
+- (c) Aumentar a meta do SLO para refletir o novo cenário.
+- (d) Desativar os alertas até a entrega da nova funcionalidade.
+
+#### Questão 18 [Difícil]
+
+A autenticação técnica ocorre no gateway, e a autorização para ver um resultado específico de exame ocorre no serviço. Qual risco o módulo aponta nesse arranjo e como tratá-lo?
+
+- (a) Nenhum risco, porque o gateway cobre a segurança inteira.
+- (b) Duplicação de autenticação, tratada removendo a verificação do serviço.
+- (c) Uma lacuna entre as duas partes, tratada documentando ambas e o comportamento de falha.
+- (d) Latência excessiva, tratada movendo a autorização para o gateway.
+
+#### Questão 19 [Difícil]
+
+No caso Knight Capital, um servidor recebeu o código antigo do Power Peg e o sistema enviou 97 mensagens de erro antes da abertura do mercado, sem que ninguém agisse. Qual lição de governança o caso ilustra?
+
+- (a) Que mensagens automáticas devem ser desativadas, porque geram ruído.
+- (b) Que implantações em etapas são sempre mais arriscadas que implantações completas.
+- (c) Que o problema foi exclusivamente técnico e não teria sido evitado por procedimentos.
+- (d) Que um controle que existe apenas como artefato, sem ligação a uma ação automática e a uma pessoa responsável, não governa o comportamento em execução.
+
+#### Questão 20 [Difícil]
+
+Durante o incidente da Knight Capital, a equipe desinstalou o código novo dos sete servidores corretos, e o problema se espalhou para os oito. O que essa decisão revela sobre a governança da empresa?
+
+- (a) Que a ausência de procedimento de resposta a incidentes levou a diagnóstico em produção com uma hipótese não verificada.
+- (b) Que reverter uma implantação é sempre a resposta errada a um incidente.
+- (c) Que o rate limiting teria impedido o problema.
+- (d) Que o código novo era o defeito e a reversão foi correta, mas tardia.

@@ -296,3 +296,193 @@ Escreva em texto corrido, uma resposta por item.
 **Evidência esperada**
 
 O arquivo entregue traz o esboço escolhido com duas necessidades citadas, os outros dois avaliados, as três situações de resposta descritas com a diferença entre elas explicada, o lugar da tradução justificado e um caminho de evolução compatível.
+
+## Questões de múltipla escolha
+
+As vinte questões a seguir formam a atividade de fixação da Unidade 2 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+
+### Questões simples
+
+#### Questão 1 [Simples]
+
+Na separação proposta pelo módulo, qual camada de uma API responde à pergunta "que promessa é observável?"
+
+- (a) Interface.
+- (b) Contrato.
+- (c) Implementação.
+- (d) Infraestrutura.
+
+#### Questão 2 [Simples]
+
+Qual método HTTP é, ao mesmo tempo, seguro e idempotente?
+
+- (a) POST.
+- (b) PATCH.
+- (c) GET.
+- (d) DELETE.
+
+#### Questão 3 [Simples]
+
+O que significa dizer que uma operação HTTP é idempotente?
+
+- (a) Que repetir a mesma intenção produz o mesmo efeito pretendido no servidor, embora a resposta possa variar.
+- (b) Que ela nunca altera o estado do servidor.
+- (c) Que ela deduplica automaticamente qualquer transação distribuída.
+- (d) Que ela sempre retorna o mesmo código de status e o mesmo corpo.
+
+#### Questão 4 [Simples]
+
+Em REST, o que é um recurso?
+
+- (a) Uma tabela do banco de dados exposta pela API.
+- (b) Um método HTTP aplicado a uma URL.
+- (c) Um arquivo JSON armazenado no servidor.
+- (d) Algo identificado por uma URI e manipulado por meio de representações.
+
+#### Questão 5 [Simples]
+
+Qual cabeçalho HTTP informa ao cliente onde acompanhar um recurso aceito, como em uma resposta 202 a POST /elegibilidades?
+
+- (a) Location.
+- (b) Content-Type.
+- (c) Accept.
+- (d) ETag.
+
+#### Questão 6 [Simples]
+
+Qual especificação descreve caminhos, operações, parâmetros, corpos, respostas e schemas de uma API HTTP em YAML ou JSON?
+
+- (a) Protocol Buffers.
+- (b) WSDL.
+- (c) OpenAPI.
+- (d) CloudEvents.
+
+#### Questão 7 [Simples]
+
+Entre as restrições REST definidas por Fielding, qual é opcional?
+
+- (a) Cliente-servidor.
+- (b) Sem estado.
+- (c) Interface uniforme.
+- (d) Código sob demanda.
+
+#### Questão 8 [Simples]
+
+Quais são as três capacidades de uma plataforma de APIs apresentadas no módulo?
+
+- (a) Autenticação, autorização e auditoria.
+- (b) Desenvolvimento, execução e engajamento.
+- (c) Design, código e testes.
+- (d) Cache, fila e banco de dados.
+
+### Questões médias
+
+#### Questão 9 [Média]
+
+A API recebe POST /elegibilidades e responde 202 Accepted com o cabeçalho Location. O que essa resposta comunica ao consumidor?
+
+- (a) Que a operadora já aprovou a elegibilidade e o recurso foi criado.
+- (b) Que a solicitação foi rejeitada por dados inválidos.
+- (c) Que o consumidor deve repetir a requisição até receber 200.
+- (d) Que a solicitação foi aceita para processamento, ainda sem decisão, e pode ser acompanhada no endereço informado.
+
+#### Questão 10 [Média]
+
+Uma equipe criou a rota POST /aprovarAutomaticamente com corpo em JSON e afirma que a API é REST. Como o módulo avalia essa afirmação?
+
+- (a) Incorreta, porque a operação é coerente como RPC, mas usar JSON e HTTP não a torna REST.
+- (b) Correta, porque usa HTTP e JSON.
+- (c) Correta, porque toda rota com verbo é REST.
+- (d) Incorreta, porque POST não pode ser usado em APIs REST.
+
+#### Questão 11 [Média]
+
+Um aplicativo móvel precisa buscar exatamente os campos de álbuns, artistas e playlists em uma única consulta, com seleção variável a cada tela. Qual estilo atende melhor essa necessidade, e qual cuidado o acompanha?
+
+- (a) SOAP, com cuidado sobre a tradução do vocabulário do parceiro.
+- (b) WebSocket, com cuidado sobre reconexão e ordenação.
+- (c) GraphQL, com cuidado sobre custo, autorização e cache nos resolvers.
+- (d) gRPC, com cuidado sobre a evolução da toolchain.
+
+#### Questão 12 [Média]
+
+Uma integração com o governo exige XML e SOAP. A equipe pergunta se a plataforma interna também precisa adotar XML. Qual é a orientação do módulo?
+
+- (a) Sim, porque o formato do parceiro deve ser o formato canônico interno.
+- (b) Não, porque usar SOAP com o parceiro não obriga a plataforma a adotar XML internamente, e a tradução deve ficar isolada do domínio.
+- (c) Sim, porque XML tem validação mais forte que JSON em qualquer cenário.
+- (d) Não, porque SOAP está obsoleto e deve ser substituído pelo parceiro.
+
+#### Questão 13 [Média]
+
+O schema ErroAPI do laboratório usa codigo estável, mensagem legível e detalhes por campo. Qual problema esse desenho evita?
+
+- (a) Que o servidor precise registrar logs de erro.
+- (b) Que o consumidor dependa de texto livre para tratar o erro.
+- (c) Que a API retorne códigos da família 5xx.
+- (d) Que o contrato precise ser versionado.
+
+#### Questão 14 [Média]
+
+Uma coleção de agendamentos muda com frequência e é paginada por offset e limit. Qual risco o módulo aponta e qual alternativa sugere?
+
+- (a) A paginação pode repetir ou omitir itens, e um cursor opaco lida melhor com a mudança.
+- (b) A paginação aumenta a latência, e a alternativa é retornar a coleção inteira.
+- (c) A paginação impede o cache, e a alternativa é usar ETag em cada item.
+- (d) A paginação quebra a idempotência do GET, e a alternativa é usar POST.
+
+#### Questão 15 [Média]
+
+O arquivo openapi.yaml do laboratório é válido sintaticamente. Por que o módulo usa também Spectral, Bruno e TestClient?
+
+- (a) Porque o OpenAPI não aceita exemplos de requisição.
+- (b) Porque as três ferramentas geram o código do servidor a partir do contrato.
+- (c) Porque um contrato válido ainda pode ser fraco, e as três ferramentas examinam o documento, o consumo e a execução HTTP.
+- (d) Porque o FastAPI exige essas ferramentas para iniciar.
+
+### Questões difíceis
+
+#### Questão 16 [Difícil]
+
+Uma API pública precisa evoluir. Qual das mudanças abaixo tende a ser compatível com os consumidores existentes?
+
+- (a) Tornar obrigatório um campo que antes era opcional.
+- (b) Mudar a unidade de um campo numérico de reais para centavos.
+- (c) Remover uma operação pouco usada.
+- (d) Acrescentar um campo opcional, preservando o significado dos campos existentes.
+
+#### Questão 17 [Difícil]
+
+O cliente de um POST de autorização sofreu timeout e vai repetir a requisição. A equipe decide usar uma chave de idempotência. O que o módulo exige para que essa chave funcione?
+
+- (a) Apenas gerar um UUID novo a cada tentativa.
+- (b) Trocar POST por PUT, porque PUT é idempotente por definição.
+- (c) Confiar na deduplicação automática do protocolo HTTP.
+- (d) Definir escopo, retenção, comparação da requisição e a resposta para uma repetição divergente.
+
+#### Questão 18 [Difícil]
+
+Uma dependência externa responde lentamente, e a equipe propõe trocar REST por gRPC para resolver a latência. Como o módulo avalia a proposta?
+
+- (a) Adequada, porque gRPC sempre reduz a latência total.
+- (b) Adequada, porque gRPC elimina a necessidade de contrato.
+- (c) Insuficiente, porque gRPC não resolve por si só a lentidão de uma dependência externa, e a escolha deve partir da força e da evidência.
+- (d) Insuficiente, porque gRPC só funciona com XML.
+
+#### Questão 19 [Difícil]
+
+Uma equipe quer substituir mensageria por WebSocket para notificar consumidores sobre resultados de exame, inclusive quando estiverem desconectados. Qual é a avaliação correta?
+
+- (a) WebSocket não atende sozinho, porque manter o canal aberto não garante durabilidade de evento, que pede outro mecanismo.
+- (b) WebSocket atende, porque mantém o canal aberto e garante a entrega.
+- (c) WebSocket atende, porque é bidirecional e dispensa reconexão.
+- (d) WebSocket não atende, porque só funciona entre servidores.
+
+#### Questão 20 [Difícil]
+
+No caso real do módulo, o Twitter abriu uma API, viu um ecossistema inteiro crescer sobre ela e depois a desligou três vezes. Qual princípio do módulo esse caso ilustra?
+
+- (a) Que APIs públicas devem ser abertas sem qualquer contrato para estimular a adoção.
+- (b) Que expor uma API transforma nomes, formatos e regras em compromissos públicos, e mudar ou remover esse contrato afeta quem depende dele.
+- (c) Que REST é inadequado para APIs públicas de grande escala.
+- (d) Que ecossistemas de terceiros não dependem do contrato da API.
