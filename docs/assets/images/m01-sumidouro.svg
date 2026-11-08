@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 600" role="img" aria-labelledby="title desc">
+  <title id="title">Sumidouro comparado a uma camada que decide</title>
+  <desc id="desc">À esquerda, GET /usuarios atravessa Apresentação, Negócios e Dados e cada camada só repassa a chamada. À direita, POST /consultas atravessa as mesmas camadas, mas a Apresentação valida o formato, Negócios recusa horário sobreposto com 409 Conflito e Dados grava a consulta. Uma faixa inferior traz a regra prática dos 80%.</desc>
+  <defs>
+    <style>
+      .h { fill: #16243A; font: 700 24px Arial, sans-serif; }
+      .req { fill: #254DB8; font: 700 17px "Courier New", monospace; }
+      .name { fill: #16243A; font: 700 19px Arial, sans-serif; }
+      .idle { fill: #8A96A6; font: italic 400 16px Arial, sans-serif; }
+      .act { fill: #16243A; font: 700 16px Arial, sans-serif; }
+      .note { fill: #16243A; font: 400 16px Arial, sans-serif; }
+      .box { fill: #FFFFFF; stroke: #16243A; stroke-width: 2; }
+      .ghost { fill: #FFFFFF; stroke: #A9B4C2; stroke-width: 2; stroke-dasharray: 6 5; }
+    </style>
+    <marker id="a-navy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16243A"/></marker>
+    <marker id="a-grey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#A9B4C2"/></marker>
+    <marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#B3261E"/></marker>
+  </defs>
+  <rect width="1040" height="600" fill="#F2F6FB"/>
+
+  <!-- Painel esquerdo: sumidouro -->
+  <rect x="24" y="24" width="484" height="440" rx="16" fill="#FFFFFF" stroke="#D5DDE8"/>
+  <text x="52" y="66" class="h">Sumidouro</text>
+  <text x="52" y="94" class="req">GET /usuarios</text>
+
+  <rect x="52" y="120" width="200" height="56" rx="10" class="ghost"/>
+  <text x="152" y="154" text-anchor="middle" class="name">Apresentação</text>
+  <text x="276" y="154" class="idle">só repassa</text>
+  <line x1="152" y1="176" x2="152" y2="208" stroke="#A9B4C2" stroke-width="2.5" marker-end="url(#a-grey)"/>
+
+  <rect x="52" y="212" width="200" height="56" rx="10" class="ghost"/>
+  <text x="152" y="246" text-anchor="middle" class="name">Negócios</text>
+  <text x="276" y="246" class="idle">só repassa</text>
+  <line x1="152" y1="268" x2="152" y2="300" stroke="#A9B4C2" stroke-width="2.5" marker-end="url(#a-grey)"/>
+
+  <rect x="52" y="304" width="200" height="56" rx="10" class="ghost"/>
+  <text x="152" y="338" text-anchor="middle" class="name">Dados</text>
+  <text x="276" y="338" class="idle">só repassa</text>
+  <line x1="152" y1="360" x2="152" y2="388" stroke="#A9B4C2" stroke-width="2.5" marker-end="url(#a-grey)"/>
+
+  <path d="M92 400 v30 a60 11 0 0 0 120 0 v-30" fill="#FFFFFF" stroke="#A9B4C2" stroke-width="2"/>
+  <ellipse cx="152" cy="400" rx="60" ry="11" fill="#FFFFFF" stroke="#A9B4C2" stroke-width="2"/>
+  <text x="152" y="436" text-anchor="middle" class="idle">banco</text>
+  <text x="276" y="424" class="note">três saltos, nenhuma decisão</text>
+
+  <!-- Painel direito: camada que decide -->
+  <rect x="532" y="24" width="484" height="440" rx="16" fill="#FFFFFF" stroke="#D5DDE8"/>
+  <text x="560" y="66" class="h">Camada que decide</text>
+  <text x="560" y="94" class="req">POST /consultas</text>
+
+  <rect x="560" y="120" width="200" height="56" rx="10" class="box"/>
+  <text x="660" y="154" text-anchor="middle" class="name">Apresentação</text>
+  <text x="784" y="154" class="act">valida o formato</text>
+  <line x1="660" y1="176" x2="660" y2="208" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+
+  <rect x="560" y="212" width="200" height="56" rx="10" fill="#E3F4F7" stroke="#16243A" stroke-width="2"/>
+  <text x="660" y="246" text-anchor="middle" class="name">Negócios</text>
+  <text x="784" y="236" class="act">recusa horário</text>
+  <text x="784" y="256" class="act">sobreposto</text>
+  <path d="M760 262 C 800 290, 830 290, 866 290" fill="none" stroke="#B3261E" stroke-width="2.5" marker-end="url(#a-red)"/>
+  <rect x="870" y="274" width="122" height="32" rx="16" fill="#FBE9E7" stroke="#B3261E" stroke-width="2"/>
+  <text x="931" y="296" text-anchor="middle" fill="#B3261E" style="font: 700 16px Arial, sans-serif">409 Conflito</text>
+  <line x1="660" y1="268" x2="660" y2="300" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+
+  <rect x="560" y="304" width="200" height="56" rx="10" class="box"/>
+  <text x="660" y="338" text-anchor="middle" class="name">Dados</text>
+  <text x="784" y="338" class="act">grava a consulta</text>
+  <line x1="660" y1="360" x2="660" y2="388" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+
+  <path d="M600 400 v30 a60 11 0 0 0 120 0 v-30" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <ellipse cx="660" cy="400" rx="60" ry="11" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <text x="660" y="436" text-anchor="middle" class="note">banco</text>
+  <text x="784" y="424" class="note">cada salto agrega uma decisão</text>
+
+  <!-- Regra prática -->
+  <rect x="24" y="488" width="992" height="88" rx="14" fill="#FDF1D9" stroke="#F2B84B" stroke-width="2"/>
+  <text x="52" y="524" class="act">Regra prática de Richards e Ford</text>
+  <text x="52" y="552" class="note">Se mais de 80% das requisições se parecem com o painel da esquerda, o estilo em camadas provavelmente não serve ao sistema.</text>
+</svg>

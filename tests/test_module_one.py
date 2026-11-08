@@ -339,7 +339,40 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(18, len(contexts))
+        # A página de padrões trocou os blocos Mermaid por SVG estáticos; os dois
+        # restantes estão em conceitos e no estudo de caso.
+        self.assertEqual(2, len(contexts))
+
+    def test_decision_page_uses_static_svg_figures_with_accessible_context(self):
+        text = (MODULE / "padroes-e-decisoes.md").read_text(encoding="utf-8")
+
+        self.assertNotIn("```mermaid", text)
+        self.assertNotIn("**Texto alternativo:**", text)
+        figures = re.findall(
+            r"!\[(.+?)\]\(\.\./assets/images/(m01-[a-z-]+\.svg)\)\n\n"
+            r"\*Figura (\d+) — .+? Fonte: .+?\*\n\n"
+            r"\*\*Leitura textual da figura:\*\* .+",
+            text,
+        )
+        self.assertEqual(
+            [
+                "m01-caracteristicas-estilos.svg",
+                "m01-camadas-dependencias.svg",
+                "m01-sumidouro.svg",
+                "m01-mvc-ddd.svg",
+                "m01-camadas-fisicas.svg",
+                "m01-pipeline-pedidos.svg",
+                "m01-microkernel-impostos.svg",
+                "m01-monolito-modular.svg",
+            ],
+            [asset for _, asset, _ in figures],
+        )
+        for alt, asset, _ in figures:
+            self.assertGreater(len(alt), 80, asset)
+            svg = (ROOT / "docs/assets/images" / asset).read_text(encoding="utf-8")
+            self.assertIn("<title", svg)
+            self.assertIn("<desc", svg)
+            self.assertNotRegex(svg, r"<script\b|(?:href|src)=[\"']https?://")
 
     def test_module_one_figure_numbers_follow_reading_order(self):
         pages = (
@@ -358,7 +391,7 @@ class ModuleOneTest(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(list(range(1, 25)), figures)
+        self.assertEqual(list(range(1, 17)), figures)
 
     def test_advanced_scenarios_do_not_leak_the_resolved_case(self):
         exercises = (MODULE / "exercicios.md").read_text(encoding="utf-8")

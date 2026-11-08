@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" role="img" aria-labelledby="title desc">
+  <title id="title">Núcleo fiscal, contrato CalculadorImposto e plugins por estado</title>
+  <desc id="desc">À esquerda, o núcleo SistemaFiscal contém o registro, que mapeia SP e RJ a plugins, o executor e os serviços compartilhados de log, segurança e configuração; o núcleo evolui devagar. No centro, o contrato CalculadorImposto é a única ligação entre núcleo e plugins. À direita, ImpostoSPPlugin aplica 12% a eletrônicos e 18% aos demais produtos, ImpostoRJPlugin aplica 20% em qualquer produto, e um novo estado entra como plugin tracejado, registrado sem alterar o núcleo. Os plugins não se conhecem.</desc>
+  <defs>
+    <style>
+      .h { fill: #FFFFFF; font: 700 22px Arial, sans-serif; }
+      .hs { fill: #C9D7F2; font: 400 15px Arial, sans-serif; }
+      .name { fill: #16243A; font: 700 18px Arial, sans-serif; }
+      .role { fill: #425466; font: 400 15px Arial, sans-serif; }
+      .mono { fill: #16243A; font: 400 15px "Courier New", monospace; }
+      .cap { fill: #425466; font: 700 13px Arial, sans-serif; letter-spacing: 1px; }
+      .box { fill: #FFFFFF; stroke: #16243A; stroke-width: 2; }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16243A"/></marker>
+  </defs>
+  <rect width="1100" height="520" fill="#F2F6FB"/>
+
+  <!-- Núcleo -->
+  <rect x="30" y="30" width="430" height="400" rx="18" fill="#16243A"/>
+  <text x="56" y="68" class="h">SistemaFiscal</text>
+  <text x="56" y="92" class="hs">núcleo · evolui devagar</text>
+
+  <rect x="56" y="112" width="378" height="124" rx="10" fill="#FFFFFF"/>
+  <text x="74" y="140" class="name">Registro</text>
+  <line x1="74" y1="152" x2="416" y2="152" stroke="#D5DDE8"/>
+  <text x="74" y="178" class="mono">"SP" → ImpostoSPPlugin</text>
+  <text x="74" y="204" class="mono">"RJ" → ImpostoRJPlugin</text>
+  <text x="74" y="226" class="role">seleciona pelo estado do pedido</text>
+
+  <rect x="56" y="252" width="378" height="66" rx="10" fill="#FFFFFF"/>
+  <text x="74" y="280" class="name">Executor</text>
+  <text x="74" y="304" class="role">chama o plugin escolhido pelo contrato</text>
+
+  <rect x="56" y="334" width="378" height="72" rx="10" fill="#2E3D55"/>
+  <text x="74" y="362" fill="#FFFFFF" style="font: 700 16px Arial, sans-serif">Serviços compartilhados</text>
+  <text x="74" y="386" class="hs">log, segurança e configuração</text>
+
+  <!-- Contrato -->
+  <rect x="500" y="60" width="74" height="340" rx="10" fill="#5FC0D1"/>
+  <text transform="translate(544 230) rotate(-90)" text-anchor="middle" fill="#16243A" style="font: 700 18px Arial, sans-serif">CalculadorImposto</text>
+  <text x="537" y="430" text-anchor="middle" class="cap">CONTRATO</text>
+  <line x1="434" y1="285" x2="496" y2="285" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- Encaixes -->
+  <g fill="#5FC0D1">
+    <rect x="574" y="104" width="34" height="22"/>
+    <rect x="574" y="219" width="34" height="22"/>
+    <rect x="574" y="334" width="34" height="22"/>
+  </g>
+
+  <!-- Plugins -->
+  <rect x="608" y="70" width="440" height="90" rx="12" class="box"/>
+  <text x="630" y="104" class="name">ImpostoSPPlugin</text>
+  <text x="630" y="130" class="role">12% em eletrônicos, 18% nos demais produtos</text>
+
+  <rect x="608" y="185" width="440" height="90" rx="12" class="box"/>
+  <text x="630" y="219" class="name">ImpostoRJPlugin</text>
+  <text x="630" y="245" class="role">20% em qualquer produto</text>
+
+  <rect x="608" y="300" width="440" height="90" rx="12" fill="#FFFFFF" stroke="#254DB8" stroke-width="2" stroke-dasharray="9 6"/>
+  <text x="630" y="334" fill="#254DB8" style="font: 700 18px Arial, sans-serif">Novo estado</text>
+  <text x="630" y="360" class="role">registra-se no núcleo sem alterar uma linha dele</text>
+
+  <text x="828" y="430" text-anchor="middle" class="cap">PLUGINS · EVOLUEM RÁPIDO E NÃO SE CONHECEM</text>
+
+  <!-- Core creep -->
+  <rect x="30" y="456" width="1018" height="48" rx="10" fill="#FBE9E7" stroke="#B3261E" stroke-width="2"/>
+  <text x="50" y="486" fill="#B3261E" style="font: 700 16px Arial, sans-serif">core creep:</text>
+  <text x="152" y="486" class="mono">if pedido.estado == "SP": ...</text>
+  <text x="440" y="486" class="role">dentro do núcleo faz cada estado novo voltar ao centro do sistema</text>
+</svg>

@@ -11,6 +11,14 @@ Esta seção examina estilos arquiteturais que ajudam a organizar softwares comp
 | Microkernel       | Manter invariantes no núcleo e variações por contrato de plugin                  | extensibilidade e modificabilidade            | core creep                              | variações podem entrar e sair isoladamente     | plugins precisam controlar detalhes do núcleo      |
 | Monólito modular  | Organizar capacidades por interfaces internas numa implantação                   | simplicidade operacional e consistência local | módulos que leem dados internos alheios | equipe e operação ainda são uma unidade        | escala ou implantação independente já foi medida   |
 
+Richards e Ford avaliam cada estilo com nove características numa escala de 1 (fraco) a 5 (forte), e a figura 3 reúne as quatro avaliações num único quadro para comparação direta. As observações de cada nota ficam recolhidas na seção de cada estilo.
+
+![Mapa de calor com nove características nas linhas e quatro estilos nas colunas, em escala de 1 a 5; Pipes and Filters se destaca em testabilidade e modularidade, Microkernel fica em 3 na maioria das características, e Camadas e Monólito modular têm custo e simplicidade altos com elasticidade 1.](../assets/images/m01-caracteristicas-estilos.svg)
+
+*Figura 3 — Características arquiteturais dos quatro estilos, de 1 a 5. Fonte: curso.*
+
+**Leitura textual da figura:** Camadas recebe 5 em custo e simplicidade, 3 em testabilidade, desempenho e confiabilidade, 2 em escalabilidade, implantabilidade e modularidade e 1 em elasticidade. Pipes and Filters recebe 5 em custo, simplicidade, testabilidade e modularidade, 3 em implantabilidade e confiabilidade e 2 em escalabilidade, elasticidade e desempenho. Microkernel recebe 4 em modularidade e 3 nas demais. Monólito modular, avaliado pelo curso na mesma escala, recebe 5 em custo, 4 em simplicidade, testabilidade, desempenho e modularidade, 3 em implantabilidade e confiabilidade, 2 em escalabilidade e 1 em elasticidade.
+
 ## Camadas {#camadas}
 
 > Pense nos andares de um prédio: cada andar conversa só com o vizinho, sem pular direto para outro.
@@ -19,85 +27,30 @@ Camadas é uma regra de dependência, não somente caixas empilhadas. A apresent
 
 O estilo em camadas (*layered architecture*) é o mais difundido da engenharia de software por um motivo simples: ele emerge naturalmente da estrutura da maioria das equipes. Mark Richards e Neal Ford descrevem esse fenômeno em *Fundamentals of Software Architecture* como *architecture by implication* — o estilo surge por inércia, não por decisão deliberada. A **Lei de Conway** explica o porquê: organizações produzem arquiteturas que espelham sua estrutura de comunicação. Uma equipe dividida em frontend, backend e banco de dados tende a produzir um sistema em três camadas — apresentação, negócios e dados —, mesmo que o arquiteto não tenha planejado isso. A forma apresentada nesta página refina a camada de negócios em aplicação e domínio.
 
-```mermaid
-flowchart TB
-    P["Apresentação\nHTTP, serialização e validação de formato"] --> A["Aplicação\ncasos de uso"]
-    A --> D["Domínio\nregras e invariantes"]
-    A --> I["Infraestrutura\nrepositórios e adaptadores"]
-    I --> B[("Banco ou sistema externo")]
-    P -. "atalho proibido" .-> B
-```
+![Quatro camadas empilhadas: Apresentação chama Aplicação, que usa Domínio e Infraestrutura, e a Infraestrutura acessa o banco. Uma seta tracejada azul da Apresentação à Infraestrutura marca a camada aberta deliberada; uma seta vermelha com um X da Apresentação ao banco marca o atalho proibido.](../assets/images/m01-camadas-dependencias.svg)
 
-**Texto alternativo:** diagrama de camadas em que Apresentação chama Aplicação, que usa Domínio e Infraestrutura; a Infraestrutura acessa o Banco, e o atalho direto da Apresentação ao Banco é proibido.
+*Figura 4 — Dependência permitida, atalho deliberado e atalho proibido em camadas. Fonte: curso.*
 
-*Figura 3 — Dependências permitidas e proibidas em uma arquitetura em camadas. Fonte: curso.*
+**Leitura textual da figura:** a Apresentação chama a Aplicação, que usa as regras do Domínio e os mecanismos da Infraestrutura, e só a Infraestrutura acessa o banco. A seta tracejada azul liga a Apresentação à Infraestrutura e representa uma camada aberta, um atalho de leitura registrado em ADR. A seta vermelha liga a Apresentação ao banco e representa o atalho proibido, que contorna a regra de negócio.
 
-**Leitura textual da figura:** Apresentação chama Aplicação. Aplicação usa regras do Domínio e solicita mecanismos da Infraestrutura, que acessa o Banco ou sistema externo. A seta pontilhada indica que a apresentação não deve consultar o banco diretamente. A figura mostra uma dependência permitida e uma dependência proibida, em vez de apenas listar camadas.
+Uma **camada fechada** obriga a passagem pela camada adjacente e protege uma regra, garantindo que mudanças numa camada não se propaguem para as outras, ao custo de cada requisição percorrer todas as camadas, mesmo quando é simples. Uma **camada aberta** permite um atalho deliberado, com contrato e teste, para reduzir o custo de uma leitura, e paga isso com acoplamento difuso que corrói o isolamento com o tempo. Por isso a decisão de abrir ou fechar cada camada deve ser documentada num ADR.
 
-Uma **camada fechada** obriga a passagem pela adjacente e protege uma regra; uma **camada aberta** permite atalho deliberado, com contrato e teste, para reduzir custo de uma leitura. O anti-padrão do **sumidouro** aparece quando a passagem repetida não toma decisão, valida nem transforma. Uma consulta simples é legítima; o sinal de problema é a predominância de travessias sem propósito.
+O anti-padrão do **sumidouro** aparece quando a passagem repetida não toma decisão, não valida e não transforma nada. Uma consulta simples é legítima, e o sinal de problema é a predominância de travessias sem propósito, que a figura 5 contrasta com uma camada que decide.
 
-O fechamento garante isolamento — mudanças numa camada não vazam para as outras — ao custo de rigidez, porque cada requisição percorre camadas mesmo quando é simples.
+![Dois painéis. À esquerda, GET /usuarios atravessa Apresentação, Negócios e Dados em cinza, e cada camada só repassa. À direita, POST /consultas atravessa as mesmas camadas, que validam o formato, recusam horário sobreposto com 409 Conflito e gravam a consulta. Uma faixa inferior traz a regra dos 80%.](../assets/images/m01-sumidouro.svg)
 
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart LR
-    A1["Apresentação"] --> B1["Negócios"] --> C1["Dados"] --> D1[("Banco")]
-```
+*Figura 5 — Sumidouro comparado a uma camada que decide. Fonte: curso.*
 
-**Texto alternativo:** camadas fechadas: a requisição percorre apresentação, negócios e dados até chegar ao banco, sem atalhos.
-
-*Figura 4 — Camadas fechadas: isolamento garantido, travessia obrigatória. Fonte: curso.*
-
-**Leitura textual da figura:** a requisição sai da apresentação, passa por negócios e por dados e chega ao banco. Não há atalhos: cada fronteira é atravessada em ordem.
-
-A abertura oferece flexibilidade ao custo de acoplamento difuso: o isolamento se perde com o tempo. Por isso, a decisão de abrir ou fechar cada camada deve ser documentada — é exatamente o tipo de decisão que um ADR registra.
-
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart LR
-    A2["Apresentação"] --> B2["Negócios"] --> C2["Dados"] --> D2[("Banco")]
-    A2 -. "acesso direto" .-> C2
-```
-
-**Texto alternativo:** camada aberta: além do caminho por negócios, a apresentação acessa a camada de dados diretamente.
-
-*Figura 5 — Camada aberta: flexibilidade com perda de isolamento. Fonte: curso.*
-
-**Leitura textual da figura:** além do caminho completo por negócios e dados até o banco, uma seta pontilhada liga a apresentação diretamente à camada de dados: o atalho deliberado que ganha flexibilidade e perde isolamento.
-
-Para o sumidouro, Richards e Ford oferecem uma regra prática: se mais de 80% das requisições do sistema apenas atravessam as camadas, sem decidir, validar ou transformar, o estilo em camadas provavelmente não é o certo para esse sistema.
-
-```mermaid
-sequenceDiagram
-    participant C as Cliente
-    participant A as Apresentação
-    participant N as Negócios
-    participant D as Dados
-
-    C->>A: GET /usuarios
-    Note over A: repassa sem lógica
-    A->>N: listar_usuarios()
-    Note over N: repassa sem lógica
-    N->>D: buscar_todos()
-    D-->>N: lista de usuários
-    N-->>A: lista de usuários
-    A-->>C: 200 OK
-    Note over A,N: nenhuma camada agregou valor
-```
-
-**Texto alternativo:** diagrama de sequência em que uma consulta atravessa apresentação, negócios e dados sem que nenhuma camada tome decisão, valide ou transforme o resultado.
-
-*Figura 6 — O anti-padrão do sumidouro: a requisição atravessa as camadas sem agregar valor. Fonte: curso.*
-
-**Leitura textual da figura:** o cliente envia GET /usuarios à apresentação, que apenas repassa a chamada a negócios; negócios repassa a dados; dados devolve a lista de usuários, que volta pelas mesmas camadas até o cliente receber 200 OK. As anotações registram que nenhuma camada agregou valor no percurso.
-
-O **OCP** (*Open-Closed Principle*) mantém a aplicação dependente de uma abstração de repositório, com implementação na infraestrutura; trocar persistência não reescreve a regra.
+**Leitura textual da figura:** no painel do sumidouro, a requisição GET /usuarios passa por apresentação, negócios e dados até o banco sem que nenhuma camada decida. No painel da camada que decide, a apresentação valida o formato de POST /consultas, a camada de negócios recusa o horário sobreposto com 409 Conflito e a camada de dados grava a consulta. A faixa inferior registra a regra prática de Richards e Ford: se mais de 80% das requisições se comportam como o painel da esquerda, o estilo em camadas provavelmente não serve ao sistema.
 
 As forças são testabilidade, mudança localizada e dependência rastreável; os limites são latência, abstrações desnecessárias e sumidouro. Use camadas quando invariantes precisam sobreviver à troca de interface ou infraestrutura; abra leitura somente com evidência de custo e sem contornar regra.
 
 ### Características arquiteturais do estilo
 
-Richards e Ford avaliam cada estilo com um conjunto padronizado de características (*Fundamentals of Software Architecture*, cap. 10), numa escala de 1 (fraco) a 5 (forte):
+As notas de Camadas estão na primeira coluna da [figura 3](#quatro-organizacoes-quatro-tipos-de-fronteira), segundo Richards e Ford (*Fundamentals of Software Architecture*, cap. 10).
+
+<details markdown="1">
+<summary>Observações por característica</summary>
 
 | Característica   | Avaliação (1 a 5) | Observação                                                                             |
 | ---------------- | ----------------- | -------------------------------------------------------------------------------------- |
@@ -110,6 +63,8 @@ Richards e Ford avaliam cada estilo com um conjunto padronizado de característi
 | Desempenho       | 3                 | adequado na maioria dos casos; sobrecarga quando a requisição atravessa muitas camadas |
 | Modularidade     | 2                 | modular logicamente, mas fisicamente acoplado                                          |
 | Confiabilidade   | 3                 | falha em um componente pode afetar o sistema inteiro                                   |
+
+</details>
 
 ### O princípio aberto-fechado na fronteira com os dados
 
@@ -168,7 +123,7 @@ class AgendamentoServico:
         self._repositorio.salvar(medico_id, horario)
 ```
 
-Repare no que o serviço faz **antes** de chamar `salvar`: consulta a agenda do dia e recusa a sobreposição. Essa decisão justifica a existência da camada. Se `agendar` apenas repassasse os argumentos ao repositório, a camada de negócios não decidiria nada — seria o sumidouro da figura 6, cobrando uma chamada extra sem devolver benefício. A regra de conflito pode ser testada com um repositório dublê, sem banco algum.
+Repare no que o serviço faz **antes** de chamar `salvar`: consulta a agenda do dia e recusa a sobreposição. Essa decisão justifica a existência da camada. Se `agendar` apenas repassasse os argumentos ao repositório, a camada de negócios não decidiria nada — seria o sumidouro da figura 5, cobrando uma chamada extra sem devolver benefício. A regra de conflito pode ser testada com um repositório dublê, sem banco algum.
 
 O exemplo executável completo está em `codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas`, explorado na [oficina de ferramentas](oficina-de-ferramentas.md), com a mesma invariante e um controller HTTP que devolve `409` no conflito.
 
@@ -176,25 +131,13 @@ O exemplo executável completo está em `codigos/cap01-estilos-fundamentais/1.2-
 
 **MVC** (*Model-View-Controller*) é a especialização do estilo em camadas para o ciclo requisição-resposta HTTP: o controller orquestra a requisição, o model concentra as regras de negócio e a view serializa a resposta — em APIs, tipicamente em JSON.
 
-```mermaid
-flowchart LR
-    Cl(["Cliente HTTP"])
-    Co["Controller\norquestra a requisição"]
-    M["Model\nregras de negócio"]
-    V["View\nserializa a resposta"]
+A figura 6 coloca o ciclo do MVC ao lado da estrutura do DDD, descrito a seguir, para mostrar os dois critérios de separação.
 
-    Cl -->|"POST /pedidos"| Co
-    Co --> M
-    M -->|"dados processados"| Co
-    Co --> V
-    V -->|"200 OK"| Cl
-```
+![Dois painéis. MVC: o cliente HTTP envia POST /pedidos ao Controller, que aciona o Model, recebe os dados, aciona a View e devolve 200 OK. DDD: dentro da fronteira do agregado, a raiz Pedido contém ItemPedido, que usa o objeto de valor Dinheiro; fora dela, PedidoRepositorio salva e busca a raiz e grava na persistência.](../assets/images/m01-mvc-ddd.svg)
 
-**Texto alternativo:** fluxo MVC em que o cliente HTTP aciona o controller, que consulta o model, recebe os dados processados e aciona a view para devolver a resposta ao cliente.
+*Figura 6 — MVC separa por papel técnico; DDD separa por conceito do domínio. Fonte: curso.*
 
-*Figura 7 — O ciclo requisição-resposta no MVC. Fonte: curso.*
-
-**Leitura textual da figura:** o cliente envia POST /pedidos ao controller. O controller aciona o model, que devolve os dados processados. O controller então aciona a view, que serializa a resposta e devolve 200 OK ao cliente.
+**Leitura textual da figura:** no MVC, o cliente envia POST /pedidos ao controller, que aciona o model, recebe os dados processados, aciona a view e devolve 200 OK, nessa ordem numerada. No DDD, a fronteira tracejada do agregado contém a raiz Pedido, a entidade ItemPedido e o objeto de valor Dinheiro; o PedidoRepositorio, fora da fronteira, salva e busca apenas a raiz e grava o agregado na persistência.
 
 O estilo foi consolidado em frameworks amplamente adotados:
 
@@ -206,93 +149,15 @@ O estilo foi consolidado em frameworks amplamente adotados:
 
 **DDD** (*Domain-Driven Design*) organiza a camada de negócios por conceitos do domínio em vez de tipo técnico. Enquanto o MVC separa model, view e controller, o DDD separa Pedido, Pagamento e Cliente — e protege as regras de negócio de cada conceito dentro de seu próprio **agregado** (um grupo de objetos tratado como uma unidade, com uma raiz que controla o acesso ao conjunto). Num exemplo de vendas, o agregado `Pedido` contém entidades `ItemPedido`, usa o objeto de valor `Dinheiro` para preservar invariantes monetárias e é salvo e recuperado por um repositório `PedidoRepositorio`. Prefira DDD a camadas simples quando as regras de negócio são complexas, mudam com frequência e o risco dominante é o mal-entendido entre o time técnico e os especialistas de negócio — tema retomado na [Unidade 3](../modulo-3-servicos/index.md).
 
-```mermaid
-flowchart TD
-    AR["Pedido\n(agregado raiz)"]
-    E["ItemPedido\n(entidade)"]
-    VO["Dinheiro\n(objeto de valor)"]
-    R["PedidoRepositorio\n(repositório)"]
-    DB[("Persistência")]
-
-    AR -->|"contém"| E
-    E -->|"usa"| VO
-    R -->|"salva e busca"| AR
-    R -->|"persiste em"| DB
-```
-
-**Texto alternativo:** estrutura DDD em que o agregado raiz Pedido contém entidades ItemPedido, que usam o objeto de valor Dinheiro; o repositório PedidoRepositorio salva e busca o agregado e o grava na persistência.
-
-*Figura 8 — Agregado, entidade, objeto de valor e repositório no DDD. Fonte: curso.*
-
-**Leitura textual da figura:** o agregado raiz Pedido contém a entidade ItemPedido, que usa o objeto de valor Dinheiro. O repositório PedidoRepositorio salva e busca o agregado Pedido e o persiste no mecanismo de persistência.
-
 ### Camadas lógicas e camadas físicas
 
 A arquitetura em camadas define uma estrutura **lógica** — as camadas físicas de implantação (*tiers*) são uma decisão separada.
 
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart LR
-    subgraph p["Uma camada física — processo único"]
-        A1["Apresentação"] --> B1["Negócios"] --> C1["Dados"]
-    end
-    C1 --> D1[("Banco embutido")]
-```
+![Três linhas alinhadas com as mesmas colunas Apresentação, Negócios, Dados e Banco. Na primeira, tudo está num único processo com banco embutido. Na segunda, um servidor de aplicação reúne as três camadas e fala por TCP com o banco em outro servidor. Na terceira, cada camada é um serviço, ligados por HTTP e gRPC. Selos âmbar marcam cada travessia de rede.](../assets/images/m01-camadas-fisicas.svg)
 
-**Texto alternativo:** uma camada física: apresentação, negócios e dados convivem num processo único que usa um banco embutido.
+*Figura 7 — As mesmas camadas lógicas em uma, duas e três camadas físicas. Fonte: curso.*
 
-*Figura 9 — Uma camada física: o sistema inteiro num processo único. Fonte: curso.*
-
-**Leitura textual da figura:** dentro de um único processo, a apresentação chama negócios, que chama a camada de dados; os dados ficam num banco embutido no mesmo processo.
-
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart LR
-    Cl(["Cliente\nbrowser ou mobile"])
-
-    subgraph t1["Camada física 1 — servidor de aplicação"]
-        A2["API REST"] --> B2["Negócios"]
-    end
-
-    D2[("Camada física 2\nbanco de dados")]
-
-    Cl -->|"HTTP"| A2
-    B2 -->|"TCP"| D2
-```
-
-**Texto alternativo:** duas camadas físicas: o cliente acessa por HTTP o servidor de aplicação, que reúne API e negócios e conversa por TCP com o banco de dados em outra camada física.
-
-*Figura 10 — Duas camadas físicas: aplicação e banco separados. Fonte: curso.*
-
-**Leitura textual da figura:** o cliente, browser ou mobile, chama por HTTP a API REST do servidor de aplicação, que abriga também a camada de negócios. A camada de negócios conversa por TCP com o banco de dados, que vive numa segunda camada física.
-
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart LR
-    Cl(["Cliente"])
-
-    subgraph c1["Camada 1 — apresentação"]
-        API["API REST"]
-    end
-
-    subgraph c2["Camada 2 — negócios"]
-        SVC["Serviço de negócios"]
-    end
-
-    subgraph c3["Camada 3 — dados"]
-        REPO["Repositório"] --> DB[("Banco de dados")]
-    end
-
-    Cl -->|"HTTP"| API
-    API -->|"HTTP interno"| SVC
-    SVC -->|"gRPC"| REPO
-```
-
-**Texto alternativo:** três camadas físicas encadeadas: o cliente chama a API REST, que chama por HTTP interno o serviço de negócios, que acessa por gRPC o repositório e o banco de dados.
-
-*Figura 11 — Três camadas físicas: apresentação, negócios e dados como serviços distintos. Fonte: curso.*
-
-**Leitura textual da figura:** o cliente chama por HTTP a API REST da camada de apresentação. A API chama por HTTP interno o serviço de negócios, na segunda camada. O serviço acessa por gRPC o repositório da camada de dados, que consulta o banco de dados.
+**Leitura textual da figura:** as colunas mantêm as mesmas camadas lógicas nas três linhas, e só os contornos de processo mudam. Com uma camada física não há travessia de rede entre camadas; com duas, há uma travessia por TCP até o banco; com três, há travessias por HTTP entre apresentação e negócios e por gRPC entre negócios e dados.
 
 Cada arranjo troca simplicidade por independência:
 
@@ -318,27 +183,13 @@ A discussão do estilo acompanha Richards e Ford (*Fundamentals of Software Arch
 
 Pipes and Filters decompõe uma transformação em filtros ligados por pipes. Cada filtro recebe um valor contratual e devolve novo valor ou **rejeição** explícita; o pipe transporta o resultado sem expor detalhes internos. O contrato nomeia formato, correlação, campos preservados, motivo e destino da rejeição, permitindo testar e observar cada etapa.
 
-Richards e Ford chamam o estilo de *Pipeline Architecture* (*Fundamentals of Software Architecture*, cap. 11). A premissa fundamental é a **ausência de estado compartilhado**: cada filtro recebe dados, os transforma e os emite, sem saber de onde vieram nem para onde vão. Filtros não se comunicam diretamente entre si, apenas através dos pipes — o que torna o sistema altamente modular: filtros podem ser adicionados, removidos ou reordenados sem impactar os demais. Os autores identificam quatro tipos canônicos de filtro:
+Richards e Ford chamam o estilo de *Pipeline Architecture* (*Fundamentals of Software Architecture*, cap. 11). A premissa fundamental é a **ausência de estado compartilhado**: cada filtro recebe dados, os transforma e os emite, sem saber de onde vieram nem para onde vão. Filtros não se comunicam diretamente entre si, apenas através dos pipes — o que torna o sistema altamente modular: filtros podem ser adicionados, removidos ou reordenados sem impactar os demais. Os autores identificam quatro tipos canônicos de filtro, e a figura 8 mostra os quatro num pipeline de pedidos de e-commerce: o leitor constrói o pedido, o validador desvia os inválidos, o aplicador de desconto e o calculador de frete transformam sem descartar, e o finalizador aprova e reporta.
 
-```mermaid
-flowchart LR
-    P(["Producer\nfonte de dados"])
-    T["Transformer\ntransforma sem descartar"]
-    Te{"Tester\navalia e pode descartar"}
-    C(["Consumer\ndestino final"])
-    X[/"Descartado"/]
+![Cinco filtros em linha ligados por pipes: LeitorDePedido (producer), ValidadorDePedido (tester), AplicadorDeDesconto e CalculadorDeFrete (transformers) e FinalizadorDePedido (consumer). Abaixo de cada pipe aparece o dado que passa por ele; do validador sai uma seta vermelha para a rejeição explícita com lote, etapa e causa.](../assets/images/m01-pipeline-pedidos.svg)
 
-    P -->|pipe| T
-    T -->|pipe| Te
-    Te -->|"aprovados"| C
-    Te -->|"reprovados"| X
-```
+*Figura 8 — Pipeline de pedidos com os quatro tipos de filtro. Fonte: curso.*
 
-**Texto alternativo:** pipeline com os quatro tipos de filtro: o producer gera os dados, o transformer os transforma, o tester avalia e pode descartar, e o consumer recebe o resultado final; os itens reprovados seguem para descarte.
-
-*Figura 12 — Os quatro tipos canônicos de filtro ligados por pipes. Fonte: curso.*
-
-**Leitura textual da figura:** o producer envia dados por um pipe ao transformer, que os transforma sem descartar e os envia ao tester. O tester avalia cada item: os aprovados seguem pelo pipe até o consumer, destino final do fluxo; os reprovados seguem para o descarte.
+**Leitura textual da figura:** o LeitorDePedido cria o pedido e o envia ao ValidadorDePedido. Os pedidos inválidos seguem para a rejeição explícita, que guarda lote, etapa e causa para reprocessamento; os válidos recebem desconto no AplicadorDeDesconto e frete no CalculadorDeFrete e chegam ao FinalizadorDePedido, que aprova e reporta. O quadro inferior lembra que nenhum filtro conhece o vizinho e que nenhum guarda estado.
 
 | Tipo | Papel | Exemplos |
 | --- | --- | --- |
@@ -372,7 +223,10 @@ No **Faturamento** hospitalar, validar, normalizar códigos, enriquecer dados do
 
 ### Características arquiteturais de Pipes and Filters
 
-Na avaliação padronizada de Richards e Ford (*Fundamentals of Software Architecture*, cap. 11), numa escala de 1 (fraco) a 5 (forte):
+As notas de Pipes and Filters estão na segunda coluna da [figura 3](#quatro-organizacoes-quatro-tipos-de-fronteira), segundo Richards e Ford (*Fundamentals of Software Architecture*, cap. 11).
+
+<details markdown="1">
+<summary>Observações por característica</summary>
 
 | Característica | Avaliação (1 a 5) | Observação |
 | --- | --- | --- |
@@ -385,6 +239,8 @@ Na avaliação padronizada de Richards e Ford (*Fundamentals of Software Archite
 | Desempenho | 2 | o processamento sequencial introduz latência acumulada |
 | Modularidade | 5 | destaque do estilo: máxima modularidade por design |
 | Confiabilidade | 3 | falha num filtro interrompe o pipeline; exige estratégias de reprocessamento |
+
+</details>
 
 ### Um framework mínimo e um exemplo de pipeline
 
@@ -417,29 +273,7 @@ class Pipeline:
         return resultado
 ```
 
-Num cenário de e-commerce, os quatro tipos aparecem num pipeline de pedidos: o leitor constrói o pedido a partir dos dados brutos, o validador rejeita valores ou clientes inválidos, o aplicador de desconto e o calculador de frete transformam sem descartar, e o finalizador aprova e reporta o resultado.
-
-```mermaid
-flowchart LR
-    L["LeitorDePedido\n(producer)"]
-    V{"ValidadorDePedido\n(tester)"}
-    D["AplicadorDeDesconto\n(transformer)"]
-    F["CalculadorDeFrete\n(transformer)"]
-    O(["FinalizadorDePedido\n(consumer)"])
-    E[/"Pedido inválido\nrejeição"/]
-
-    L --> V
-    V -->|"válido"| D
-    D --> F
-    F --> O
-    V -->|"inválido"| E
-```
-
-**Texto alternativo:** pipeline de pedidos em que o leitor cria o pedido, o validador rejeita os inválidos e os válidos passam por desconto, frete e finalização.
-
-*Figura 13 — Pipeline de processamento de pedidos com os quatro tipos de filtro. Fonte: curso.*
-
-**Leitura textual da figura:** o LeitorDePedido, um producer, envia o pedido ao ValidadorDePedido, um tester. Pedidos inválidos seguem para a rejeição com a causa; os válidos passam pelo AplicadorDeDesconto e pelo CalculadorDeFrete, dois transformers, até o FinalizadorDePedido, o consumer que aprova e reporta.
+Com esse framework, o pipeline da figura 8 é a sequência `LeitorDePedido`, `ValidadorDePedido`, `AplicadorDeDesconto`, `CalculadorDeFrete` e `FinalizadorDePedido` registrada por chamadas sucessivas a `adicionar`.
 
 O acervo do curso traz ainda um segundo exemplo, que processa linhas de log e mantém apenas os níveis ERROR e CRITICAL. Os dois exemplos executáveis estão em `codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters`, explorados na [oficina de ferramentas](oficina-de-ferramentas.md).
 
@@ -459,35 +293,13 @@ Microkernel separa um núcleo invariável das extensões. O núcleo preserva ide
 
 Richards e Ford chamam o estilo de *Plug-in Architecture* (*Fundamentals of Software Architecture*, cap. 12). A premissa fundamental: o **núcleo evolui lentamente**, enquanto os **plugins evoluem rapidamente** e de forma independente, sem coordenação entre equipes. O núcleo não sabe o que os plugins fazem; os plugins não sabem uns dos outros. A única relação entre eles é o contrato que o núcleo define e que cada plugin implementa.
 
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart TD
-    subgraph nucleo["Núcleo (core system)"]
-        REG["Registro de plugins\ndescobre e carrega"]
-        EXE["Executor\norquestra chamadas"]
-        SVC["Serviços compartilhados\nlogging, segurança, configuração"]
-        REG --> EXE
-    end
+A figura 9 mostra essa estrutura no caso canônico de cálculo de impostos, detalhado mais adiante.
 
-    CT["Contrato\ninterface que cada plugin implementa"]
+![À esquerda, o núcleo SistemaFiscal com registro que mapeia SP e RJ a plugins, executor e serviços compartilhados. No centro, a barra do contrato CalculadorImposto. À direita, os plugins ImpostoSPPlugin, ImpostoRJPlugin e um novo estado tracejado encaixados no contrato. Uma faixa vermelha inferior mostra o core creep como um if por estado dentro do núcleo.](../assets/images/m01-microkernel-impostos.svg)
 
-    subgraph plugins["Plugins — independentes entre si"]
-        P1["Plugin A"]
-        P2["Plugin B"]
-        P3["Plugin C"]
-    end
+*Figura 9 — Núcleo, contrato e plugins no cálculo de impostos por estado. Fonte: curso.*
 
-    EXE -->|"dispatch"| CT
-    CT --> P1
-    CT --> P2
-    CT --> P3
-```
-
-**Texto alternativo:** estrutura do Microkernel: no núcleo, o registro de plugins alimenta o executor, apoiado por serviços compartilhados; o executor despacha chamadas pelo contrato, que liga o núcleo aos plugins A, B e C, independentes entre si.
-
-*Figura 14 — Núcleo, contrato e plugins na arquitetura Microkernel. Fonte: curso.*
-
-**Leitura textual da figura:** dentro do núcleo, o registro de plugins descobre e carrega as extensões e alimenta o executor, que orquestra as chamadas com apoio de serviços compartilhados de logging, segurança e configuração. O executor despacha cada chamada por meio do contrato, a interface que cada plugin implementa. Os plugins A, B e C ficam fora do núcleo e não se conhecem entre si.
+**Leitura textual da figura:** o núcleo SistemaFiscal reúne o registro, que mapeia SP e RJ aos seus plugins e seleciona pelo estado do pedido, o executor, que chama o plugin escolhido, e os serviços compartilhados de log, segurança e configuração. O executor chega aos plugins só pelo contrato CalculadorImposto. O plugin de São Paulo aplica 12% a eletrônicos e 18% aos demais produtos, o do Rio de Janeiro aplica 20% em qualquer produto, e um novo estado se registra sem alterar o núcleo. A faixa inferior mostra o core creep: um if por estado dentro do núcleo.
 
 O **contrato de extensão** define entrada, resultado, erros, permissões e versão. A **compatibilidade** usa versão e capacidades: antes de carregar um plugin, o núcleo verifica contrato e dados autorizados. Registro por configuração, convenção ou catálogo dinâmico são variações; plugins no processo simplificam, enquanto serviços separados acrescentam isolamento, latência e operação.
 
@@ -506,7 +318,10 @@ Na **Triagem** hospitalar, o núcleo controla identificação, estados e auditor
 
 ### Características arquiteturais do Microkernel
 
-Na avaliação padronizada de Richards e Ford (*Fundamentals of Software Architecture*, cap. 12), numa escala de 1 (fraco) a 5 (forte):
+As notas de Microkernel estão na terceira coluna da [figura 3](#quatro-organizacoes-quatro-tipos-de-fronteira), segundo Richards e Ford (*Fundamentals of Software Architecture*, cap. 12).
+
+<details markdown="1">
+<summary>Observações por característica</summary>
 
 | Característica | Avaliação (1 a 5) | Observação |
 | --- | --- | --- |
@@ -520,31 +335,11 @@ Na avaliação padronizada de Richards e Ford (*Fundamentals of Software Archite
 | Modularidade | 4 | destaque do estilo: plugins completamente independentes entre si |
 | Confiabilidade | 3 | plugin com falha pode ser isolado sem derrubar o núcleo |
 
+</details>
+
 ### Formas de implantação dos plugins
 
-```mermaid
-flowchart TB
-    subgraph ip["No processo (in-process)"]
-        direction LR
-        N1["Núcleo"] --> P1["Plugin\nbiblioteca ou módulo"]
-    end
-
-    subgraph op["Fora do processo (out-of-process)"]
-        direction LR
-        N2["Núcleo"] -->|"HTTP ou IPC"| P2["Plugin\nserviço separado"]
-    end
-
-    subgraph sa["SaaS"]
-        direction LR
-        N3["Núcleo"] -->|"API externa"| P3["Plugin\nserviço na nuvem"]
-    end
-```
-
-**Texto alternativo:** três formas de implantar plugins: no mesmo processo do núcleo, como biblioteca ou módulo; fora do processo, como serviço acessado por HTTP ou IPC; e como serviço SaaS externo acessado por API.
-
-*Figura 15 — Plugins no processo, fora do processo e como serviço externo. Fonte: curso.*
-
-**Leitura textual da figura:** no arranjo in-process, o núcleo carrega o plugin como biblioteca ou módulo no mesmo processo. No arranjo out-of-process, o núcleo chama por HTTP ou IPC um plugin que roda como serviço separado. No arranjo SaaS, o núcleo consome por API externa um plugin hospedado na nuvem.
+O mesmo contrato admite três formas de implantar o plugin, que trocam simplicidade por independência:
 
 | Forma | Descrição | Custo |
 | --- | --- | --- |
@@ -554,30 +349,7 @@ flowchart TB
 
 ### O caso canônico: cálculo de impostos
 
-Sistemas tributários são o caso canônico de Microkernel em Richards e Ford: as regras fiscais variam por estado, mas o fluxo de cálculo é o mesmo. O núcleo seleciona pelo registro o plugin do estado do pedido; adicionar suporte a um novo estado significa registrar um novo plugin, sem alterar o núcleo.
-
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart TD
-    SF["SistemaFiscal\n(núcleo)"]
-    REG["Registro\nSP e RJ mapeados a plugins"]
-    CT["CalculadorImposto\n(contrato)"]
-    SP["ImpostoSPPlugin\n12% eletrônicos, 18% demais"]
-    RJ["ImpostoRJPlugin\n20% em qualquer produto"]
-    NOVO["Novo estado\nplugin futuro, sem alterar o núcleo"]
-
-    SF --> REG
-    REG -->|"seleciona por estado"| CT
-    CT --> SP
-    CT --> RJ
-    CT -.->|"extensão futura"| NOVO
-```
-
-**Texto alternativo:** sistema fiscal em Microkernel: o núcleo consulta o registro, que seleciona pelo estado o plugin de São Paulo ou do Rio de Janeiro por meio do contrato CalculadorImposto; um novo estado entra como plugin futuro sem alterar o núcleo.
-
-*Figura 16 — Cálculo de impostos por estado como plugins de um núcleo fiscal. Fonte: curso.*
-
-**Leitura textual da figura:** o SistemaFiscal, que é o núcleo, consulta o registro em que São Paulo e Rio de Janeiro estão mapeados a plugins. O registro seleciona pelo estado do pedido e despacha pelo contrato CalculadorImposto: o plugin de São Paulo aplica 12% a eletrônicos e 18% aos demais produtos; o do Rio de Janeiro aplica 20% em qualquer produto. Uma seta pontilhada mostra um novo estado como extensão futura, sem alterar o núcleo.
+Sistemas tributários são o caso canônico de Microkernel em Richards e Ford, e são o caso desenhado na figura 9: as regras fiscais variam por estado, mas o fluxo de cálculo é o mesmo. O núcleo seleciona pelo registro o plugin do estado do pedido, e adicionar suporte a um novo estado significa registrar um novo plugin, sem alterar o núcleo.
 
 O anti-padrão do core creep aparece quando essa seleção vira condicionais dentro do núcleo:
 
@@ -620,33 +392,11 @@ Há uma implantação, mas Agenda, Triagem, Faturamento e Auditoria mantêm mode
 
 Um monólito é apenas um sistema com exatamente uma unidade de implantação — a definição, de Kamil Grzybek, separa a decisão de implantação da decisão de organização interna. O **monólito modular** explora essa separação: uma única unidade implantável, organizada em módulos alinhados ao domínio, em **fatias verticais** que reúnem API, casos de uso, regras e persistência de uma capacidade de negócio — em vez de camadas técnicas horizontais. Cada módulo é dono do próprio comportamento e dos próprios dados, atrás de um contrato estável; o restante fica encapsulado. Richards e Ford dedicam um capítulo ao estilo na 2ª edição de *Fundamentals of Software Architecture*, e Simon Brown popularizou a provocação que o acompanha: se você não consegue construir um monólito bem estruturado, o que faz pensar que microsserviços são a resposta?
 
-```mermaid
-flowchart TB
-    subgraph unidade["Uma unidade de implantação"]
-        subgraph ag["Módulo Agenda"]
-            AA["API pública da Agenda"]
-            AI["Regras e casos de uso"]
-            AD[("Dados da Agenda")]
-            AA --> AI
-            AI --> AD
-        end
+![Em cima, uma unidade de implantação com os módulos Triagem, Agenda e Faturamento, cada um com API pública, regras e dados. O Faturamento chama a API da Agenda, permitido, e uma seta vermelha com X do Faturamento aos dados da Agenda marca o acesso proibido. Embaixo, depois de evidência medida, o Faturamento vira serviço com implantação própria e chama a Agenda pela mesma API, agora por HTTP.](../assets/images/m01-monolito-modular.svg)
 
-        subgraph fa["Módulo Faturamento"]
-            FI["Regras e casos de uso"]
-            FD[("Dados do Faturamento")]
-            FI --> FD
-        end
+*Figura 10 — Monólito modular hoje e depois da extração de um módulo. Fonte: curso.*
 
-        FI -->|"chamada permitida"| AA
-        FI -. "acesso direto proibido" .-> AD
-    end
-```
-
-**Texto alternativo:** dois módulos dentro de uma única unidade de implantação: o Faturamento consome a API pública da Agenda, enquanto o acesso direto do Faturamento aos dados internos da Agenda é proibido.
-
-*Figura 17 — Módulos com contrato público e posse de dados dentro de uma implantação. Fonte: curso.*
-
-**Leitura textual da figura:** dentro de uma única unidade de implantação, o módulo Agenda expõe uma API pública que leva às suas regras e aos seus dados; o módulo Faturamento tem regras e dados próprios. A seta cheia mostra a chamada permitida do Faturamento à API pública da Agenda; a seta pontilhada mostra o acesso direto proibido do Faturamento aos dados internos da Agenda.
+**Leitura textual da figura:** na parte superior, os módulos Triagem, Agenda e Faturamento convivem numa unidade de implantação, cada um com API pública, regras e dados próprios. O Faturamento chama a API pública da Agenda, e o acesso direto do Faturamento aos dados da Agenda é proibido. Na parte inferior, depois de evidência medida, como módulo quente, raio de incidente ou cadência própria, o Faturamento sai como serviço com implantação própria e continua consumindo a Agenda pelo mesmo contrato, agora por HTTP.
 
 As regras de comunicação sustentam a autonomia: um módulo consome outro apenas pela API pública — por chamada síncrona ou por assinatura de eventos de domínio — e cada conjunto de dados tem **um único escritor**. Módulos podem compartilhar o mesmo banco físico, mas nunca tabelas ou modelos de escrita; transações são locais ao módulo, e fluxos que atravessam módulos se coordenam por eventos ou orquestração. O encapsulamento é a consequência prática: apenas os tipos exigidos pelo contrato são públicos, e tudo o que se expõe passa a ser API pública do módulo, com o dever de estabilidade que isso implica.
 
@@ -687,7 +437,10 @@ O caso mais citado é o da Shopify, que mantém um dos maiores monólitos Ruby o
 
 #### Características arquiteturais do Monólito modular
 
-Aplicando a mesma escala de 1 (fraco) a 5 (forte) das seções anteriores: o estilo mantém o custo e a simplicidade do monólito e melhora implantabilidade, testabilidade e modularidade em relação às camadas; escalabilidade, elasticidade e isolamento de falhas continuam sendo os de um processo único:
+As notas de Monólito modular estão na quarta coluna da [figura 3](#quatro-organizacoes-quatro-tipos-de-fronteira) e são uma avaliação do curso na mesma escala. O estilo mantém o custo e a simplicidade do monólito e melhora implantabilidade, testabilidade e modularidade em relação às camadas, enquanto escalabilidade, elasticidade e isolamento de falhas continuam sendo os de um processo único.
+
+<details markdown="1">
+<summary>Observações por característica</summary>
 
 | Característica | Avaliação (1 a 5) | Observação |
 | --- | --- | --- |
@@ -701,32 +454,11 @@ Aplicando a mesma escala de 1 (fraco) a 5 (forte) das seções anteriores: o est
 | Modularidade | 4 | fatias verticais com contrato; depende de verificação automática |
 | Confiabilidade | 3 | uma falha ainda derruba o processo; o raio de dano é o sistema inteiro |
 
+</details>
+
 #### Da modularidade à extração de serviços
 
-A extração de um módulo para um serviço é uma opção conquistada pela boa modularidade, não o plano inicial. Os gatilhos que a justificam são medidos, não presumidos: mudanças que exigem coordenação entre módulos com frequência sustentada, raio de incidentes que atravessa fronteiras, um módulo quente dominando os recursos do processo ou cadências de mudança muito diferentes entre módulos. Quando a evidência aparece, o contrato do módulo vira a fronteira do serviço — tema retomado na [Unidade 3](../modulo-3-servicos/index.md).
-
-```mermaid
-flowchart TB
-    subgraph antes["Antes — monólito modular"]
-        M1["Agenda"]
-        M2["Triagem"]
-        M3["Faturamento\nmódulo quente"]
-    end
-
-    subgraph depois["Depois — extração conquistada"]
-        N1["Agenda"]
-        N2["Triagem"]
-        S3["Serviço de Faturamento\nmesmo contrato, agora remoto"]
-    end
-
-    antes -->|"evidência medida\njustifica a extração"| depois
-```
-
-**Texto alternativo:** evolução em duas etapas: no monólito modular, Agenda, Triagem e Faturamento convivem numa implantação, com o Faturamento como módulo quente; após a extração, o Faturamento vira serviço separado com o mesmo contrato, e os demais módulos permanecem.
-
-*Figura 18 — A extração de um módulo quente como opção conquistada pela modularidade. Fonte: curso.*
-
-**Leitura textual da figura:** no estado inicial, os módulos Agenda, Triagem e Faturamento convivem numa única implantação, e o Faturamento é identificado como módulo quente. Depois da extração, justificada por evidência medida, o Faturamento passa a ser um serviço separado que preserva o mesmo contrato, agora remoto, enquanto Agenda e Triagem permanecem no monólito.
+A extração de um módulo para um serviço é uma opção conquistada pela boa modularidade, não o plano inicial. Os gatilhos que a justificam são medidos, não presumidos: mudanças que exigem coordenação entre módulos com frequência sustentada, raio de incidentes que atravessa fronteiras, um módulo quente dominando os recursos do processo ou cadências de mudança muito diferentes entre módulos. Quando a evidência aparece, o contrato do módulo passa a ser a fronteira do serviço, como mostra a parte inferior da figura 10 — tema retomado na [Unidade 3](../modulo-3-servicos/index.md).
 
 #### Quando usar Monólito modular — e quando não usar
 

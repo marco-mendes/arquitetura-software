@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 520" role="img" aria-labelledby="title desc">
+  <title id="title">MVC separa por papel técnico; DDD separa por conceito do domínio</title>
+  <desc id="desc">À esquerda, o ciclo MVC: o cliente HTTP envia POST /pedidos ao Controller, que aciona o Model e recebe os dados processados, aciona a View e devolve 200 OK. À direita, a estrutura DDD: dentro da fronteira do agregado, a raiz Pedido contém ItemPedido, que usa o objeto de valor Dinheiro; fora dela, PedidoRepositorio salva e busca o agregado inteiro e o grava na persistência.</desc>
+  <defs>
+    <style>
+      .h { fill: #16243A; font: 700 24px Arial, sans-serif; }
+      .hs { fill: #425466; font: 400 16px Arial, sans-serif; }
+      .name { fill: #16243A; font: 700 19px Arial, sans-serif; }
+      .role { fill: #425466; font: 400 15px Arial, sans-serif; }
+      .lbl { fill: #254DB8; font: 700 15px Arial, sans-serif; }
+      .box { fill: #FFFFFF; stroke: #16243A; stroke-width: 2; }
+      .root { fill: #E3F4F7; stroke: #16243A; stroke-width: 2.5; }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16243A"/></marker>
+  </defs>
+  <rect width="1040" height="520" fill="#F2F6FB"/>
+
+  <!-- MVC -->
+  <rect x="24" y="24" width="484" height="472" rx="16" fill="#FFFFFF" stroke="#D5DDE8"/>
+  <text x="52" y="66" class="h">MVC</text>
+  <text x="52" y="92" class="hs">separa por papel técnico na requisição</text>
+
+  <rect x="52" y="230" width="120" height="64" rx="32" fill="#16243A"/>
+  <text x="112" y="258" text-anchor="middle" fill="#FFFFFF" style="font: 700 17px Arial, sans-serif">Cliente</text>
+  <text x="112" y="279" text-anchor="middle" fill="#FFFFFF" style="font: 400 15px Arial, sans-serif">HTTP</text>
+
+  <rect x="270" y="130" width="200" height="68" rx="10" class="box"/>
+  <text x="370" y="160" text-anchor="middle" class="name">Controller</text>
+  <text x="370" y="184" text-anchor="middle" class="role">orquestra a requisição</text>
+
+  <rect x="270" y="384" width="200" height="68" rx="10" class="box"/>
+  <text x="370" y="414" text-anchor="middle" class="name">View</text>
+  <text x="370" y="438" text-anchor="middle" class="role">serializa a resposta</text>
+
+  <rect x="290" y="258" width="160" height="68" rx="10" class="root"/>
+  <text x="370" y="288" text-anchor="middle" class="name">Model</text>
+  <text x="370" y="312" text-anchor="middle" class="role">regras de negócio</text>
+
+  <path d="M140 230 C 150 170, 200 164, 266 164" fill="none" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="52" y="128" class="lbl">1 · POST /pedidos</text>
+  <line x1="350" y1="198" x2="350" y2="254" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="390" y1="258" x2="390" y2="202" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="234" y="232" class="lbl">2 · aciona</text>
+  <text x="402" y="232" class="lbl">3 · dados</text>
+  <path d="M470 180 C 500 230, 500 380, 474 412" fill="none" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="400" y="366" class="lbl">4 · aciona</text>
+  <path d="M266 420 C 200 420, 150 370, 132 298" fill="none" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="70" y="400" class="lbl">5 · 200 OK</text>
+
+  <!-- DDD -->
+  <rect x="532" y="24" width="484" height="472" rx="16" fill="#FFFFFF" stroke="#D5DDE8"/>
+  <text x="560" y="66" class="h">DDD</text>
+  <text x="560" y="92" class="hs">separa por conceito do domínio</text>
+
+  <rect x="560" y="116" width="250" height="270" rx="14" fill="#F7FBFC" stroke="#5FC0D1" stroke-width="2.5" stroke-dasharray="10 6"/>
+  <text x="576" y="140" fill="#2A8A9B" style="font: 700 14px Arial, sans-serif; letter-spacing: 1px">FRONTEIRA DO AGREGADO</text>
+
+  <rect x="585" y="152" width="200" height="56" rx="10" class="root"/>
+  <text x="685" y="177" text-anchor="middle" class="name">Pedido</text>
+  <text x="685" y="198" text-anchor="middle" class="role">raiz do agregado</text>
+
+  <rect x="585" y="234" width="200" height="56" rx="10" class="box"/>
+  <text x="685" y="259" text-anchor="middle" class="name">ItemPedido</text>
+  <text x="685" y="280" text-anchor="middle" class="role">entidade</text>
+
+  <rect x="585" y="316" width="200" height="56" rx="10" class="box"/>
+  <text x="685" y="341" text-anchor="middle" class="name">Dinheiro</text>
+  <text x="685" y="362" text-anchor="middle" class="role">objeto de valor</text>
+
+  <text x="697" y="227" class="lbl">contém</text>
+  <line x1="685" y1="208" x2="685" y2="230" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="697" y="309" class="lbl">usa</text>
+  <line x1="685" y1="290" x2="685" y2="312" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <rect x="840" y="156" width="156" height="60" rx="10" class="box"/>
+  <text x="918" y="183" text-anchor="middle" style="font: 700 16px Arial, sans-serif" fill="#16243A">PedidoRepositorio</text>
+  <text x="918" y="205" text-anchor="middle" class="role">repositório</text>
+  <text x="918" y="144" text-anchor="middle" class="lbl">salva e busca a raiz</text>
+  <line x1="840" y1="180" x2="789" y2="180" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <path d="M868 266 v40 a50 10 0 0 0 100 0 v-40" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <ellipse cx="918" cy="266" rx="50" ry="10" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <text x="918" y="302" text-anchor="middle" class="role">persistência</text>
+  <line x1="918" y1="216" x2="918" y2="252" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <text x="560" y="414" class="role">O repositório salva e busca o Pedido inteiro, nunca um</text>
+  <text x="560" y="436" class="role">ItemPedido solto: só a raiz é acessível de fora, e ela</text>
+  <text x="560" y="458" class="role">garante as invariantes de todo o agregado.</text>
+</svg>

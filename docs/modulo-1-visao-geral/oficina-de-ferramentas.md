@@ -6,7 +6,7 @@ Cada arquivo aparece na página inteiro, pronto para copiar. O título de cada b
 
 ![Três estilos arquiteturais e suas diferentes evidências no terminal](../assets/images/m01-oficina-tres-estilos.png)
 
-*Figura 25 — Três estilos, três formas de repartir responsabilidade, três evidências no terminal. Fonte: curso.*
+*Figura 17 — Três estilos, três formas de repartir responsabilidade, três evidências no terminal. Fonte: curso.*
 
 **Leitura textual da figura:** três painéis lado a lado, um por estilo. No primeiro, camadas na agenda clínica, com Apresentação, Serviço, Domínio e Repositório empilhados de cima para baixo e o retorno subindo até a apresentação. A evidência no terminal é uma resposta HTTP com conflito de horário. No segundo, pipes and filters na triagem, com Produtor, Validação, Transformação e Consumo ligados em sequência e um desvio de descarte saindo da Validação. A evidência é o ranking impresso. No terceiro, microkernel no faturamento, com um núcleo cercado por um contrato e três módulos plug-in conectados a ele. A evidência são categorias e contribuições.
 
@@ -119,7 +119,7 @@ flowchart TB
 
 **Texto alternativo:** quatro caixas empilhadas representando as camadas de apresentação, serviço, domínio e repositório, com o fluxo descendo da apresentação para o serviço e dele para domínio e repositório, e uma seta tracejada de exceção voltando do domínio à apresentação.
 
-*Figura 26 — As quatro camadas da agenda clínica e o sentido do fluxo. Fonte: curso.*
+*Figura 18 — As quatro camadas da agenda clínica e o sentido do fluxo. Fonte: curso.*
 
 **Leitura textual da figura:** a apresentação recebe a chamada e a entrega ao serviço. O serviço coordena o caso de uso e consulta duas camadas abaixo dele, o domínio para decidir a regra e o repositório para guardar e recuperar. Uma seta tracejada sobe do domínio até a apresentação, representando a exceção de conflito de agenda: quem detecta a violação é o domínio, e quem a traduz em código HTTP é a apresentação. Nenhuma seta liga a apresentação diretamente ao repositório.
 
@@ -420,7 +420,7 @@ flowchart TB
 
 **Texto alternativo:** sequência horizontal de seis estágios, do produtor que lê currículos ao consumidor que imprime o relatório, com duas setas tracejadas saindo do validador e dos filtros de critério em direção a uma caixa que representa a saída do fluxo.
 
-*Figura 27 — O fluxo de triagem e os dois lugares onde um item sai dele. Fonte: curso.*
+*Figura 19 — O fluxo de triagem e os dois lugares onde um item sai dele. Fonte: curso.*
 
 **Leitura textual da figura:** o produtor entrega os currículos ao validador, que os passa ao normalizador, dele aos filtros de experiência e pretensão, depois ao calculador de score e por fim ao relatório. Duas setas tracejadas apontam para fora do fluxo. A primeira sai do validador e representa o descarte por dado ausente. A segunda sai dos filtros de critério e representa a reprovação por regra de negócio. Cada item deixa o fluxo no estágio que sabe julgá-lo, e nenhum estágio conhece o critério dos outros.
 
@@ -788,7 +788,7 @@ flowchart TB
 
 **Texto alternativo:** um núcleo no topo, ligado a três categorias, impostos, frete e notificação, e cada categoria ligada aos arquivos de plugin que a preenchem.
 
-*Figura 28 — O núcleo, as três categorias e os plugins que se registram nelas. Fonte: curso.*
+*Figura 20 — O núcleo, as três categorias e os plugins que se registram nelas. Fonte: curso.*
 
 **Leitura textual da figura:** o núcleo, que contém o registro e a ordem das categorias, aponta para três categorias em sequência: impostos, frete e notificação. Da categoria de impostos saem dois arquivos de plugin, um com as regras de São Paulo e outro com a do Rio de Janeiro. Da categoria de frete sai um arquivo, e da de notificação, outro. O núcleo não aponta para nenhum plugin diretamente, apenas para as categorias, e é esse desvio que permite acrescentar um estado novo sem tocar nele.
 

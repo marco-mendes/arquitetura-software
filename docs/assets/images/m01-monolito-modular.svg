@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 640" role="img" aria-labelledby="title desc">
+  <title id="title">Monólito modular hoje e depois da extração de um módulo</title>
+  <desc id="desc">Na parte de cima, uma única unidade de implantação contém os módulos Triagem, Agenda e Faturamento, cada um com API pública, regras e dados próprios. O Faturamento chama a API pública da Agenda, o que é permitido; o acesso direto do Faturamento aos dados da Agenda é proibido. Na parte de baixo, depois de evidência medida, o Faturamento sai como serviço com implantação própria e continua chamando a Agenda pelo mesmo contrato, agora pela rede.</desc>
+  <defs>
+    <style>
+      .stage { fill: #16243A; font: 700 20px Arial, sans-serif; }
+      .stages { fill: #425466; font: 400 15px Arial, sans-serif; }
+      .proc { fill: #2A8A9B; font: 700 13px Arial, sans-serif; letter-spacing: 0.8px; }
+      .mod { fill: #16243A; font: 700 18px Arial, sans-serif; }
+      .api { fill: #FFFFFF; font: 700 13px Arial, sans-serif; }
+      .role { fill: #425466; font: 400 14px Arial, sans-serif; }
+      .ok { fill: #16243A; font: 700 14px Arial, sans-serif; }
+      .no { fill: #B3261E; font: 700 14px Arial, sans-serif; }
+      .card { fill: #FFFFFF; stroke: #16243A; stroke-width: 2; }
+      .bound { fill: #F7FBFC; stroke: #5FC0D1; stroke-width: 2.5; stroke-dasharray: 10 6; }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16243A"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#B3261E"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#254DB8"/></marker>
+  </defs>
+  <rect width="1100" height="640" fill="#F2F6FB"/>
+
+  <!-- HOJE -->
+  <text x="30" y="44" class="stage">Hoje</text>
+  <text x="90" y="44" class="stages">uma unidade de implantação, fronteiras verificadas por ferramenta</text>
+  <rect x="30" y="64" width="1040" height="290" rx="16" class="bound"/>
+  <text x="48" y="88" class="proc">UMA UNIDADE DE IMPLANTAÇÃO</text>
+
+  <!-- Módulo Triagem -->
+  <rect x="60" y="104" width="280" height="226" rx="12" class="card"/>
+  <rect x="60" y="104" width="280" height="34" rx="12" fill="#254DB8"/><rect x="60" y="124" width="280" height="14" fill="#254DB8"/>
+  <text x="200" y="127" text-anchor="middle" class="api">API PÚBLICA</text>
+  <text x="80" y="166" class="mod">Triagem</text>
+  <rect x="80" y="180" width="240" height="44" rx="8" fill="#F2F6FB"/><text x="200" y="207" text-anchor="middle" class="role">regras e casos de uso</text>
+  <path d="M150 248 v40 a50 9 0 0 0 100 0 v-40" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/><ellipse cx="200" cy="248" rx="50" ry="9" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <text x="200" y="284" text-anchor="middle" class="role">dados</text>
+
+  <!-- Módulo Agenda -->
+  <rect x="410" y="104" width="280" height="226" rx="12" class="card"/>
+  <rect x="410" y="104" width="280" height="34" rx="12" fill="#254DB8"/><rect x="410" y="124" width="280" height="14" fill="#254DB8"/>
+  <text x="550" y="127" text-anchor="middle" class="api">API PÚBLICA</text>
+  <text x="430" y="166" class="mod">Agenda</text>
+  <rect x="430" y="180" width="240" height="44" rx="8" fill="#F2F6FB"/><text x="550" y="207" text-anchor="middle" class="role">regras e casos de uso</text>
+  <path d="M500 248 v40 a50 9 0 0 0 100 0 v-40" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/><ellipse cx="550" cy="248" rx="50" ry="9" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <text x="550" y="284" text-anchor="middle" class="role">dados</text>
+
+  <!-- Módulo Faturamento -->
+  <rect x="760" y="104" width="280" height="226" rx="12" class="card"/>
+  <rect x="760" y="104" width="280" height="34" rx="12" fill="#254DB8"/><rect x="760" y="124" width="280" height="14" fill="#254DB8"/>
+  <text x="900" y="127" text-anchor="middle" class="api">API PÚBLICA</text>
+  <text x="780" y="166" class="mod">Faturamento</text>
+  <rect x="780" y="180" width="240" height="44" rx="8" fill="#F2F6FB"/><text x="900" y="207" text-anchor="middle" class="role">regras e casos de uso</text>
+  <path d="M850 248 v40 a50 9 0 0 0 100 0 v-40" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/><ellipse cx="900" cy="248" rx="50" ry="9" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <text x="900" y="284" text-anchor="middle" class="role">dados</text>
+
+  <!-- Permitido: Faturamento -> API Agenda -->
+  <path d="M780 190 C 740 190, 740 121, 694 121" fill="none" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="725" y="98" text-anchor="middle" class="ok">chama a API</text>
+  <!-- Proibido: Faturamento -> dados Agenda -->
+  <path d="M780 216 C 720 216, 700 268, 604 268" fill="none" stroke="#B3261E" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#r)"/>
+  <circle cx="712" cy="246" r="12" fill="#FFFFFF" stroke="#B3261E" stroke-width="2.5"/>
+  <path d="M706 240 L718 252 M718 240 L706 252" stroke="#B3261E" stroke-width="2.5"/>
+  <text x="725" y="347" text-anchor="middle" class="no">lê a tabela alheia</text>
+
+  <!-- Transição -->
+  <line x1="900" y1="358" x2="900" y2="420" stroke="#254DB8" stroke-width="2.5" marker-end="url(#g)"/>
+  <text x="884" y="384" text-anchor="end" fill="#254DB8" style="font: 700 15px Arial, sans-serif">extração só com evidência medida</text>
+  <text x="884" y="404" text-anchor="end" class="role">módulo quente, raio de incidente ou cadência própria</text>
+
+  <!-- DEPOIS -->
+  <text x="30" y="452" class="stage">Depois</text>
+  <text x="108" y="452" class="stages">o contrato do módulo se torna a fronteira do serviço</text>
+  <rect x="30" y="472" width="690" height="140" rx="16" class="bound"/>
+  <text x="48" y="496" class="proc">MONÓLITO MODULAR</text>
+  <rect x="60" y="512" width="280" height="76" rx="12" class="card"/>
+  <rect x="60" y="512" width="280" height="26" rx="12" fill="#254DB8"/><rect x="60" y="526" width="280" height="12" fill="#254DB8"/>
+  <text x="200" y="530" text-anchor="middle" class="api">API PÚBLICA</text>
+  <text x="200" y="570" text-anchor="middle" class="mod">Triagem</text>
+  <rect x="410" y="512" width="280" height="76" rx="12" class="card"/>
+  <rect x="410" y="512" width="280" height="26" rx="12" fill="#254DB8"/><rect x="410" y="526" width="280" height="12" fill="#254DB8"/>
+  <text x="550" y="530" text-anchor="middle" class="api">API PÚBLICA</text>
+  <text x="550" y="570" text-anchor="middle" class="mod">Agenda</text>
+
+  <rect x="740" y="472" width="330" height="140" rx="16" class="bound"/>
+  <text x="758" y="496" class="proc">IMPLANTAÇÃO PRÓPRIA</text>
+  <rect x="760" y="512" width="280" height="76" rx="12" class="card"/>
+  <rect x="760" y="512" width="280" height="26" rx="12" fill="#254DB8"/><rect x="760" y="526" width="280" height="12" fill="#254DB8"/>
+  <text x="900" y="530" text-anchor="middle" class="api">MESMA API PÚBLICA</text>
+  <text x="900" y="570" text-anchor="middle" class="mod">Serviço de Faturamento</text>
+
+  <path d="M760 560 C 730 560, 720 525, 694 525" fill="none" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="700" y="566" width="80" height="24" rx="12" fill="#F2B84B"/>
+  <text x="740" y="583" text-anchor="middle" fill="#16243A" style="font: 700 13px Arial, sans-serif">HTTP</text>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 600" role="img" aria-labelledby="title desc">
+  <title id="title">Dependências permitidas, deliberadas e proibidas em camadas</title>
+  <desc id="desc">Apresentação chama Aplicação, que usa Domínio e Infraestrutura; a Infraestrutura acessa o banco. Uma seta tracejada azul liga a Apresentação à Infraestrutura como camada aberta deliberada; uma seta vermelha liga a Apresentação ao banco como atalho proibido.</desc>
+  <defs>
+    <style>
+      .name { fill: #16243A; font: 700 22px Arial, sans-serif; }
+      .sub { fill: #425466; font: 400 16px Arial, sans-serif; }
+      .tag { font: 700 17px Arial, sans-serif; }
+      .note { fill: #425466; font: 400 15px Arial, sans-serif; }
+      .box { fill: #FFFFFF; stroke: #16243A; stroke-width: 2; }
+      .core { fill: #E3F4F7; stroke: #16243A; stroke-width: 2; }
+    </style>
+    <marker id="a-navy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16243A"/></marker>
+    <marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#254DB8"/></marker>
+    <marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#B3261E"/></marker>
+  </defs>
+  <rect width="1040" height="600" fill="#F2F6FB"/>
+
+  <!-- Camadas -->
+  <rect x="60" y="40" width="600" height="76" rx="12" class="box"/>
+  <text x="84" y="74" class="name">Apresentação</text>
+  <text x="84" y="100" class="sub">HTTP, serialização e validação de formato</text>
+
+  <rect x="60" y="176" width="600" height="76" rx="12" class="box"/>
+  <text x="84" y="210" class="name">Aplicação</text>
+  <text x="84" y="236" class="sub">coordena os casos de uso</text>
+
+  <rect x="60" y="312" width="280" height="76" rx="12" class="core"/>
+  <text x="84" y="346" class="name">Domínio</text>
+  <text x="84" y="372" class="sub">regras e invariantes</text>
+
+  <rect x="380" y="312" width="280" height="76" rx="12" class="box"/>
+  <text x="404" y="346" class="name">Infraestrutura</text>
+  <text x="404" y="372" class="sub">repositórios e adaptadores</text>
+
+  <!-- Banco -->
+  <path d="M420 456 v58 a100 16 0 0 0 200 0 v-58" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <ellipse cx="520" cy="456" rx="100" ry="16" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <text x="520" y="500" text-anchor="middle" class="sub">banco ou sistema</text>
+  <text x="520" y="520" text-anchor="middle" class="sub">externo</text>
+
+  <!-- Dependências permitidas -->
+  <line x1="200" y1="116" x2="200" y2="172" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+  <text x="214" y="144" class="tag" fill="#16243A">camada fechada</text>
+  <text x="352" y="144" class="note">passagem obrigatória: protege a regra</text>
+  <line x1="200" y1="252" x2="200" y2="308" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+  <line x1="520" y1="252" x2="520" y2="308" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+  <line x1="520" y1="388" x2="520" y2="436" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+
+  <!-- Camada aberta deliberada -->
+  <path d="M660 96 H700 V350 H666" fill="none" stroke="#254DB8" stroke-width="2.5" stroke-dasharray="9 6" marker-end="url(#a-blue)"/>
+  <text x="770" y="296" class="tag" fill="#254DB8">camada aberta</text>
+  <text x="770" y="320" class="note">atalho deliberado para leitura,</text>
+  <text x="770" y="340" class="note">com contrato, teste e ADR</text>
+
+  <!-- Atalho proibido -->
+  <path d="M660 60 H740 V486 H626" fill="none" stroke="#B3261E" stroke-width="2.5" marker-end="url(#a-red)"/>
+  <circle cx="740" cy="430" r="14" fill="#FFFFFF" stroke="#B3261E" stroke-width="2.5"/>
+  <path d="M733 423 L747 437 M747 423 L733 437" stroke="#B3261E" stroke-width="2.5"/>
+  <text x="770" y="466" class="tag" fill="#B3261E">atalho proibido</text>
+  <text x="770" y="490" class="note">a interface lê o banco sem</text>
+  <text x="770" y="510" class="note">passar pela regra de negócio</text>
+
+  <!-- Legenda -->
+  <g transform="translate(60 562)">
+    <line x1="0" y1="0" x2="40" y2="0" stroke="#16243A" stroke-width="2.5" marker-end="url(#a-navy)"/>
+    <text x="52" y="5" class="note">dependência permitida</text>
+    <line x1="250" y1="0" x2="290" y2="0" stroke="#254DB8" stroke-width="2.5" stroke-dasharray="9 6" marker-end="url(#a-blue)"/>
+    <text x="302" y="5" class="note">atalho deliberado e documentado</text>
+    <line x1="580" y1="0" x2="620" y2="0" stroke="#B3261E" stroke-width="2.5" marker-end="url(#a-red)"/>
+    <text x="632" y="5" class="note">dependência proibida</text>
+  </g>
+</svg>

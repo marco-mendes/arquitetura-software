@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 600" role="img" aria-labelledby="title desc">
+  <title id="title">As mesmas camadas lógicas em uma, duas e três camadas físicas</title>
+  <desc id="desc">Três linhas alinhadas mostram as mesmas camadas lógicas, Apresentação, Negócios e Dados, em arranjos físicos diferentes. Com uma camada física, tudo roda num processo com banco embutido. Com duas, o servidor de aplicação reúne as três camadas e fala por TCP com o banco em outro servidor. Com três, apresentação, negócios e dados são processos separados ligados por HTTP interno e gRPC. Cada travessia de rede aparece como um selo âmbar.</desc>
+  <defs>
+    <style>
+      .row { fill: #16243A; font: 700 20px Arial, sans-serif; }
+      .rows { fill: #425466; font: 400 15px Arial, sans-serif; }
+      .col { fill: #425466; font: 700 14px Arial, sans-serif; letter-spacing: 1px; }
+      .name { fill: #16243A; font: 700 17px Arial, sans-serif; }
+      .proc { fill: #2A8A9B; font: 700 13px Arial, sans-serif; letter-spacing: 0.8px; }
+      .net { fill: #16243A; font: 700 13px Arial, sans-serif; }
+      .box { fill: #FFFFFF; stroke: #16243A; stroke-width: 2; }
+      .bound { fill: #F7FBFC; stroke: #5FC0D1; stroke-width: 2.5; stroke-dasharray: 10 6; }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16243A"/></marker>
+  </defs>
+  <rect width="1100" height="600" fill="#F2F6FB"/>
+
+  <!-- Cabeçalho de colunas -->
+  <text x="290" y="40" text-anchor="middle" class="col">APRESENTAÇÃO</text>
+  <text x="510" y="40" text-anchor="middle" class="col">NEGÓCIOS</text>
+  <text x="730" y="40" text-anchor="middle" class="col">DADOS</text>
+  <text x="950" y="40" text-anchor="middle" class="col">BANCO</text>
+
+  <!-- Linha 1: uma camada física -->
+  <text x="24" y="104" class="row">1 física</text>
+  <text x="24" y="126" class="rows">processo único</text>
+  <rect x="190" y="62" width="880" height="112" rx="14" class="bound"/>
+  <text x="206" y="84" class="proc">PROCESSO</text>
+  <rect x="210" y="96" width="160" height="56" rx="10" class="box"/><text x="290" y="130" text-anchor="middle" class="name">Apresentação</text>
+  <rect x="430" y="96" width="160" height="56" rx="10" class="box"/><text x="510" y="130" text-anchor="middle" class="name">Negócios</text>
+  <rect x="650" y="96" width="160" height="56" rx="10" class="box"/><text x="730" y="130" text-anchor="middle" class="name">Dados</text>
+  <path d="M900 104 v34 a50 9 0 0 0 100 0 v-34" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/><ellipse cx="950" cy="104" rx="50" ry="9" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <text x="950" y="140" text-anchor="middle" class="rows">embutido</text>
+  <line x1="370" y1="124" x2="426" y2="124" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="590" y1="124" x2="646" y2="124" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="810" y1="124" x2="896" y2="124" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- Linha 2: duas camadas físicas -->
+  <text x="24" y="284" class="row">2 físicas</text>
+  <text x="24" y="306" class="rows">aplicação + banco</text>
+  <rect x="190" y="242" width="640" height="112" rx="14" class="bound"/>
+  <text x="206" y="264" class="proc">SERVIDOR DE APLICAÇÃO</text>
+  <rect x="210" y="276" width="160" height="56" rx="10" class="box"/><text x="290" y="310" text-anchor="middle" class="name">API REST</text>
+  <rect x="430" y="276" width="160" height="56" rx="10" class="box"/><text x="510" y="310" text-anchor="middle" class="name">Negócios</text>
+  <rect x="650" y="276" width="160" height="56" rx="10" class="box"/><text x="730" y="310" text-anchor="middle" class="name">Repositório</text>
+  <rect x="880" y="242" width="140" height="112" rx="14" class="bound"/>
+  <text x="896" y="264" class="proc">SERVIDOR</text>
+  <path d="M900 286 v34 a50 9 0 0 0 100 0 v-34" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/><ellipse cx="950" cy="286" rx="50" ry="9" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <line x1="370" y1="304" x2="426" y2="304" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="590" y1="304" x2="646" y2="304" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="810" y1="304" x2="896" y2="304" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="826" y="314" width="46" height="24" rx="12" fill="#F2B84B"/><text x="849" y="331" text-anchor="middle" class="net">TCP</text>
+
+  <!-- Linha 3: três camadas físicas -->
+  <text x="24" y="464" class="row">3 físicas</text>
+  <text x="24" y="486" class="rows">um serviço por camada</text>
+  <rect x="190" y="422" width="200" height="112" rx="14" class="bound"/>
+  <text x="206" y="444" class="proc">SERVIÇO</text>
+  <rect x="410" y="422" width="200" height="112" rx="14" class="bound"/>
+  <text x="426" y="444" class="proc">SERVIÇO</text>
+  <rect x="630" y="422" width="440" height="112" rx="14" class="bound"/>
+  <text x="646" y="444" class="proc">SERVIÇO DE DADOS</text>
+  <rect x="210" y="456" width="160" height="56" rx="10" class="box"/><text x="290" y="490" text-anchor="middle" class="name">API REST</text>
+  <rect x="430" y="456" width="160" height="56" rx="10" class="box"/><text x="510" y="490" text-anchor="middle" class="name">Negócios</text>
+  <rect x="650" y="456" width="160" height="56" rx="10" class="box"/><text x="730" y="490" text-anchor="middle" class="name">Repositório</text>
+  <path d="M900 466 v34 a50 9 0 0 0 100 0 v-34" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/><ellipse cx="950" cy="466" rx="50" ry="9" fill="#FFFFFF" stroke="#16243A" stroke-width="2"/>
+  <line x1="370" y1="484" x2="426" y2="484" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="368" y="494" width="64" height="24" rx="12" fill="#F2B84B"/><text x="400" y="511" text-anchor="middle" class="net">HTTP</text>
+  <line x1="590" y1="484" x2="646" y2="484" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="588" y="494" width="64" height="24" rx="12" fill="#F2B84B"/><text x="620" y="511" text-anchor="middle" class="net">gRPC</text>
+  <line x1="810" y1="484" x2="896" y2="484" stroke="#16243A" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- Legenda -->
+  <rect x="190" y="562" width="46" height="24" rx="12" fill="#F2B84B"/><text x="213" y="579" text-anchor="middle" class="net">rede</text>
+  <text x="248" y="579" class="rows">cada selo marca uma travessia de rede, que acrescenta latência e um ponto de falha em troca de independência</text>
+</svg>

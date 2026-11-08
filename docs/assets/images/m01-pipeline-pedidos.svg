@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 70 1200 380" role="img" aria-labelledby="title desc">
+  <title id="title">Pipeline de pedidos com os quatro tipos de filtro</title>
+  <desc id="desc">Cinco filtros em sequência ligados por pipes: LeitorDePedido, do tipo producer, cria o pedido; ValidadorDePedido, do tipo tester, desvia os pedidos inválidos para a rejeição com lote, etapa e causa; AplicadorDeDesconto e CalculadorDeFrete, do tipo transformer, acrescentam desconto e frete sem descartar; FinalizadorDePedido, do tipo consumer, aprova e reporta. Abaixo de cada pipe aparece o estado do pedido naquele ponto.</desc>
+  <defs>
+    <style>
+      .name { fill: #16243A; font: 700 16px Arial, sans-serif; }
+      .role { fill: #425466; font: 400 14px Arial, sans-serif; }
+      .chip { font: 700 13px Arial, sans-serif; letter-spacing: 1px; }
+      .data { fill: #16243A; font: 400 14px "Courier New", monospace; }
+      .note { fill: #425466; font: 400 15px Arial, sans-serif; }
+      .box { fill: #FFFFFF; stroke: #16243A; stroke-width: 2; }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5FC0D1"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#B3261E"/></marker>
+  </defs>
+  <rect y="70" width="1200" height="380" fill="#F2F6FB"/>
+
+  <!-- Pipes (tubos) -->
+  <g fill="#5FC0D1">
+    <rect x="228" y="163" width="26" height="14" rx="3"/><path d="M253 156 L264 170 L253 184 z"/>
+    <rect x="464" y="163" width="26" height="14" rx="3"/><path d="M489 156 L500 170 L489 184 z"/>
+    <rect x="700" y="163" width="26" height="14" rx="3"/><path d="M725 156 L736 170 L725 184 z"/>
+    <rect x="936" y="163" width="26" height="14" rx="3"/><path d="M961 156 L972 170 L961 184 z"/>
+  </g>
+
+  <!-- Filtros -->
+  <g>
+    <rect x="30" y="94" width="196" height="40" rx="8" fill="#16243A"/>
+    <text x="128" y="120" text-anchor="middle" class="chip" fill="#FFFFFF">PRODUCER</text>
+    <rect x="30" y="134" width="196" height="76" rx="0" class="box"/>
+    <text x="128" y="166" text-anchor="middle" class="name">LeitorDePedido</text>
+    <text x="128" y="190" text-anchor="middle" class="role">cria o pedido</text>
+  </g>
+  <g>
+    <rect x="266" y="94" width="196" height="40" rx="8" fill="#F2B84B"/>
+    <text x="364" y="120" text-anchor="middle" class="chip" fill="#16243A">TESTER</text>
+    <rect x="266" y="134" width="196" height="76" class="box"/>
+    <text x="364" y="166" text-anchor="middle" class="name">ValidadorDePedido</text>
+    <text x="364" y="190" text-anchor="middle" class="role">aprova ou desvia</text>
+  </g>
+  <g>
+    <rect x="502" y="94" width="196" height="40" rx="8" fill="#254DB8"/>
+    <text x="600" y="120" text-anchor="middle" class="chip" fill="#FFFFFF">TRANSFORMER</text>
+    <rect x="502" y="134" width="196" height="76" class="box"/>
+    <text x="600" y="166" text-anchor="middle" class="name">AplicadorDeDesconto</text>
+    <text x="600" y="190" text-anchor="middle" class="role">acrescenta desconto</text>
+  </g>
+  <g>
+    <rect x="738" y="94" width="196" height="40" rx="8" fill="#254DB8"/>
+    <text x="836" y="120" text-anchor="middle" class="chip" fill="#FFFFFF">TRANSFORMER</text>
+    <rect x="738" y="134" width="196" height="76" class="box"/>
+    <text x="836" y="166" text-anchor="middle" class="name">CalculadorDeFrete</text>
+    <text x="836" y="190" text-anchor="middle" class="role">acrescenta frete</text>
+  </g>
+  <g>
+    <rect x="974" y="94" width="196" height="40" rx="8" fill="#16243A"/>
+    <text x="1072" y="120" text-anchor="middle" class="chip" fill="#FFFFFF">CONSUMER</text>
+    <rect x="974" y="134" width="196" height="76" class="box"/>
+    <text x="1072" y="166" text-anchor="middle" class="name">FinalizadorDePedido</text>
+    <text x="1072" y="190" text-anchor="middle" class="role">aprova e reporta</text>
+  </g>
+
+  <!-- Estado do dado em cada pipe -->
+  <text x="30" y="252" class="note">dado no pipe →</text>
+  <g>
+    <rect x="178" y="232" width="122" height="30" rx="6" fill="#FFFFFF" stroke="#5FC0D1"/>
+    <text x="239" y="252" text-anchor="middle" class="data">pedido</text>
+    <rect x="410" y="232" width="130" height="30" rx="6" fill="#FFFFFF" stroke="#5FC0D1"/>
+    <text x="475" y="252" text-anchor="middle" class="data">pedido ✓</text>
+    <rect x="632" y="232" width="158" height="30" rx="6" fill="#FFFFFF" stroke="#5FC0D1"/>
+    <text x="711" y="252" text-anchor="middle" class="data">+ desconto</text>
+    <rect x="868" y="232" width="158" height="30" rx="6" fill="#FFFFFF" stroke="#5FC0D1"/>
+    <text x="947" y="252" text-anchor="middle" class="data">+ frete</text>
+  </g>
+
+  <!-- Rejeição -->
+  <path d="M364 210 V 330" fill="none" stroke="#B3261E" stroke-width="2.5" marker-end="url(#r)"/>
+  <text x="376" y="300" fill="#B3261E" style="font: 700 15px Arial, sans-serif">inválido</text>
+  <rect x="230" y="336" width="268" height="84" rx="12" fill="#FBE9E7" stroke="#B3261E" stroke-width="2"/>
+  <text x="364" y="364" text-anchor="middle" fill="#B3261E" style="font: 700 17px Arial, sans-serif">Rejeição explícita</text>
+  <text x="364" y="388" text-anchor="middle" class="role">guarda lote, etapa e causa</text>
+  <text x="364" y="408" text-anchor="middle" class="role">para reprocessar depois</text>
+
+  <!-- Regra -->
+  <rect x="560" y="336" width="610" height="84" rx="12" fill="#FFFFFF" stroke="#D5DDE8"/>
+  <text x="584" y="366" class="name">Nenhum filtro conhece o vizinho.</text>
+  <text x="584" y="390" class="note">Cada um recebe pelo pipe, devolve pelo pipe e não guarda estado;</text>
+  <text x="584" y="410" class="note">por isso pode ser trocado, reordenado ou testado sozinho.</text>
+</svg>

@@ -10,9 +10,9 @@ Esta página não apresenta conceito novo. Ela mostra em uso o vocabulário das 
 | Família "organização interna" | [Organização interna](conceitos.md#organizacao-interna) | camadas na submissão, microkernel nos leitores de formato e monólito modular como limite de implantação |
 | Família "integração e comunicação" | [Integração e comunicação](conceitos.md#integracao-e-comunicacao) | pipes and filters no processamento |
 | Cenário de atributo de qualidade | [Atributos de qualidade](../referencia/atributos-de-qualidade.md#como-usar-na-decisao) | a seção seguinte, que vem antes de qualquer caixa desenhada |
-| Camada fechada e anti-padrão do sumidouro | [Camadas](padroes-e-decisoes.md#camadas) | figura 19 e o parágrafo logo abaixo dela |
-| Filtro, pipe e rejeição explícita | [Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters) | figuras 20 e 21 |
-| Núcleo, contrato de extensão e core creep | [Microkernel](padroes-e-decisoes.md#microkernel) | figura 22 |
+| Camada fechada e anti-padrão do sumidouro | [Camadas](padroes-e-decisoes.md#camadas) | figura 11 e o parágrafo logo abaixo dela |
+| Filtro, pipe e rejeição explícita | [Pipes and Filters](padroes-e-decisoes.md#pipes-and-filters) | figuras 12 e 13 |
+| Núcleo, contrato de extensão e core creep | [Microkernel](padroes-e-decisoes.md#microkernel) | figura 14 |
 | ADR como decisão revisável | [ADR](padroes-e-decisoes.md#adr-o-mecanismo-para-escolher-estilos) | seção "Decisão provisória" |
 
 A ordem das seções é a cadeia de raciocínio da unidade: o contexto e a força priorizada vêm antes de qualquer caixa desenhada; as alternativas, antes da escolha; a evidência, antes da decisão — que por sua vez registra o custo aceito e o gatilho de revisão.
@@ -56,13 +56,13 @@ flowchart TB
 
 **Texto alternativo:** fluxo de submissão em camadas: a interface chama o caso de uso, que aplica as regras de janela e duplicidade antes de persistir; a interface não acessa os dados diretamente.
 
-*Figura 19 — Uma remessa atravessa fronteiras de camadas antes de ser persistida. Fonte: curso.*
+*Figura 11 — Uma remessa atravessa fronteiras de camadas antes de ser persistida. Fonte: curso.*
 
 **Leitura textual da figura:** o Parceiro envia a remessa à Interface HTTP. A interface chama o Caso de uso, que consulta a Regra de Submissão — janela contratada e remessa duplicada — antes de pedir ao Repositório que grave os Dados de remessas. O Caso de uso também registra um fato mínimo na Trilha. A ligação pontilhada mostra que a interface não consulta os dados diretamente; a regra de duplicidade não pode ser ignorada por uma tela.
 
 Esse arranjo favorece consistência local e teste das regras sem banco. Se quase toda leitura apenas atravessar todas as camadas sem validação ou decisão, a equipe mede o custo e registra um caminho de leitura justificado; não cria atalhos silenciosos.
 
-**Conceito aplicado:** a ligação pontilhada é a *camada fechada* de [Camadas](padroes-e-decisoes.md#camadas) — a interface não pula a camada seguinte para ler dados. A camada de negócios decide: recusa remessa fora da janela contratada e remessa repetida. Sem essas duas decisões o desenho cairia no *sumidouro* da figura 6, cobrando uma chamada extra sem devolver nada.
+**Conceito aplicado:** a ligação pontilhada é a *camada fechada* de [Camadas](padroes-e-decisoes.md#camadas) — a interface não pula a camada seguinte para ler dados. A camada de negócios decide: recusa remessa fora da janela contratada e remessa repetida. Sem essas duas decisões o desenho cairia no *sumidouro* da figura 5 da página de padrões, cobrando uma chamada extra sem devolver nada.
 
 [Aprofundar Camadas](padroes-e-decisoes.md#camadas)
 
@@ -81,7 +81,7 @@ flowchart LR
 
 **Texto alternativo:** pipeline de processamento no qual validar, normalizar, enriquecer e publicar recebem documentos em sequência; rejeições seguem para um registro com etapa identificada.
 
-*Figura 20 — Transformações independentes conservam o contexto de uma rejeição. Fonte: curso.*
+*Figura 12 — Transformações independentes conservam o contexto de uma rejeição. Fonte: curso.*
 
 **Leitura textual da figura:** o Adaptador de entrada entrega um documento bruto ao filtro de validação. Documentos válidos atravessam normalização, enriquecimento e publicação; uma rejeição em validação, normalização ou enriquecimento é registrada com sua etapa. Nenhum filtro consulta o estado interno de outro filtro.
 
@@ -109,7 +109,7 @@ sequenceDiagram
 
 **Texto alternativo:** sequência de processamento em que a correlação acompanha o documento e uma falha no enriquecimento retorna com etapa e causa.
 
-*Figura 21 — Uma falha parcial preserva correlação, etapa e causa. Fonte: curso.*
+*Figura 13 — Uma falha parcial preserva correlação, etapa e causa. Fonte: curso.*
 
 **Leitura textual da figura:** a Entrada envia um documento com correlação a Validar, que passa um valor válido para Normalizar e depois para Enriquecer. A falha de enriquecimento retorna à Entrada com etapa e causa; a Entrada registra duração e rejeição. A sequência evidencia que a correlação acompanha o fluxo, inclusive na falha.
 
@@ -132,7 +132,7 @@ flowchart LR
 
 **Texto alternativo:** núcleo de leitura mantém estados, autorização e contrato; plugins de formato devolvem documentos canônicos pelo contrato sem acessar dados internos.
 
-*Figura 22 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos. Fonte: curso.*
+*Figura 14 — O núcleo oferece o contrato; plugins devolvem resultados sem acessar seus dados internos. Fonte: curso.*
 
 **Leitura textual da figura:** uma Remessa aceita chega ao Núcleo de leitura, que controla identidade, estados e autorização. O Núcleo expõe um Contrato de extensão usado por dois plugins: um leitor CSV específico do parceiro A e uma validação de esquema XML. Os plugins devolvem resultados ao Núcleo, que produz fato com correlação para a Trilha. As ligações pontilhadas indicam que plugins não leem os dados internos do núcleo diretamente.
 
@@ -150,7 +150,7 @@ Também há limites não resolvidos. Se o enriquecimento depender de um serviço
 
 ## Estrutura de Projeto
 
-Uma implementação da capacidade de processamento pode separar o coordenador `Pipeline`, os filtros puros e os adaptadores de formato — que são os plugins do núcleo de leitura da figura 22. A árvore indica **responsabilidades**, não dependências automaticamente garantidas:
+Uma implementação da capacidade de processamento pode separar o coordenador `Pipeline`, os filtros puros e os adaptadores de formato — que são os plugins do núcleo de leitura da figura 14. A árvore indica **responsabilidades**, não dependências automaticamente garantidas:
 
 ```text
 processamento/
