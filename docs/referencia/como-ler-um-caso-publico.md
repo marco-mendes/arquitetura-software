@@ -1,10 +1,10 @@
 # Como ler um caso público
 
-Cada módulo desta disciplina tem uma página de casos reais. Elas descrevem arquiteturas de empresas existentes, documentadas por elas próprias, pelo fornecedor envolvido ou em publicação revisada por pares. Esta página explica como lê-las, e serve igualmente para qualquer relato que você encontre fora daqui.
+Cada módulo desta disciplina tem uma página de casos reais. Elas descrevem arquiteturas de empresas existentes, documentadas por elas próprias, pelo fornecedor envolvido ou em publicação revisada por pares. Esta página explica como lê-las e como ler qualquer relato que você encontre fora daqui.
 
 ## Por que um caso público engana com facilidade
 
-Relatos de arquitetura são publicados por quem venceu. A empresa conta a decisão que deu certo, raramente as tentativas anteriores, e quase nunca o custo organizacional de sustentar o resultado. O fornecedor de nuvem que assina o estudo tem interesse comercial no desfecho. O engenheiro que apresenta em conferência descreve o estado final de uma migração de anos como se fosse escolha tomada numa reunião.
+Relatos de arquitetura são publicados por quem venceu. A empresa relata a decisão que deu certo, raramente relata as tentativas anteriores e quase nunca relata o custo organizacional de sustentar o resultado. O fornecedor de nuvem que assina o estudo tem interesse comercial no desfecho. O engenheiro que apresenta em conferência descreve o estado final de uma migração de anos como se fosse escolha tomada numa reunião.
 
 Some-se o efeito de reescrita. À medida que um caso circula em blogs, vídeos e resumos, ganha números arredondados, citações que ninguém consegue rastrear e nomes de sistemas que a empresa nunca usou. As páginas de casos reais desta disciplina descartam esse material: uma afirmação sem fonte publicada simplesmente não entra.
 
@@ -20,9 +20,9 @@ As páginas de casos reais seguem esta sequência. Use-a também quando ler um r
 
 **Consequência aceita.** Toda escolha compra uma coisa e paga com outra. Um relato honesto declara o que piorou.
 
-**Evidência.** Que dado sustenta o resultado, e quem publicou esse dado. Número sem data de apuração e sem autor identificado vale como ordem de grandeza, e falha como citação.
+**Evidência.** Que dado sustenta o resultado e quem publicou esse dado. Um número sem data de apuração e sem autor identificado indica apenas a ordem de grandeza e não sustenta uma citação.
 
-**Limite de transferência.** Que característica do contexto original está ausente no seu, e o que isso invalida.
+**Limite de transferência.** Que característica do contexto original está ausente no seu e o que essa ausência invalida.
 
 ## Classificação das fontes
 
@@ -32,9 +32,9 @@ As páginas desta disciplina distinguem três níveis, e você deveria fazer o m
 | --- | --- | --- |
 | Primária | Publicação da própria empresa, artigo revisado por pares, repositório ou documentação oficial | Citável com atribuição direta |
 | Quase primária | Relato assinado por quem participou, publicado em livro técnico, entrevista ou apresentação | Citável, identificando o autor e o veículo |
-| Secundária | Blog de terceiro, resumo, notícia, vídeo explicativo | Serve para localizar a fonte original, e falha como citação |
+| Secundária | Blog de terceiro, resumo, notícia, vídeo explicativo | Serve para localizar a fonte original e não sustenta uma citação |
 
-Um estudo de caso publicado pelo fornecedor de nuvem que vendeu a solução é fonte primária quanto à autoria e material comercial quanto ao interesse. As duas coisas ao mesmo tempo. Ele diz o que a empresa autorizou a divulgar, sem auditoria externa.
+Um estudo de caso publicado pelo fornecedor de nuvem que vendeu a solução é, ao mesmo tempo, fonte primária quanto à autoria e material comercial quanto ao interesse. Ele diz o que a empresa autorizou a divulgar, sem auditoria externa.
 
 ## O que não fazer com um caso
 
@@ -44,4 +44,4 @@ Não copie a plataforma de ferramentas. Bibliotecas envelhecem, e uma que era pa
 
 Não use o número da empresa como meta da sua. "Reduzimos custo em 90%" descreve a distância entre a arquitetura anterior daquela empresa e a nova. Sem conhecer a base de comparação, o percentual não se transfere.
 
-O que se transfere é a força: a razão pela qual a decisão fez sentido naquele contexto, e o critério que permite verificar se ela faz sentido no seu.
+O que se transfere é a força: a razão pela qual a decisão fez sentido naquele contexto e o critério que permite verificar se ela faz sentido no seu.

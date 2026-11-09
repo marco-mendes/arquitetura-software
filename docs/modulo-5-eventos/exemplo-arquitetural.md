@@ -1,4 +1,4 @@
-# Exemplo arquitetural: resultado disponível, cobrança uma vez
+# Exemplo arquitetural: cobrança única por resultado disponível
 
 ## Contexto e fronteiras
 
@@ -50,7 +50,7 @@ class ResultadoLaboratorialDisponibilizadoV1(BaseModel):
     result_reference: str
 ```
 
-## Publicador: declarar, serializar, confirmar
+## Publicador: declarar, serializar e confirmar
 
 O publicador abre uma conexão AMQP robusta (`aio_pika.connect_robust`, que reconecta sozinha em queda transitória), declara a exchange como `topic` e durável, e publica com `delivery_mode=PERSISTENT` para sobreviver a um restart do broker. O `message_id` recebe o `event_id`, o que permite correlacionar a mensagem AMQP à ocorrência de domínio ao inspecionar filas no management plugin.
 
@@ -78,9 +78,9 @@ async def publicar_json(payload: dict[str, object], url: str | None = None) -> N
         await connection.close()
 ```
 
-`publisher_confirms=True` ativa a confirmação de publicação do RabbitMQ: o `await exchange.publish` só retorna depois que o broker confirmou a escrita, não apenas o envio pela rede. Sem isso, uma queda de conexão entre o envio e a confirmação passaria despercebida pelo publicador.
+`publisher_confirms=True` ativa a confirmação de publicação do RabbitMQ: o `await exchange.publish` só retorna depois que o broker confirma a escrita da mensagem. Sem isso, uma queda de conexão entre o envio e a confirmação passaria despercebida pelo publicador.
 
-## Consumidor: declarar topologia, validar, deduplicar
+## Consumidor: declarar topologia, validar e deduplicar
 
 O consumidor declara a mesma exchange, a fila durável de trabalho, a exchange de dead-letter e a fila de rejeitados, e liga a DLQ à DLX com a **mesma routing key** da fila principal. Declarar a exchange de novo com os mesmos parâmetros é seguro: RabbitMQ trata declarações repetidas e idênticas como uma operação sem efeito colateral. Já o vínculo de routing key é fácil de esquecer: se a DLQ for ligada com uma chave diferente, mensagens rejeitadas somem em vez de aparecer na fila de erro.
 
@@ -197,11 +197,11 @@ Em caso válido, `ProcessedEventStore.record` começa a transação, insere ou a
 
 O exemplo é deliberadamente pequeno. Entre publicar e chegar à fila há rede e disponibilidade de broker; entre gravar SQLite e confirmar AMQP existe uma janela em que o processo pode cair. A segunda janela produz reentrega, que o store cobre. A primeira janela, em um serviço de produção, pede uma estratégia na origem como outbox. Também não existe retry com atraso: erro de banco poderia reentregar imediatamente e exigir política de backoff, limite e alerta para não ocupar a fila indefinidamente.
 
-A transação local não cria uma transação global entre Resultados, RabbitMQ e Faturamento. Portanto, o desenho não alega exactly-once. Ele controla um efeito local identificável. Se Faturamento chamar uma operadora externa, deverá passar a mesma chave de idempotência, registrar a requisição e reconciliar respostas ambíguas. Caso a operadora não aceite uma chave, pode ser necessário um ledger, consulta antes de repetir ou uma decisão de operação manual. A arquitetura torna a incerteza explícita.
+A transação local não cria uma transação global entre Resultados, RabbitMQ e Faturamento. Portanto, o desenho não alega exactly-once e controla apenas um efeito local identificável. Se Faturamento chamar uma operadora externa, deverá passar a mesma chave de idempotência, registrar a requisição e reconciliar respostas ambíguas. Caso a operadora não aceite uma chave, pode ser necessário um ledger, consulta antes de repetir ou uma decisão de operação manual. A arquitetura torna a incerteza explícita.
 
 ## Ordem e evolução aplicadas ao caso
 
-Este evento não afirma uma ordem global de exames. Se Faturamento precisar reagir somente ao estado mais recente do mesmo exame, o contrato pode ganhar uma versão de agregado ou sequência em evolução compatível. `occurred_at` é útil para auditoria temporal, mas não substitui uma sequência quando há empate, relógio desalinhado ou replay. Escolher `exam_id` como chave de particionamento em um log futuro preservaria a sequência por exame, não por paciente inteiro.
+Este evento não afirma uma ordem global de exames. Se Faturamento precisar reagir somente ao estado mais recente do mesmo exame, o contrato pode ganhar uma versão de agregado ou sequência em evolução compatível. `occurred_at` é útil para auditoria temporal, mas não substitui uma sequência quando há empate, relógio desalinhado ou replay. Escolher `exam_id` como chave de particionamento em um log futuro preservaria a sequência dos eventos de cada exame, e eventos de exames diferentes do mesmo paciente poderiam chegar fora de ordem.
 
 O sufixo `.v1` comunica que a versão pertence ao nome do evento. Uma alteração como adicionar `billing_reference` opcional pode passar por uma fase em que consumidores antigos ignoram o campo, se o schema permitir. Neste exemplo específico isso não acontece: `extra="forbid"` faz qualquer campo novo derrubar a validação até o modelo Pydantic ser atualizado. É uma escolha deliberada da oficina para tornar visível o custo de evoluir um contrato fechado; um serviço que preferir tolerância a campos novos usa `extra="allow"` ou `extra="ignore"`, ciente de que abre mão da mesma proteção. Trocar o sentido de `result_reference` ou remover `exam_id` exige versão nova, consumidores compatíveis por período e decisão de retirada. Os exemplos do repositório não usam dados reais e a oficina não deve ser usada para inferir uma política de retenção hospitalar.
 
@@ -209,4 +209,4 @@ O sufixo `.v1` comunica que a versão pertence ao nome do evento. Uma alteraçã
 
 Ao final da oficina, três evidências contam histórias diferentes. A saída do publicador demonstra que uma mensagem foi enviada ao canal. A saída do consumidor mostra `processed=True attempts=1` na primeira entrega e `processed=False attempts=2` na repetição. A consulta SQLite mostra uma linha em `billing_effects` e duas tentativas em `processed_events`. Já a página de filas do management plugin ou a consulta AMQP mostra que o payload inválido chegou à DLQ. Nenhuma dessas evidências, isolada, prova todas as propriedades; juntas sustentam a decisão didática.
 
-Se o consumidor informar `None`, a fila estava vazia no instante da busca. Isso não é confirmação de que uma publicação anterior foi perdida: confira primeiro URL AMQP, vhost, chave de roteamento, binding e se a mensagem já foi consumida. Se a mensagem for parar na DLQ, leia a razão de rejeição e o schema antes de republicar. Republicar cegamente uma mensagem inválida cria repetição de falha, não resiliência.
+Se o consumidor informar `None`, a fila estava vazia no instante da busca. Isso não é confirmação de que uma publicação anterior foi perdida: confira primeiro URL AMQP, vhost, chave de roteamento, binding e se a mensagem já foi consumida. Se a mensagem for parar na DLQ, leia a razão de rejeição e o schema antes de republicar. Republicar uma mensagem inválida sem corrigir a causa apenas repete a falha.

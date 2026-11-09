@@ -15,7 +15,7 @@ Esta página não apresenta conceito novo. Ela mostra em uso o vocabulário das 
 | Núcleo, contrato de extensão e core creep | [Microkernel](padroes-e-decisoes.md#microkernel) | figura 14 |
 | ADR como decisão revisável | [ADR](padroes-e-decisoes.md#adr-o-mecanismo-para-escolher-estilos) | seção "Decisão provisória" |
 
-A ordem das seções é a cadeia de raciocínio da unidade: o contexto e a força priorizada vêm antes de qualquer caixa desenhada; as alternativas, antes da escolha; a evidência, antes da decisão — que por sua vez registra o custo aceito e o gatilho de revisão.
+A ordem das seções segue a cadeia de raciocínio da unidade: o contexto e a força priorizada aparecem antes de qualquer caixa desenhada, as alternativas aparecem antes da escolha e a evidência aparece antes da decisão, que registra o custo aceito e o gatilho de revisão.
 
 Quem lê de trás para frente escolhe a figura de que gostou e procura a justificativa depois.
 
@@ -35,7 +35,7 @@ A comparação usou a mesma grade para os quatro: a tabela de características a
 
 A escolha inicial combina um monólito modular como limite de implantação, pipes and filters na capacidade de processamento e pequenos adapters para os formatos. Combinar estilos é aceitável quando cada um resolve uma escala declarada. O risco é usar muitos nomes sem restrições verificáveis.
 
-## A mesma plataforma, três estruturas deliberadas
+## Três estruturas na plataforma de remessas
 
 A plataforma de remessas tem quatro capacidades. **Submissão** recebe e aceita ou recusa a remessa de um parceiro; **Processamento** transforma os documentos de uma remessa aceita; **Leitores de formato** interpretam JSON, CSV e XML e variam por parceiro; **Trilha** recebe fatos mínimos para rastreabilidade. Não há integração real: os nomes permitem enxergar a responsabilidade de cada fronteira.
 
@@ -113,7 +113,7 @@ sequenceDiagram
 
 **Leitura textual da figura:** a Entrada envia um documento com correlação a Validar, que passa um valor válido para Normalizar e depois para Enriquecer. A falha de enriquecimento retorna à Entrada com etapa e causa; a Entrada registra duração e rejeição. A sequência evidencia que a correlação acompanha o fluxo, inclusive na falha.
 
-A sequência mostra uma falha no enriquecimento. A correlação atravessa os pipes, permitindo relacionar o documento à etapa. Uma versão que apenas lança uma mensagem genérica atenderia à transformação, mas não à rastreabilidade.
+A sequência mostra uma falha no enriquecimento. A correlação atravessa os pipes, permitindo relacionar o documento à etapa. Uma versão que apenas lança uma mensagem genérica atenderia à transformação e deixaria de atender à rastreabilidade.
 
 ### Leitores como núcleo e plugins: variar sem reescrever o comum
 
@@ -136,7 +136,7 @@ flowchart LR
 
 **Leitura textual da figura:** uma Remessa aceita chega ao Núcleo de leitura, que controla identidade, estados e autorização. O Núcleo expõe um Contrato de extensão usado por dois plugins: um leitor CSV específico do parceiro A e uma validação de esquema XML. Os plugins devolvem resultados ao Núcleo, que produz fato com correlação para a Trilha. As ligações pontilhadas indicam que plugins não leem os dados internos do núcleo diretamente.
 
-Essa é a capacidade em que a mudança chega: um formato novo entra poucas vezes por ano, mas entra sempre pela mesma fronteira. Para a estrutura ser honesta, o contrato deve especificar entrada, resultado, erros e versão. Se um plugin precisa editar tabelas internas ou se o núcleo conhece regras particulares de todos os plugins, a equipe encontrou core creep e deve revisar a fronteira em vez de chamar o acoplamento de extensibilidade.
+Essa é a capacidade em que a mudança chega: um formato novo entra poucas vezes por ano e sempre pela mesma fronteira. Para a estrutura ser honesta, o contrato deve especificar entrada, resultado, erros e versão. Se um plugin precisa editar tabelas internas ou se o núcleo conhece regras particulares de todos os plugins, a equipe encontrou core creep e deve revisar a fronteira em vez de chamar o acoplamento de extensibilidade.
 
 **Conceito aplicado:** núcleo, contrato de extensão e *core creep* vêm de [Microkernel](padroes-e-decisoes.md#microkernel). Um plugin que precisa do banco do núcleo continua sendo parte do núcleo, ainda que resida em outra pasta.
 
@@ -146,11 +146,11 @@ Essa é a capacidade em que a mudança chega: um formato novo entra poucas vezes
 
 Cada teste desta seção devolve uma parte do cenário declarado no início da página. O teste funcional usa exemplos pequenos para verificar ordem e transformação; o de desempenho mede a duração de um lote representativo e calcula throughput; o de falha injeta um documento sem referência de enriquecimento e verifica etapa e correlação. O resultado precisa informar ambiente e massa utilizada — um número sem condições não sustenta decisão.
 
-Também há limites não resolvidos. Se o enriquecimento depender de um serviço remoto lento, o filtro pode dominar toda a vazão. Paralelizar exige decidir ordenação e concorrência. Persistir resultados intermediários melhora recuperação, mas acrescenta estado. Esses aspectos viram forças de um ADR posterior, em vez de serem ocultados pelo desenho inicial.
+Também há limites não resolvidos. Se o enriquecimento depender de um serviço remoto lento, o filtro pode dominar toda a vazão. Paralelizar exige decidir ordenação e concorrência. Persistir resultados intermediários melhora recuperação, mas acrescenta estado. Esses aspectos ficam registrados como forças de um ADR posterior.
 
 ## Estrutura de Projeto
 
-Uma implementação da capacidade de processamento pode separar o coordenador `Pipeline`, os filtros puros e os adaptadores de formato — que são os plugins do núcleo de leitura da figura 14. A árvore indica **responsabilidades**, não dependências automaticamente garantidas:
+Uma implementação da capacidade de processamento pode separar o coordenador `Pipeline`, os filtros puros e os adaptadores de formato — que são os plugins do núcleo de leitura da figura 14. A árvore indica **responsabilidades**. As dependências entre elas precisam de verificação própria:
 
 ```text
 processamento/
@@ -175,6 +175,6 @@ Uma árvore de diretórios não prova isolamento: teste imports proibidos e subs
 
 O ADR deste exemplo aceitaria pipes and filters para explicitar transformações e manteria uma implantação única. Registraria o custo de contratos intermediários, correlação e eventual controle de concorrência. A evidência inicial seria o teste de throughput e rejeição. O gatilho de revisão seria a entrada de uma etapa com escala ou disponibilidade muito diferente das demais.
 
-O exemplo demonstra o método sem depender do domínio hospitalar: começar pelo cenário, comparar alternativas, desenhar restrições, observar comportamento e declarar limites. Nada aqui foi inventado nesta página; tudo veio de [conceitos](conceitos.md) e de [padrões e decisões](padroes-e-decisoes.md).
+O exemplo demonstra o método sem depender do domínio hospitalar: começar pelo cenário, comparar alternativas, desenhar restrições, observar comportamento e declarar limites. Os conceitos usados nesta página vêm de [conceitos](conceitos.md) e de [padrões e decisões](padroes-e-decisoes.md).
 
 No [estudo de caso](estudo-de-caso.md) você percorre a mesma sequência produzindo os artefatos. Não copie os módulos desta página para lá: as forças da plataforma hospitalar são outras.

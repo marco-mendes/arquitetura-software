@@ -2,7 +2,7 @@
 
 ## O problema que a arquitetura precisa resolver
 
-Considere um hospital com agenda, elegibilidade, autorização e pedidos de exame. Operadora e laboratório são organizações independentes, com versões, disponibilidade e modelos próprios. A plataforma deve rastrear processos sem transformar a integração externa no seu modelo interno. Dados são sintéticos; o cenário representa forças de arquitetura, não informações reais.
+Considere um hospital com agenda, elegibilidade, autorização e pedidos de exame. Operadora e laboratório são organizações independentes, com versões, disponibilidade e modelos próprios. A plataforma deve rastrear processos sem transformar a integração externa no seu modelo interno. Os dados são sintéticos, e o cenário representa forças de arquitetura sem reproduzir informações reais de nenhuma organização.
 
 ```mermaid
 flowchart LR
@@ -79,15 +79,15 @@ sequenceDiagram
 
 *Figura 8 — A plataforma registra o pedido antes de consultar o laboratório e preserva o estado conhecido após um timeout. Fonte: curso.*
 
-**Leitura textual:** a plataforma cria protocolo antes da chamada externa; o adaptador traduz para SOAP/TISS e encontra timeout no laboratório; consulta posterior devolve estado conhecido, não decisão do laboratório.
+**Leitura textual:** a plataforma cria protocolo antes da chamada externa; o adaptador traduz para SOAP/TISS e encontra timeout no laboratório; a consulta posterior devolve o estado conhecido pela plataforma, sem apresentá-lo como decisão do laboratório.
 
 O mesmo formato — protocolo registrado antes da chamada externa, adaptador isolando a tradução, estado explícito em vez de decisão presumida — se aplica à operadora quando ela também exigir um protocolo diferente de REST/JSON; só muda o parceiro e o vocabulário traduzido.
 
-## Decisão 3: gateway é política de fronteira, ACL é proteção do domínio
+## Decisão 3: papéis do gateway e da ACL
 
 Um gateway pode centralizar TLS, roteamento, autenticação técnica, limites, correlação, métricas e, em casos justificados, composição de respostas. Ele não resolve diferenças semânticas entre a plataforma e o laboratório. Colocar a conversão TISS no gateway parece reduzir componentes, mas espalha decisões de domínio onde deveriam ficar apenas políticas técnicas.
 
-Pergunte se o mapeamento entre `matricula_plano` e identificador externo pertence à plataforma ou a uma operadora. A segunda resposta aponta para adaptador. Estado externo desconhecido deve permanecer explícito, nunca virar `negada` por conveniência de roteamento.
+Pergunte se o mapeamento entre `matricula_plano` e identificador externo pertence à plataforma ou a uma operadora. A segunda resposta aponta para adaptador. Um estado externo desconhecido deve permanecer explícito e não pode ser convertido em `negada` por conveniência de roteamento.
 
 ## Decisão 4: como avisar que um exame ficou pronto
 

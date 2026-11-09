@@ -13,7 +13,7 @@
   </defs>
   <rect width="1200" height="760" fill="#F2F6FB"/>
   <text x="600" y="66" text-anchor="middle" class="title">Arquiteturas de backend: comece pela pergunta</text>
-  <text x="600" y="98" text-anchor="middle" class="subtitle">Cada família orienta uma decisão diferente; elas podem coexistir.</text>
+  <text x="600" y="98" text-anchor="middle" class="subtitle">As quatro famílias orientam decisões diferentes e podem coexistir no mesmo sistema.</text>
 
   <g transform="translate(70 140)">
     <rect width="510" height="250" rx="18" fill="#FFFFFF" stroke="#5FC0D1" stroke-width="3"/>

@@ -179,4 +179,4 @@ Execute uma verificação reproduzível de implantação e recuperação. Aprese
 
 ### Conexão com o próximo encontro
 
-O ciclo de encontros termina, mas a baseline permanece evolutiva: riscos não resolvidos, gatilhos de revisão e próximos experimentos formam o plano de continuidade da arquitetura.
+Ao fim do ciclo de encontros, a baseline continua em evolução: riscos não resolvidos, gatilhos de revisão e próximos experimentos formam o plano de continuidade da arquitetura.

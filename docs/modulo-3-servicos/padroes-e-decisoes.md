@@ -25,11 +25,11 @@ Comece perguntando se há necessidade de implantação independente, escalabilid
 
 O padrão banco por serviço protege invariantes e evolução. Cada serviço decide schema, migrações e regras de escrita. Outro serviço não faz `SELECT`, `JOIN` ou `UPDATE` direto. A proteção deve ser concreta: credenciais distintas, permissões mínimas e testes arquiteturais.
 
-“Por serviço” descreve propriedade, não necessariamente uma máquina. Opções incluem schemas separados no mesmo PostgreSQL, bancos separados no mesmo servidor ou instâncias separadas. O isolamento cresce junto com custo operacional. O laboratório escolhe dois contêineres PostgreSQL e dois schemas homônimos para que a violação seja evidente.
+“Por serviço” descreve propriedade e não exige necessariamente uma máquina dedicada. Opções incluem schemas separados no mesmo PostgreSQL, bancos separados no mesmo servidor ou instâncias separadas. O isolamento cresce junto com custo operacional. O laboratório escolhe dois contêineres PostgreSQL e dois schemas homônimos para que a violação seja evidente.
 
 Consultas que atravessam limites podem ser resolvidas por composição síncrona, cópias orientadas a eventos, plataforma analítica ou modelo materializado. Cada alternativa troca frescor, disponibilidade, complexidade e custo. Não use acesso compartilhado como atalho silencioso.
 
-Quando necessidades de acesso diferem de modo comprovado, a persistência poliglota pode usar tecnologias distintas por proprietário. A questão não é “qual banco é moderno?”, mas qual mecanismo mantém os invariantes e a operação compreensíveis. Começar com uma tecnologia conhecida e registrar o sinal de revisão costuma ser mais reversível que multiplicar bancos sem uma necessidade mensurável.
+Quando necessidades de acesso diferem de modo comprovado, a persistência poliglota pode usar tecnologias distintas por proprietário. A questão a responder é qual mecanismo mantém os invariantes e a operação compreensíveis. Começar com uma tecnologia conhecida e registrar o sinal de revisão costuma ser mais reversível que multiplicar bancos sem uma necessidade mensurável.
 
 ## Consistência local e consistência entre serviços
 
@@ -41,20 +41,20 @@ Consistência forte é útil quando uma leitura precisa refletir a escrita mais 
 
 O teorema CAP, formulado por Eric Brewer, trata um armazenamento distribuído quando existe partição de comunicação. Consistência, nesse modelo, aproxima-se de uma visão única e atual; disponibilidade exige resposta de cada nó não falho; tolerância à partição reconhece mensagens perdidas ou atrasadas entre grupos. Em uma rede sujeita a partições, o sistema precisa decidir entre recusar ou atrasar operações para preservar consistência, ou responder aceitando possível divergência.
 
-Portanto, **CAP se torna uma decisão durante uma partição**, não uma classificação cotidiana em que um produto escolhe livremente duas letras. Fora da partição, latência e consistência ainda geram decisões descritas por outros modelos. Também não devemos usar CAP para justificar qualquer dado desatualizado em uma integração: é necessário especificar mecanismo e promessa.
+Portanto, **CAP se torna uma decisão durante uma partição** e não serve como classificação cotidiana em que um produto escolhe livremente duas letras. Fora da partição, latência e consistência ainda geram decisões descritas por outros modelos. Também não devemos usar CAP para justificar qualquer dado desatualizado em uma integração: é necessário especificar mecanismo e promessa.
 
-A leitura "escolha duas das três letras" falha justamente onde mais se confia nela. Num sistema distribuído real, a partição não é uma opção que a equipe descarta — ela é propriedade da rede, e vai acontecer. Por isso a combinação "consistência mais disponibilidade" não descreve um sistema distribuído que resolveu o problema: descreve um sistema que não é distribuído, ou que simplesmente deixa de responder quando o enlace cai. O que a equipe escolhe, de fato, é o comportamento durante a partição.
+A leitura "escolha duas das três letras" falha justamente onde mais se confia nela. Num sistema distribuído real, a partição é uma propriedade da rede que vai ocorrer, e a equipe não tem como descartá-la. Por isso a combinação "consistência mais disponibilidade" descreve um sistema que não é distribuído ou que simplesmente deixa de responder quando o enlace cai. O que a equipe escolhe, de fato, é o comportamento durante a partição.
 
 ### O que os armazenamentos conhecidos fazem durante uma partição
 
-A pergunta útil sobre um armazenamento não é "que duas letras ele tem", e sim "o que ele faz quando os nós param de se falar":
+A pergunta útil sobre um armazenamento é "o que ele faz quando os nós param de se falar":
 
 | Armazenamento | Comportamento durante a partição | O que isso custa |
 | --- | --- | --- |
 | Google Spanner | Recusa ou atrasa operações do lado que não consegue formar quórum, para preservar uma visão única e ordenada; usa relógios sincronizados globalmente (TrueTime) para ordenar transações com garantia temporal | Parte da disponibilidade: durante a partição, algumas requisições falham em vez de responder com dado incerto |
-| Amazon DynamoDB | Aceita escritas e reconcilia depois; consistência eventual é o comportamento padrão, com leitura fortemente consistente disponível como opção explícita | Divergência temporária, e a necessidade de resolver conflitos entre versões concorrentes |
+| Amazon DynamoDB | Aceita escritas e reconcilia depois; consistência eventual é o comportamento padrão, com leitura fortemente consistente disponível como opção explícita | Divergência temporária e necessidade de resolver conflitos entre versões concorrentes |
 | Apache Cassandra | Continua atendendo, com o nível de consistência ajustável por operação (quórum configurável na chamada) | A promessa muda de chamada para chamada, e a equipe precisa saber qual delas pediu |
-| MongoDB | Permite configurar a garantia, da escrita confirmada por maioria à leitura em réplica secundária possivelmente atrasada | A garantia efetiva depende da configuração escolhida, não do nome do produto |
+| MongoDB | Permite configurar a garantia, da escrita confirmada por maioria à leitura em réplica secundária possivelmente atrasada | A garantia efetiva depende da configuração escolhida em cada implantação |
 
 Nenhuma dessas linhas é recomendação. Elas mostram que a mesma decisão — o que fazer quando a rede falha — foi resolvida de formas diferentes, e que a resposta escolhida pelo fornecedor passa a ser uma restrição do seu desenho. Vale notar que o padrão de banco por serviço, visto acima, coloca essa decisão na mesa mesmo sem nenhum banco replicado globalmente: dados relacionados que vivem em serviços diferentes já levam tempo para se alinhar.
 
@@ -66,7 +66,7 @@ Se o sistema segue aceitando escritas durante a partição, ele admite que duas 
 - **tipos de dados que convergem por construção** (*CRDTs*): estruturas definidas de modo que a ordem de aplicação das operações não altere o resultado final. Servem bem para contadores, conjuntos e listas; não resolvem uma regra de negócio que precise julgar qual versão está correta;
 - **função de mesclagem do domínio**: a própria aplicação decide, com regra explícita — por exemplo, preferir a alteração registrada na unidade onde o paciente foi atendido. É a mais trabalhosa e a única capaz de acertar quando o critério é clínico ou contratual.
 
-Daí a frase que vale guardar: consistência eventual não é bagunça eventual. Ela é uma promessa com prazo e com regras — identidade, ordem quando necessária, idempotência, repetição e reconciliação, como visto acima —, não uma licença para réplicas divergirem sem plano.
+Consistência eventual é uma promessa com prazo e com regras: identidade, ordem quando necessária, idempotência, repetição e reconciliação, como visto acima. Sem essas regras, as réplicas divergem sem plano de convergência.
 
 No estudo de caso deste módulo, a equipe não precisou de nenhuma dessas estratégias para decidir elegibilidade: ao reunir as regras fortemente relacionadas num único macrosserviço, recuperou uma transação local e, com ela, consistência forte dentro do processo. A consistência eventual ficou onde a defasagem era aceitável e observável — na projeção do painel gerencial.
 
@@ -117,8 +117,8 @@ A escolha entre as duas não é de estilo. A coreografia distribui a lógica e d
 | Ganho | Custo correspondente |
 | --- | --- |
 | Cada serviço mantém o próprio banco e a própria autoridade, sem transação distribuída | É preciso escrever e testar uma compensação de negócio para cada passo — e ela também pode falhar |
-| O fluxo continua avançando mesmo com um participante lento | Existe uma janela em que o estado é legítimo, mas intermediário, e alguém pode observá-lo |
-| Passos evoluem e escalam de forma independente | Diagnosticar um fluxo travado exige correlação entre serviços: sem identificador propagado e trilha de auditoria, a investigação vira arqueologia |
+| O fluxo continua avançando mesmo com um participante lento | Existe uma janela em que o estado intermediário é legítimo e pode ser observado por outros participantes |
+| Passos evoluem e escalam de forma independente | Diagnosticar um fluxo travado exige correlação entre serviços: sem identificador propagado e trilha de auditoria, a investigação exige reconstruir o fluxo a partir de logs dispersos |
 
 No caso hospitalar, uma SAGA poderia coordenar reservar agenda, autorizar procedimento e preparar recurso. Ela não é necessária para o laboratório de dois passos: Exames consulta Elegibilidade antes de gravar localmente. Introduzir um orquestrador ali aumentaria componentes sem demonstrar benefício. O critério é o mesmo do resto do módulo: a SAGA se justifica quando a mudança atravessa mais de um dono de dados e não há como reuni-los. Se a alternativa for consolidar os passos num único serviço com transação local — como fez o estudo de caso —, ela é mais barata e deve ser avaliada primeiro.
 
@@ -138,7 +138,7 @@ O custo inclui versões de eventos, reconstrução, projeções, privacidade e c
 
 ## Chassi e estrangulador: evoluir sem reescrever no escuro
 
-Um **chassi arquitetural** reúne capacidades transversais repetidas — configuração, logs, métricas, autenticação, tratamento de erro e entrega — de modo que equipes possam iniciar serviços com guardas coerentes. Ele deve oferecer padrões e bibliotecas, não um núcleo que concentre toda regra de negócio; quando cada mudança precisa passar pelo chassi, ele vira um gargalo.
+Um **chassi arquitetural** reúne capacidades transversais repetidas — configuração, logs, métricas, autenticação, tratamento de erro e entrega — de modo que equipes possam iniciar serviços com guardas coerentes. Ele deve oferecer padrões e bibliotecas e não deve concentrar a regra de negócio dos serviços. Quando cada mudança precisa passar pelo chassi, ele se torna um gargalo.
 
 O padrão **estrangulador** (strangler) encaminha gradualmente partes de uma interface antiga para uma implementação nova, preservando o contrato enquanto consumidores migram. Use-o para reduzir risco de substituição; mantenha uma única fonte de verdade por etapa e defina data e evidência para remover o caminho antigo. Sem esses cuidados, o roteador apenas prolonga dois sistemas divergentes.
 

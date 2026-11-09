@@ -160,15 +160,25 @@ Decompor as forças de uma integração antes de comparar estruturas, e dizer o 
 
 **Situação**
 
-Uma rede de laboratórios recebe resultados de dezoito parceiros numa central. Cada parceiro envia no formato que já usa: uns mandam JSON, outros CSV, outros XML. São quatro milhões de registros por dia, com pico de seiscentos por segundo no fim da tarde, quando os laboratórios fecham o expediente.
+Uma rede de laboratórios recebe resultados de dezoito parceiros numa central. Hoje o recebimento, a conversão e a gravação acontecem num programa único que ninguém quer mais tocar, e a rede pediu uma análise antes de decidir a nova estrutura.
 
-O mesmo registro às vezes chega duas vezes, e às vezes chega horas atrasado. Os parceiros mudam o layout do arquivo cerca de uma vez por mês, quase sempre sem avisar antes.
+Seis fatos foram apurados na central, e cada um deles é também uma exigência que a nova estrutura precisa atender:
 
-Quando a central rejeita um registro, ela precisa dizer de qual parceiro veio, em que versão de layout, qual transformação falhou e por quê. Um lote precisa ser aceito em até vinte minutos.
+1. Cada parceiro envia no formato que já usa, e os dezoito se dividem entre JSON, CSV e XML.
+2. A central recebe quatro milhões de registros por dia, com pico de seiscentos por segundo no fim da tarde, quando os laboratórios fecham o expediente.
+3. O mesmo registro às vezes chega duas vezes, e às vezes chega horas atrasado.
+4. Os parceiros mudam o layout do arquivo cerca de uma vez por mês, quase sempre sem avisar antes.
+5. Cada rejeição precisa informar de qual parceiro veio o registro, em que versão de layout ele chegou, qual transformação falhou e o motivo da falha.
+6. Um lote precisa ser aceito em até vinte minutos depois da chegada.
 
-Hoje tudo isso acontece num programa único que ninguém quer mais tocar.
+As quatro estruturas em avaliação:
 
-Os seis fatos, as quatro estruturas e as exigências de rejeição e de prazo, todos descritos nesta página.
+| Estrutura | O que muda na central |
+| --- | --- |
+| **A. Camadas** | A recepção vira uma camada de entrada com um leitor por formato. A camada de aplicação coordena o lote, a camada de domínio valida e normaliza o registro, e a camada de dados grava resultados e rejeições. |
+| **B. Pipes and Filters** | Cada registro passa por uma sequência de filtros independentes: leitura do formato, validação do layout pela versão, eliminação de repetidos, normalização e gravação. Cada filtro registra o que recebeu e o que rejeitou, e as rejeições seguem por um pipe próprio. |
+| **C. Microkernel** | Um núcleo estável cuida do recebimento, da eliminação de repetidos e da gravação. Cada parceiro tem um plugin de leitura que declara formato e versão de layout por um contrato fixo, e uma mudança de layout vira uma nova versão do plugin. |
+| **D. Monólito modular** | A central vira uma única implantação com os módulos Recepção, Normalização, Conciliação e Rejeições. Cada módulo tem API pública e dados próprios, e a fronteira entre eles é verificada na integração contínua. |
 
 **Seu papel**
 
@@ -195,7 +205,7 @@ Julgar duas propostas concorrentes com critérios declarados antes da escolha, d
 
 **Situação**
 
-Uma secretaria estadual consolida a disponibilidade de leitos de 45 hospitais num painel público. Alguns hospitais enviam JSON a cada trinta segundos; outros enviam CSV a cada cinco minutos. No horário de maior movimento chegam novecentas atualizações por minuto.
+Uma secretaria estadual consolida a disponibilidade de leitos de 45 hospitais num painel público, alimentado por hospitais que enviam JSON a cada trinta segundos e por hospitais que enviam CSV a cada cinco minutos. No horário de maior movimento, o painel recebe novecentas atualizações por minuto vindas dos 45 hospitais.
 
 Os dados brigam entre si. O mesmo hospital às vezes manda a mesma atualização duas vezes, às vezes manda com atraso, e às vezes duas fontes do mesmo hospital discordam sobre quantos leitos estão livres. O painel precisa refletir a realidade em até sessenta segundos, e a auditoria precisa saber, para cada número exibido, de qual fonte ele veio, em que versão, que transformação sofreu e como o desempate foi feito.
 
@@ -209,7 +219,24 @@ Um caminho comum para todos os hospitais, com conectores finos na entrada e um m
 
 Um coletor por hospital, cada um com a própria regra de leitura e de desempate, gravando num repositório comum já no formato final.
 
-As duas propostas, a amostra descrita e a lista do que foi medido e do que não foi, todos nesta página.
+#### Amostra usada pelas duas equipes
+
+As duas equipes processaram a mesma amostra num protótipo. A amostra reúne 2.000 atualizações reais de doze hospitais, sete que enviam JSON e cinco que enviam CSV, colhidas num dia comum entre 9h e 11h, fora do horário de maior movimento. Nessa amostra há 50 atualizações repetidas, 20 atualizações que chegaram com mais de sessenta segundos de atraso e 5 contradições entre duas fontes do mesmo hospital.
+
+#### O que foi medido
+
+1. As duas propostas descartaram as 50 atualizações repetidas.
+2. A Proposta A resolveu as 5 contradições com a mesma regra de desempate. A Proposta B resolveu as 5 contradições com três regras diferentes, uma para cada coletor envolvido.
+3. O tempo entre a chegada da atualização e a exibição no painel teve mediana de 8 segundos na Proposta A e de 5 segundos na Proposta B.
+4. As duas propostas gravaram fonte, versão, transformação e desempate para as 2.000 atualizações. A Proposta A gravou os quatro campos num registro único, e a Proposta B gravou um registro por coletor, cada um com formato próprio.
+
+#### O que não foi medido
+
+1. O comportamento das duas propostas no pico de novecentas atualizações por minuto, com os 45 hospitais enviando ao mesmo tempo.
+2. O esforço para incluir um hospital novo ou para acomodar a mudança de formato de um hospital já incluído.
+3. O efeito sobre o painel quando o caminho comum da Proposta A para, ou quando um coletor da Proposta B para.
+4. O tratamento de uma atualização atrasada que chega depois de uma atualização mais recente do mesmo hospital, situação que não ocorreu na amostra.
+5. O custo de operação e o número de pessoas necessárias para manter cada proposta.
 
 **Seu papel**
 
@@ -219,7 +246,7 @@ Você emite o parecer que o comitê vai ler. Pode aprovar uma proposta, recusar 
 
 Escreva em texto corrido, uma resposta por item.
 
-1. Declare de três a cinco critérios de julgamento e diga qual deles pesa mais para uma secretaria de saúde. Justifique o peso pelo risco de errar, e não por gosto técnico.
+1. Declare de três a cinco critérios de julgamento e diga qual deles pesa mais para uma secretaria de saúde. Justifique o peso pelo risco de errar. Preferência técnica pessoal não conta como justificativa.
 2. Avalie as duas propostas contra os seus critérios, um parágrafo por proposta, dizendo o que cada uma protege e o que ela expõe.
 3. Para cada critério, diga se a evidência disponível permite julgar ou se falta medida. Quando faltar, nomeie a medida que falta.
 4. Emita o parecer: aprovar uma, recusar as duas ou adiar. Se adiar, escreva a condição concreta que encerraria a espera.
@@ -236,13 +263,32 @@ Propor a estrutura inicial de uma plataforma nova, escolhendo entre três esboç
 
 **Situação**
 
-Um hospital de médio porte vai construir uma plataforma digital do zero. Na primeira fase, três coisas precisam funcionar: cadastrar o paciente, marcar um procedimento e emitir o comprovante que o paciente leva para casa.
+Um hospital de médio porte vai construir uma plataforma digital do zero e pediu uma proposta de estrutura inicial que a equipe interna possa construir e manter.
 
-O hospital tem seis pessoas na equipe de desenvolvimento, nenhuma com experiência em sistemas distribuídos. A diretoria quer a primeira versão no ar em quatro meses. O sistema atende cerca de duzentos atendimentos por dia, sem previsão de crescer nos próximos dois anos.
+Na primeira fase, três funcionalidades precisam funcionar:
 
-Duas coisas o hospital já sabe que vai querer depois, e não agora: integração com laboratórios externos e um aplicativo para o paciente.
+1. Cadastrar o paciente.
+2. Marcar um procedimento.
+3. Emitir o comprovante que o paciente leva para casa.
 
-As três funcionalidades da primeira fase, as restrições de equipe, prazo e volume, os dois planos futuros declarados e os três esboços, todos nesta página.
+O hospital declarou três restrições:
+
+1. Equipe: seis pessoas desenvolvem a plataforma, e nenhuma delas tem experiência em sistemas distribuídos.
+2. Prazo: a diretoria quer a primeira versão no ar em quatro meses.
+3. Volume: a plataforma atende cerca de duzentos atendimentos por dia, sem previsão de crescer nos próximos dois anos.
+
+O hospital também declarou dois planos para fases posteriores à primeira:
+
+1. Integração com laboratórios externos.
+2. Um aplicativo para o paciente.
+
+Os três esboços em avaliação:
+
+| Esboço | Como a plataforma fica organizada |
+| --- | --- |
+| **A. Camadas** | Uma única aplicação com as camadas de apresentação, aplicação, domínio e dados, implantada uma vez e ligada a um banco. Cadastro, marcação e comprovante são serviços de domínio dentro da mesma camada de negócio e compartilham o mesmo modelo de dados. |
+| **B. Monólito modular** | Uma única implantação com os módulos Cadastro, Agenda e Comprovantes. Cada módulo tem API pública e tabelas próprias, e uma ferramenta como o import-linter verifica as fronteiras entre eles na integração contínua. |
+| **C. Microkernel** | Um núcleo estável executa cadastro, marcação e comprovante e mantém um registro de extensões. Os canais e as integrações, como o futuro aplicativo e os futuros laboratórios, entram como plugins que se declaram ao núcleo por um contrato fixo, definido já na primeira fase. |
 
 **Seu papel**
 

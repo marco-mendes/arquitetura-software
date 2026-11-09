@@ -6,7 +6,7 @@ Dividir um sistema é escolher o que deve permanecer junto e o que pode evoluir 
 
 Uma **capacidade de negócio** descreve algo que a organização sabe fazer para produzir um resultado, independentemente da tela ou tecnologia atual. “Verificar elegibilidade”, “agendar atendimento” e “solicitar exame” são capacidades. “Salvar no PostgreSQL” e “enviar JSON” são mecanismos técnicos.
 
-Capacidades ajudam a evitar serviços recortados por camadas como “serviço de controladores” ou “serviço de banco”. Um recorte útil reúne comportamento, regras e informação necessários a um resultado. O nome costuma ser estável mesmo quando o processo muda. Ainda assim, um mapa de capacidades é uma lente estratégica, não um gerador automático de executáveis. Uma capacidade ampla pode conter vários contextos; várias capacidades pequenas podem coexistir no mesmo contexto.
+Capacidades ajudam a evitar serviços recortados por camadas como “serviço de controladores” ou “serviço de banco”. Um recorte útil reúne comportamento, regras e informação necessários a um resultado. O nome costuma ser estável mesmo quando o processo muda. Ainda assim, um mapa de capacidades serve à análise estratégica e não define automaticamente quais executáveis devem existir. Uma capacidade ampla pode conter vários contextos; várias capacidades pequenas podem coexistir no mesmo contexto.
 
 No caso hospitalar, elegibilidade interpreta vínculo, vigência e regras da operadora. Exames conhece códigos, solicitações e estados do fluxo clínico. O segundo precisa da resposta do primeiro, mas não precisa conhecer tabelas, algoritmos ou documentos internos usados para produzi-la.
 
@@ -24,11 +24,11 @@ Um bom limite permite responder:
 - qual contrato é oferecido a consumidores;
 - quais mudanças deveriam ocorrer sem coordenação externa.
 
-![Três capacidades de negócio — Elegibilidade, Exames e Agendamento — cada uma com seu próprio vocabulário, regras e dados autoritativos; setas de tradução intencional ligam os contextos, nunca tabelas compartilhadas.](../assets/images/m03-capacidades-contextos.png)
+![Três capacidades de negócio — Elegibilidade, Exames e Agendamento — cada uma com seu próprio vocabulário, regras e dados autoritativos; setas de tradução intencional ligam os contextos, sem tabelas compartilhadas.](../assets/images/m03-capacidades-contextos.png)
 
 *Figura 1 — De capacidades de negócio a bounded contexts. Fonte: curso.*
 
-**Leitura textual da figura:** Elegibilidade, Exames e Agendamento são capacidades de negócio, cada uma resumida por seu vocabulário central (vínculo/vigência/regras; solicitação/códigos/estados; horários/profissionais/confirmação). Cada uma também é um bounded context: vocabulário próprio, regras próprias e dados autoritativos próprios. Entre contextos vizinhos existe apenas tradução intencional, nunca uma tabela compartilhada. Na base, a figura reforça que capacidade de negócio não é tecnologia: JSON, PostgreSQL e um controller são mecanismos, não o resultado que a organização entrega.
+**Leitura textual da figura:** Elegibilidade, Exames e Agendamento são capacidades de negócio, cada uma resumida por seu vocabulário central (vínculo/vigência/regras; solicitação/códigos/estados; horários/profissionais/confirmação). Cada uma também é um bounded context: vocabulário próprio, regras próprias e dados autoritativos próprios. Entre contextos vizinhos existe apenas tradução intencional, sem tabela compartilhada. Na base, a figura reforça que capacidade de negócio não é tecnologia: JSON, PostgreSQL e um controller são mecanismos e não constituem o resultado que a organização entrega.
 
 ## Coesão
 
@@ -52,7 +52,7 @@ Uma dependência explícita e estável pode ser saudável. O problema é o acopl
 
 ![À esquerda, três regras de Elegibilidade (vigência, plano, regras) com alta coesão porque mudam pelo mesmo motivo. À direita, Exames com quatro setas de acoplamento — contrato, temporal, dados e implantação — apontando para Elegibilidade.](../assets/images/m03-coesao-acoplamento.png)
 
-*Figura 2 — Coesão dentro de uma capacidade, acoplamento entre capacidades. Fonte: curso.*
+*Figura 2 — Coesão dentro de uma capacidade e acoplamento entre capacidades. Fonte: curso.*
 
 **Leitura textual da figura:** dentro de Elegibilidade, vigência, plano e regras têm alta coesão porque mudam pelo mesmo motivo. Entre Exames e Elegibilidade existem quatro formas de acoplamento — de contrato, temporal, de dados e de implantação —, cada uma representada por uma seta própria. A figura fecha com um espectro entre "coeso" e "fragmentado": uma dependência explícita e estável pode ser saudável; o risco cresce quando o desenho se aproxima do extremo fragmentado, com muitos processos pequenos dependendo uns dos outros.
 
@@ -70,9 +70,9 @@ Extrair cedo demais adiciona latência, serialização, autenticação entre ser
 
 ## Serviço e microsserviço
 
-“Serviço” é uma unidade que oferece capacidades por um contrato. Pode viver no mesmo processo ou em outro. Um **microsserviço** é uma unidade implantável de maneira independente, alinhada a uma responsabilidade de negócio e dona de seu estado. “Micro” não fornece um limite de linhas ou pessoas. O sinal relevante é autonomia com coesão, não tamanho arbitrário.
+“Serviço” é uma unidade que oferece capacidades por um contrato. Pode viver no mesmo processo ou em outro. Um **microsserviço** é uma unidade implantável de maneira independente, alinhada a uma responsabilidade de negócio e dona de seu estado. “Micro” não fornece um limite de linhas ou pessoas. O sinal relevante é a autonomia com coesão, e um limite arbitrário de tamanho não serve de critério.
 
-Independência é uma propriedade exigente. Se toda alteração requer publicação coordenada, se vários serviços escrevem o mesmo banco ou se um fluxo só funciona quando dez respostas chegam, a topologia é distribuída, mas a autonomia é baixa. Equipes podem acabar com um monólito distribuído: custos remotos sem benefícios de isolamento.
+Independência é uma propriedade exigente. Se toda alteração requer publicação coordenada, se vários serviços escrevem o mesmo banco ou se um fluxo só funciona quando dez respostas chegam, a topologia é distribuída, mas a autonomia é baixa. Equipes podem chegar a um monólito distribuído, que acumula os custos da comunicação remota sem obter os benefícios do isolamento.
 
 ## Propriedade dos dados
 
@@ -100,4 +100,4 @@ Em uma chamada síncrona, o consumidor espera a resposta. É simples para fluxos
 
 Uma **falha parcial** ocorre quando uma parte distribuída funciona e outra não. Exames pode estar saudável para consultar seu banco enquanto não consegue aceitar nova solicitação porque Elegibilidade parou. Retornar `503 Service Unavailable` com `dependencia_indisponivel` torna essa condição observável. Devolver `500` genérico ou registrar como se a solicitação tivesse sido concluída esconderia a semântica.
 
-Timeouts limitam espera; repetição pode ajudar falhas transitórias, mas amplia carga e exige idempotência; circuit breaker interrompe tentativas quando a dependência está instável; fallback precisa ser válido para o negócio, não apenas tecnicamente conveniente. No exemplo clínico, presumir elegibilidade positiva seria perigoso. Falhar de forma explícita é a decisão didática.
+Timeouts limitam espera; repetição pode ajudar falhas transitórias, mas amplia carga e exige idempotência; circuit breaker interrompe tentativas quando a dependência está instável; fallback precisa ser válido para o negócio além de tecnicamente conveniente. No exemplo clínico, presumir elegibilidade positiva seria perigoso. Falhar de forma explícita é a decisão didática.

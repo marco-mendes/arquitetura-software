@@ -40,7 +40,7 @@ Este roteiro usa os quatro episódios acima como matéria-prima. Siga a ordem: c
 
 **Passo 3 — Diagnostique o incidente de duplicidade sem olhar a resposta do texto.** Antes de reler a seção do incidente, escreva sua própria hipótese: o que a dupla observação de `processed_events` e `billing_effects` revela que uma única métrica de contagem de mensagens não revelaria? Só depois confira contra o texto.
 
-**Passo 4 — Avalie a evolução incompatível pela raiz, não pelo sintoma.** O sintoma foi a mensagem na DLQ. A raiz foi um contrato alterado sem revisão cruzada entre times. Proponha um mecanismo, ferramenta ou processo, capaz de pegar essa mudança antes do deploy chegar à fila de produção.
+**Passo 4 — Avalie a causa raiz da evolução incompatível.** O sintoma foi a mensagem na DLQ. A raiz foi um contrato alterado sem revisão cruzada entre times. Proponha um mecanismo, ferramenta ou processo, capaz de pegar essa mudança antes do deploy chegar à fila de produção.
 
 **Passo 5 — Redija o gatilho de revisão para Kafka.** Use o pedido de Auditoria como âncora e escreva, em uma frase, a condição observável (não a intuição) que deveria abrir a discussão de migrar Auditoria para um log com retenção, mantendo Faturamento onde está.
 

@@ -1,12 +1,12 @@
 # Conceitos: decisões que podem ser conferidas
 
-## Governança, não burocracia
+## Governança de decisões repetidas
 
-Uma arquitetura distribuída cria decisões repetidas: quem publica uma API, quem pode alterá-la, quanto tráfego ela tolera, onde guardar evidência de erro e qual indisponibilidade é aceitável. **Governança** organiza essas decisões para que não dependam de memória individual. A forma mínima não é um comitê grande; é um acordo curto, acessível e verificável. Uma política de rota, por exemplo, deve ter escopo, motivação, proprietário, mecanismo e evidência. Se só existe em uma apresentação, ela não governa o comportamento em execução.
+Uma arquitetura distribuída cria decisões repetidas: quem publica uma API, quem pode alterá-la, quanto tráfego ela tolera, onde guardar evidência de erro e qual indisponibilidade é aceitável. **Governança** organiza essas decisões para que não dependam de memória individual. A forma mínima de governança é um acordo curto, acessível e verificável, sem necessidade de um comitê grande. Uma política de rota, por exemplo, deve ter escopo, motivação, proprietário, mecanismo e evidência. Se só existe em uma apresentação, ela não governa o comportamento em execução.
 
-Há dois tempos complementares. Em **design-time**, equipes criam e revisam contratos, ADRs, convenções de versão, catálogo e ameaças. A pergunta é “o que será permitido e por quê?”. Em **runtime**, infraestrutura e código aplicam controles e emitem sinais. A pergunta é “o sistema fez o que foi decidido?”. Uma revisão de OpenAPI ou uma convenção de nomes pertence ao primeiro tempo; um `429` reproduzível e um trace consultável pertencem ao segundo. Um não substitui o outro: a observação sem intenção vira ruído, e a intenção sem evidência vira desejo. O **versionamento** liga os dois tempos: contrato publicado, consumidores avisados, período de depreciação e evidência de uso antes da retirada.
+Há dois tempos complementares. Em **design-time**, equipes criam e revisam contratos, ADRs, convenções de versão, catálogo e ameaças. A pergunta é “o que será permitido e por quê?”. Em **runtime**, infraestrutura e código aplicam controles e emitem sinais. A pergunta é “o sistema fez o que foi decidido?”. Uma revisão de OpenAPI ou uma convenção de nomes pertence ao primeiro tempo; um `429` reproduzível e um trace consultável pertencem ao segundo. Os dois tempos são necessários, porque sinais coletados sem uma intenção declarada não indicam o que conferir e uma intenção declarada sem sinais em execução não pode ser confirmada. O **versionamento** liga os dois tempos: contrato publicado, consumidores avisados, período de depreciação e evidência de uso antes da retirada.
 
-O catálogo de serviços evita que uma equipe descubra uma API por tentativa. Para cada capacidade, registre nome orientado ao negócio, dono, consumidores conhecidos, contrato publicado, versão, dados sob responsabilidade, canal de suporte, dependências e SLO. **Ownership** não significa que um time recebe culpa automática; significa que há alguém com autoridade e contexto para priorizar correção, evolução e retirada. Também informa quem aprova uma mudança incompatível e quem responde pelo dado.
+O catálogo de serviços evita que uma equipe descubra uma API por tentativa. Para cada capacidade, registre nome orientado ao negócio, dono, consumidores conhecidos, contrato publicado, versão, dados sob responsabilidade, canal de suporte, dependências e SLO. **Ownership** significa que há alguém com autoridade e contexto para priorizar correção, evolução e retirada, sem atribuir culpa automática ao time. Também informa quem aprova uma mudança incompatível e quem responde pelo dado.
 
 ## Política como hipótese executável
 
@@ -32,7 +32,7 @@ flowchart TB
 
 **Leitura textual:** contratos e catálogo orientam a política; gateway e serviço aplicam partes distintas e geram sinais para revisão.
 
-## Quatro sinais, quatro perguntas
+## Logs, métricas, traces e SLO
 
 ![Governança observável: uma requisição atravessa gateway com política, recebe identificador de correlação, chega ao serviço e produz logs estruturados, traces e uma medida de limite.](../assets/images/m04-governanca-observavel.png)
 

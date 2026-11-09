@@ -148,7 +148,11 @@ Formar hipóteses sobre um incidente a partir dos sinais disponíveis, sem trans
 
 Na terça-feira à tarde, a recepção do hospital reportou que a consulta de elegibilidade estava falhando "às vezes". Ninguém soube dizer com que frequência.
 
-Três lugares registram alguma coisa. O gateway de borda mostra respostas `502` em cerca de dois por cento das chamadas daquele período. O serviço de Elegibilidade registra erros de conexão com o banco, sem carimbo de tempo padronizado. O Jaeger mostra traces, e boa parte deles aparece com nomes de operação diferentes para o que parece ser a mesma rota.
+Três registros guardam alguma coisa sobre aquele período:
+
+- O log do gateway de borda mostra respostas `502` em cerca de dois por cento das chamadas.
+- O log do serviço de Elegibilidade mostra erros de conexão com o banco, sem carimbo de tempo padronizado.
+- O Jaeger mostra traces, e boa parte deles aparece com nomes de operação diferentes para o que parece ser a mesma rota.
 
 O painel de latência média do gateway não mudou nada durante a tarde inteira.
 
@@ -161,7 +165,7 @@ Quatro fatos valem para a análise:
 3. Os traces existem, e os nomes de operação variam para a mesma rota.
 4. A latência média do gateway ficou estável do começo ao fim do período.
 
-Os quatro fatos, a descrição dos três registros e a ausência de identificador comum, todos nesta página.
+Os quatro fatos, a descrição dos três registros e a ausência de identificador comum estão nesta página.
 
 **Seu papel**
 
@@ -194,16 +198,18 @@ Um portal parceiro passou a chamar a API de elegibilidade do hospital vinte veze
 
 Durante essas rajadas, o atendimento presencial do próprio hospital fica lento, porque usa a mesma API.
 
-Há uma complicação. Vários hospitais da rede saem pelo mesmo proxy, e portanto pelo mesmo endereço de origem visto pelo gateway. Distinguir quem é quem pelo endereço de rede não funciona.
+Vários hospitais da rede saem pelo mesmo proxy e, portanto, pelo mesmo endereço de origem visto pelo gateway, o que impede distinguir um hospital do outro pelo endereço de rede.
 
 O parceiro tem contrato assinado e não pode simplesmente ser bloqueado.
 
-Quatro fatos valem para a decisão:
+Seis fatos valem para a decisão:
 
-1. Capacidade atual de oito chamadas por segundo; o parceiro pede vinte durante cinco minutos.
+1. A capacidade atual é de oito chamadas por segundo, e o parceiro envia vinte por segundo durante cinco minutos.
 2. O atendimento presencial usa a mesma API e degrada junto.
 3. Vários hospitais compartilham o mesmo endereço de origem no gateway.
 4. Existe contrato com o parceiro, e ele precisa continuar sendo atendido.
+5. O gateway já identifica o portal parceiro e o atendimento presencial por credencial de cliente própria, mas os outros hospitais da rede ainda chamam a API sem credencial.
+6. A infraestrutura permite multiplicar as instâncias do serviço em menos de um dia, e o banco de elegibilidade nunca foi testado acima de quinze chamadas por segundo.
 
 Quatro políticas estão sobre a mesa:
 
@@ -223,7 +229,7 @@ Fila com espera: as chamadas acima da capacidade aguardam até dois segundos ant
 
 Nenhum limite, e aumento da capacidade do serviço para trinta chamadas por segundo.
 
-Os quatro fatos, a descrição das quatro políticas e o contrato com o parceiro, todos nesta página.
+Os seis fatos e a descrição das quatro políticas estão nesta página.
 
 **Seu papel**
 
@@ -252,15 +258,16 @@ Propor o conjunto mínimo de governança para uma capacidade que nasce agora, es
 
 **Situação**
 
-O hospital vai lançar a capacidade de Agendamento como serviço próprio, com equipe própria. Ela consulta Elegibilidade, reserva o horário e avisa Preparo de Sala, que pertence a outra equipe.
+O hospital vai lançar a capacidade de Agendamento como serviço próprio, com equipe própria. A diretoria aprovou o serviço novo com uma condição: ele não pode nascer com o mesmo problema dos seis serviços que já estão no ar.
 
-A API de Agendamento será pública para dois parceiros externos desde o primeiro dia.
+Seis fatos foram apurados no hospital:
 
-O hospital já tem seis serviços no ar, e nenhum deles tem dono declarado por escrito. Quando algo quebra, a descoberta de quem responde leva em média quarenta minutos.
-
-A diretoria aprovou o serviço novo com uma condição: ele não pode nascer com o mesmo problema dos outros seis.
-
-A equipe de plataforma tem duas pessoas e já opera um gateway em produção.
+1. Agendamento consulta Elegibilidade, reserva o horário e avisa Preparo de Sala, que pertence a outra equipe.
+2. A API de Agendamento será pública para dois parceiros externos desde o primeiro dia.
+3. Nenhum dos seis serviços no ar tem dono declarado por escrito, e a descoberta de quem responde por uma falha leva em média quarenta minutos.
+4. A equipe de plataforma tem duas pessoas e opera um gateway em produção, que já aplica limite de tráfego e injeta identificador de correlação nas chamadas que entram.
+5. Os serviços enviam traces para um Jaeger compartilhado, mas Preparo de Sala ainda descarta o identificador de correlação que recebe.
+6. A esteira de integração compila e testa cada serviço sem nenhuma etapa que compare a implementação com o contrato publicado, e o hospital não tem registro de decisão arquitetural escrito nem sinal de saúde publicado por serviço.
 
 Três níveis de exigência estão sobre a mesa:
 
@@ -276,11 +283,11 @@ O nível A, mais identificador de correlação atravessando a cadeia e um limite
 
 O nível B, mais registro de decisão arquitetural obrigatório, verificação automática do contrato na esteira e sinal de saúde publicado por serviço.
 
-O histórico dos seis serviços, o tamanho da equipe de plataforma, a exposição externa desde o primeiro dia e os três níveis, todos nesta página.
+Os seis fatos e os três níveis estão nesta página.
 
 **Seu papel**
 
-Você propõe o pacote de governança que acompanha o lançamento. Exigir demais atrasa o serviço; exigir de menos repete o problema que a diretoria mandou evitar.
+Você propõe o pacote de governança que acompanha o lançamento. O pacote precisa equilibrar dois riscos: exigências em excesso atrasam o lançamento, e exigências insuficientes repetem o problema que a diretoria mandou evitar.
 
 **O que fazer**
 
@@ -370,7 +377,7 @@ O que significa ownership de um serviço no catálogo?
 No laboratório, o Kong roda em modo DB-less. O que isso significa?
 
 - (a) Que o Kong não encaminha requisições para serviços com banco de dados.
-- (b) Que a configuração vem de um arquivo declarativo, kong.yml, e não de um banco ou de um painel.
+- (b) Que a configuração vem de um arquivo declarativo, kong.yml, sem banco de configuração nem painel.
 - (c) Que o Kong guarda os logs apenas em memória.
 - (d) Que o serviço de Elegibilidade não usa banco de dados.
 
@@ -400,7 +407,7 @@ O rate limiting foi configurado em três chamadas por segundo por origem. Um col
 
 - (a) Que a afirmação é correta, porque o limite impede acessos indevidos.
 - (b) Que o limite deve ser reduzido para uma chamada por segundo para funcionar como autorização.
-- (c) Que rate limiting é uma proteção contra abuso, não uma autorização, e não decide se uma pessoa tem direito a um recurso.
+- (c) Que rate limiting é uma proteção contra abuso e não decide se uma pessoa tem direito a um recurso.
 - (d) Que a autorização deve ser feita pelo Jaeger.
 
 #### Questão 12 [Média]

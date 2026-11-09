@@ -4,7 +4,7 @@ Para o vocabulário de leitura de diagramas, decisões, restrições e cenários
 
 ## Estilos arquiteturais
 
-Um **estilo arquitetural** é um jeito conhecido de organizar as partes de um sistema — as peças (*elementos*), as ligações entre elas (*conectores*) e as regras sobre o que pode depender de quê (*restrições*). Pense nos estilos de planta de casa: sobrado, casa térrea, loft. Cada um arruma os mesmos cômodos de um jeito, com vantagens e limites já conhecidos. O estilo dá vocabulário, não receita: duas soluções em camadas podem usar tecnologias diferentes e ainda assim organizar as dependências por responsabilidade.
+Um **estilo arquitetural** é um jeito conhecido de organizar as partes de um sistema — as peças (*elementos*), as ligações entre elas (*conectores*) e as regras sobre o que pode depender de quê (*restrições*). Pense nos estilos de planta de casa: sobrado, casa térrea, loft. Cada um arruma os mesmos cômodos de um jeito, com vantagens e limites já conhecidos. O estilo oferece vocabulário compartilhado e deixa a implementação em aberto: duas soluções em camadas podem usar tecnologias diferentes e ainda assim organizar as dependências por responsabilidade.
 
 ## Um mapa antes da escolha
 
@@ -61,7 +61,7 @@ Antes de comparar soluções, descubra que problema você tem. Este mapa não é
 
 **Problema:** disponibilizar a solução com capacidade, recuperação e entrega compatíveis com suas necessidades. 
 
-**Ideia de organização:** tratar o ambiente de execução como decisão arquitetural, e não como detalhe posterior. 
+**Ideia de organização:** tratar o ambiente de execução como decisão arquitetural desde o início do projeto. 
 
 **Estilos abrangidos:** nuvem, contêineres, orquestração e serverless, aprofundados na [Unidade 6](../modulo-6-nuvem/index.md). 
 
@@ -69,14 +69,14 @@ Antes de comparar soluções, descubra que problema você tem. Este mapa não é
 
 **Limite:** infraestrutura sofisticada não compensa fronteiras mal definidas e pode criar operação desproporcional ao problema.
 
-Um monólito modular pode usar APIs, faturamento pode usar Pipes and Filters e nuvem pode ter um processo: decida por forças e evidências, não pelo nome.
+Um monólito modular pode usar APIs, faturamento pode usar Pipes and Filters e nuvem pode ter um processo. A decisão deve se basear em forças e evidências, independentemente do nome do estilo.
 
 ![Mapa comparativo de quatro estilos arquiteturais: camadas, pipes e filtros, microkernel e monólito modular, com as forças de mudabilidade, vazão e extensibilidade.](../assets/images/m01-mapa-estilos.png)
 
 *Figura 2 — Mapa comparativo de estilos arquiteturais. Fonte: curso.*
 
-**Leitura textual da figura:** o mapa coloca quatro organizações lado a lado. Camadas separam responsabilidades por nível; pipes e filtros encadeiam transformações; microkernel mantém um núcleo e extensões; e monólito modular isola capacidades dentro de uma implantação. As forças na base lembram que a escolha compara modificabilidade, vazão e extensibilidade, em vez de eleger um estilo universalmente superior.
+**Leitura textual da figura:** o mapa coloca quatro organizações lado a lado. Camadas separam responsabilidades por nível; pipes e filtros encadeiam transformações; microkernel mantém um núcleo e extensões; e monólito modular isola capacidades dentro de uma implantação. As forças na base indicam que a escolha compara modificabilidade, vazão e extensibilidade, e que nenhum estilo é superior em todos os contextos.
 
-## Comparar, não eleger um vencedor universal
+## Comparar e combinar os estilos
 
-Camadas organizam níveis; Pipes and Filters, transformações; Microkernel, extensões; Monólito modular, capacidades numa implantação. Eles podem ser combinados. Compare forças, limites, premissas e evidências antes de escolher.
+Camadas organizam níveis de responsabilidade, Pipes and Filters organiza transformações, Microkernel organiza extensões e Monólito modular organiza capacidades dentro de uma implantação. Eles podem ser combinados. Compare forças, limites, premissas e evidências antes de escolher.

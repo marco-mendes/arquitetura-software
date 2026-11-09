@@ -2,7 +2,7 @@
 
 ![Arquitetura orientada por eventos numa loja virtual: o Cliente faz um pedido, o Serviço de Pedidos publica o fato na central de eventos, e Estoque, Pagamentos e Notificações reagem de forma independente, cada um com sua própria fila e seus próprios dados.](../assets/images/m05-eda-loja-virtual.png)
 
-*Figura 6 — Um pedido, várias reações independentes. Fonte: curso.*
+*Figura 6 — Reações independentes de três serviços a um pedido. Fonte: curso.*
 
 **Leitura textual da figura:** o Cliente faz um pedido na loja virtual. O Serviço de Pedidos, no papel de produtor, registra o pedido nos seus próprios dados e publica o evento “Pedido realizado”, que carrega o identificador do pedido. A central de eventos recebe essa publicação e entrega uma cópia para a fila de cada assinante. Estoque reserva os produtos, Pagamentos inicia o faturamento e Notificações avisa o cliente, cada consumidor com sua fila própria e seu banco de dados próprio, sem que o Serviço de Pedidos conheça qualquer um deles. Três propriedades sustentam o desenho: o evento informa um fato já ocorrido; o processamento é assíncrono, então Pedidos não espera as reações terminarem; e a consistência é eventual, porque as atualizações de cada consumidor podem ocorrer em momentos diferentes.
 
@@ -20,7 +20,7 @@ Três papéis compõem o estilo, e o vocabulário deste módulo inteiro se organ
 - O **consumidor** recebe o evento e decide o que fazer com ele. Pode haver nenhum, um ou vários, e o produtor não precisa saber quantos são.
 - O **intermediário** fica entre os dois, recebendo a publicação e fazendo-a chegar a quem interessa. Broker e mediator, definidos adiante, são as duas formas que esse papel assume.
 
-Trocar chamadas diretas por essa tríade compra quatro propriedades, e cada uma cobra um preço que as demais seções tratam:
+Trocar chamadas diretas por essa tríade traz quatro propriedades, cada uma com um custo tratado nas seções seguintes:
 
 - **Desacoplamento** — o produtor não conhece os consumidores. *Custo:* perde-se a resposta imediata que uma chamada direta daria.
 - **Escalabilidade** — picos de carga podem ser absorvidos pelo canal em vez de derrubarem a origem. *Custo:* operar esse canal.
@@ -37,7 +37,7 @@ Um **comando** expressa intenção dirigida. “Gerar cobrança do pedido” sol
 
 **Mensagem** é o termo de transporte: os bytes que trafegam, os cabeçalhos que os acompanham, a chave usada para roteamento, o tipo de conteúdo declarado e a confirmação de entrega. Ela pode carregar evento, comando, documento ou sinal técnico. Ao investigar por que uma entrega falhou, a equipe olha para a mensagem; ao decidir quem é responsável por um contrato, olha para evento ou comando. Esta separação impede que a escolha de AMQP, HTTP ou um cliente Kafka determine o vocabulário do domínio.
 
-Numa loja on-line, `PedidoRealizado.v1` tem `event_id`, `occurred_at`, `pedido_id`, `cliente_id` e `pedido_reference`. O contrato afirma que um pedido foi registrado; não inclui os itens do carrinho nem uma instrução de cobrança completa. `event_id` identifica a ocorrência, enquanto `pedido_id` identifica o pedido: duas tentativas de transportar a mesma ocorrência preservam o primeiro e podem compartilhar o segundo. `occurred_at` é o tempo do fato, não o horário em que um consumidor recebeu uma cópia.
+Numa loja on-line, `PedidoRealizado.v1` tem `event_id`, `occurred_at`, `pedido_id`, `cliente_id` e `pedido_reference`. O contrato afirma que um pedido foi registrado; não inclui os itens do carrinho nem uma instrução de cobrança completa. `event_id` identifica a ocorrência, enquanto `pedido_id` identifica o pedido: duas tentativas de transportar a mesma ocorrência preservam o primeiro e podem compartilhar o segundo. `occurred_at` registra o momento em que o fato ocorreu, e esse valor independe do horário em que cada consumidor recebe uma cópia.
 
 Decidido que `PedidoRealizado.v1` é um evento, falta responder quem entrega essa notícia aos interessados. É aqui que broker e mediator se separam.
 
@@ -49,7 +49,7 @@ Um **broker** é um intermediário que recebe uma mensagem de quem publica e a f
 
 O que define o papel é tão importante quanto o que ele recusa. Um broker roteia, guarda a mensagem até a entrega e confirma o que foi entregue. Um broker não decide regra de negócio nem a ordem em que as etapas de um processo devem acontecer. Se a decisão de aprovar um pedido migrar para dentro da configuração do broker, a regra passa a viver na infraestrutura, longe do domínio a que pertence e de quem responde por ela.
 
-No fluxo de um pedido, o broker produz uma cadeia descentralizada: cada serviço termina seu trabalho publicando um fato, e o serviço seguinte reage a esse fato. Ninguém chama ninguém diretamente, e ninguém espera resposta. Um diagrama de sequência torna essa característica visível de um jeito que um fluxograma de caixas não consegue: repare que nenhuma seta abaixo volta para quem a enviou. A última seta chega ao Cliente, mas como um aviso novo emitido por Notificação.
+No fluxo de um pedido, o broker produz uma cadeia descentralizada: cada serviço termina seu trabalho publicando um fato, e o serviço seguinte reage a esse fato. Nenhum serviço chama outro diretamente nem espera resposta. Um diagrama de sequência torna essa característica visível de um jeito que um fluxograma de caixas não consegue: repare que nenhuma seta abaixo volta para quem a enviou. A última seta chega ao Cliente como um aviso novo emitido por Notificação.
 
 ```mermaid
 sequenceDiagram
@@ -71,7 +71,7 @@ sequenceDiagram
     SN->>CL: avisa
 ```
 
-**Texto alternativo:** Diagrama de sequência em que o Cliente publica um pedido e cada serviço, ao concluir sua etapa, publica um evento para o próximo e também para Notificação; todas as setas seguem adiante, nenhuma delas é uma resposta de volta para quem a originou.
+**Texto alternativo:** Diagrama de sequência em que o Cliente publica um pedido e cada serviço, ao concluir sua etapa, publica um evento para o próximo e também para Notificação, e todas as setas seguem adiante, sem nenhuma resposta de volta para quem a originou.
 
 *Figura 7 — Padrão broker: cada serviço publica adiante, sem esperar resposta. Fonte: curso, adaptado de material do curso sobre o padrão broker.*
 
@@ -103,7 +103,7 @@ Essa concentração é uma escolha, com ganho e preço declarados. O ganho: o pr
 
 A pergunta que separa os dois padrões é direta. Alguém precisa tomar uma decisão central sobre a ordem do fluxo, ou as equipes apenas precisam reagir de forma independente ao mesmo fato? Vale notar que os dois papéis convivem: um mediator costuma usar um broker como canal para conversar com os participantes.
 
-O mesmo pedido, sob um mediator, muda de forma: nenhum serviço fala com o próximo, todos falam só com o coordenador, que decide a sequência e aguarda cada resposta antes do próximo passo.
+Sob um mediator, o mesmo pedido muda de forma: cada serviço fala apenas com o coordenador, que decide a sequência e aguarda cada resposta antes do próximo passo.
 
 ```mermaid
 sequenceDiagram
@@ -144,13 +144,13 @@ Comparar as duas figuras revela a diferença que a definição sozinha esconde: 
 
 ## Fila, tópico e log distribuído
 
-Broker e mediator respondem quem entrega a mensagem. Fila, tópico e log respondem uma pergunta diferente: o que acontece com ela depois de entregue, e é aí que a escolha de tecnologia começa a pesar. Os três distribuem mensagens de formas diferentes o bastante para merecer nomes diferentes, mesmo quando a tecnologia por baixo é a mesma exchange ou o mesmo cluster.
+Broker e mediator respondem quem entrega a mensagem. Fila, tópico e log respondem uma pergunta diferente, que orienta a escolha de tecnologia: o que acontece com a mensagem depois de entregue. Os três distribuem mensagens de formas diferentes o bastante para merecer nomes diferentes, mesmo quando a tecnologia por baixo é a mesma exchange ou o mesmo cluster.
 
 Uma **fila** representa trabalho pendente para uma capacidade. Mensagens ficam disponíveis até um consumidor confirmar; várias réplicas podem repartir trabalho. A fila `billing.pedidos.v1` é uma fila de Faturamento: uma cópia de cada evento roteado para ela é tratada pelo grupo de trabalho desse domínio. A confirmação ocorre depois da validação e do efeito local. Se o processo cair antes da confirmação, a mensagem pode voltar e a duplicação deve ser esperada.
 
 Já um **tópico** muda o critério de distribuição: em vez de repartir trabalho entre réplicas de uma fila, ele copia a mesma publicação para filas distintas com critérios de assinatura próprios. Faturamento recebe uma cópia, Notificações outra e Auditoria uma terceira. Em AMQP, a exchange do tipo topic e as chaves de roteamento realizam isso; o tópico não torna todos os consumidores uma única equipe nem lhes dá o mesmo banco.
 
-Um terceiro formato, o **log distribuído**, muda de novo o critério: em vez de repartir trabalho ou copiar para várias filas, ele guarda as mensagens numa sequência ordenada, por um prazo definido em tempo ou em tamanho. Cada consumidor mantém a própria **posição de leitura** (*offset*), um marcador que indica até onde já leu. Isso permite que dois grupos leiam a mesma sequência em ritmos diferentes, e que um deles recue o marcador para reprocessar um trecho já lido, desde que a mensagem ainda esteja dentro do prazo de guarda. Kafka é a tecnologia mais conhecida desse modelo. O log favorece a releitura e as leituras independentes, mas não impõe uma ordem única para tudo: a ordem é garantida dentro de cada partição em que o log foi dividido, conforme a chave escolhida. O prazo de guarda é uma decisão de custo, privacidade e recuperação, e não um “histórico infinito”.
+Um terceiro formato, o **log distribuído**, muda de novo o critério: em vez de repartir trabalho ou copiar para várias filas, ele guarda as mensagens numa sequência ordenada, por um prazo definido em tempo ou em tamanho. Cada consumidor mantém a própria **posição de leitura** (*offset*), um marcador que indica até onde já leu. Isso permite que dois grupos leiam a mesma sequência em ritmos diferentes, e que um deles recue o marcador para reprocessar um trecho já lido, desde que a mensagem ainda esteja dentro do prazo de guarda. Kafka é a tecnologia mais conhecida desse modelo. O log favorece a releitura e as leituras independentes, mas não impõe uma ordem única para tudo: a ordem é garantida dentro de cada partição em que o log foi dividido, conforme a chave escolhida. O prazo de guarda é uma decisão de custo, privacidade e recuperação, e o log descarta as mensagens que ultrapassam esse prazo.
 
 ```mermaid
 flowchart TB
@@ -169,9 +169,9 @@ flowchart TB
 
 Cada uma dessas três formas de canal tem tecnologias associadas, e escolher entre elas é a próxima decisão a tomar.
 
-## As tecnologias, sem atalhos
+## Tecnologias de mensageria
 
-Cada tecnologia a seguir implementa o papel de intermediário, mas resolve bem problemas diferentes. Vale ler esta seção procurando o que cada uma assume como caso principal, e não uma lista de funcionalidades.
+Cada tecnologia a seguir implementa o papel de intermediário, mas resolve bem problemas diferentes. Vale ler esta seção procurando o que cada uma assume como caso principal.
 
 **RabbitMQ** organiza a entrega em torno de filas de trabalho. Uma publicação chega a um distribuidor, chamado *exchange*, que decide para quais filas encaminhar cópias segundo regras de assinatura. Cada consumidor confirma o que processou, e a mensagem confirmada sai da fila. Ele traz recursos úteis para operação, como um prazo de validade para a mensagem e o redirecionamento automático de mensagens rejeitadas para uma fila de erros. Cabe bem quando o problema central é repartir trabalho entre consumidores e rotear mensagens por critérios variados. O que ele não oferece por si: guardar o histórico das mensagens já consumidas para alguém relê-las depois.
 

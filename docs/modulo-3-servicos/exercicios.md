@@ -9,7 +9,7 @@ Tente responder antes de abrir cada feedback. Nas atividades avançadas não há
 <details>
 <summary>Ver resposta</summary>
 
-Capacidade de negócio é definida pelo resultado que ela produz para alguém, independentemente da tecnologia usada para produzi-lo; "salvar no PostgreSQL" descreve como um dado é persistido, não que resultado a organização entrega. Exemplos de capacidade: "agendar atendimento", "solicitar exame". Exemplo de mecanismo técnico: "enviar JSON", "consultar cache" — eles podem mudar sem que a capacidade que servem mude de nome.
+Capacidade de negócio é definida pelo resultado que ela produz para alguém, independentemente da tecnologia usada para produzi-lo; "salvar no PostgreSQL" descreve como um dado é persistido e não indica o resultado que a organização entrega. Exemplos de capacidade: "agendar atendimento", "solicitar exame". Exemplo de mecanismo técnico: "enviar JSON", "consultar cache" — eles podem mudar sem que a capacidade que servem mude de nome.
 </details>
 
 2\. Uma equipe decide que, como Elegibilidade e Exames são bounded contexts diferentes, cada um precisa virar um microsserviço imediatamente. Que erro de raciocínio essa equipe está cometendo?
@@ -17,7 +17,7 @@ Capacidade de negócio é definida pelo resultado que ela produz para alguém, i
 <details>
 <summary>Ver resposta</summary>
 
-A equipe está confundindo fronteira semântica com topologia física. Bounded context delimita onde um modelo e sua linguagem têm significado consistente — é uma decisão sobre significado, não sobre implantação. Um bounded context pode viver como módulo dentro de um monólito, como parte de um macrosserviço ou como um serviço implantável; a extração física só se justifica quando há necessidade comprovada de autonomia, escala ou falha independentes. Tratar toda fronteira lógica como um serviço separado cria processos, redes e operação antes de existir qualquer benefício demonstrado.
+A equipe está confundindo fronteira semântica com topologia física. Bounded context delimita onde um modelo e sua linguagem têm significado consistente, e essa delimitação trata de significado e independe da forma de implantação. Um bounded context pode viver como módulo dentro de um monólito, como parte de um macrosserviço ou como um serviço implantável; a extração física só se justifica quando há necessidade comprovada de autonomia, escala ou falha independentes. Tratar toda fronteira lógica como um serviço separado cria processos, redes e operação antes de existir qualquer benefício demonstrado.
 </details>
 
 3\. O módulo descreve cinco formas de acoplamento entre serviços: de contrato, temporal, de dados, de implantação e organizacional. Escolha duas delas e explique, com um exemplo, o que cada uma faz um serviço depender do outro.
@@ -41,7 +41,7 @@ Ela viola banco por serviço: a regra de que somente o serviço proprietário ac
 <details>
 <summary>Ver resposta</summary>
 
-O que muda é a autonomia física de implantação e de falha, não o volume de linhas ou de pessoas. No monólito modular, os módulos têm fronteiras lógicas claras, mas publicam e falham juntos, numa única unidade implantável. No macrosserviço, algumas fronteiras já viram processos separados, mas ainda agrupam mais de uma capacidade por unidade. No microsserviço, cada unidade implantável está alinhada a uma única responsabilidade de negócio e é dona do próprio estado, podendo publicar e falhar de forma independente das demais. "Micro" não é uma medida de tamanho: é um sinal de autonomia com coesão.
+O que muda é a autonomia física de implantação e de falha. O volume de linhas ou de pessoas não distingue as três formas. No monólito modular, os módulos têm fronteiras lógicas claras, mas publicam e falham juntos, numa única unidade implantável. No macrosserviço, algumas fronteiras já viram processos separados, mas ainda agrupam mais de uma capacidade por unidade. No microsserviço, cada unidade implantável está alinhada a uma única responsabilidade de negócio e é dona do próprio estado, podendo publicar e falhar de forma independente das demais. "Micro" não é uma medida de tamanho: é um sinal de autonomia com coesão.
 </details>
 
 6\. Exames continua respondendo consultas ao próprio banco, mas passa a recusar novas solicitações porque Elegibilidade está fora do ar. Que nome se dá a essa situação, e por que ela não deveria ser tratada apenas como "o sistema caiu"?
@@ -107,7 +107,7 @@ Coesão é o grau em que os elementos de uma unidade contribuem para uma mesma r
 <details>
 <summary>Ver resposta</summary>
 
-Não garante sozinho. Propriedade responde quem tem autoridade para interpretar e alterar uma informação — é uma regra de acesso e de responsabilidade, não uma questão de onde o arquivo do banco está gravado. A separação física (bancos, schemas ou instâncias distintas) só protege a propriedade quando vem acompanhada de isolamento de rede e de credenciais que realmente impedem o outro serviço de conectar diretamente — como no laboratório, em que a credencial de Exames só conhece o banco `exames`, e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões reais, dois bancos fisicamente separados ainda podem ser acessados livremente por qualquer serviço que descubra a string de conexão, e a propriedade continua sendo apenas uma convenção não aplicada.
+Não garante sozinho. Propriedade responde quem tem autoridade para interpretar e alterar uma informação e, por isso, define uma regra de acesso e de responsabilidade que independe do local onde o arquivo do banco está gravado. A separação física (bancos, schemas ou instâncias distintas) só protege a propriedade quando vem acompanhada de isolamento de rede e de credenciais que realmente impedem o outro serviço de conectar diretamente — como no laboratório, em que a credencial de Exames só conhece o banco `exames`, e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões reais, dois bancos fisicamente separados ainda podem ser acessados livremente por qualquer serviço que descubra a string de conexão, e a propriedade continua sendo apenas uma convenção não aplicada.
 </details>
 
 4\. Faturamento mantém uma réplica projetada do dado de Elegibilidade, alimentada pelos eventos que Elegibilidade publica. A promessa é de consistência eventual: sem novas escritas, a réplica acaba chegando ao mesmo estado da origem. Só que essa promessa não diz como nem quando isso acontece — quem faz acontecer são as **regras de convergência**, um conjunto de decisões explícitas de desenho: o identificador que amarra cada evento ao mesmo registro; a ordenação, quando a ordem de aplicação altera o resultado; a idempotência, para que o mesmo evento aplicado duas vezes não produza o efeito duas vezes; a política de repetição, para mensagens perdidas ou atrasadas; e a reconciliação, para detectar e corrigir a divergência que sobrar. Escolha três dessas regras e diga, para cada uma, o que acontece com a réplica de Faturamento se ela faltar.
@@ -135,7 +135,7 @@ Em ambos os casos, o que decide é a autonomia necessária de implantação e de
 <details>
 <summary>Ver resposta</summary>
 
-Uma compensação de SAGA cria um novo fato que neutraliza o efeito de negócio de uma etapa anterior — ela não volta o tempo nem apaga o que já foi observado por outras partes do sistema. Se uma solicitação de exame já foi confirmada e notificada, cancelá-la depois não significa que ela nunca existiu: quem recebeu a confirmação já pode ter agido com base nela, e mensagens de cancelamento podem chegar duplicadas ou fora de ordem. É por isso que o desenho de uma SAGA precisa declarar estados explícitos, comandos idempotentes e uma trilha de auditoria — a compensação é mais um evento na história, não um apagador dela.
+Uma compensação de SAGA cria um novo fato que neutraliza o efeito de negócio de uma etapa anterior — ela não volta o tempo nem apaga o que já foi observado por outras partes do sistema. Se uma solicitação de exame já foi confirmada e notificada, cancelá-la depois não significa que ela nunca existiu: quem recebeu a confirmação já pode ter agido com base nela, e mensagens de cancelamento podem chegar duplicadas ou fora de ordem. É por isso que o desenho de uma SAGA precisa declarar estados explícitos, comandos idempotentes e uma trilha de auditoria, já que a compensação acrescenta mais um evento à história do fluxo e mantém os eventos anteriores registrados.
 </details>
 
 7\. Uma equipe quer introduzir tanto SAGA quanto CQRS no fluxo de Agendamento só porque "qualquer sistema distribuído sério usa os dois". Que problema real cada um resolveria, e por que adotar um não implica precisar do outro?
@@ -165,7 +165,7 @@ Seis fatos foram apurados na clínica e valem para a decisão:
 
 1. Uma equipe só mantém o sistema inteiro.
 2. A implantação é semanal, com tudo junto.
-3. Assinatura e publicação acontecem na mesma transação local, e precisam continuar assim.
+3. Assinatura e publicação acontecem na mesma transação local e precisam continuar assim.
 4. Um atraso de até cinco minutos no aviso ao paciente é aceitável para a clínica.
 5. O volume é estável, sem pico previsto para os próximos meses.
 6. Não existe fila, *broker* ou serviço separado no ambiente hoje.
@@ -188,7 +188,7 @@ As quatro alternativas em avaliação:
 | **C. Módulos com entrega adiada** | Como a B, e a publicação passa a apenas registrar o aviso numa tabela de pendências do módulo de Notificações. Um processo em segundo plano envia depois. Uma implantação só. |
 | **D. Notificações como serviço** | Notificações vira processo próprio, com banco próprio, recebendo os avisos por um *broker* novo no ambiente. |
 
-Os seis fatos apurados, as quatro alternativas descritas e as referências de padrões e decisões do módulo.
+Os seis fatos apurados, os quatro termos definidos e as quatro alternativas descritas estão nesta página e bastam para responder.
 
 **Seu papel**
 
@@ -255,7 +255,7 @@ Os dois viram um serviço só, com transação local, banco próprio e uma estei
 
 Os quatro processos continuam existindo. Atendimento passa a responder ao usuário assim que Cadastro e Agenda confirmam, e o aviso a Faturamento sai depois, fora da espera.
 
-Os sete fatos, o mapa de chamadas, a conta de disponibilidade, as definições de acoplamento e as duas correções propostas, todos nesta página.
+Os sete fatos, o mapa de chamadas, a conta de disponibilidade, as definições de acoplamento e as duas correções propostas estão nesta página.
 
 **Seu papel**
 
@@ -289,7 +289,7 @@ Uma rede de clínicas depende de um provedor externo de autorizações. Antes de
 
 O provedor fica indisponível por até quinze minutos, algumas vezes por mês, sem hora marcada. Nesses períodos, hoje, a clínica simplesmente para de receber solicitações.
 
-Duas coisas são inaceitáveis para a rede, e elas puxam em direções opostas. Executar um procedimento sem autorização válida cria risco clínico e prejuízo financeiro, porque a operadora pode recusar o pagamento depois. Perder a solicitação do paciente também é inaceitável, porque ele já está na clínica e vai embora sem atendimento.
+Duas condições são inaceitáveis para a rede, e reduzir o risco de uma delas tende a aumentar o risco da outra. Executar um procedimento sem autorização válida cria risco clínico e prejuízo financeiro, porque a operadora pode recusar o pagamento depois. Perder a solicitação do paciente também é inaceitável, porque ele já está na clínica e vai embora sem atendimento.
 
 O comitê de arquitetura se reúne na quinta-feira para decidir.
 
@@ -299,7 +299,7 @@ Cinco restrições valem para a decisão:
 2. A rede aceita manter uma solicitação em estado pendente por até trinta minutos.
 3. A comunicação com o provedor é consulta HTTP; ele não notifica mudanças.
 4. A equipe de operação trabalha em horário comercial, sem plantão noturno.
-5. Não existe transação distribuída entre a clínica e o provedor, e não haverá.
+5. Não existe transação distribuída entre a clínica e o provedor, e a rede não pretende criar uma.
 
 As quatro alternativas em avaliação:
 
@@ -319,7 +319,7 @@ A clínica guarda a última resposta conhecida de cada beneficiário e a reutili
 
 A clínica aceita e executa na hora apenas os procedimentos de uma lista curta previamente acordada com a operadora, de baixo custo e baixo risco. Todos os demais entram como pendentes, como na alternativa B.
 
-As cinco restrições, as duas condições inaceitáveis e as quatro alternativas descritas, todas nesta página.
+As cinco restrições, as duas condições inaceitáveis e as quatro alternativas descritas estão nesta página.
 
 **Seu papel**
 
@@ -329,7 +329,7 @@ Você é a pessoa arquiteta que apresenta a recomendação ao comitê. A decisã
 
 Escreva em texto corrido. O comitê vai ler o documento antes da reunião, então cada resposta precisa se sustentar sozinha.
 
-1. Antes de comparar, declare os critérios que você vai usar e diga qual deles pesa mais nesta decisão. Justifique a ponderação pelo risco do domínio, e não por preferência técnica.
+1. Antes de comparar, declare os critérios que você vai usar e diga qual deles pesa mais nesta decisão. Justifique a ponderação pelo risco do domínio, sem recorrer a preferência técnica.
 2. Avalie as quatro alternativas contra os seus critérios, uma por parágrafo, dizendo o que cada uma protege e o que ela expõe.
 3. Recomende uma delas e escreva, em uma frase, o que a clínica está aceitando ao segui-la.
 4. Descreva os estados pelos quais uma solicitação passa na sua recomendação, e diga o que a recepção enxerga em cada estado.
@@ -361,7 +361,7 @@ O paciente precisa ver a confirmação da reserva em até três segundos.
 Cinco restrições valem para a proposta:
 
 1. A resposta ao paciente sai em até três segundos.
-2. O identificador da solicitação é gerado pelo consumidor, e chega pronto.
+2. O identificador da solicitação é gerado pelo consumidor e chega pronto.
 3. PostgreSQL está disponível e é a base padrão da plataforma.
 4. Mensageria é permitida, e não existe nenhum *broker* instalado hoje.
 5. No máximo três unidades implantáveis novas podem existir neste semestre.
@@ -372,15 +372,15 @@ As três topologias esboçadas:
 
 Agendamento nasce como módulo dentro de um serviço existente, chamando Elegibilidade por HTTP e Preparo de Sala por HTTP, tudo dentro da mesma requisição do paciente.
 
-#### B. Agendamento como serviço, avisos síncronos
+#### B. Agendamento como serviço com avisos síncronos
 
 Agendamento vira serviço próprio com banco próprio. Continua chamando Elegibilidade e Preparo de Sala por HTTP, e só confirma ao paciente depois que os dois responderem.
 
-#### C. Agendamento como serviço, aviso adiado
+#### C. Agendamento como serviço com aviso adiado
 
 Agendamento vira serviço próprio com banco próprio. Consulta Elegibilidade por HTTP, reserva o horário, confirma ao paciente, e registra o aviso a Preparo de Sala numa tabela de saída processada logo depois.
 
-As cinco restrições, as três capacidades descritas, as diferenças de ritmo entre elas e as três topologias, todas nesta página.
+As cinco restrições, as três capacidades descritas, as diferenças de ritmo entre elas e as três topologias estão nesta página.
 
 **Seu papel**
 

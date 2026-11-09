@@ -6,7 +6,7 @@ Cada arquivo aparece na página inteiro, pronto para copiar. O título de cada b
 
 ![Três estilos arquiteturais e suas diferentes evidências no terminal](../assets/images/m01-oficina-tres-estilos.png)
 
-*Figura 17 — Três estilos, três formas de repartir responsabilidade, três evidências no terminal. Fonte: curso.*
+*Figura 17 — Os três estilos da oficina, a forma como cada um reparte responsabilidade e a evidência que cada um produz no terminal. Fonte: curso.*
 
 **Leitura textual da figura:** três painéis lado a lado, um por estilo. No primeiro, camadas na agenda clínica, com Apresentação, Serviço, Domínio e Repositório empilhados de cima para baixo e o retorno subindo até a apresentação. A evidência no terminal é uma resposta HTTP com conflito de horário. No segundo, pipes and filters na triagem, com Produtor, Validação, Transformação e Consumo ligados em sequência e um desvio de descarte saindo da Validação. A evidência é o ranking impresso. No terceiro, microkernel no faturamento, com um núcleo cercado por um contrato e três módulos plug-in conectados a ele. A evidência são categorias e contribuições.
 
@@ -28,7 +28,7 @@ Confirmar a versão do Python e preparar a pasta de trabalho.
 
 **Pré-requisito**
 
-Um terminal e um editor de texto. Nada mais.
+A oficina requer apenas um terminal e um editor de texto.
 
 ## Instalação
 
@@ -351,7 +351,7 @@ No segundo, uma tentativa de marcar consulta em horário já ocupado retorna:
 HTTP 409 CONFLICT → {'erro': 'Dr(a). Dra. Ana Silva já tem consulta das 09:00 às 09:30.'}
 ```
 
-O detalhe que interessa não é o `409` em si, e sim **onde ele nasce**. A regra que detecta a sobreposição está em `dominio.py`, junto do conceito de horário. Quem a traduz para um código HTTP é `apresentacao.py`, na borda. O domínio não sabe o que é HTTP, e a apresentação não sabe o que faz dois horários conflitarem.
+O detalhe que interessa é o lugar **onde o `409` nasce**. A regra que detecta a sobreposição está em `dominio.py`, junto do conceito de horário. Quem a traduz para um código HTTP é `apresentacao.py`, na borda. O domínio não sabe o que é HTTP, e a apresentação não sabe o que faz dois horários conflitarem.
 
 **Compare**
 
@@ -1109,9 +1109,9 @@ Em seguida, ao processar cada fatura, apenas os plugins cujo contexto se aplica 
 
 Compare o custo de uma mudança nos três estilos que você acabou de rodar. Para atender um novo estado, o microkernel pede um arquivo novo em `plugins` e uma linha de registro em `main.py`, sem tocar no núcleo. Na versão em camadas, uma regra nova entraria no domínio, que é código compartilhado por todos os casos. E no fluxo de filtros, entraria um estágio novo na sequência.
 
-É essa a propriedade que o módulo atribui ao [microkernel](padroes-e-decisoes.md#microkernel): o sistema cresce por adição, e não por modificação. O preço está no contrato de extensão que `nucleo.py` define. Quando ele precisa mudar, todos os plugins mudam junto.
+É essa a propriedade que o módulo atribui ao [microkernel](padroes-e-decisoes.md#microkernel): o sistema recebe regras novas pela adição de plugins, sem modificação do núcleo. O preço está no contrato de extensão que `nucleo.py` define. Quando ele precisa mudar, todos os plugins mudam junto.
 
-Os três experimentos, juntos, sustentam a tese central de [comparar sem eleger um vencedor](conceitos.md#comparar-nao-eleger-um-vencedor-universal): o mesmo domínio poderia ser escrito em qualquer um dos três, e o que muda é onde a mudança futura vai doer.
+Os três experimentos, juntos, sustentam a [comparação de estilos](conceitos.md#comparar-e-combinar-os-estilos) da página de conceitos: o mesmo domínio poderia ser escrito em qualquer um dos três estilos, e cada estilo concentra a mudança futura em um lugar diferente do código.
 
 Questões exploratórias:
 
@@ -1153,7 +1153,7 @@ Cada `main.py` termina sem erro e imprime a demonstração descrita em seu exper
 
 **Compare**
 
-Uma saída observável mostra o comportamento deste cenário didático, e ela não demonstra que um estilo é universalmente melhor. Use as questões e a sua nota para justificar a relação entre código, responsabilidade e evidência.
+Uma saída observável mostra o comportamento deste cenário didático e não demonstra que um estilo seja universalmente melhor. Use as questões e a sua nota para justificar a relação entre código, responsabilidade e evidência.
 
 ## Limpeza e contingência
 
@@ -1163,7 +1163,7 @@ Para descartar a oficina inteira, apague a pasta `oficina-estilos`. Nada fora de
 
 ## Evidência a entregar
 
-Em `oficina-estilos`, entregue as três pastas, cada uma com `saida-antes.txt`, `saida-depois.txt` e uma nota curta, por exemplo `observacoes.md`, contendo a condição que você alterou, o que a saída revelou e qual responsabilidade arquitetural você relacionou à evidência. A saída deve sustentar a explicação, e ela não precisa coincidir com a de outro colega.
+Em `oficina-estilos`, entregue as três pastas, cada uma com `saida-antes.txt`, `saida-depois.txt` e uma nota curta, por exemplo `observacoes.md`, contendo a condição que você alterou, o que a saída revelou e qual responsabilidade arquitetural você relacionou à evidência. A saída deve sustentar a explicação e não precisa coincidir com a de outro colega.
 
 Se algum experimento não executar, registre o comando, a mensagem completa e a pasta atual na nota. Isso é evidência suficiente para retomar a investigação.
 

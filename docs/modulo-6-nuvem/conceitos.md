@@ -12,7 +12,7 @@ A maneira mais direta de enxergar a diferença entre os modelos é empilhar as c
 
 **Leitura textual da figura:** nove camadas aparecem empilhadas, de baixo para cima: rede, armazenamento, servidores, virtualização, sistemas operacionais, middleware, ambiente de execução de aplicações, dados e aplicação. Três colchetes marcam até onde vai a gestão do provedor em cada modelo. A infraestrutura gerida em nuvem cobre as quatro camadas de baixo, da rede à virtualização, que é o alcance de IaaS. A plataforma gerida em nuvem sobe até o ambiente de execução, incorporando sistemas operacionais e middleware, que é o alcance de PaaS. O software gerido em nuvem cobre a pilha inteira, incluindo dados e aplicação, que é o alcance de SaaS. Um quarto colchete, à direita, marca o auto-hospedado, ou on-premise, em que a organização responde por todas as nove camadas.
 
-### Os quatro modelos, um a um
+### Os quatro modelos de serviço
 
 **On-premise (auto-hospedado).** A organização mantém a infraestrutura em instalações próprias ou sob contrato dedicado e assume, em maior grau, espaço, hardware, capacidade e operação.
 
@@ -69,7 +69,7 @@ A nuvem oferece escala e custo inicial menor com menos manutenção. O on-premis
 
 Uma **região** é uma área geográfica ou administrativa onde um provedor oferece recursos. Uma **zona** é uma unidade de isolamento dentro dela. Os nomes e garantias dependem do provedor, portanto não se deve inferir que “duas zonas” resolvem qualquer indisponibilidade. Separar réplicas entre zonas pode reduzir impacto de uma falha local, mas banco, fila, DNS, identidade e operação de deploy continuam sendo dependências a analisar.
 
-Escolher uma região é decidir sobre latência, residência de dados, contratos e caminho de recuperação. Escolher uma zona é decidir sobre domínio de falha. Uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó. Um plano honesto declara o cenário. Duas réplicas em nós distintos, com anti-affinity se necessário. Dados replicados com recuperação testada. Procedimentos escritos para indisponibilidade regional. A arquitetura não deveria esconder essas condições atrás de “multi-AZ”.
+Escolher uma região é decidir sobre latência, residência de dados, contratos e caminho de recuperação. Escolher uma zona é decidir sobre domínio de falha. Uma réplica extra no mesmo nó protege contra a queda de um processo e deixa o serviço exposto à perda do nó. Um plano honesto declara o cenário: duas réplicas em nós distintos, com anti-affinity se necessário, dados replicados com recuperação testada e procedimentos escritos para indisponibilidade regional. A arquitetura não deveria esconder essas condições atrás de “multi-AZ”.
 
 **Texto alternativo:** uma região contém duas zonas. Cada zona recebe uma réplica, enquanto os dados mantêm uma política de recuperação própria.
 
@@ -109,7 +109,7 @@ As duas pilhas da Figura 12 são um recorte das camadas da Figura 11. A virtuali
 
 O hipervisor aloca recursos de hardware para cada instância e entrega isolamento forte, ao custo de memória e processamento. O motor de contêineres, como o Docker, executa processos isolados sobre um kernel compartilhado. Daí vêm as propriedades que levam a arquitetura a preferir contêineres em muitos cenários: consumo menor de recursos, inicialização em segundos, replicação barata e execução de várias aplicações na mesma máquina sem interferência. A portabilidade entra na mesma lista, com a ressalva já registrada acima.
 
-Essas propriedades explicam onde a tecnologia pegou. No desenvolvimento, porque replicar um ambiente de teste vira baixar uma imagem. Na nuvem, porque microsserviços precisam de unidades de implantação independentes e substituíveis. Na computação de borda, porque o recurso disponível no dispositivo raramente comporta uma VM.
+Essas propriedades explicam a adoção da tecnologia em três contextos. No desenvolvimento, replicar um ambiente de teste passa a exigir apenas o download de uma imagem. Na nuvem, microsserviços precisam de unidades de implantação independentes e substituíveis. Na computação de borda, o recurso disponível no dispositivo raramente comporta uma VM.
 
 ### Docker em três comandos
 
@@ -165,9 +165,9 @@ kubectl scale deployment web --replicas=5
 
 ### O estado futuro desejado
 
-A diferença de natureza está no verbo. `docker run` é uma ordem, executada uma vez. `kubectl apply` registra uma intenção, e o cluster passa a persegui-la. Apagar um Pod à mão faz o controlador criar outro, porque o estado declarado continua pedindo três. Mudar `--replicas` para cinco não cria dois contêineres, altera o número desejado e deixa o controlador chegar lá.
+A diferença de natureza está no verbo. `docker run` é uma ordem, executada uma vez. `kubectl apply` registra uma intenção, e o cluster passa a persegui-la. Apagar um Pod à mão faz o controlador criar outro, porque o estado declarado continua pedindo três. Mudar `--replicas` para cinco altera o número desejado, e o controlador cria os dois contêineres que faltam.
 
-Essa intenção declarada tem nome: **estado futuro desejado**. Em vez de descrever a sequência de passos que leva o sistema de onde ele está para onde se quer que ele fique, descreve-se apenas o destino. Um agente compara continuamente o destino declarado com o estado observado e executa o que faltar para fechar a diferença. O nome desse laço é **reconciliação**, e ele muda o que significa operar: a operação deixa de ser executar procedimentos e passa a ser manter um arquivo correto.
+Essa intenção declarada tem nome: **estado futuro desejado**. Em vez de descrever a sequência de passos que leva o sistema de onde ele está para onde se quer que ele fique, descreve-se apenas o destino. Um agente compara continuamente o destino declarado com o estado observado e executa o que faltar para fechar a diferença. O nome desse laço é **reconciliação**. Com ele, a tarefa de operação consiste em manter correto o arquivo que declara o destino, e o agente executa os procedimentos necessários.
 
 Três consequências arquiteturais decorrem disso. O estado desejado vira artefato versionado, revisável em pull request como qualquer código. A diferença entre o que foi declarado e o que existe passa a ser mensurável, e ganha o nome de desvio, ou *drift*. E a recuperação de uma alteração manual deixa de depender de alguém lembrar do que fez, porque o agente a desfaz sozinho na próxima comparação.
 
@@ -191,7 +191,7 @@ flowchart TB
 
 O Kubernetes aplica o padrão ao que executa dentro de um cluster. Ele não cria a rede, as sub-redes, o banco gerenciado nem as máquinas virtuais onde o cluster vive. Para isso existe a **infraestrutura como código**, que estende a mesma ideia ao restante da pilha. Três nomes aparecem com frequência, e a comunidade de DevOps costuma reparti-los pelo momento do ciclo de vida em que atuam.
 
-**Terraform** é provisionador. O foco dele é o Day 0, criar a infraestrutura básica do zero: redes, sub-redes, regras de firewall, bancos gerenciados e máquinas virtuais. Ele é declarativo, e a ordem em que se escreve o código não importa, porque ele deduz as dependências entre os recursos. Ele também é *stateful*, e essa é a característica que mais o distingue: um arquivo de estado guarda o mapa do que foi criado, o que permite detectar o que sumiu do código e destruir a infraestrutura na ordem correta com um comando só.
+**Terraform** é provisionador. O foco dele é o Day 0, criar a infraestrutura básica do zero: redes, sub-redes, regras de firewall, bancos gerenciados e máquinas virtuais. Ele é declarativo, e a ordem em que se escreve o código não importa, porque ele deduz as dependências entre os recursos. Ele também é *stateful*, característica que mais o distingue das outras duas ferramentas: um arquivo de estado guarda o mapa do que foi criado, o que permite detectar o que sumiu do código e destruir a infraestrutura na ordem correta com um comando só.
 
 O arquivo abaixo, escrito em HCL, declara um grupo de segurança e uma máquina que o utiliza.
 
@@ -277,7 +277,7 @@ O inventário lista as máquinas que já existem, e o playbook diz o que fazer d
 ansible-playbook -i inventario.ini site.yml
 ```
 
-As três tarefas executam nessa ordem, sempre, e o Ansible precisa que seja assim, porque publicar a página antes de instalar o Nginx falharia. Ao mesmo tempo, cada tarefa declara o estado alvo em vez do procedimento: `state: present` para o pacote, `state: started` e `enabled: true` para o serviço. Rodar o playbook uma segunda vez não reinstala nada e relata as três tarefas como `ok`. Esse é o sentido exato em que o Ansible é procedural na ordem e declarativo na intenção. E como não existe arquivo de estado, remover uma máquina do inventário apenas faz o Ansible parar de visitá-la, sem desfazer o que já instalou lá.
+As três tarefas sempre executam nessa ordem, e o Ansible depende dessa sequência, porque publicar a página antes de instalar o Nginx falharia. Ao mesmo tempo, cada tarefa declara o estado alvo em vez do procedimento: `state: present` para o pacote, `state: started` e `enabled: true` para o serviço. Rodar o playbook uma segunda vez não reinstala nada e relata as três tarefas como `ok`. Esse é o sentido exato em que o Ansible é procedural na ordem e declarativo na intenção. E como não existe arquivo de estado, remover uma máquina do inventário apenas faz o Ansible parar de visitá-la, sem desfazer o que já instalou lá.
 
 **Argo CD** é controlador de entrega contínua para Kubernetes, no padrão GitOps. Nele, o repositório Git é a fonte da verdade do estado desejado da aplicação. O Argo compara continuamente o estado vivo do cluster com o que está no repositório, marca a aplicação como `OutOfSync` quando os dois divergem, mostra o desvio e sincroniza de volta, de forma automática ou mediante aprovação. É o mesmo laço de reconciliação da Figura 17, com o estado desejado morando fora do cluster.
 
@@ -310,7 +310,7 @@ argocd app get web
 argocd app sync web
 ```
 
-O objeto `Application` não contém o estado desejado. Ele contém o endereço onde o estado desejado mora, que é o diretório `web` do repositório, no ramo `main`. Duas chaves de `syncPolicy` fazem o trabalho pesado. Com `selfHeal: true`, alterar o número de réplicas direto no cluster dura até a próxima comparação, quando o Argo restaura o valor do repositório. Com `prune: true`, apagar um manifesto do repositório apaga o recurso correspondente do cluster. Desligar as duas transforma o Argo em detector de desvio, que aponta a divergência e espera aprovação humana para sincronizar, que costuma ser o arranjo inicial de quem está adotando GitOps.
+O objeto `Application` contém apenas o endereço onde o estado desejado está guardado, que é o diretório `web` do repositório, no ramo `main`. Duas chaves de `syncPolicy` fazem o trabalho pesado. Com `selfHeal: true`, alterar o número de réplicas direto no cluster dura até a próxima comparação, quando o Argo restaura o valor do repositório. Com `prune: true`, apagar um manifesto do repositório apaga o recurso correspondente do cluster. Desligar as duas transforma o Argo em detector de desvio, que aponta a divergência e espera aprovação humana para sincronizar, que costuma ser o arranjo inicial de quem está adotando GitOps.
 
 | Característica | Terraform | Ansible | Argo CD |
 | --- | --- | --- | --- |
@@ -320,9 +320,9 @@ O objeto `Application` não contém o estado desejado. Ele contém o endereço o
 | Abordagem | declarativa, a ordem do código não importa | tarefas em YAML executadas em sequência | declarativa, sobre manifestos Kubernetes |
 | Ciclo de vida completo | destrói recursos na ordem correta com um comando | destruir infraestrutura complexa exige playbook escrito à mão | remove o que saiu do repositório, quando configurado para isso |
 
-Duas ressalvas evitam que essa repartição vire dogma. A primeira é que a rotulagem de Ansible como procedural se refere à ordem de execução das tarefas, e não a uma ausência de intenção declarada: os módulos do Ansible são idempotentes e se escrevem pelo estado que se quer alcançar, como `state: present`. A segunda é que as três não competem entre si. O arranjo comum usa Terraform para criar o cluster e o banco, Ansible para preparar máquinas que ficaram fora do cluster, e Argo CD para manter as aplicações sincronizadas depois. Escolher uma delas raramente é a pergunta certa.
+Duas ressalvas evitam que essa repartição vire dogma. A primeira é que a rotulagem de Ansible como procedural se refere apenas à ordem de execução das tarefas: os módulos do Ansible são idempotentes e se escrevem pelo estado que se quer alcançar, como `state: present`. A segunda é que as três não competem entre si. O arranjo comum usa Terraform para criar o cluster e o banco, Ansible para preparar máquinas que ficaram fora do cluster, e Argo CD para manter as aplicações sincronizadas depois. Escolher uma delas raramente é a pergunta certa.
 
-O que as une, e é o que interessa ao arquiteto, é a mesma inversão: alguém escreve o destino num arquivo versionado, e um agente assume a responsabilidade de chegar lá e de permanecer lá. O risco correspondente também é o mesmo. Um estado desejado errado é perseguido com a mesma eficiência de um estado desejado certo.
+As três ferramentas têm em comum a mesma inversão: alguém escreve o destino num arquivo versionado, e um agente assume a responsabilidade de chegar lá e de permanecer lá. O risco correspondente também é o mesmo. Um estado desejado errado é perseguido com a mesma eficiência de um estado desejado certo.
 
 Fontes destas distinções: [Terraform vs Ansible, Spacelift](https://spacelift.io/blog/ansible-vs-terraform) e a [documentação do Argo CD](https://argo-cd.readthedocs.io/en/stable/).
 

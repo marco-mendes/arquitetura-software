@@ -2,9 +2,9 @@
 
 Boa parte do vocabulário do Twitter não foi inventada pelo Twitter. O termo *tweet* apareceu num cliente de terceiro, o Twitterrific. A resposta com arroba, a repostagem e a marcação com cerquilha nasceram do uso e foram absorvidas depois. Durante alguns anos, a plataforma foi projetada por gente que não trabalhava lá, através de uma API aberta.
 
-Depois a empresa fechou a porta. Três vezes, com onze anos de intervalo entre a primeira e a última, e cada fechamento apagou uma categoria inteira de software.
+Depois a empresa restringiu o acesso à API em três ocasiões, com onze anos de intervalo entre a primeira e a última, e cada restrição eliminou uma categoria inteira de software.
 
-Este caso não trata de desenho de contrato. Trata do que acontece com quem construiu em cima do contrato de outra pessoa.
+O tema deste caso é a situação de quem construiu produtos sobre o contrato publicado por outra empresa.
 
 ## 2006 a 2010: a API como estratégia de produto
 
@@ -18,7 +18,7 @@ Em 2010 a empresa comprou o Tweetie e o transformou no cliente oficial para iPho
 
 Ryan Sarver, então responsável pela plataforma, escreveu à lista de desenvolvedores uma mensagem que ficou conhecida. O trecho reproduzido em toda a cobertura da época diz que os desenvolvedores não deveriam construir aplicativos clientes que imitassem ou reproduzissem a experiência de consumo principal do Twitter.
 
-Foi um aviso, e nada mais. O contrato continuava funcionando exatamente como antes. O que mudou foi a declaração pública sobre o que seria tolerado dali em diante.
+A mensagem era apenas um aviso, e o contrato continuou funcionando exatamente como antes. A mudança estava na declaração pública sobre o que seria tolerado dali em diante.
 
 Quem tinha um cliente em produção nesse momento enfrentou uma decisão difícil de tomar com racionalidade: continuar investindo numa base de código cuja permissão de existir tinha acabado de ser posta em dúvida por um aviso informal.
 
@@ -26,9 +26,9 @@ Quem tinha um cliente em produção nesse momento enfrentou uma decisão difíci
 
 A versão 1.1 da API tornou a intenção executável. As mudanças anunciadas em 16 de agosto de 2012 incluíam autenticação obrigatória em todos os *endpoints* (os endereços que a API expõe), limites de taxa recalculados por *endpoint* em vez de globais, e uma regra nova que atingia especificamente uma categoria de aplicativo.
 
-Clientes de terceiros passaram a ter teto de **100 mil tokens de usuário**. Um aplicativo que atingisse cem mil usuários precisava negociar diretamente com o Twitter para crescer. Quem já estava acima do teto ganhou espaço até o dobro da base daquele momento, e nada além disso.
+Clientes de terceiros passaram a ter teto de **100 mil tokens de usuário**. Um aplicativo que atingisse cem mil usuários precisava negociar diretamente com o Twitter para crescer. Quem já estava acima do teto podia crescer até o dobro da base daquele momento.
 
-Repare no desenho do controle. Não é um limite de requisições, que protegeria a infraestrutura. É um limite de **usuários**, que protege o modelo de negócio. Um limite de taxa e um teto de tokens parecem o mesmo tipo de mecanismo na documentação, e resolvem problemas de natureza completamente diferente.
+Repare no desenho do controle. O teto limita o número de **usuários** e protege o modelo de negócio, enquanto um limite de requisições protegeria a infraestrutura. Na documentação, o limite de taxa e o teto de tokens parecem o mesmo tipo de mecanismo, embora resolvam problemas de natureza completamente diferente.
 
 O prazo de migração da 1.0 para a 1.1 foi de seis meses. Depois disso, a versão antiga foi desligada.
 
@@ -54,23 +54,23 @@ timeline
 
 O segundo fechamento foi mais técnico e, para quem estava do lado de fora, mais caro.
 
-As APIs de fluxo contínuo conhecidas como User Streams e Site Streams foram desligadas em 16 de agosto de 2018, substituídas pela Account Activity API. A diferença não é de contrato: é de **estilo de interação**. Uma conexão persistente que empurra eventos foi trocada por um modelo em que a plataforma chama um endereço do consumidor.
+As APIs de fluxo contínuo conhecidas como User Streams e Site Streams foram desligadas em 16 de agosto de 2018, substituídas pela Account Activity API. A mudança alterou o **estilo de interação**. Uma conexão persistente que empurra eventos foi trocada por um modelo em que a plataforma chama um endereço do consumidor.
 
-Isso não se resolve trocando a URL. Um aplicativo que recebia eventos por conexão aberta não precisava de endereço público, nem de certificado, nem de disponibilidade permanente para receber chamadas de entrada. Passou a precisar. Produtos inteiros fecharam por não conseguirem pagar essa mudança, entre eles o Favstar.
+A adaptação exigia mais do que trocar a URL. Um aplicativo que recebia eventos por conexão aberta não precisava de endereço público, de certificado nem de disponibilidade permanente para receber chamadas de entrada, e depois da mudança passou a precisar dos três. Produtos inteiros fecharam por não conseguirem pagar essa mudança, entre eles o Favstar.
 
 ## Fevereiro de 2023: o acesso gratuito acaba
 
-O terceiro fechamento veio sem transição. Em 2 de fevereiro de 2023 a empresa anunciou que, a partir do dia 9, o acesso gratuito à API terminaria, nas versões 1.1 e 2. Sete dias.
+O terceiro fechamento veio sem transição. Em 2 de fevereiro de 2023 a empresa anunciou que, a partir do dia 9, o acesso gratuito à API terminaria nas versões 1.1 e 2, o que deu aos consumidores sete dias de prazo.
 
-O que morreu dessa vez foi diferente das outras duas. Bots públicos de utilidade, ferramentas de acessibilidade, projetos de pesquisa acadêmica e serviços gratuitos mantidos por uma pessoa só. Nenhum deles tinha receita para migrar para um plano pago.
+Dessa vez os produtos encerrados pertenciam a outra categoria: bots públicos de utilidade, ferramentas de acessibilidade, projetos de pesquisa acadêmica e serviços gratuitos mantidos por uma pessoa só. Nenhum deles tinha receita para migrar para um plano pago.
 
 ## A lição que o caso ensina sobre contratos
 
-Uma API pública tem duas faces, e o módulo trata as duas. Do lado de dentro, é um contrato que precisa ser versionado, documentado e testado. Do lado de fora, é uma **dependência que você não controla**.
+Uma API pública tem dois aspectos, e o módulo trata ambos. Para quem a publica, a API é um contrato que precisa ser versionado, documentado e testado, e para quem a consome ela é uma **dependência que você não controla**.
 
 Toda decisão de consumir uma API de terceiro é uma aposta sobre o comportamento futuro de uma empresa. O contrato técnico não protege contra mudança de estratégia, e o histórico do Twitter mostra que o aviso costuma vir antes da restrição, às vezes com anos de antecedência.
 
-Isso não é argumento para não integrar. É argumento para tratar a integração como decisão arquitetural registrada, com o custo de saída estimado antes de começar.
+O histórico recomenda tratar a integração com API de terceiro como decisão arquitetural registrada, com o custo de saída estimado antes de começar.
 
 ## Questões para discussão
 

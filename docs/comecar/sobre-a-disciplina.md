@@ -19,4 +19,4 @@ Espera-se familiaridade com programação, versionamento de código, linha de co
 
 Cada encontro parte de conceitos e vocabulário comum, avança para exemplos arquiteturais e aplica as decisões ao mesmo caso hospitalar. A oficina torna evidências observáveis; os exercícios organizados pela Taxonomia de Bloom permitem escolher a profundidade adequada; o projeto integrador registra a evolução em artefatos pequenos e conectados.
 
-As decisões são discutidas por contexto, forças, alternativas e consequências. Ferramentas aparecem para tornar um fenômeno visível, nunca como substitutas do raciocínio arquitetural.
+As decisões são discutidas por contexto, forças, alternativas e consequências. As ferramentas aparecem para tornar um fenômeno visível e servem de apoio ao raciocínio arquitetural do estudante.

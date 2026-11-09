@@ -1,6 +1,6 @@
 # Estudo de caso: quando a fragmentação supera a autonomia
 
-Este caso usa a mesma plataforma hospitalar do laboratório e do exemplo arquitetural deste módulo — mas numa fase anterior. Antes de chegar ao desenho de dois processos que você viu em Elegibilidade e Exames, a equipe já tinha tentado "ir direto para microsserviços" em Elegibilidade, e foi longe demais.
+Este caso usa a mesma plataforma hospitalar do laboratório e do exemplo arquitetural deste módulo — mas numa fase anterior. Antes de chegar ao desenho de dois processos que você viu em Elegibilidade e Exames, a equipe já tinha tentado "ir direto para microsserviços" em Elegibilidade e dividiu a capacidade em mais processos do que ela comportava.
 
 Depois de uma meta corporativa de "migrar para microsserviços", a capacidade Elegibilidade — que interpreta vínculo, vigência e regras da operadora, como você viu em [conceitos](conceitos.md) — foi dividida em processos separados: cadastro de beneficiário, vínculo com a operadora, vigência do plano, categoria de plano, regra contratual, procedimento e rede credenciada. A capacidade vizinha, Autorização, virou mais quatro processos: protocolo, decisão de autorização, notificação e auditoria. Ao final, eram onze processos, cada um com seu próprio repositório e pipeline de implantação — mas mantidos por uma única equipe.
 
@@ -8,7 +8,7 @@ Depois de uma meta corporativa de "migrar para microsserviços", a capacidade El
 
 Adicionar uma nova regra de autorização exigia alterar contratos de quatro processos e implantar seis deles na mesma janela. Vínculo, vigência e categoria de plano nunca eram escalados separadamente — sempre recebiam a mesma carga, porque sempre respondiam à mesma pergunta de negócio. Em incidentes, a equipe precisava correlacionar logs de vários processos só para descobrir que um campo tinha mudado de significado em algum deles. Uma tela de atendimento fazia oito chamadas sequenciais e mostrava um erro genérico sempre que qualquer uma delas atrasava.
 
-Havia muitos contêineres, mas pouca autonomia real. O desenho tinha as quatro formas de acoplamento que você viu em [conceitos](conceitos.md#acoplamento): de implantação (mudar uma regra exigia publicar várias unidades juntas), temporal (a tela dependia de oito respostas síncronas), de contrato (cada processo expunha uma fatia do mesmo assunto) e organizacional (a mesma equipe negociava consigo mesma sem parar). A separação física — vários processos, vários deploys — tinha acontecido antes de existir uma separação semântica estável.
+Os onze processos rodavam em contêineres separados e tinham pouca autonomia real. O desenho tinha as quatro formas de acoplamento que você viu em [conceitos](conceitos.md#acoplamento): de implantação (mudar uma regra exigia publicar várias unidades juntas), temporal (a tela dependia de oito respostas síncronas), de contrato (cada processo expunha uma fatia do mesmo assunto) e organizacional (a mesma equipe negociava consigo mesma sem parar). A separação física — vários processos, vários deploys — tinha acontecido antes de existir uma separação semântica estável.
 
 ## Diagnóstico por capacidades
 
@@ -45,15 +45,15 @@ Um painel gerencial também precisava cruzar autorizações com dados agregados 
 
 A consolidação deveria ser revista se equipes diferentes passassem a ser donas de partes do macrosserviço, se uma das regras precisasse de um ciclo de implantação isolado, se as cargas de vínculo/vigência e de regra contratual divergissem de forma relevante, ou se a unidade voltasse a impedir entregas independentes. Também deveria ser revista se a projeção do painel gerencial parasse de atender ao prazo que o negócio precisa. Uma boa decisão arquitetural carrega dentro de si os sinais que a tornariam obsoleta.
 
-O caso ensina que consolidar não é fracassar, e distribuir não é modernizar. O objetivo é sempre alinhar coesão do código, propriedade dos dados, padrão de comunicação e desenho das equipes. Um macrosserviço pode ser uma etapa estável ou um estágio de transição; um monólito modular pode ser o destino certo; microsserviços continuam fazendo sentido em fronteiras específicas — como Elegibilidade e Exames continuam sendo dois processos no exemplo deste módulo, porque ali a autonomia observada compensa o custo de rede.
+O caso mostra que consolidar processos pode corrigir uma fragmentação excessiva e que distribuir um sistema não o torna mais moderno por si só. O objetivo é sempre alinhar coesão do código, propriedade dos dados, padrão de comunicação e desenho das equipes. Um macrosserviço pode ser uma etapa estável ou um estágio de transição; um monólito modular pode ser o destino certo; microsserviços continuam fazendo sentido em fronteiras específicas — como Elegibilidade e Exames continuam sendo dois processos no exemplo deste módulo, porque ali a autonomia observada compensa o custo de rede.
 
 Uma consolidação também precisa preservar os contratos externos durante a migração. Um roteador pode encaminhar chamadas antigas para o novo macrosserviço enquanto os consumidores são atualizados aos poucos. O padrão de estrangulamento é uma estratégia de transição — não uma razão para manter duas fontes de verdade funcionando indefinidamente.
 
-## Netflix e Uber como consequências, não como receitas
+## Netflix e Uber como fonte de perguntas
 
 Relatos públicos sobre a Netflix costumam destacar a escala de entrega e a necessidade de isolar mudanças e falhas entre muitas equipes. Relatos sobre a Uber mostram como diferentes domínios, volumes e operações geográficas podem justificar fronteiras bem mais granulares. Nenhum dos dois casos é um argumento para copiar a topologia de um fornecedor: são empresas com histórico, equipes, dados e obrigações operacionais muito diferentes dos de um hospital.
 
-Use os dois casos como perguntas de consequência, não como modelo a copiar: que carga precisa escalar separadamente? Que falha precisa ficar contida sem derrubar o resto? Qual contrato precisa continuar estável durante uma migração? E, sobretudo, como a equipe volta atrás se a fronteira escolhida não entregar a autonomia prometida? Uma extração reversível começa por módulos, contratos, telemetria e dados com dono definido; um **padrão de estrangulamento** (migrar uma rota de cada vez para o novo desenho, mantendo a rota antiga viva até a troca ser segura) só funciona se existir uma fonte de verdade única e um plano para desligar o caminho antigo.
+Use os dois casos para formular perguntas de consequência: que carga precisa escalar separadamente? Que falha precisa ficar contida sem derrubar o resto? Qual contrato precisa continuar estável durante uma migração? E, sobretudo, como a equipe volta atrás se a fronteira escolhida não entregar a autonomia prometida? Uma extração reversível começa por módulos, contratos, telemetria e dados com dono definido; um **padrão de estrangulamento** (migrar uma rota de cada vez para o novo desenho, mantendo a rota antiga viva até a troca ser segura) só funciona se existir uma fonte de verdade única e um plano para desligar o caminho antigo.
 
 ## Perguntas para revisar o caso
 
@@ -120,4 +120,4 @@ O caso afirma que uma boa decisão arquitetural carrega dentro de si os sinais q
 
 Um sinal só serve para algo se alguém conseguir observá-lo em um dado concreto. O sinal 3, por exemplo, apareceria na comparação de requisições por minuto entre os módulos, acompanhada por algumas semanas. Escolha outro sinal da lista e diga qual dado a equipe precisaria acompanhar para saber que ele apareceu.
 
-Essas respostas preparam o `ADR-003` do [incremento 3 do projeto integrador](../projeto-integrador/incrementos.md#incremento-3-limites-de-servicos-dados-e-coordenacao): a mesma pergunta — consolidar ou distribuir, e sob qual evidência — reaparece lá como decisão registrável, não apenas como discussão.
+Essas respostas preparam o `ADR-003` do [incremento 3 do projeto integrador](../projeto-integrador/incrementos.md#incremento-3-limites-de-servicos-dados-e-coordenacao): a mesma pergunta — consolidar ou distribuir, e sob qual evidência — reaparece lá como decisão registrável em ADR.

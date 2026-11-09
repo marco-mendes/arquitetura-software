@@ -111,7 +111,7 @@ A falha de liveness leva ao reinício do contêiner. Como as quatro réplicas co
 <details>
 <summary>Ver resposta</summary>
 
-Vivo significa que o processo está executando e responde ao endpoint de vitalidade. Pronto significa elegível a receber tráfego agora. Correto significa que a resposta de negócio está certa, e é a única das três que nenhuma probe verifica, porque ela depende de regra de domínio e de dados, não de sinal de processo. Uma versão logicamente errada responde saúde normalmente.
+Vivo significa que o processo está executando e responde ao endpoint de vitalidade. Pronto significa elegível a receber tráfego agora. Correto significa que a resposta de negócio está certa, e é a única das três que nenhuma probe verifica, porque ela depende de regra de domínio e de dados, que nenhum sinal de processo expõe. Uma versão logicamente errada responde saúde normalmente.
 </details>
 
 ### Explicar por que o cluster desfez a alteração manual
@@ -133,7 +133,7 @@ Você explica o que aconteceu de fato, e depois explica o que deveria ter sido f
 <details>
 <summary>Ver resposta</summary>
 
-O estado desejado do serviço vive no repositório Git, que continua declarando três réplicas. O Argo CD compara continuamente esse destino declarado com o estado observado no cluster, e o comando manual criou uma divergência. Com `selfHeal` ativado, a sincronização desfez a divergência restaurando o valor do repositório. Nenhuma pessoa reverteu nada, o laço de reconciliação fez o que foi configurado para fazer.
+O estado desejado do serviço vive no repositório Git, que continua declarando três réplicas. O Argo CD compara continuamente esse destino declarado com o estado observado no cluster, e o comando manual criou uma divergência. Com `selfHeal` ativado, a sincronização desfez a divergência restaurando o valor do repositório. A reversão foi executada pelo laço de reconciliação, conforme a configuração, sem ação de nenhuma pessoa.
 </details>
 
 2\. Explique por que o registro no canal do time não impediu o desfazimento, e o que teria impedido.
@@ -141,7 +141,7 @@ O estado desejado do serviço vive no repositório Git, que continua declarando 
 <details>
 <summary>Ver resposta</summary>
 
-O agente de reconciliação lê o repositório, e não o canal de conversa. A alteração ficou fora da única fonte que o sistema consulta. O que teria persistido é a mudança do número de réplicas no manifesto versionado, aprovada e sincronizada. Em situação de urgência, a alternativa é suspender a sincronização automática do serviço enquanto dura o incidente, deixando registro dessa suspensão.
+O agente de reconciliação consulta apenas o repositório. A alteração ficou fora da única fonte que o sistema consulta. O que teria persistido é a mudança do número de réplicas no manifesto versionado, aprovada e sincronizada. Em situação de urgência, a alternativa é suspender a sincronização automática do serviço enquanto dura o incidente, deixando registro dessa suspensão.
 </details>
 
 3\. Diferencie o papel de Terraform, Ansible e Argo CD neste cenário, dizendo qual deles teria agido e quais não.
@@ -307,7 +307,7 @@ Aplicar o vocabulário dos seis Rs a três aplicações reais de um mesmo portf�
 
 **Situação**
 
-O contrato do data center do hospital vence em dezoito meses e não será renovado. A diretoria pediu uma decisão por aplicação, e três delas chegaram primeiro. As descrições de [Padrões e decisões](padroes-e-decisoes.md) sobre rehost, replatform, refactor, rebuild, retire e retain bastam para decidir.
+O contrato do data center do hospital vence em dezoito meses e não será renovado. A diretoria pediu uma decisão por aplicação, e três delas chegaram primeiro.
 
 A primeira é o **sistema de faturamento**. Ele roda em dois servidores físicos, foi escrito há dezoito anos numa linguagem que ninguém da equipe atual domina, e não recebe mudança funcional há quatro anos. Ele funciona. A auditoria externa exige que o histórico permaneça consultável por mais dois anos, e nenhum outro sistema sabe produzir os relatórios que ele produz.
 
@@ -320,6 +320,17 @@ Três restrições valem para as três decisões:
 1. O data center precisa ser esvaziado em dezoito meses.
 2. A equipe tem cinco pessoas e opera as três aplicações ao mesmo tempo.
 3. Nenhuma das três pode ficar indisponível durante horário de atendimento.
+
+As seis estratégias, resumidas de [Padrões e decisões](padroes-e-decisoes.md), bastam para decidir:
+
+| Estratégia | O que significa | Esforço |
+| --- | --- | --- |
+| **Rehost** | mover sem alterar código, também chamado de *lift and shift* | baixo |
+| **Replatform** | mover para uma plataforma de execução nova com alterações mínimas de código, como trocar o banco por um gerenciado ou o servidor de aplicação por um runtime operado | baixo a médio |
+| **Refactor** | alterar o código existente sem mudar de forma relevante o comportamento externo, para melhorar desempenho, escala e integração | alto |
+| **Rebuild** | recomeçar a aplicação, em geral com arquitetura nova | muito alto |
+| **Retire** | desativar e desligar a aplicação | baixo |
+| **Retain** | manter como está por ora, com a razão e a data de reavaliação registradas | nenhum |
 
 **Seu papel**
 
@@ -367,7 +378,7 @@ No terceiro, o histórico vai para o banco gerenciado e o aviso é registrado nu
 Quatro restrições valem para a proposta:
 
 1. A publicação de versões novas não pode derrubar o serviço.
-2. O hospital opera numa região só hoje, e a segunda é intenção, não projeto.
+2. O hospital opera numa região só hoje, e a segunda região é uma intenção ainda sem projeto.
 3. Recuperação em outra região nunca foi testada.
 4. A recepção tolera até um minuto de atraso no aviso de mudança.
 
@@ -397,9 +408,28 @@ Traduzir o modelo de referência de plataforma em nuvem para o portfólio de um 
 
 **Situação**
 
-O modelo de referência apresentado em [Exemplo arquitetural](exemplo-arquitetural.md) descreve uma plataforma com camada de acessibilidade, microgateways por canal, API de plano de controle, microsserviços de integração, banco gerenciado, uma carga legada em máquina virtual e três serviços de terceiros consumidos como SaaS.
+O modelo de referência apresentado em [Exemplo arquitetural](exemplo-arquitetural.md) descreve uma plataforma em nuvem formada por sete peças:
 
-A diretoria pediu uma representação desse modelo na AWS, para discutir custo e responsabilidade com o fornecedor. O catálogo de serviços básicos está em [Estudo de caso](estudo-de-caso.md), organizado por categoria.
+1. Camada de acessibilidade, que funciona como *ingress controller*, *firewall* ou *proxy* e recebe os clientes móvel e web.
+2. Dois microgateways, um para o canal móvel e outro para o canal web, cada um no próprio conjunto de escala.
+3. API do plano de controle, que carrega políticas de segurança, controle de taxa de requisição e regras de escala.
+4. Microsserviços de integração, cada um no próprio conjunto de escala, ligados aos microgateways.
+5. Banco de dados gerenciado pelo provedor e replicado.
+6. Uma carga legada, o LMS, executada em máquina virtual sem ter sido reescrita.
+7. Três serviços de terceiros consumidos como SaaS: videoconferência, cobrança e CRM.
+
+A diretoria pediu uma representação desse modelo na AWS, para discutir custo e responsabilidade com o fornecedor. O catálogo de serviços básicos, detalhado em [Estudo de caso](estudo-de-caso.md), reúne estes serviços por categoria:
+
+| Categoria | Serviços do catálogo |
+| --- | --- |
+| Computação | Amazon EC2, AWS Lambda, Amazon ECS, Amazon EKS e AWS Fargate |
+| Armazenamento | Amazon S3, Amazon EBS, Amazon FSx, AWS Backup e Amazon Glacier |
+| Banco de dados | Amazon RDS, Amazon DynamoDB, Amazon Aurora, Amazon Redshift, Amazon ElastiCache, Amazon DocumentDB e Amazon Keyspaces |
+| Rede e segurança | Amazon VPC, AWS CloudFront, AWS Route 53, AWS WAF e AWS Shield |
+| IA e aprendizado de máquina | Amazon SageMaker, AWS Rekognition, AWS Textract e Amazon Comprehend |
+| Monitoramento e DevOps | Amazon CloudWatch, AWS X-Ray, AWS CodePipeline e AWS CloudFormation |
+
+A Figura 16 do [Estudo de caso](estudo-de-caso.md) mostra o nível de detalhe esperado, com Route 53, CloudFront e S3 na entrada, balanceadores e instâncias EC2 com escala automática em duas zonas de disponibilidade e um par RDS primário e réplica com replicação entre zonas.
 
 A atividade é de desenho. Nada é provisionado no provedor, e nenhum recurso real é criado.
 
@@ -539,7 +569,7 @@ Uma equipe faz git pull e recompila o código dentro do servidor de produção a
 
 O HPA do laboratório declara de duas a cinco réplicas com alvo de CPU. O que o módulo afirma sobre essa configuração?
 
-- (a) Que ela é uma política, não uma prova, e exige métrica disponível, request de CPU definido e observação de latência, fila, erro e saturação.
+- (a) Que ela é uma política que ainda precisa de verificação e exige métrica disponível, request de CPU definido e observação de latência, fila, erro e saturação.
 - (b) Que ela prova que a aplicação escala sob qualquer carga.
 - (c) Que ela dispensa a definição de limits.
 - (d) Que ela garante alta disponibilidade entre zonas.
@@ -569,7 +599,7 @@ Uma organização compra uma agenda como SaaS. Que responsabilidade continua com
 A API de elegibilidade tem duas réplicas em um cluster kind de um único nó. A equipe afirma que o serviço é altamente disponível. Como o módulo avalia a afirmação?
 
 - (a) Correta, porque duas réplicas garantem alta disponibilidade.
-- (b) Incorreta, porque uma réplica extra no mesmo nó protege contra queda de processo, não contra perda do nó, e o cluster local não representa falha de zona.
+- (b) Incorreta, porque uma réplica extra no mesmo nó protege contra a queda de um processo e não protege contra a perda do nó, e o cluster local não representa falha de zona.
 - (c) Correta, desde que o HPA esteja configurado.
 - (d) Incorreta, porque o kind não permite mais de uma réplica.
 

@@ -18,7 +18,7 @@ No mercado atual, as APIs desempenham papéis estratégicos. Elas são o motor d
 
 Além de serem amplamente utilizadas em sistemas móveis, aplicativos web e na comunicação entre micro serviços em arquiteturas distribuídas, as APIs são fundamentais para a transformação digital das organizações. Elas possibilitam a integração de legados e novos sistemas, acelerando inovações nos processos.
 
-## API: fronteira de colaboração, não apenas uma URL
+## API como fronteira de colaboração
 
 Uma **interface de programação de aplicações** (API) permite que aplicação web, móvel, nuvem, parceiro ou dispositivo use uma capacidade sem conhecer tabelas ou algoritmos internos. Separe três camadas:
 
@@ -28,9 +28,9 @@ Uma **interface de programação de aplicações** (API) permite que aplicação
 | Contrato      | Que promessa é observável?            | campos obrigatórios, `202`, `Location`, `422` e schemas publicados |
 | Implementação | Como a promessa é cumprida hoje?      | FastAPI, Pydantic e armazenamento em memória                       |
 
-O **consumidor** depende do contrato, não do código ou banco. Trocar biblioteca ou armazenamento pode ser interno; renomear campo, mudar status ou remover operação pede transição. Contrato, governança e evidência tornam a API reutilizável.
+O **consumidor** depende somente do contrato publicado, sem acesso ao código nem ao banco. Trocar biblioteca ou armazenamento pode ser interno; renomear campo, mudar status ou remover operação pede transição. Contrato, governança e evidência tornam a API reutilizável.
 
-## Consumidores diferentes, necessidades diferentes
+## Necessidades de cada tipo de consumidor
 
 Não se escolhe um estilo por popularidade. Aplicação web tende a valorizar semântica HTTP e documentação; móvel, payload e rede; integração entre organizações, contrato durável e tradução de vocabulário; canal em tempo real, reconexão e ritmo. Uma API multicanal não precisa entregar a mesma representação a todos, mas precisa preservar o significado de negócio e declarar diferenças.
 
@@ -56,7 +56,7 @@ Em REST, um **recurso** é algo identificado e manipulado por representações. 
 
 Por isso, rotas tendem a usar substantivos do vocabulário do consumidor, como `/elegibilidades`, `/agendamentos` e `/autorizacoes`. Verbos continuam existindo nos métodos e nas transições. Uma rota como `/aprovarAutomaticamente` pode ser uma operação RPC perfeitamente coerente, mas não deve ser chamada de REST só por usar JSON e HTTP.
 
-Uma representação inclui dados necessários à tarefa, não tabelas internas: o laboratório retorna `protocolo`, `situacao` e `criado_em`. Famílias `2xx`, `4xx` e `5xx` distinguem sucesso, problema do consumidor e falha do servidor; `200`, `201`, `202`, `404`, `409` e `422` refinam a semântica. O schema `ErroAPI` usa `codigo` estável, `mensagem` legível e `detalhes` por campo para que o consumidor não dependa de texto livre.
+Uma representação inclui somente os dados necessários à tarefa e omite as tabelas internas: o laboratório retorna `protocolo`, `situacao` e `criado_em`. Famílias `2xx`, `4xx` e `5xx` distinguem sucesso, problema do consumidor e falha do servidor; `200`, `201`, `202`, `404`, `409` e `422` refinam a semântica. O schema `ErroAPI` usa `codigo` estável, `mensagem` legível e `detalhes` por campo para que o consumidor não dependa de texto livre.
 
 ## Restrições REST de Fielding
 
@@ -98,7 +98,7 @@ GraphQL exige schema e política para consultas caras. Se a dependência externa
 
 ## O contrato verificável e a sua evolução
 
-Cabeçalhos transportam metadados da interação: `Content-Type` descreve a representação enviada, `Accept` expressa os formatos aceitos, `Location` aponta um recurso relacionado, `ETag` identifica a versão de uma representação para cache ou concorrência, e um identificador de correlação conecta registros técnicos. OpenAPI descreve caminhos, operações, parâmetros, corpos, respostas e schemas em YAML ou JSON; no laboratório, `contratos/openapi.yaml` é a promessa explícita versionada. Um arquivo válido ainda pode ser um contrato fraco — tipo sem significado, erro ausente, exemplo incompatível: Spectral examina o documento, Bruno o consumo e `TestClient` a execução HTTP, perspectivas complementares.
+Cabeçalhos transportam metadados da interação: `Content-Type` descreve a representação enviada, `Accept` expressa os formatos aceitos, `Location` aponta um recurso relacionado, `ETag` identifica a versão de uma representação para cache ou concorrência, e um identificador de correlação conecta registros técnicos. OpenAPI descreve caminhos, operações, parâmetros, corpos, respostas e schemas em YAML ou JSON; no laboratório, `contratos/openapi.yaml` é a promessa explícita versionada. Um arquivo válido ainda pode ser um contrato fraco, com tipo sem significado, erro ausente ou exemplo incompatível. Por isso o laboratório combina três verificações complementares: Spectral examina o documento, Bruno examina o consumo e `TestClient` examina a execução HTTP.
 
 ![Anatomia de um contrato de API: cliente consome um contrato OpenAPI, a API processa a solicitação e responde 202 Accepted com Location para acompanhamento pela operadora de plano.](../assets/images/m02-anatomia-api.png)
 

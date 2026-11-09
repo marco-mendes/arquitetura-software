@@ -2,7 +2,7 @@
 
 ## Gateway como borda técnica
 
-O API gateway concentra controles que são iguais para várias entradas: roteamento, terminação TLS, autenticação técnica, cabeçalhos de segurança, correlation ID, rate limiting e telemetria. Essa mediação diminui duplicação e oferece uma superfície observável. Ela não elimina o serviço como autoridade. O serviço ainda valida dados, autoriza ações no contexto do domínio, aplica invariantes, escolhe persistência e comunica estados de negócio. “Limitar três chamadas por segundo por IP” é política de proteção de entrada; “um beneficiário não pode usar um plano vencido” é política de domínio.
+O API gateway concentra controles que são iguais para várias entradas: roteamento, terminação TLS, autenticação técnica, cabeçalhos de segurança, correlation ID, rate limiting e telemetria. Essa mediação diminui duplicação e oferece uma superfície observável. Ela não elimina o serviço como autoridade. O serviço ainda valida dados, autoriza ações no contexto do domínio, aplica invariantes, escolhe persistência e comunica estados de negócio. Por exemplo, a regra “limitar três chamadas por segundo por IP” protege a entrada e pode ficar no gateway, enquanto a regra “um beneficiário não pode usar um plano vencido” depende do domínio e fica no serviço.
 
 Uma heurística ajuda: se a regra precisa do vocabulário, do estado ou da exceção de uma capacidade, ela pertence ao serviço que possui essa capacidade. Se a regra é independente do recurso e protege uma borda comum, o gateway é candidato. Algumas decisões atravessam os dois: autenticação técnica pode ocorrer no gateway, enquanto autorização para visualizar um resultado específico precisa do serviço. Documente ambas as partes e o comportamento de falha para não criar uma lacuna entre elas.
 
@@ -38,7 +38,7 @@ sequenceDiagram
 
 ## Limites, segurança e custo operacional
 
-Rate limiting é uma proteção, não uma autorização. Ele reduz abuso e impede que uma origem consuma toda capacidade, mas não decide se uma pessoa tem direito a um recurso. Devolva `429` de forma explícita, com cabeçalhos de limite quando apropriado, para que cliente possa reduzir ritmo. Não esconda o erro como `500`, nem configure um limite tão baixo que o fluxo normal se torne aleatório. Um teste controlado precisa declarar a janela e enviar mais chamadas que o limiar.
+Rate limiting é um mecanismo de proteção de tráfego. Ele reduz abuso e impede que uma origem consuma toda capacidade, mas não decide se uma pessoa tem direito a um recurso. Devolva `429` de forma explícita, com cabeçalhos de limite quando apropriado, para que cliente possa reduzir ritmo. Não esconda o erro como `500`, nem configure um limite tão baixo que o fluxo normal se torne aleatório. Um teste controlado precisa declarar a janela e enviar mais chamadas que o limiar.
 
 Logs, métricas e traces também têm custo e risco. Defina retenção, amostragem, acesso e campos permitidos. Uma investigação pode começar pelo correlation ID no log, verificar aumento de `429` na métrica e abrir o trace com a mesma operação. Esse encadeamento deve ser ensinado junto de SLO: se a rota atende a latência mas recusa consumidores legítimos, o indicador isolado não descreve qualidade. Escolha indicadores de sucesso, disponibilidade e proteção de acordo com o objetivo do recurso.
 

@@ -104,7 +104,7 @@ Location: /elegibilidades/550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
-O código usa `202` — não `200` nem `201` — porque a API só aceitou o pedido; ela ainda não decidiu nada. Guardar os dados num dicionário em memória é uma decisão simples de implementação: funciona enquanto o processo está rodando, mas tudo se perde se ele reiniciar. Esse limite precisa ficar declarado para quem consome a API.
+O código usa `202` porque a API apenas aceitou o pedido e ainda não tomou nenhuma decisão, situação para a qual `200` e `201` não se aplicam. Guardar os dados num dicionário em memória é uma decisão simples de implementação: funciona enquanto o processo está rodando, mas tudo se perde se ele reiniciar. Esse limite precisa ficar declarado para quem consome a API.
 
 ## Passo 3 — A rota que recupera
 

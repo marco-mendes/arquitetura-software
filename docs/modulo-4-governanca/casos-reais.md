@@ -1,8 +1,8 @@
-# Knight Capital: 45 minutos, 460 milhões de dólares
+# Knight Capital e a implantação incompleta de 2012
 
 Em 1º de agosto de 2012, às 9h30 da manhã, a bolsa de Nova York abriu. Quarenta e cinco minutos depois, a Knight Capital Americas tinha comprado e vendido 397 milhões de ações que ninguém pediu, acumulado uma posição não intencional de bilhões de dólares e perdido mais de **460 milhões**. A empresa, que respondia por cerca de 10% do volume negociado em ações listadas nos Estados Unidos, foi vendida meses depois.
 
-A causa não foi um ataque, nem uma falha de hardware, nem um algoritmo mal calibrado. Foi uma implantação manual em oito servidores na qual um técnico esqueceu um.
+A causa foi uma implantação manual em oito servidores na qual um técnico deixou de atualizar um deles, e o incidente não envolveu ataque, falha de hardware ou algoritmo mal calibrado.
 
 O relato a seguir vem da ordem administrativa que a SEC publicou em 16 de outubro de 2013. É um documento regulatório, com o detalhe técnico apurado e as datas confirmadas, e é raro ter uma fonte dessa qualidade sobre um incidente de software.
 
@@ -10,9 +10,9 @@ O relato a seguir vem da ordem administrativa que a SEC publicou em 16 de outubr
 
 A Knight operava um roteador automático de ordens chamado SMARS. A função dele é receber ordens grandes de clientes (o documento as chama de *parent orders*) e quebrá-las em ordens menores, as *child orders*, enviadas a diferentes centros de negociação conforme a liquidez disponível.
 
-Dentro do SMARS existia uma funcionalidade chamada **Power Peg**. A Knight parou de usá-la em 2003. Não removeu o código. Nas palavras da SEC: *"Despite the lack of use, the Power Peg functionality remained present and callable at the time of the RLP deployment."*
+Dentro do SMARS existia uma funcionalidade chamada **Power Peg**. A Knight parou de usá-la em 2003 e não removeu o código. Nas palavras da SEC: *"Despite the lack of use, the Power Peg functionality remained present and callable at the time of the RLP deployment."*
 
-Presente e chamável. Por nove anos.
+O código permaneceu presente e chamável por nove anos.
 
 ## 2005: a bomba é armada
 
@@ -34,7 +34,7 @@ A partir de 27 de julho, o código foi implantado em etapas, em alguns servidore
 
 > *"During the deployment of the new code, however, one of Knight's technicians did not copy the new code to one of the eight SMARS computer servers. Knight did not have a second technician review this deployment and no one at Knight realized that the Power Peg code had not been removed from the eighth server, nor the new RLP code added. Knight had no written procedures that required such a review."*
 
-Sete servidores com o código novo. Um servidor com o código de 2003, sem freio, e uma *flag* que agora seria ligada por ordens de clientes reais.
+Sete servidores receberam o código novo, e um servidor manteve o código de 2003, sem a trava de contagem, com uma *flag* que agora seria ligada por ordens de clientes reais.
 
 ## 8h01: o sistema avisa 97 vezes
 
@@ -44,7 +44,7 @@ O sistema enviou **97 dessas mensagens** a um grupo de funcionários antes das 9
 
 A ordem da SEC é precisa sobre por que elas não serviram para nada: *"Knight did not design these types of messages to be system alerts, and Knight personnel generally did not review them when they were received."* E completa que as mensagens eram em tempo real, foram causadas pela falha de implantação, e ofereciam uma oportunidade de identificar e corrigir o problema antes da abertura.
 
-Noventa e sete avisos, com o nome do subsistema e o nome exato da funcionalidade defeituosa, entregues com noventa minutos de antecedência a um grupo de pessoas para quem aquilo era ruído.
+Os 97 avisos traziam o nome do subsistema e o nome exato da funcionalidade defeituosa e chegaram com noventa minutos de antecedência a um grupo de pessoas que os tratava como ruído.
 
 ## 9h30: quarenta e cinco minutos
 
@@ -58,7 +58,7 @@ O mercado sentiu. Em 75 daquelas ações, as execuções da Knight passaram de 2
 
 ## O erro que piorou tudo
 
-Aqui está a parte mais dolorosa do documento, e a mais instrutiva para uma disciplina de governança.
+Esta parte do documento é a mais relevante para uma disciplina de governança.
 
 A Knight não tinha procedimento de resposta a incidente. Nas palavras da SEC: *"Knight did not have supervisory procedures to guide its relevant personnel when significant issues developed."* A empresa deixou a equipe de tecnologia tentar diagnosticar o problema com o sistema em produção, negociando ao vivo.
 
@@ -66,11 +66,11 @@ Numa das tentativas de correção, a equipe **desinstalou o código novo dos set
 
 > *"This action worsened the problem, causing additional incoming parent orders to activate the Power Peg code that was present on those servers, similar to what had already occurred on the eighth server."*
 
-A hipótese era razoável: o problema apareceu depois da implantação, então reverter a implantação deveria resolver. Estava errada, porque o defeito não estava no código novo. Estava no código antigo que o novo deveria ter apagado. Reverter transformou um servidor defeituoso em oito.
+A hipótese era razoável: o problema apareceu depois da implantação, então reverter a implantação deveria resolver. A hipótese estava errada porque o defeito estava no código antigo que o novo deveria ter substituído, e a reversão transformou um servidor defeituoso em oito.
 
 ## Os controles que existiam e não pararam nada
 
-A ordem da SEC cataloga o que havia, e é um inventário familiar.
+A ordem da SEC cataloga os controles que a Knight possuía.
 
 Existiam controles de entrada de ordem errônea na interface do cliente, no sistema de gestão de ordens e no sistema de execução interna. Nenhum deles ficava no SMARS, que era o último elo antes do mercado. Não havia comparação entre o que entrava no SMARS e o que saía dele, nem procedimento para interromper o SMARS diante do próprio comportamento aberrante.
 
@@ -78,7 +78,7 @@ Existia um limite de posição de 2 milhões de dólares numa conta interna, a c
 
 Existia a ferramenta principal de monitoração de risco, o **PMON**. Ela é descrita como sistema de monitoração pós-execução: mostrava as posições depois de feitas, não gerava alerta automático, não exibia os limites na tela (quem olhasse precisava saber de cor qual era o limite aplicável) e ficava lenta justamente em eventos de alto volume como aquele, produzindo relatórios imprecisos.
 
-O padrão se repete nos três casos. O controle existia como artefato. Nenhum deles estava ligado a uma ação automática capaz de parar o sistema.
+Nos três casos, o controle existia como artefato e nenhum deles estava ligado a uma ação automática capaz de parar o sistema.
 
 ## O desfecho formal
 
@@ -86,7 +86,7 @@ A SEC concluiu que a Knight violou a Regra 15c3-5 do Exchange Act, a chamada reg
 
 > *"Knight did not have technology governance controls and supervisory procedures sufficient to ensure the orderly deployment of new code or to prevent the activation of code no longer intended for use in Knight's current operations but left on its servers that were accessing the market."*
 
-A empresa foi censurada e pagou penalidade civil de 12 milhões de dólares — valor irrelevante diante dos 460 milhões perdidos em 45 minutos. A certificação anual do executivo-chefe para 2012 foi considerada defeituosa porque não atestava a conformidade exigida pela regra.
+A empresa foi censurada e pagou penalidade civil de 12 milhões de dólares, valor inferior a 3% dos 460 milhões perdidos em 45 minutos. A certificação anual do executivo-chefe para 2012 foi considerada defeituosa porque não atestava a conformidade exigida pela regra.
 
 ## Questões para discussão
 

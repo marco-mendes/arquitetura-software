@@ -2,9 +2,9 @@
 
 **Encontro:** 5 de 6
 
-Nos módulos anteriores, um serviço que precisava de algo chamava outro e esperava a resposta. Esse desenho funciona bem quando a resposta é necessária para continuar, e cobra caro quando não é: quem chama fica preso à disponibilidade e ao desempenho de quem responde, mesmo para avisar sobre um fato que já aconteceu.
+Nos módulos anteriores, um serviço que precisava de algo chamava outro e esperava a resposta. Esse desenho é adequado quando a resposta é necessária para continuar. Quando a resposta é dispensável, quem chama fica preso à disponibilidade e ao desempenho de quem responde, mesmo para avisar sobre um fato que já aconteceu.
 
-Este módulo trata da alternativa. Um serviço publica que algo ocorreu e encerra o próprio trabalho; quem tiver interesse reage depois, no ritmo que conseguir sustentar. A troca não é gratuita, e boa parte do módulo é sobre o que ela cobra: contratos entre partes que não se conhecem, mensagens que podem chegar duas vezes, dados que ficam temporariamente desencontrados e falhas que ninguém percebe se não houver quem as observe.
+Este módulo trata da alternativa. Um serviço publica que algo ocorreu e encerra o próprio trabalho; quem tiver interesse reage depois, no ritmo que conseguir sustentar. Boa parte do módulo trata dos custos dessa troca: contratos entre partes que não se conhecem, mensagens que podem chegar duas vezes, dados que ficam temporariamente desencontrados e falhas que ninguém percebe se não houver quem as observe.
 
 O caso condutor continua sendo a plataforma hospitalar. Quando um resultado de exame fica disponível, Faturamento precisa cobrar e Notificação precisa avisar o paciente, sem que o laboratório dependa de nenhum dos dois para concluir seu próprio trabalho.
 

@@ -53,4 +53,4 @@ A [oficina](oficina-de-ferramentas.md) usa os três exemplos executáveis do rep
 
 Ao concluir, guarde artefatos pequenos e conectados: as saídas de antes e depois de cada experimento com uma nota do que a diferença revelou, as entregas dos exercícios do seu nível e um mini-ADR registrando uma decisão com contexto, alternativas e consequências. Nenhum artefato prova sozinho que a arquitetura é adequada; em conjunto, eles mostram como a decisão foi formulada e onde a turma pode revisar a hipótese.
 
-O [incremento 1 do projeto integrador](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) reutiliza esses artefatos para formar a primeira baseline da plataforma. A intenção não é prever todos os encontros, mas iniciar uma cadeia de decisões coerente e evolutiva.
+O [incremento 1 do projeto integrador](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) reutiliza esses artefatos para formar a primeira baseline da plataforma. O objetivo desta etapa é iniciar uma cadeia de decisões coerente e evolutiva, sem prever o conteúdo dos encontros seguintes.

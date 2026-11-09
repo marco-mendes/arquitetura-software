@@ -4,9 +4,9 @@ Arquitetura de software reúne estruturas, decisões e racional para compreender
 
 ## Decisões arquiteturais
 
-Uma decisão é arquitetural quando afeta interesses importantes, restringe escolhas posteriores ou custa caro reverter. A fronteira entre módulos costuma ser arquitetural; o nome de uma variável, não.
+Uma decisão é arquitetural quando afeta interesses importantes, restringe escolhas posteriores ou custa caro reverter. A fronteira entre módulos costuma atender a esses critérios, e o nome de uma variável é um exemplo de decisão que não atende a nenhum deles.
 
-Arquitetura não é só um diagrama inicial: está no código, na implantação, nos dados e nas relações de trabalho. Também não é toda decisão técnica. Uma descrição arquitetural responde ao menos a quatro perguntas:
+A arquitetura está registrada no diagrama inicial e também no código, na implantação, nos dados e nas relações de trabalho, e abrange apenas parte das decisões técnicas. Uma descrição arquitetural responde ao menos a quatro perguntas:
 
 - quais elementos relevantes existem;
 - quais responsabilidades e fronteiras cada elemento possui;
@@ -36,7 +36,7 @@ flowchart LR
 
 O desenho ainda exige restrições: quem pode acessar `Dados`, onde está a regra e como erros atravessam fronteiras. Sem essa semântica, permite interpretações incompatíveis.
 
-Uma visão arquitetural também precisa ser nomeada: módulos mostram dependências de código; execução, comunicação entre processos; implantação, ambientes computacionais. Misturá-las esconde decisões.
+Uma visão arquitetural também precisa ser nomeada: a visão de módulos mostra dependências de código, a visão de execução mostra a comunicação entre processos e a visão de implantação mostra os ambientes computacionais. Misturá-las esconde decisões.
 
 ## Estrutura e comportamento se complementam
 
@@ -71,10 +71,10 @@ Uma decisão escolhe uma alternativa e aceita consequências. Uma **restrição*
 
 Decisões úteis registram contexto, forças, alternativas, escolha, consequências e evidências. “Usar Python” não basta; um monólito modular pode justificar implantação simples e revisão quando houver escala independente demonstrada.
 
-O código não explica alternativas rejeitadas; por isso o ADR o complementa. Structurizr Lite versiona modelos; pytest verifica comportamento; ArchUnit e NetArchTest verificam dependências. Ferramentas produzem evidência; a decisão continua sendo do grupo.
+O código não explica alternativas rejeitadas; por isso o ADR o complementa. Structurizr Lite versiona modelos; pytest verifica comportamento; ArchUnit e NetArchTest verificam dependências. As ferramentas produzem a evidência que o grupo usa para tomar a decisão.
 
 Um **atributo de qualidade** descreve comportamento além da função principal. Modificabilidade, desempenho, disponibilidade, segurança, testabilidade e observabilidade são exemplos. “Ter desempenho” sem carga, ambiente e medida é ambíguo.
 
 Use [fonte, estímulo, ambiente, artefato, resposta e medida](atributos-de-qualidade.md). Um cenário de modificabilidade pode limitar a alteração ao módulo de regras e a suíte a cinco minutos; throughput define lote, volume e itens por segundo.
 
-Atributos entram em tensão. Mais isolamento pode acrescentar comunicação e operação. Uma otimização de throughput pode reduzir a clareza. Consistência imediata pode diminuir disponibilidade durante uma partição. Arquitetar é explicitar esses compromissos, não prometer maximizar tudo.
+Atributos entram em tensão. Mais isolamento pode acrescentar comunicação e operação. Uma otimização de throughput pode reduzir a clareza. Consistência imediata pode diminuir disponibilidade durante uma partição. O trabalho de arquitetura consiste em explicitar esses compromissos e registrar qual atributo foi priorizado em cada um.

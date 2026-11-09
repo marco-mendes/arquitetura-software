@@ -6,7 +6,7 @@ O [contexto hospitalar compartilhado](../projeto-integrador/contexto-hospitalar.
 
 ### O que é uma capacidade
 
-Uma **capacidade** é uma coisa que o negócio precisa que seja feita — um trabalho com valor próprio, como *marcar uma consulta* ou *fechar a conta com a operadora*. Ela diz **o quê** se entrega, não **como** se faz. "Marcar uma consulta" é a mesma capacidade quer seja feita por uma recepcionista com uma agenda de papel, quer por um aplicativo. A tecnologia é o *como* e pode mudar; a capacidade é o *quê* e permanece.
+Uma **capacidade** é uma coisa que o negócio precisa que seja feita — um trabalho com valor próprio, como *marcar uma consulta* ou *fechar a conta com a operadora*. Ela descreve **o quê** se entrega. A forma de fazer, o **como**, depende da tecnologia escolhida. "Marcar uma consulta" é a mesma capacidade quer seja feita por uma recepcionista com uma agenda de papel, quer por um aplicativo. A capacidade permanece a mesma quando a tecnologia muda.
 
 > Pense no balcão de uma clínica. Há um guichê para marcar horário, outro para conferir o convênio, outro para pagar. Cada guichê é uma capacidade: um serviço com começo, fim e responsabilidade claros. Trocar o computador do guichê não muda o que ele faz.
 
@@ -19,7 +19,7 @@ Essa distinção importa porque **a mesma capacidade pode ser construída de vá
 
 ### Capacidades em escopo
 
-O caso trabalha oito capacidades, detalhadas no [contexto compartilhado](../projeto-integrador/contexto-hospitalar.md#capacidades-em-escopo). Na coluna de força dominante, a palavra em negrito é o termo técnico (você o reencontra em [atributos de qualidade](../referencia/atributos-de-qualidade.md)) e o resto é o que ele significa aqui. É uma hipótese inicial, não um veredito — os exercícios existem para medi-la.
+O caso trabalha oito capacidades, detalhadas no [contexto compartilhado](../projeto-integrador/contexto-hospitalar.md#capacidades-em-escopo). Na coluna de força dominante, a palavra em negrito é o termo técnico (você o reencontra em [atributos de qualidade](../referencia/atributos-de-qualidade.md)) e o resto é o que ele significa aqui. A força indicada é uma hipótese inicial, e os exercícios existem para medi-la.
 
 | Capacidade | Resultado que entrega | Força dominante (hipótese) |
 | --- | --- | --- |
@@ -40,11 +40,11 @@ Trabalhar as oito com a mesma profundidade seria demais para começar. Os quatro
 - **Triagem administrativa** (Cadastro + Elegibilidade + Autorização) — reúne essas três etapas para encaminhar o paciente, e cada unidade do hospital pode ter uma etapa a mais. Sua força é a **extensibilidade**: acrescentar uma etapa nova sem mexer no que já funciona, como encaixar mais uma peça de Lego.
 - **Faturamento** — junta registros de várias origens, confere, ajusta e envia em lotes. Sua força é a **vazão** (*throughput*): dar conta de um grande volume de uma vez, como uma esteira que separa milhares de cartas por hora.
 
-As três vivem na mesma plataforma, mas pedem coisas diferentes — e essa diferença é o que o exercício 2 vai deixar comparável. As outras três capacidades do contexto compartilhado (Exames e resultados, Notificações, Auditoria) permanecem fora do aprofundamento dos exercícios por escolha de escopo, não porque tenham deixado de existir — quem quiser pode estendê-las com o mesmo método.
+As três vivem na mesma plataforma e têm exigências diferentes, que o exercício 2 vai tornar comparáveis. As outras três capacidades do contexto compartilhado (Exames e resultados, Notificações, Auditoria) permanecem fora do aprofundamento dos exercícios por escolha de escopo e continuam fazendo parte da plataforma. Quem quiser pode estendê-las com o mesmo método.
 
 ## Como trabalhar esta página
 
-São quatro exercícios curtos, e cada um usa o resultado do anterior. Pense numa decisão comum, como escolher onde morar: primeiro você lista o que importa (perto do trabalho, silêncio, preço), depois compara as opções por esses critérios, então desenha a planta do lugar escolhido e, por fim, anota por que decidiu assim — e o que faria você mudar de ideia. Os exercícios seguem essa mesma ordem:
+São quatro exercícios curtos, e cada um usa o resultado do anterior. Pense numa decisão comum, como escolher onde morar: primeiro você lista o que importa (perto do trabalho, silêncio, preço), depois compara as opções por esses critérios, então desenha a planta do lugar escolhido e, por fim, anota por que decidiu assim e o que faria você mudar de ideia. Os exercícios seguem essa mesma ordem:
 
 1. Os **cenários** dizem o que importa, de um jeito que dá para medir.
 2. A **matriz** compara os estilos usando esses cenários como critério.
@@ -62,7 +62,7 @@ No terminal aberto na raiz do repositório `arquitetura-software`, crie a pasta 
 | 3 | Estrutura inicial e diagrama | `estrutura.md` |
 | 4 | Consequências e decisão registrada | `ADR-001-estrutura-inicial.md` |
 
-Cada exercício mostra **onde aprender a fazer** (a página e a seção que ensinam o método) e a **forma do artefato** (um esqueleto pronto para você completar). O esqueleto já vem montado de propósito: assim seu esforço vai para a decisão, não para a formatação.
+Cada exercício mostra **onde aprender a fazer** (a página e a seção que ensinam o método) e a **forma do artefato** (um esqueleto pronto para você completar). O esqueleto já vem montado de propósito: assim seu esforço se concentra na decisão.
 
 Cada exercício termina com uma **Referência do curso** recolhida — uma resposta possível, escrita pelo material, para você comparar **depois** de tentar. Não é gabarito: seu grupo pode chegar a outra resposta, desde que compare as mesmas forças, assuma as consequências e mostre uma evidência que outra pessoa consiga repetir. Abra o bloco só depois de fechar a sua versão; ver antes tira o valor do exercício.
 
@@ -70,7 +70,7 @@ Cada exercício termina com uma **Referência do curso** recolhida — uma respo
 
 **Enunciado**
 
-Agenda, triagem administrativa e faturamento vivem na mesma plataforma, mas pedem coisas diferentes. Para cada uma, escreva um **cenário mensurável**: uma frase de teste tão clara que duas soluções possam ser comparadas pela mesma régua.
+Agenda, triagem administrativa e faturamento vivem na mesma plataforma e têm exigências diferentes. Para cada uma, escreva um **cenário mensurável**: uma frase de teste tão clara que duas soluções possam ser comparadas pela mesma régua.
 
 > É a diferença entre uma receita que diz "asse por 20 minutos a 180°C" e outra que diz "asse até ficar bom". Só a primeira pode ser conferida por qualquer pessoa.
 
@@ -236,7 +236,7 @@ O desenho precisa **nomear** as partes — nada de caixas genéricas — e vir c
 
 **Onde aprender a fazer**
 
-O vocabulário do desenho está em [como ler uma arquitetura](../referencia/como-ler-uma-arquitetura.md#componentes-conectores-e-configuracao): componente concentra responsabilidade, conector descreve colaboração e configuração é o arranjo dos dois. O [exemplo arquitetural](exemplo-arquitetural.md#a-mesma-plataforma-tres-estruturas-deliberadas) mostra três estruturas com o nível de detalhe esperado aqui. Os módulos de lá pertencem a outra plataforma; aproveite a forma do desenho e nomeie os seus. A convenção de acessibilidade usada em todas as figuras do curso aparece nas figuras 15 e 16 desta página: bloco Mermaid, texto alternativo, legenda numerada e leitura textual.
+O vocabulário do desenho está em [como ler uma arquitetura](../referencia/como-ler-uma-arquitetura.md#componentes-conectores-e-configuracao): componente concentra responsabilidade, conector descreve colaboração e configuração é o arranjo dos dois. O [exemplo arquitetural](exemplo-arquitetural.md#tres-estruturas-na-plataforma-de-remessas) mostra três estruturas com o nível de detalhe esperado aqui. Os módulos de lá pertencem a outra plataforma; aproveite a forma do desenho e nomeie os seus. A convenção de acessibilidade usada em todas as figuras do curso aparece nas figuras 15 e 16 desta página: bloco Mermaid, texto alternativo, legenda numerada e leitura textual.
 
 **Forma do artefato**
 
@@ -340,7 +340,7 @@ O faturamento recebe registros administrativos, valida campos obrigatórios, nor
 
 **Enunciado**
 
-A estrutura do exercício 3 é uma aposta, não uma verdade. Aqui você a transforma num registro que outra pessoa pode questionar: um **ADR** (do inglês *Architecture Decision Record*, "registro de decisão de arquitetura"). Um ADR anota três coisas — o que você decidiu, por que decidiu e o que faria você voltar atrás.
+A estrutura do exercício 3 é uma hipótese que ainda precisa de evidência. Aqui você a transforma num registro que outra pessoa pode questionar: um **ADR** (do inglês *Architecture Decision Record*, "registro de decisão de arquitetura"). Um ADR anota três coisas — o que você decidiu, por que decidiu e o que faria você voltar atrás.
 
 > É como anotar uma decisão importante num caderno: "escolhi o plano X porque Y; se o preço passar de Z, reavalio". Meses depois, qualquer um entende a escolha e sabe quando ela deixou de valer.
 
@@ -371,11 +371,11 @@ sequenceDiagram
 
 **Leitura textual da figura:** a Equipe administrativa solicita um horário pela Interface, que chama Agenda com o horário e a correlação. Agenda verifica e registra a reserva de modo atômico. Se houver horário, registra a confirmação em Auditoria; se houver conflito, registra a tentativa rejeitada. Em ambos os casos, a Interface devolve um resultado explícito à equipe.
 
-**O que o diagrama te diz — e por que o monólito modular ajuda aqui**
+**Leitura do diagrama e papel do monólito modular**
 
 Repare no passo em que a Agenda "verifica e registra de forma atômica". Como Agenda, Triagem e Faturamento vivem numa **única implantação, com um só banco de dados**, reservar um horário é uma **transação local**: o próprio banco garante que, entre dois pedidos ao mesmo tempo, só um consegue gravar. É como um caixa único com um só caderno de reservas — duas pessoas não escrevem na mesma linha ao mesmo tempo. Não é preciso coordenar serviços separados nem criar um protocolo entre eles.
 
-Essa é a **consequência favorável** que o ADR vai registrar. Toda escolha cobra um preço, e aqui está a **restrição**: como tudo roda no mesmo processo, um lote pesado de faturamento disputa recursos com a agenda — escala e falha ficam compartilhadas.
+Essa é a **consequência favorável** que o ADR vai registrar. A **restrição** correspondente é que, como tudo roda no mesmo processo, um lote pesado de faturamento disputa recursos com a agenda e os dois módulos compartilham escala e falha.
 
 Você já tem as duas peças. Use estas frases no ADR (pode copiar ou reescrever com suas palavras):
 
@@ -418,11 +418,11 @@ Alternativa listada só pelo nome não foi comparada. E um gatilho como "revisar
 - Cada alternativa descartada aparece com a força que atenderia e o risco que traria — não apenas com o nome.
 - As consequências incluem ao menos um efeito desfavorável assumido.
 - Cada evidência informa onde pode ser reproduzida.
-- O gatilho de revisão descreve uma observação, não uma data vaga.
+- O gatilho de revisão descreve uma observação mensurável, sem recorrer a uma data vaga.
 
 **Se precisar reduzir o escopo**
 
-Registre o ADR com estado "proposta" e liste em uma seção final os campos que faltaram. Um registro incompleto e honesto continua utilizável; um registro completo por invenção contamina os encontros seguintes.
+Registre o ADR com estado "proposta" e liste em uma seção final os campos que faltaram. Um registro incompleto e honesto continua utilizável. Campos preenchidos com informação inventada comprometem as decisões dos encontros seguintes.
 
 <details markdown="1">
 <summary>Referência do curso — abra só depois de fechar a sua versão</summary>

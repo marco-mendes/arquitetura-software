@@ -2,19 +2,19 @@
 
 Esta oficina coloca no ar dois serviços separados, cada um com seu próprio banco de dados, e provoca de propósito a situação que define arquitetura distribuída: **um serviço cai e o outro continua funcionando pela metade**. Não é um exercício de Docker. É a chance de ver, em execução, três decisões que o livro-texto discute em teoria: propriedade de dados, fronteira física e falha parcial.
 
-O caso é o mesmo das páginas anteriores. **Elegibilidade** decide se um beneficiário pode usar o plano. **Exames** registra uma solicitação clínica, e para isso precisa consultar a decisão de Elegibilidade. São duas capacidades de negócio distintas, com dados e ciclos de mudança próprios, e é por isso que servem para demonstrar uma fronteira.
+O caso é o mesmo das páginas anteriores. **Elegibilidade** decide se um beneficiário pode usar o plano. **Exames** registra uma solicitação clínica, e para isso precisa consultar a decisão de Elegibilidade. São duas capacidades de negócio distintas, com dados e ciclos de mudança próprios, o que as torna adequadas para demonstrar uma fronteira.
 
-### O que você vai observar, e por que importa
+### O que a oficina demonstra
 
 | O que a oficina mostra | O conceito do módulo |
 | --- | --- |
 | Cada serviço só alcança o próprio banco, por construção da rede | [Propriedade dos dados](conceitos.md#propriedade-dos-dados) e banco por serviço |
-| Exames responde `200` na verificação de saúde e `503` na operação | [Falha parcial](conceitos.md#chamadas-sincronas-e-falhas-parciais): o sistema não cai inteiro, degrada em partes |
+| Exames responde `200` na verificação de saúde e `503` na operação | [Falha parcial](conceitos.md#chamadas-sincronas-e-falhas-parciais): o sistema degrada em partes e continua parcialmente disponível |
 | A chamada entre serviços tem prazo de espera e traduz o erro do vizinho | O custo da [fronteira física](conceitos.md#fronteira-logica-e-fronteira-fisica), que a chamada local não tinha |
 
 ![Serviços e bancos isolados com degradação durante uma falha parcial](../assets/images/m03-oficina-falha-parcial.png)
 
-*Figura 5 — Fronteira de dados por construção da rede, e um serviço que degrada em vez de cair. Fonte: curso.*
+*Figura 5 — Fronteira de dados definida pela construção da rede e serviço que degrada durante a falha da dependência. Fonte: curso.*
 
 **Leitura textual da figura:** três faixas horizontais representam redes distintas. Na rede de serviços, a API de Exames chama a API de Elegibilidade por httpx com prazo de espera declarado. Na rede de banco de dados, cada serviço tem seu próprio Postgres privado, e não existe caminho de rede entre os dois bancos. Abaixo, o resultado observável durante a falha: `GET /health` responde 200 enquanto a operação responde 503, porque Elegibilidade está fora do ar e Exames continua respondendo de forma degradada.
 
@@ -36,9 +36,9 @@ flowchart TB
 
 **Texto alternativo:** o terminal alcança os dois serviços por uma rede de aplicação, exames chama elegibilidade por HTTP com prazo de espera, e cada serviço tem uma rede interna própria que leva ao seu banco, sem ligação entre as duas redes de banco.
 
-*Figura 11 — Três redes, e por que um serviço não alcança o banco do outro. Fonte: curso.*
+*Figura 11 — As três redes da oficina e o motivo pelo qual um serviço não alcança o banco do outro. Fonte: curso.*
 
-**Leitura textual da figura:** você chega pelo terminal às portas publicadas dos dois serviços, que estão na rede de aplicação. Nessa mesma rede, o serviço de exames chama o de elegibilidade por HTTP, com prazo de espera declarado de dois segundos. Cada serviço pertence também a uma segunda rede, marcada como interna, que leva ao seu próprio Postgres. As duas redes de banco não se tocam e não têm saída para fora, e é por isso que o serviço de exames não consegue nem resolver o nome do banco de elegibilidade. A fronteira de dados aqui não depende de disciplina do programador, ela está na construção da rede.
+**Leitura textual da figura:** você chega pelo terminal às portas publicadas dos dois serviços, que estão na rede de aplicação. Nessa mesma rede, o serviço de exames chama o de elegibilidade por HTTP, com prazo de espera declarado de dois segundos. Cada serviço pertence também a uma segunda rede, marcada como interna, que leva ao seu próprio Postgres. As duas redes de banco não se tocam e não têm saída para fora, e é por isso que o serviço de exames não consegue nem resolver o nome do banco de elegibilidade. A fronteira de dados aqui é garantida pela construção da rede e independe da disciplina do programador.
 
 ### Onde cada arquivo mora
 
@@ -641,7 +641,7 @@ No PowerShell, o equivalente para o diretório é `New-Item -ItemType Directory 
 
 ## A fronteira declarada no Compose
 
-Antes de subir qualquer coisa, vale ler o arquivo que define a topologia, porque **a fronteira entre os dois serviços está escrita ali**, e não no código Python.
+Antes de subir qualquer coisa, vale ler o arquivo que define a topologia, porque **a fronteira entre os dois serviços está escrita ali**, fora do código Python.
 
 Comece pelo bloco de redes, no fim do arquivo:
 
@@ -654,7 +654,7 @@ networks:
     internal: true
 ```
 
-São três redes, e não uma. Cada serviço é ligado a exatamente duas delas:
+O arquivo declara três redes, e cada serviço é ligado a exatamente duas delas:
 
 ```yaml
   elegibilidade:
@@ -670,7 +670,7 @@ São três redes, e não uma. Cada serviço é ligado a exatamente duas delas:
 
 Repare no que isso produz. O serviço de Exames **não tem rota de rede** até `db_elegibilidade`: mesmo que alguém escrevesse no código uma consulta ao banco alheio, a conexão falharia por não haver caminho. A propriedade dos dados deixa de depender de disciplina da equipe e passa a ser uma propriedade da infraestrutura.
 
-É essa a tese que o módulo defende ao dizer que banco por serviço é uma decisão de **autoridade**, e não de tecnologia. Os dois bancos aqui rodam o mesmo PostgreSQL, com a mesma versão. O que os separa é quem tem permissão de alcançá-los.
+É essa a tese que o módulo defende ao dizer que banco por serviço é uma decisão de **autoridade** sobre os dados, independente da tecnologia escolhida. Os dois bancos aqui rodam o mesmo PostgreSQL, com a mesma versão. O que os separa é quem tem permissão de alcançá-los.
 
 O bloco de dependências declara a ordem de inicialização:
 
@@ -850,7 +850,7 @@ flowchart TB
 
 *Figura 12 — Por que a mesma instância responde 200 e 503 ao mesmo tempo. Fonte: curso.*
 
-**Leitura textual da figura:** dois caminhos partem do mesmo processo. O primeiro é a verificação de saúde, que só consulta o banco de Exames, encontra tudo no lugar e responde 200. O segundo é a operação de negócio, que precisa perguntar a Elegibilidade se o beneficiário pode ser atendido, não obtém resposta dentro do prazo e devolve 503 com o código de dependência indisponível. Uma seta tracejada liga as duas respostas, registrando que elas saem da mesma instância no mesmo instante. Isso é degradação parcial, e é diferente de o sistema cair. Uma verificação de saúde que também consultasse Elegibilidade apagaria essa distinção e faria o orquestrador reiniciar um processo que está funcionando.
+**Leitura textual da figura:** dois caminhos partem do mesmo processo. O primeiro é a verificação de saúde, que só consulta o banco de Exames, encontra tudo no lugar e responde 200. O segundo é a operação de negócio, que precisa perguntar a Elegibilidade se o beneficiário pode ser atendido, não obtém resposta dentro do prazo e devolve 503 com o código de dependência indisponível. Uma seta tracejada liga as duas respostas, registrando que elas saem da mesma instância no mesmo instante. Esse comportamento caracteriza degradação parcial, que difere da queda do sistema inteiro. Uma verificação de saúde que também consultasse Elegibilidade apagaria essa distinção e faria o orquestrador reiniciar um processo que está funcionando.
 
 Repita a chamada abaixo. Ela deve retornar `503 Service Unavailable` e o código `dependencia_indisponivel`, enquanto `GET /health` de Exames ainda retorna `200`:
 
@@ -886,9 +886,9 @@ HTTP/1.1 200 OK
 {"status":"ok","servico":"exames"}
 ```
 
-São duas respostas contraditórias do mesmo serviço, no mesmo instante, e é exatamente isso que caracteriza a falha parcial.
+A emissão de duas respostas contraditórias pelo mesmo serviço no mesmo instante caracteriza a falha parcial.
 
-O serviço de Exames está saudável pela definição dele mesmo: o processo responde e a base própria está acessível. O que ele não consegue é concluir uma operação que depende de um vizinho. Numa arquitetura de serviços, "estar no ar" e "conseguir atender" deixam de ser a mesma coisa, e é por isso que monitorar apenas processos vivos dá uma falsa sensação de saúde.
+O serviço de Exames está saudável pela definição dele mesmo: o processo responde e a base própria está acessível. O que ele não consegue é concluir uma operação que depende de um vizinho. Numa arquitetura de serviços, "estar no ar" e "conseguir atender" deixam de ser a mesma coisa. Por esse motivo, o monitoramento que verifica apenas se os processos estão vivos indica saúde mesmo quando uma capacidade está indisponível.
 
 Repare no que **não** aconteceu. O sistema não caiu inteiro: consultas a Elegibilidade que já tivessem sido feitas não foram desfeitas, a base de Exames continua íntegra, e qualquer operação de Exames que não dependa do vizinho seguiria funcionando. A falha ficou contida no caminho que atravessa a fronteira.
 
@@ -906,7 +906,7 @@ except httpx.HTTPError as error:                    # a rede falhou
     ) from error
 ```
 
-A escolha do `503` comunica algo específico: **o defeito é temporário e não é culpa de quem chamou**. Um `500` diria "quebrei por dentro"; um `400` culparia o consumidor por um pedido correto. O `503` diz "tente de novo mais tarde", que é a informação verdadeira e acionável.
+A escolha do `503` comunica algo específico: **o defeito é temporário e não é culpa de quem chamou**. Um `500` diria "quebrei por dentro"; um `400` culparia o consumidor por um pedido correto. O `503` diz "tente de novo mais tarde", que é a informação verdadeira e permite ao consumidor decidir quando repetir a chamada.
 
 O mesmo arquivo traduz cada falha possível do vizinho num significado próprio, e essa tabela é o cerne da aula:
 
@@ -922,7 +922,7 @@ Duas lições de arquitetura de serviços estão embutidas nessa tabela.
 
 A primeira: **Exames nunca repassa o código de status do vizinho**. Um `404` de Elegibilidade não vira `404` de Exames, porque significariam coisas diferentes — o recurso `/exames` existe; quem não existe é o beneficiário. Vazar o status do serviço interno acopla o consumidor à topologia interna do sistema.
 
-A segunda: falha técnica e decisão de negócio recebem tratamentos distintos. Beneficiário inelegível não é erro; é a resposta correta a uma pergunta legítima, e por isso vira `422` com código próprio, e não `503`.
+A segunda: falha técnica e decisão de negócio recebem tratamentos distintos. Beneficiário inelegível não é erro; é a resposta correta a uma pergunta legítima, e por isso recebe o status `422` com código próprio, enquanto o `503` fica reservado para a indisponibilidade técnica.
 
 Repare também no prazo de espera declarado na criação do cliente HTTP:
 

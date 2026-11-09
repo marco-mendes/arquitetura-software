@@ -2,14 +2,14 @@
 
 O projeto integrador conecta os seis encontros em uma única decisão arquitetural evolutiva. Você trabalhará como arquiteto ou arquiteta de uma plataforma hospitalar que troca informações com planos de saúde e laboratórios. O desafio é arquitetural: não exige conhecimento clínico nem decisões sobre diagnóstico ou tratamento.
 
-Em vez de criar seis soluções independentes, a turma mantém uma baseline de arquitetura. A cada encontro, novas decisões, contratos e evidências são incorporados ao que já existe. Uma decisão anterior pode ser revisada, desde que a mudança e suas consequências sejam registradas.
+A turma mantém uma única baseline de arquitetura ao longo dos seis encontros. A cada encontro, novas decisões, contratos e evidências são incorporados ao que já existe. Uma decisão anterior pode ser revisada, desde que a mudança e suas consequências sejam registradas.
 
 ## Comece por aqui
 
 1. Leia o [contexto hospitalar](contexto-hospitalar.md) e delimite o problema.
 2. Consulte os [seis incrementos](incrementos.md) antes de iniciar cada encontro.
 3. Use os [modelos de entrega](modelos-de-entrega.md) para manter os artefatos comparáveis.
-4. Verifique os [critérios de avaliação](criterios-de-avaliacao.md) durante o trabalho, não apenas ao final.
+4. Verifique os [critérios de avaliação](criterios-de-avaliacao.md) durante o trabalho e também ao final.
 
 ## A linha cumulativa
 
@@ -24,6 +24,6 @@ Em vez de criar seis soluções independentes, a turma mantém uma baseline de a
 
 ## Resultado esperado
 
-Ao final, a entrega forma um dossiê arquitetural coerente: modelos conectados, ADRs, contratos, decisões sobre dados e eventos, controles de governança, visão de implantação e evidências reproduzíveis. O objetivo não é acumular diagramas, mas demonstrar por que a solução evoluiu e como se pode verificar se as decisões atendem ao contexto.
+Ao final, a entrega forma um dossiê arquitetural coerente: modelos conectados, ADRs, contratos, decisões sobre dados e eventos, controles de governança, visão de implantação e evidências reproduzíveis. O objetivo da entrega é demonstrar por que a solução evoluiu e como se pode verificar se as decisões atendem ao contexto.
 
 Termos novos podem ser consultados no [glossário](../referencia/glossario.md); padrões recorrentes estão reunidos no [catálogo de padrões](../referencia/catalogo-de-padroes.md).

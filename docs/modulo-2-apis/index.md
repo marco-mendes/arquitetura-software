@@ -17,9 +17,9 @@ O percurso trata a API como um **estilo arquitetural** e percorre quatro planos:
 
 ## Questão orientadora
 
-Sua organização precisa expor capacidades a consumidores que ela não controla: aplicações web e móveis, parceiros, outras nuvens e dispositivos. Quais fronteiras merecem virar contrato público — e quais devem permanecer internas? Que estilo de interação serve cada consumidor sem acorrentar a evolução do sistema? O que a borda e a plataforma precisam oferecer para que dezenas de APIs continuem seguras, observáveis e compatíveis ao longo dos anos?
+Sua organização precisa expor capacidades a consumidores que ela não controla: aplicações web e móveis, parceiros, outras nuvens e dispositivos. Quais fronteiras merecem virar contrato público e quais devem permanecer internas? Que estilo de interação serve cada consumidor sem acorrentar a evolução do sistema? O que a borda e a plataforma precisam oferecer para que dezenas de APIs continuem seguras, observáveis e compatíveis ao longo dos anos?
 
-A pergunta do encontro não é operacional — “como implemento um endpoint?” —, e sim arquitetural: quais promessas uma fronteira pública faz, a que custo, e como ela evolui sem quebrar quem depende dela. O raciocínio será:
+A pergunta do encontro é arquitetural e trata de quais promessas uma fronteira pública faz, a que custo, e como ela evolui sem quebrar quem depende dela. O raciocínio será:
 
 > capacidade de negócio → consumidor → estilo de interação → contrato observável → borda e plataforma → evolução compatível
 

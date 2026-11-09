@@ -1,10 +1,8 @@
-# iFood: 500 instâncias no pico, 60% delas descartáveis
+# iFood: a migração para a nuvem e a compra elástica de capacidade
 
 No sábado, 7 de março de 2026, o iFood registrou mais de 7,7 milhões de pedidos em um único dia. No fim de semana inteiro foram 22,2 milhões de pedidos, cerca de 5,1 mil transações por minuto, com mais de 200 mil entregadores ativos ao mesmo tempo, segundo o [comunicado da própria empresa](https://institucional.ifood.com.br/noticias/ifood-bateu-recorde-de-vendas/).
 
-Quinze anos antes, a tecnologia da empresa era telefone e fax.
-
-Este caso percorre o que aconteceu entre as duas frases, e percorre pelo lado técnico.
+Em 2011, quinze anos antes, a tecnologia da empresa se resumia a telefone e fax. Este caso descreve, pelo lado técnico, a evolução da infraestrutura entre essas duas datas.
 
 ## De onde vem cada número deste caso
 
@@ -14,17 +12,17 @@ Três materiais posteriores completam o quadro. O **[estudo de caso do iFood no 
 
 Todos os quatro foram publicados pela empresa, por seu provedor de nuvem ou por um fornecedor dela. Isso não os invalida e obriga a ler cada número pelo que ele mede.
 
-## Antes da nuvem, a infraestrutura morava no call center
+## Infraestrutura do iFood antes da nuvem
 
 O iFood nasceu em 15 de maio de 2011, digitalizando uma operação que existia desde 1997 como Disk Cook, um guia impresso de cardápios com central telefônica, conforme o [verbete da Wikipédia sobre a empresa](https://pt.wikipedia.org/wiki/IFood). No começo, segundo os engenheiros no [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I), toda a infraestrutura ficava dentro do call center.
 
 Com o crescimento, isso deixou de se sustentar, e a primeira mudança foi para um data center convencional. Não resolveu. A frase que descreve o problema no vídeo de 2018 é a mais reconhecível da história inteira: *"a velocidade que o negócio estava imprimindo para a tecnologia era muito grande. [Cada] dia a gente precisava de mais link, mais servidores. A gente perdia muito tempo operando a infraestrutura."*
 
-Repare no que está sendo dito. O gargalo não era desempenho do sistema. Era o tempo de engenharia consumido por provisionamento. Um pedido de mais link é um chamado, um contrato, um prazo. A soma desses prazos define a velocidade máxima com que o negócio consegue crescer, e nenhuma otimização de código muda isso.
+O gargalo descrito na frase era o tempo de engenharia consumido pelo provisionamento de infraestrutura. Um pedido de mais link exigia abrir um chamado, negociar um contrato e aguardar um prazo. A soma desses prazos define a velocidade máxima com que o negócio consegue crescer, e nenhuma otimização de código muda isso.
 
-## A migração foi por partes, e a ordem revela a estratégia
+## Ordem das etapas da migração
 
-A virada para a nuvem não foi um evento. Foi uma sequência, e ela está descrita no [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) em quatro etapas.
+A migração para a nuvem ocorreu em quatro etapas, descritas no [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I).
 
 Primeiro vieram os serviços de envio de e-mail. Depois, os serviços de gestão de filas e mensagens. Só então a plataforma foi quebrada em microsserviços, que passaram a migrar um a um. No fim, quando manter o data center virou insustentável, o restante foi movido de uma vez.
 
@@ -34,7 +32,7 @@ A ordem não é acidental. E-mail e filas são capacidades sem estado de negóci
 
 O [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) registra por que AWS, e vale reproduzir porque é raro encontrar o critério escrito: *"naquela época a AWS era mais madura e tinha todos os requisitos que a gente queria. O nosso negócio ser escalável, estável, seguro, e que tivesse um suporte para a gente ter uma boa curva de aprendizado dentro do time."*
 
-Quatro atributos e uma restrição de equipe. É a estrutura de um registro de decisão arquitetural, mesmo sem o documento. O último item, a curva de aprendizado do time, costuma ficar de fora das comparações técnicas e é o que decide muita migração na prática.
+O critério reúne quatro atributos e uma restrição de equipe, que formam a estrutura de um registro de decisão arquitetural mesmo sem o documento. O último item, a curva de aprendizado do time, costuma ficar de fora das comparações técnicas e é o que decide muita migração na prática.
 
 ## O desenho de 2018: três formas de comprar a mesma máquina
 
@@ -64,25 +62,25 @@ flowchart TB
 
 *Figura 1 — O mix de compra de capacidade do iFood no pico de 2018. Fonte: curso, a partir do estudo de caso em vídeo publicado pela AWS em 31 de julho de 2018.*
 
-**Leitura textual da figura:** o desenho parte da demanda, que tem dois picos por dia, no almoço e no jantar, e chega à capacidade de pico de mais de 500 instâncias EC2. Dessa capacidade saem três ramos, um para cada forma de compra: cerca de um quarto em instâncias reservadas, que formam a base contratada com desconto, cerca de três quintos em instâncias spot, que usam capacidade ociosa do provedor a preço menor, e o restante sob demanda, como folga sem compromisso. Do ramo spot sai uma seta indicando a retomada da instância pelo provedor com dois minutos de aviso, que leva ao orquestrador. Ele remove a réplica afetada e a recria em outra instância, e uma seta de volta ao ramo spot fecha o ciclo, mostrando que a interrupção é rotina e não incidente.
+**Leitura textual da figura:** o desenho parte da demanda, que tem dois picos por dia, no almoço e no jantar, e chega à capacidade de pico de mais de 500 instâncias EC2. Dessa capacidade saem três ramos, um para cada forma de compra: cerca de um quarto em instâncias reservadas, que formam a base contratada com desconto, cerca de três quintos em instâncias spot, que usam capacidade ociosa do provedor a preço menor, e o restante sob demanda, como folga sem compromisso. Do ramo spot sai uma seta indicando a retomada da instância pelo provedor com dois minutos de aviso, que leva ao orquestrador. Ele remove a réplica afetada e a recria em outra instância, e uma seta de volta ao ramo spot fecha o ciclo, mostrando que a interrupção faz parte da operação normal.
 
-Spot só funciona sob três condições, e as três são conteúdo deste módulo. A aplicação precisa ser **sem estado**, porque a instância que some leva junto o que estava na memória dela. Precisa existir um **orquestrador** que perceba a perda e recrie a réplica em outro lugar sem intervenção humana. E a **capacidade precisa ser folgada**, com réplicas suficientes para que a saída de uma parcela não derrube o serviço enquanto a reposição acontece.
+Spot só funciona sob três condições, todas estudadas neste módulo. A aplicação precisa ser **sem estado**, porque a instância que some leva junto o que estava na memória dela. Precisa existir um **orquestrador** que perceba a perda e recrie a réplica em outro lugar sem intervenção humana. E a **capacidade precisa ser folgada**, com réplicas suficientes para que a saída de uma parcela não derrube o serviço enquanto a reposição acontece.
 
-Dito de outro jeito: os fatores 6 e 9 dos [doze fatores](padroes-e-decisoes.md#os-doze-fatores), processos sem estado e descartabilidade, deixam de ser boa prática e viram pré-requisito comercial. Sem eles, aquele desconto é inacessível.
+Nesse modelo de compra, os fatores 6 e 9 dos [doze fatores](padroes-e-decisoes.md#os-doze-fatores), processos sem estado e descartabilidade, passam a ser pré-requisito comercial, porque sem eles o desconto da instância spot fica inacessível.
 
 ## Os dados: mais de 80 instâncias de banco
 
 Do lado da persistência, o [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) registra **mais de 80 instâncias rodando bancos de dados em RDS**, o serviço de banco relacional gerenciado da AWS. O S3, serviço de armazenamento de objetos, aparece junto com o EC2 como um dos dois serviços mais usados pela empresa.
 
-Oitenta bancos não é um banco grande. É muitos bancos pequenos, que é a assinatura de uma arquitetura em que cada serviço tem a própria persistência. Escolher RDS em vez de operar Postgres em máquina própria é a mesma decisão de sempre, aplicada à camada de dados: paga-se mais por hora para deixar de aplicar correção de segurança, configurar réplica e testar restauração à mão.
+Oitenta instâncias de banco indicam muitos bancos pequenos, padrão típico de uma arquitetura em que cada serviço tem a própria persistência. Escolher RDS em vez de operar Postgres em máquina própria é a mesma decisão de sempre, aplicada à camada de dados: paga-se mais por hora para deixar de aplicar correção de segurança, configurar réplica e testar restauração à mão.
 
-O [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) também afirma que o ambiente é **100% automatizado**. Essa frase, dita em 2018, é a infraestrutura como código descrita em [Conceitos](conceitos.md). Sem ela, nada do que veio antes se sustenta, porque recriar réplica a cada retomada de spot exige que a criação de máquina seja um arquivo, e não um procedimento executado por alguém.
+O [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) também afirma que o ambiente é **100% automatizado**. Essa frase, dita em 2018, é a infraestrutura como código descrita em [Conceitos](conceitos.md). Sem ela, nada do que veio antes se sustenta, porque recriar réplica a cada retomada de spot exige que a criação de máquina esteja descrita num arquivo executado sem intervenção humana.
 
 ## O custo por pedido
 
 O trecho mais valioso do [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I), para um arquiteto, é este: *"com essa elasticidade da nuvem eu consigo atribuir um custo por pedido, porque eu não estou pagando por infraestrutura ociosa. Então toda a infraestrutura que está provisionada está relacionada a uma transação que está acontecendo dentro da plataforma."*
 
-Isso é economia unitária habilitada por decisão de arquitetura. Enquanto a capacidade é comprada em bloco e fica ociosa entre os picos, o custo de infraestrutura é um valor mensal que não se divide por nada. Quando a capacidade acompanha a demanda, o mesmo custo passa a ter denominador, e o negócio ganha uma grandeza que antes não existia: quanto custa atender mais um pedido.
+Isso é economia unitária habilitada por decisão de arquitetura. Enquanto a capacidade é comprada em bloco e fica ociosa entre os picos, o custo de infraestrutura é um valor mensal que não se divide por nada. Quando a capacidade acompanha a demanda, o mesmo custo pode ser dividido pelo número de pedidos, e o negócio passa a medir quanto custa atender mais um pedido.
 
 Essa é a resposta para a pergunta de custo que fecha muitos projetos de nuvem sem resposta.
 
@@ -92,7 +90,7 @@ O desenho sobre EC2 e RDS foi o começo. Três movimentos posteriores estão doc
 
 A execução migrou para Kubernetes gerenciado. O [estudo de caso do iFood no site da AWS](https://aws.amazon.com/pt/solutions/case-studies/innovators/ifood/) registra **redução de 40% nos custos** com o uso de Kubernetes e uma plataforma que atende **até 60 milhões de requisições por minuto**. A unidade de escala deixou de ser a instância e passou a ser o contêiner, o que aumenta a densidade de uso de cada máquina.
 
-A integração migrou para streaming. Pelo [relato de caso da Confluent](https://www.confluent.io/customers/ifood/), a empresa passou a operar cerca de **2.000 microsserviços** ligados por pipelines de eventos, substituindo os pipelines em lote entre bancos que faziam a falha de um serviço alcançar os seguintes. O volume de eventos saiu de 100 milhões por dia, limite do desenho anterior, para algo entre 8 e 10 bilhões diários. A empresa adotou Kafka gerenciado e, ainda assim, trocou por uma plataforma de streaming totalmente gerenciada, hoje sustentando cerca de 700 aplicações, porque dimensionar cluster e aplicar atualização manual estava consumindo o tempo dos engenheiros. É o mesmo argumento de 2011, reaparecendo uma camada acima.
+A integração migrou para streaming. Pelo [relato de caso da Confluent](https://www.confluent.io/customers/ifood/), a empresa passou a operar cerca de **2.000 microsserviços** ligados por pipelines de eventos, substituindo os pipelines em lote entre bancos que faziam a falha de um serviço alcançar os seguintes. O volume de eventos saiu de 100 milhões por dia, limite do desenho anterior, para algo entre 8 e 10 bilhões diários. A empresa adotou Kafka gerenciado e, ainda assim, trocou por uma plataforma de streaming totalmente gerenciada, hoje sustentando cerca de 700 aplicações, porque dimensionar cluster e aplicar atualização manual estava consumindo o tempo dos engenheiros. O argumento repete o da migração iniciada em 2011 e agora se aplica à camada de integração.
 
 E a plataforma passou a servir aprendizado de máquina, com Amazon SageMaker e Amazon Bedrock sustentando recomendação e personalização, segundo o mesmo [estudo de caso da AWS](https://aws.amazon.com/pt/solutions/case-studies/innovators/ifood/). O [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) já anunciava esse caminho como próximo passo.
 
@@ -128,11 +126,11 @@ flowchart TB
 
 Os resultados publicados são disponibilidade 30% maior, tempo médio de recuperação 90% menor e tempo de entrega de funcionalidade reduzido pela metade, de um mês para ciclos de duas semanas.
 
-Doze anos separam a primeira migração desta. O sistema financeiro interno foi o último a sair porque ninguém sentia a dor dele no sábado à noite, que é exatamente como dívida arquitetural sobrevive.
+A decomposição ocorreu doze anos depois da primeira migração. O sistema financeiro interno foi o último a sair porque a falha dele não afetava os pedidos dos picos de fim de semana, condição que manteve a dívida arquitetural sem prioridade durante esse período.
 
 ## O conselho que fecha o vídeo de 2018
 
-O encerramento do [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) é uma frase de método, e ela vale mais do que os números: *"não imagine a migração dos seus sistemas ou do seu parque de tecnologia como ele é hoje. Imagine como ele deveria ser na nuvem e no futuro, e vá atrás das mudanças necessárias para chegar nesse cenário."*
+O encerramento do [vídeo de 2018](https://www.youtube.com/watch?v=IRZJBpRmB4I) apresenta uma frase de método: *"não imagine a migração dos seus sistemas ou do seu parque de tecnologia como ele é hoje. Imagine como ele deveria ser na nuvem e no futuro, e vá atrás das mudanças necessárias para chegar nesse cenário."*
 
 Traduzindo para o vocabulário deste módulo, é a diferença entre rehost e refactor. Mover o que existe é barato e entrega pouco. O ganho de 40% em custo e a compra de 60% da capacidade em spot não estavam disponíveis para quem apenas moveu máquinas.
 

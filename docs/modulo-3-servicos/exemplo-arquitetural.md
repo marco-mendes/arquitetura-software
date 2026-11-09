@@ -1,10 +1,10 @@
 # Exemplo arquitetural: elegibilidade e exames
 
-O laboratório concretiza dois bounded contexts em processos FastAPI independentes. Cada processo possui um PostgreSQL e uma credencial própria. O objetivo não é simular toda uma plataforma hospitalar, mas expor um limite verificável: Exames conhece o contrato HTTP de Elegibilidade e não conhece sua tabela.
+O laboratório concretiza dois bounded contexts em processos FastAPI independentes. Cada processo possui um PostgreSQL e uma credencial própria. O objetivo é expor um limite verificável, sem simular a plataforma hospitalar inteira: Exames conhece o contrato HTTP de Elegibilidade e não conhece sua tabela.
 
 ## Onde está o bounded context
 
-Como [conceitos](conceitos.md) define, um bounded context delimita onde um modelo e sua linguagem têm significado consistente — é uma fronteira semântica, não uma obrigação de processo separado. Neste laboratório, cada bounded context também virou um processo (um microsserviço): essa é uma escolha de implantação feita para tornar a fronteira observável, não uma regra geral.
+Como [conceitos](conceitos.md) define, um bounded context delimita onde um modelo e sua linguagem têm significado consistente. Ele é uma fronteira semântica e não exige processo separado. Neste laboratório, cada bounded context também se tornou um processo (um microsserviço) por uma escolha de implantação feita para tornar a fronteira observável, e essa escolha não constitui regra geral.
 
 Dentro de cada contexto existe um vocabulário próprio que o outro lado não precisa conhecer. Em Elegibilidade, `elegivel` resume vínculo, vigência e regra da operadora — um cálculo que pode mudar por completo sem que nada além do campo booleano seja exposto. Em Exames, `situacao` descreve uma etapa do fluxo clínico da solicitação, sem relação com o vocabulário de Elegibilidade. A única tradução entre os dois modelos acontece no contrato HTTP; nenhum dos dois enxerga o schema, a tabela ou o código interno do outro.
 
@@ -33,7 +33,7 @@ As seções a seguir mostram o código de cada lado desta figura: primeiro os co
 
 ## Componentes
 
-O serviço **Elegibilidade** oferece `GET /elegibilidades/{beneficiario_id}`. Seu schema contém beneficiários sintéticos e a decisão booleana. Cada processo é uma aplicação FastAPI própria, com sua própria conexão PostgreSQL — não há import nem chamada de função entre os dois códigos, só HTTP.
+O serviço **Elegibilidade** oferece `GET /elegibilidades/{beneficiario_id}`. Seu schema contém beneficiários sintéticos e a decisão booleana. Cada processo é uma aplicação FastAPI própria, com sua própria conexão PostgreSQL, e os dois códigos se comunicam apenas por HTTP, sem import nem chamada de função entre eles.
 
 ```python
 # hospital/servicos/elegibilidade.py
@@ -78,7 +78,7 @@ def obter_cliente_elegibilidade():
         yield client
 ```
 
-`ELIGIBILIDADE_URL` é a única informação que Exames recebe sobre o outro serviço: um endereço HTTP, injetado por variável de ambiente. Nenhuma URL de banco alheio é passada a Exames — é essa ausência, não uma regra de código, que impede o acesso direto.
+`ELIGIBILIDADE_URL` é a única informação que Exames recebe sobre o outro serviço: um endereço HTTP, injetado por variável de ambiente. Nenhuma URL de banco alheio é passada a Exames, e essa ausência de configuração impede o acesso direto sem depender de uma regra no código.
 
 Ambos oferecem `GET /health`. O health check comprova conexão com seu banco local; ele não declara nenhuma dependência remota saudável. Essa escolha permite ver uma falha parcial: Exames continua com processo e banco ativos, embora uma operação que depende de Elegibilidade retorne `503`.
 
@@ -299,7 +299,7 @@ def test_exames_consumes_eligibility_only_through_http_contract(monkeypatch):
 
 Não há autenticação, dados pessoais reais, descoberta dinâmica, TLS, migrações versionadas ou telemetria distribuída. Também não há SAGA, CQRS ou mensageria. O fluxo faz uma consulta síncrona antes de uma única transação local; adicionar padrões avançados esconderia a lição principal.
 
-Em produção, a equipe precisaria definir SLOs, propagação de correlação, limites de recursos, política de logs, proteção de dados e restauração. O código também adotaria migrações em vez de um script de inicialização descartável. O Compose é ambiente didático reproduzível, não uma plataforma de produção.
+Em produção, a equipe precisaria definir SLOs, propagação de correlação, limites de recursos, política de logs, proteção de dados e restauração. O código também adotaria migrações em vez de um script de inicialização descartável. O Compose serve como ambiente didático reproduzível e não foi preparado para produção.
 
 ## Alternativa: monólito modular
 
@@ -307,4 +307,4 @@ Os mesmos limites poderiam existir em uma aplicação: `Elegibilidade` exporia u
 
 A versão distribuída é escolhida aqui para observar propriedades que só aparecem com rede e processos independentes. Não transforma a alternativa modular em desenho inferior.
 
-Qualquer que seja a forma escolhida, a regra central permanece: a configuração de Exames recebe a URL HTTP de Elegibilidade e a URL de seu próprio banco, nunca a URL do banco alheio.
+Qualquer que seja a forma escolhida, a regra central permanece: a configuração de Exames recebe a URL HTTP de Elegibilidade e a URL de seu próprio banco e não recebe a URL do banco alheio.

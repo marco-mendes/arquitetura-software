@@ -8,7 +8,7 @@ As propostas usam o caso hospitalar e dados sintéticos. Não há resposta únic
 
 **Situação**
 
-Você acabou de entrar como arquiteta numa equipe que está migrando a integração entre Resultados e Faturamento de chamadas diretas para mensageria. Ao herdar o código e as conversas já em andamento, você encontra seis nomes espalhados pelo repositório, sem nenhum glossário que diga o que cada um significa: `ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`. Numa reunião recente, dois desenvolvedores gastaram dez minutos discutindo se `GerarCobranca` era algo que já tinha acontecido ou um pedido para alguém fazer algo — e a discussão só terminou porque o horário da reunião acabou, não porque alguém convenceu o outro.
+Você acabou de entrar como arquiteta numa equipe que está migrando a integração entre Resultados e Faturamento de chamadas diretas para mensageria. Ao herdar o código e as conversas já em andamento, você encontra seis nomes espalhados pelo repositório, sem nenhum glossário que diga o que cada um significa: `ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`. Numa reunião recente, dois desenvolvedores gastaram dez minutos discutindo se `GerarCobranca` era algo que já tinha acontecido ou um pedido para alguém fazer algo. A discussão só terminou porque o horário da reunião acabou, sem que nenhum dos dois tivesse convencido o outro.
 
 **Seu papel**
 
@@ -87,7 +87,7 @@ Tentativa é cada vez que o consumidor viu a mensagem e registrou isso em `proce
 <details>
 <summary>Ver resposta</summary>
 
-Um `set()` em memória existe só enquanto o processo está vivo: um reinício zera o histórico de `event_id` vistos, e uma segunda réplica começa com o próprio `set()` vazio, sem conhecimento do que a primeira já processou. `event_id` como chave primária numa tabela durável sobrevive a reinício e é compartilhada entre réplicas que apontam para o mesmo banco, porque a garantia passou a ser uma propriedade dos dados, não uma variável de um processo específico.
+Um `set()` em memória existe só enquanto o processo está vivo: um reinício zera o histórico de `event_id` vistos, e uma segunda réplica começa com o próprio `set()` vazio, sem conhecimento do que a primeira já processou. `event_id` como chave primária numa tabela durável sobrevive a reinício e é compartilhada entre réplicas que apontam para o mesmo banco, porque a garantia passou a ser uma propriedade dos dados persistidos, independente do processo que está em execução.
 </details>
 
 ## Aplicar
@@ -101,7 +101,7 @@ Recomendar uma entre quatro formas de propagar um fato para três consumidores i
 
 No hospital, o serviço de Exames grava o resultado no próprio banco e precisa avisar três destinos. Faturamento usa o resultado para compor a conta. Notificações avisa o paciente. Auditoria guarda o histórico para consulta posterior.
 
-Hoje o serviço de Exames chama os três em sequência, dentro da mesma transação que grava o resultado. Na semana passada, o serviço de Notificações ficou lento e resultados deixaram de ser gravados. O time descobriu por reclamação de médico, e não por alarme.
+Hoje o serviço de Exames chama os três em sequência, dentro da mesma transação que grava o resultado. Na semana passada, o serviço de Notificações ficou lento e resultados deixaram de ser gravados. O time descobriu o problema por reclamação de médico, porque nenhum alarme disparou.
 
 A liderança técnica pediu uma recomendação antes de acrescentar o quarto consumidor, já solicitado por Compliance.
 
@@ -152,7 +152,7 @@ Formar hipóteses sobre o crescimento de uma fila a partir dos sinais disponíve
 
 Na quinta-feira de manhã, o time de plantão percebeu que a fila `billing.resultados.v1` passou de algumas dezenas de mensagens para onze mil em quatro horas. A fila de mensagens rejeitadas, que costuma ficar vazia, tinha trezentas.
 
-Faturamento parou de fechar contas. As reclamações chegaram pelo atendimento, e não por alarme.
+Faturamento parou de fechar contas. As reclamações chegaram pelo atendimento, porque nenhum alarme disparou.
 
 Na véspera, o time de Resultados publicou uma versão nova do contrato do evento. O campo `unidade_medida`, que antes vinha sempre preenchido, passou a ser opcional.
 
@@ -164,7 +164,7 @@ Cinco fatos valem para a análise:
 2. A fila de rejeitadas, normalmente vazia, tem trezentas mensagens.
 3. Uma versão nova do contrato foi publicada na véspera, tornando um campo opcional.
 4. Nenhum servidor ficou indisponível, e o uso de recursos está normal.
-5. O problema foi descoberto por reclamação de usuário, e não por alarme.
+5. O problema foi descoberto por reclamação de usuário, sem que nenhum alarme disparasse.
 
 **Seu papel**
 
@@ -175,7 +175,7 @@ Você conduz a investigação antes de qualquer correção. Reiniciar o consumid
 Escreva em texto corrido, uma resposta por item.
 
 1. Escreva duas hipóteses diferentes que explicam o crescimento da fila, e diga que sinal disponível separaria uma da outra.
-2. O fato 3 tornou um campo opcional. Explique por que uma mudança que afrouxa uma regra pode quebrar um consumidor, em vez de facilitar a vida dele.
+2. O fato 3 tornou um campo opcional. Explique por que uma mudança que afrouxa uma regra pode quebrar um consumidor.
 3. Diga a diferença entre a fila principal crescer e a fila de rejeitadas crescer, e o que cada um dos dois sinais indica sobre onde está o defeito.
 4. O fato 5 é um problema em si. Diga qual sinal, se estivesse sendo observado, teria avisado a equipe antes do usuário, e por quê.
 5. Aponte uma conclusão que os cinco fatos não sustentam, rotule-a como hipótese e diga que dado a confirmaria.
@@ -252,6 +252,8 @@ Um dos consumidores é um sistema antigo, mantido por um fornecedor externo. Ele
 Faturamento consome o mesmo evento e não pode parar em nenhum momento.
 
 Todos os consumidores usam o identificador do evento para descartar mensagem repetida, e esse mecanismo precisa continuar funcionando durante a transição.
+
+A mudança será executada por três equipes: a de Resultados, que publica o evento e controla o formato emitido, a de Faturamento, que mantém o consumidor que não pode parar, e a de Compliance, que vai consumir o campo novo. O fornecedor externo do sistema antigo não faz parte dessas três equipes e só altera o próprio sistema na janela de mudança prevista para daqui a oito meses.
 
 Três caminhos estão sobre a mesa, e as descrições abaixo bastam para escolher.
 
@@ -386,7 +388,7 @@ Uma equipe guarda os event_id já processados em um cache na memória do process
 
 #### Questão 11 [Média]
 
-O evento de resultado de exame carrega apenas result_reference, e não o laudo. Qual é a principal razão dessa escolha no domínio clínico?
+O evento de resultado de exame carrega apenas result_reference, sem incluir o laudo. Qual é a principal razão dessa escolha no domínio clínico?
 
 - (a) Controlar o acesso, para que o evento entregue internamente não vire um atalho em torno da autorização de leitura.
 - (b) Reduzir o tamanho da mensagem, que tem limite rígido no broker.

@@ -2,7 +2,7 @@
 
 Em março de 2023, um engenheiro sênior da Amazon publicou no blog técnico do Prime Video um artigo com um título que parecia erro de digitação: **"Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%"**. O subtítulo tirava a dúvida. *"The move from a distributed microservices architecture to a monolith application helped achieve higher scale, resilience, and reduce costs."*
 
-Uma equipe da Amazon havia desmontado uma arquitetura de microsserviços *serverless* (sem servidor sob gestão da equipe), empacotado tudo num processo único, e cortado mais de 90% do custo de infraestrutura. A internet técnica pegou fogo por semanas.
+Uma equipe da Amazon havia desmontado uma arquitetura de microsserviços *serverless* (sem servidor sob gestão da equipe), empacotado tudo num processo único e cortado mais de 90% do custo de infraestrutura. A internet técnica pegou fogo por semanas.
 
 O artigo é curto e vale ser lido inteiro. O que ele diz é mais interessante do que a briga que provocou.
 
@@ -22,11 +22,11 @@ O artigo defende essa escolha, e a defesa importa: *"which was a good choice for
 
 Na prática, o teto apareceu cedo. A frase que mais dói do artigo inteiro: *"the way we used some components caused us to hit a hard scaling limit at around 5% of the expected load"*.
 
-Cinco por cento. A arquitetura escolhida para escalar parou a um vinte avos da carga esperada.
+A arquitetura escolhida para escalar parou em 5% da carga esperada, isto é, em um vinte avos do volume previsto.
 
 ## Onde o dinheiro estava indo
 
-A equipe encontrou dois sorvedouros, e nenhum dos dois está no processamento de imagem.
+A equipe encontrou dois sorvedouros de custo localizados fora do processamento de imagem.
 
 **A orquestração.** O serviço fazia várias transições de estado **por segundo de transmissão**. Isso esbarrou nos limites da conta e, pior, o Step Functions cobra por transição de estado. O custo crescia com a duração do vídeo multiplicada pelo número de fluxos, e não com o trabalho útil de detectar defeito.
 
@@ -70,13 +70,13 @@ O artigo não esconde a conta. Antes, cada detector era um microsserviço e podi
 
 A equipe adiciona detectores com frequência, e já estourou a capacidade de uma instância. A solução foi clonar o serviço várias vezes, cada cópia parametrizada com um subconjunto diferente de detectores, e escrever uma camada leve de orquestração para distribuir as requisições entre as cópias.
 
-Ou seja: voltaram a distribuir, numa granularidade muito maior e sob controle próprio. Não é um retorno ao monólito de 1998. É uma correção do **tamanho da unidade de distribuição**.
+Ou seja, a equipe voltou a distribuir o serviço, com granularidade muito maior e sob controle próprio, o que corrige o **tamanho da unidade de distribuição** sem retornar a um monólito tradicional.
 
-Há ainda uma decisão contraintuitiva que o artigo faz questão de registrar. A equipe **replicou** o processo caro de conversão de mídia, colocando uma cópia perto de cada detector. Rodar a conversão uma vez e guardar o resultado parecia mais barato, e medindo não era.
+Há ainda uma decisão contraintuitiva que o artigo faz questão de registrar. A equipe **replicou** o processo caro de conversão de mídia, colocando uma cópia perto de cada detector. A medição mostrou que rodar a conversão uma vez e guardar o resultado custava mais do que replicá-la, embora a primeira opção parecesse mais barata.
 
-## O resultado, e a frase que ninguém citou
+## Resultado e conclusão do artigo
 
-Mais de 90% de redução no custo de infraestrutura. Capacidade de processar milhares de transmissões, com folga para crescer. E a possibilidade de usar planos de economia de EC2, que derrubam o custo mais um pouco.
+A mudança reduziu o custo de infraestrutura em mais de 90%, deu ao serviço capacidade para processar milhares de transmissões com folga para crescer e permitiu usar planos de economia de EC2, que reduzem o custo mais um pouco.
 
 A conclusão dos autores é bem menos dramática do que a repercussão: *"Microservices and serverless components are tools that do work at high scale, but whether to use them over monolith has to be made on a case-by-case basis."* Em português: microsserviços e componentes sem servidor funcionam em grande escala, e a escolha entre eles e o monólito precisa ser feita caso a caso.
 
@@ -98,7 +98,7 @@ Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os f
 
 ## Fontes
 
-- Marcin Kolny, **Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%** — Prime Video Tech, 22 de março de 2023. Fonte primária de todas as citações e números. A Amazon retirou a página original do ar; use a [cópia arquivada](https://web.archive.org/web/20240805183535/https://www.primevideotech.com/video-streaming/scaling-up-the-prime-video-audio-video-monitoring-service-and-reducing-costs-by-90).
+- Marcin Kolny, **Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%** — Prime Video Tech, 22 de março de 2023. Fonte primária de todas as citações e números. A Amazon retirou a página original do ar; use a [cópia arquivada em agosto de 2024](https://web.archive.org/web/20240805183535/https://www.primevideotech.com/video-streaming/scaling-up-the-prime-video-audio-video-monitoring-service-and-reducing-costs-by-90).
 - AWS, [Step Functions — preços](https://aws.amazon.com/step-functions/pricing/) e [Amazon S3 — preços](https://aws.amazon.com/s3/pricing/) — o modelo de cobrança por transição de estado e por requisição, que explica os dois sorvedouros descritos no caso.
 - Amazon ECS, [documentação oficial](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) — a unidade de implantação para onde o serviço foi movido.
 - Adrian Cockcroft, [So Many Bad Takes — What Is There To Learn From The Prime Video Microservices To Monolith Story](https://adrianco.medium.com/so-many-bad-takes-what-is-there-to-learn-from-the-prime-video-microservices-to-monolith-story-4bd0970423d4) — leitura de quem dirigiu a arquitetura de nuvem da Netflix e depois trabalhou na AWS, útil para separar o que o artigo diz do que a repercussão inventou.

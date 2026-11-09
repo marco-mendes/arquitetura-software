@@ -57,7 +57,7 @@ A tabela abaixo diz o papel de cada arquivo. Os arquivos em si vêm logo depois,
 | [`tests/test_api_contract.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/tests/test_api_contract.py) | Sete testes: cinco exercitam a API pela porta da frente, dois comparam o contrato publicado com o que o FastAPI gera. | A verificação de que a promessa publicada e o comportamento real não divergiram. |
 | [`.spectral.yaml` e `contratos/.spectral.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-2/contratos/.spectral.yaml) | As regras que o verificador de contrato aplica ao `openapi.yaml`. | A política de contrato que uma equipe acorda e automatiza. |
 
-O caminho que uma requisição percorre explica por que os arquivos são estes e não outros.
+O caminho que uma requisição percorre explica a função de cada um desses arquivos.
 
 ```mermaid
 flowchart TB
@@ -74,7 +74,7 @@ flowchart TB
 
 **Leitura textual:** o cliente envia `POST /elegibilidades` com CPF, código de operadora e matrícula. A validação declarada em `models.py` decide o desfecho antes de qualquer código de negócio rodar. Quando o corpo cumpre o contrato, `main.py` cria o protocolo e responde `202 Accepted` com o cabeçalho `Location`. Quando não cumpre, a mesma aplicação devolve `422 Unprocessable Entity` com um corpo estruturado, listando campo, mensagem e tipo do erro. Seguindo o caminho de aceitação, o cliente usa o endereço do `Location` para fazer `GET /elegibilidades/{protocolo}`, que responde `200 OK` com a representação ou `404` quando o protocolo não existe no processo atual.
 
-### Os nove arquivos, um a um
+### Conteúdo dos nove arquivos
 
 Crie a pasta e a estrutura antes de escrever qualquer coisa. No macOS e no Linux:
 
@@ -773,7 +773,7 @@ def test_contrato_explicito_e_contrato_gerado_nao_divergem():
     assert aceito_gerado["headers"]["Location"] == aceito_explicito["headers"]["Location"]
 ```
 
-Há dois contratos em jogo nesta oficina, e distinguir os dois é o assunto do módulo inteiro.
+Esta oficina trabalha com dois contratos, e a distinção entre eles é o assunto central do módulo.
 
 ```mermaid
 flowchart TB
@@ -875,7 +875,7 @@ components:
 
 Três mecanismos de validação aparecem aqui. O `required` lista os campos obrigatórios, e é o que produz o `422` quando o `cpf` é omitido. O `pattern` é uma expressão regular: `^\d{11}$` significa início da cadeia, onze dígitos, fim. E `additionalProperties: false` recusa campos não previstos, em vez de ignorá-los em silêncio.
 
-Compare esse trecho com o `models.py` do laboratório e verá as mesmas três regras escritas em Python: `Field(pattern=r"^\d{11}$")`, a lista de campos sem valor padrão e `ConfigDict(extra="forbid")`. **O mesmo contrato, em duas linguagens.** Manter os dois em acordo é o trabalho que os dois últimos testes verificam.
+Compare esse trecho com o `models.py` do laboratório e verá as mesmas três regras escritas em Python: `Field(pattern=r"^\d{11}$")`, a lista de campos sem valor padrão e `ConfigDict(extra="forbid")`. Os dois arquivos expressam o mesmo contrato em duas linguagens. Manter os dois em acordo é o trabalho que os dois últimos testes verificam.
 
 ### Os códigos de status HTTP usados aqui
 
@@ -900,7 +900,7 @@ Esta API usa quatro códigos, e cada escolha tem um motivo:
 
 A diferença entre `202` e `201` costuma confundir. `201 Created` afirma que o recurso já existe em definitivo; `202 Accepted` afirma apenas que o pedido entrou na fila, e por isso não promete resultado nenhum ainda.
 
-### As duas rotas, linha a linha
+### Leitura detalhada das duas rotas
 
 Este é o `POST` completo, como está em `src/hospital/api/main.py`:
 
@@ -1010,11 +1010,11 @@ Preparar um ambiente local descartável com Python, Bruno e Node.js. Reserve uma
 
 **Pré-requisito**
 
-Um terminal, um editor de texto e a pasta `oficina-contrato` já criada com os nove arquivos da seção anterior. Todos os comandos partem de dentro dela.
+A oficina exige um terminal, um editor de texto e a pasta `oficina-contrato` já criada com os nove arquivos da seção anterior. Todos os comandos partem de dentro dela.
 
 ### O que é o ambiente virtual que você vai criar
 
-Os comandos adiante criam uma pasta `.venv`. Um **ambiente virtual** é uma instalação de Python isolada, contida numa pasta do próprio projeto. Sem ele, cada biblioteca instalada iria para o Python do sistema, misturando as dependências deste laboratório com as de qualquer outro projeto da máquina — e uma versão que um exige poderia quebrar o outro.
+Os comandos adiante criam uma pasta `.venv`. Um **ambiente virtual** é uma instalação de Python isolada, contida numa pasta do próprio projeto. Sem ele, cada biblioteca instalada iria para o Python do sistema, misturando as dependências deste laboratório com as de qualquer outro projeto da máquina, e a versão exigida por um projeto poderia impedir o funcionamento de outro.
 
 Com o ambiente virtual, tudo o que a oficina instalar fica dentro de `.venv`, e apagar essa pasta desfaz a instalação por completo. É por isso que a limpeza no fim consiste em remover um diretório.
 
@@ -1201,7 +1201,7 @@ Três elementos aparecem no topo do arquivo e explicam o resto:
 - O `setup_function` roda antes de cada teste e limpa os pedidos guardados. Como a aplicação mantém tudo em memória, sem essa limpeza um teste enxergaria os protocolos criados pelo anterior e passaria a depender da ordem de execução.
 - O `PEDIDO_VALIDO` é o corpo sintético reaproveitado pelos testes, com CPF e matrícula que não existem fora deste laboratório.
 
-Os sete testes se dividem em dois grupos, e a diferença entre eles é o assunto do módulo:
+Os sete testes se dividem em dois grupos, cuja diferença é o assunto do módulo:
 
 | Grupo | Testes | O que provam |
 | --- | --- | --- |
@@ -1210,7 +1210,7 @@ Os sete testes se dividem em dois grupos, e a diferença entre eles é o assunto
 
 O segundo grupo é o que pega o erro mais caro do módulo: alguém altera o código, o contrato gerado acompanha automaticamente, e o documento publicado continua prometendo o formato antigo para quem consome. Cada teste do arquivo abre com um texto explicando o que prova e por quê.
 
-Vale saber também o que esses testes **não** cobrem. Eles comparam operações, campos obrigatórios e a resposta `202`, e não os dois documentos inteiros — uma comparação total quebraria a cada diferença de formatação. Descrições divergentes em outras respostas, exemplos ausentes e mudanças de significado num campo que manteve o mesmo tipo passariam sem alarme.
+Vale saber também o que esses testes **não** cobrem. Eles comparam operações, campos obrigatórios e a resposta `202` e deixam de fora a comparação dos dois documentos inteiros, porque uma comparação total falharia a cada diferença de formatação. Descrições divergentes em outras respostas, exemplos ausentes e mudanças de significado num campo que manteve o mesmo tipo passariam sem alarme.
 
 ## As regras que o Spectral aplica
 
@@ -1231,7 +1231,7 @@ rules:
 
 A primeira linha herda o conjunto de regras que o próprio Spectral distribui para OpenAPI, chamado `spectral:oas`. São dezenas de verificações prontas, e é dele que vem o `oas3-valid-media-example` que aparecerá mais adiante quando quebrarmos um exemplo de propósito.
 
-O bloco `rules` acrescenta três exigências e as marca como `error`, e não como aviso. A diferença importa: `error` faz o comando terminar com código diferente de zero, o que reprova uma esteira de integração contínua. Aviso apenas imprime texto e deixa passar.
+O bloco `rules` acrescenta três exigências e as marca com a severidade `error`. A diferença importa: `error` faz o comando terminar com código diferente de zero, o que reprova uma esteira de integração contínua. Aviso apenas imprime texto e deixa passar.
 
 Cada uma das três exigências atende a um interessado concreto. O `operationId` é um identificador único da operação, e geradores de cliente o usam para nomear o método que vão criar — sem ele, o método sai com nome automático e ilegível. A descrição atende quem vai ler a documentação e decidir se aquela operação serve. As tags agrupam operações, o que só faz diferença quando a API cresce e a página de documentação precisa de navegação.
 
@@ -1268,7 +1268,7 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 ```
 
-`Application startup complete` é a linha que confirma que a API está no ar. O terminal não volta ao prompt: ele fica preso servindo requisições, e é assim mesmo. Deixe essa janela aberta e use outra para os comandos seguintes. Cada chamada que você fizer aparecerá aqui como uma linha de log.
+`Application startup complete` é a linha que confirma que a API está no ar. O terminal não volta ao prompt porque continua servindo requisições, e esse comportamento é o esperado. Deixe essa janela aberta e use outra para os comandos seguintes. Cada chamada que você fizer aparecerá aqui como uma linha de log.
 
 **Contingência**
 
@@ -1329,11 +1329,11 @@ O identificador será diferente no seu computador, porque é gerado a cada pedid
 
 **Observe**
 
-O `202` diz "recebi e ainda vou processar", e não "pronto". É por isso que a resposta não traz o resultado da elegibilidade: traz um protocolo e o endereço onde consultá-lo. O cabeçalho `Location` entrega esse endereço pronto, poupando o consumidor de montar a URL por convenção — e permitindo que o provedor mude o formato dela sem quebrar ninguém.
+O `202` comunica apenas "recebi e ainda vou processar". É por isso que a resposta não traz o resultado da elegibilidade: traz um protocolo e o endereço onde consultá-lo. O cabeçalho `Location` entrega esse endereço pronto, o que poupa o consumidor de montar a URL por convenção e permite ao provedor mudar o formato da URL sem afetar os consumidores.
 
 **Compare**
 
-Compare com o que aconteceria num `200` que devolvesse a decisão na hora. O `202` compra o direito de processar depois, e cobra do consumidor uma segunda chamada. É a mesma escolha de [interface, contrato e implementação](conceitos.md) sendo exercida no nível do código de status.
+Compare com o que aconteceria num `200` que devolvesse a decisão na hora. O `202` permite ao provedor processar o pedido depois e exige do consumidor uma segunda chamada. É a mesma escolha de [interface, contrato e implementação](conceitos.md) sendo exercida no nível do código de status.
 
 **Contingência**
 
@@ -1363,7 +1363,7 @@ O campo `detalhes` aponta exatamente onde está o problema: `body.cpf`, ausente.
 
 **Observe**
 
-O corpo do erro tem formato previsível: `codigo`, `mensagem` e a lista `detalhes` apontando o campo problemático. Isso permite que o consumidor trate a falha programaticamente, em vez de exibir texto solto ao usuário. O erro faz parte do contrato tanto quanto o caminho feliz.
+O corpo do erro tem formato previsível: `codigo`, `mensagem` e a lista `detalhes` apontando o campo problemático. Isso permite que o consumidor trate a falha programaticamente, sem exibir texto solto ao usuário. O erro faz parte do contrato tanto quanto o caminho feliz.
 
 **Compare**
 
@@ -1390,7 +1390,7 @@ npx @stoplight/spectral-cli@6.16.1 lint contratos/openapi.yaml 2>&1 | tee eviden
 
 **Resultado esperado**
 
-Uma única linha, e é a que você quer ver:
+A saída esperada é uma única linha:
 
 ```text
 No results with a severity of 'error' found!
@@ -1483,7 +1483,7 @@ printf 'Código esperado: %s\n' "$spectral_exit"
 
 **Resultado esperado**
 
-Desta vez o Spectral acusa, e a saída aponta o lugar exato:
+Desta vez o Spectral acusa o erro e a saída aponta o lugar exato:
 
 ```text
 /caminho/para/evidencias/openapi-experimento.yaml
@@ -1637,7 +1637,7 @@ Se `dotnet` não for reconhecido, reabra o terminal após instalar o SDK. Se uma
 
 **Observe**
 
-O gateway não tem lógica de negócio: as rotas são dados, não código. Versionar `ocelot.json` documenta a topologia da borda da mesma forma que `openapi.yaml` documenta o contrato de cada serviço.
+O gateway não tem lógica de negócio, e as rotas existem apenas como dados de configuração. Versionar `ocelot.json` documenta a topologia da borda da mesma forma que `openapi.yaml` documenta o contrato de cada serviço.
 
 **Compare**
 

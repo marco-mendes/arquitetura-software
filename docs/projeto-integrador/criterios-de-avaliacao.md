@@ -1,6 +1,6 @@
 # Critérios de avaliação
 
-A entrega é avaliada como uma arquitetura acumulada, não como seis pastas independentes. Os critérios abaixo somam 100% e orientam tanto a revisão entre encontros quanto a apresentação final.
+A entrega é avaliada como uma única arquitetura acumulada ao longo dos seis incrementos. Os critérios abaixo somam 100% e orientam tanto a revisão entre encontros quanto a apresentação final.
 
 | Critério | Peso |
 | --- | ---: |

@@ -9,7 +9,7 @@ Responda primeiro e abra “Ver resposta” somente depois da tentativa. Nas ati
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Interface é a fronteira oferecida; contrato torna explícitas as promessas observáveis; implementação é o mecanismo que as cumpre. Um consumidor deveria depender do contrato, e não do framework ou banco usados internamente.
+Interface é a fronteira oferecida; contrato torna explícitas as promessas observáveis; implementação é o mecanismo que as cumpre. Um consumidor deveria depender somente do contrato, sem depender do framework ou do banco usados internamente.
 </details>
 
 2\. Os métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`...) têm papéis diferentes por convenção. Qual é a diferença fundamental de propósito entre `GET` e `POST`?
@@ -44,7 +44,7 @@ Repetir a mesma intenção produz o mesmo efeito pretendido no servidor. Isso n�
 Um documento OpenAPI. No laboratório, o contrato explícito está em `laboratorios/plataforma-hospitalar/contratos/openapi.yaml`.
 </details>
 
-6\. Um **API gateway** fica na borda, entre os consumidores e as APIs internas. Cite duas responsabilidades técnicas adequadas a ele — e uma que **não** deveria ficar nele.
+6\. Um **API gateway** fica na borda, entre os consumidores e as APIs internas. Cite duas responsabilidades técnicas adequadas a ele e uma responsabilidade que **não** deveria ficar nele.
 
 <details markdown="1">
 <summary>Ver resposta</summary>
@@ -70,7 +70,7 @@ RPC organiza a colaboração por operações nomeadas. REST requer restrições 
 Quando consumidores precisam de combinações de campos e relações muito variáveis. Ainda é necessário controlar custo das consultas, autorização por campo e cache; não é a escolha automática para qualquer tela móvel.
 </details>
 
-3\. O **WebSocket** mantém um canal aberto entre cliente e servidor. O que ele resolve, e o que ele não resolve sozinho?
+3\. O **WebSocket** mantém um canal aberto entre cliente e servidor. O que ele resolve e o que ele não resolve sozinho?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
@@ -146,9 +146,15 @@ Explicar por que três contratos de consulta que funcionam isoladamente quebram 
 
 Um sistema de agendamento hospitalar consulta a agenda de três parceiros diferentes para montar uma lista única de horários livres. São até quarenta mil horários futuros, e o aplicativo do paciente carrega vinte por vez, conforme ele rola a tela.
 
-Os três parceiros paginam de jeitos diferentes. O parceiro A devolve os horários ordenados por data e aceita pular um número de registros. O parceiro B devolve na ordem que quiser, e a ordem muda entre uma chamada e outra. O parceiro C entrega um cursor próprio, uma marca opaca que o consumidor devolve para pedir a página seguinte.
+Os três parceiros paginam de jeitos diferentes:
 
-Enquanto o paciente rola a tela, horários são criados e cancelados o tempo inteiro. Pacientes relatam duas coisas: horários que aparecem duas vezes na lista, e horários que existem e nunca aparecem.
+| Parceiro | Como pagina |
+| --- | --- |
+| **A** | Devolve os horários ordenados por data e aceita pular um número de registros, informado pelo consumidor a cada chamada. |
+| **B** | Aceita pular um número de registros e devolve os horários numa ordem própria, que muda entre uma chamada e outra. |
+| **C** | Entrega um cursor próprio, uma marca opaca que o consumidor devolve para pedir a página seguinte. |
+
+Enquanto o paciente rola a tela, horários são criados e cancelados o tempo inteiro. Pacientes relatam duas coisas: horários que aparecem duas vezes na lista e horários que existem mas nunca aparecem.
 
 Quatro fatos foram apurados:
 
@@ -171,7 +177,7 @@ O sistema mantém a paginação de cada parceiro como está e passa a devolver, 
 
 O sistema adota um cursor próprio para o aplicativo e, por baixo, traduz esse cursor para o mecanismo de cada parceiro, guardando a posição de leitura de cada um.
 
-Os quatro fatos, o comportamento de paginação dos três parceiros e as três saídas, todos descritos nesta página.
+Os quatro fatos numerados, a tabela de paginação dos três parceiros e as três saídas estão descritos nesta página.
 
 **Seu papel**
 
@@ -218,15 +224,23 @@ O hospital aceita o pedido, devolve imediatamente um protocolo e resolve a autor
 
 O hospital aceita o pedido e devolve na hora a última decisão conhecida para aquele beneficiário e procedimento, quando existir, marcando a resposta como provisória.
 
-O que se sabe e o que não se sabe:
+O que foi medido nos últimos três meses:
 
-1. A distribuição de tempo de resposta da operadora foi medida por três meses.
-2. A frequência de indisponibilidade foi medida no mesmo período.
-3. Ninguém mediu quantos pedidos repetidos viram autorização duplicada hoje.
-4. Ninguém mediu por quanto tempo uma decisão anterior continua válida.
-5. A equipe de operação trabalha em horário comercial.
+1. O tempo de resposta da operadora fica entre duzentos milissegundos e um segundo em metade dos pedidos, passa de dois segundos em cerca de cinco por cento deles e chega a vinte e cinco segundos no pior caso.
+2. A operadora ficou indisponível seis vezes no período, por até dez minutos seguidos em cada uma.
+3. O pico chega a doze mil pedidos de autorização por hora.
+4. Cinco por cento dos pedidos são repetidos pelo sistema do hospital dois segundos depois da primeira chamada.
 
-As três propostas, os números de volume e de tempo de resposta, e a lista do que foi medido e do que não foi, todos nesta página.
+O que não foi medido:
+
+5. Ninguém mediu quantos pedidos repetidos viram autorização duplicada hoje.
+6. Ninguém mediu por quanto tempo uma decisão anterior continua válida para o mesmo beneficiário e procedimento.
+
+Há ainda uma restrição de operação:
+
+7. A equipe de operação trabalha em horário comercial, e ninguém acompanha a integração à noite.
+
+As três propostas e as listas numeradas do que foi medido, do que não foi medido e da restrição de operação estão descritas nesta página.
 
 **Seu papel**
 
@@ -253,15 +267,15 @@ Propor o contrato inicial de uma capacidade que será consumida por três públi
 
 **Situação**
 
-O hospital vai expor, pela primeira vez, a consulta de elegibilidade de um beneficiário. Três públicos vão consumir essa capacidade, e eles querem coisas diferentes.
+O hospital vai expor, pela primeira vez, a consulta de elegibilidade de um beneficiário. Três públicos com necessidades diferentes vão consumir essa capacidade:
 
-O aplicativo do paciente precisa de uma resposta curta e rápida, porque roda em rede móvel e mostra apenas se o beneficiário está apto.
+1. O aplicativo do paciente precisa de uma resposta curta e rápida, porque roda em rede móvel e mostra apenas se o beneficiário está apto.
+2. O sistema interno de recepção precisa da resposta completa, com vigência, categoria do plano e motivo da recusa, para orientar o atendente.
+3. Uma operadora parceira quer receber a mesma informação, e o contrato que ela mantém com outros hospitais usa XML sobre um envelope antigo, que o hospital não usa em lugar nenhum.
 
-O sistema interno de recepção precisa da resposta completa, com vigência, categoria do plano e motivo da recusa, para orientar o atendente.
+A restrição de execução também está definida:
 
-Uma operadora parceira quer receber a mesma informação, e o contrato que ela mantém com outros hospitais usa XML sobre um envelope antigo, que o hospital não usa em lugar nenhum.
-
-A equipe tem quatro pessoas e três meses até a primeira entrega.
+4. A equipe tem quatro pessoas e três meses até a primeira entrega.
 
 Três esboços estão sobre a mesa:
 
@@ -277,7 +291,7 @@ Dois contratos sobre a mesma capacidade: um enxuto para o aplicativo e um comple
 
 Dois contratos internos, como no esboço B, mais um adaptador dedicado que traduz para o envelope XML da operadora, isolado do resto.
 
-As três necessidades de consumo, a restrição de equipe e prazo e os três esboços, todos nesta página.
+As três necessidades de consumo numeradas de 1 a 3, a restrição de equipe e prazo no item 4 e os três esboços estão descritos nesta página.
 
 **Seu papel**
 
@@ -397,7 +411,7 @@ Uma equipe criou a rota POST /aprovarAutomaticamente com corpo em JSON e afirma 
 
 #### Questão 11 [Média]
 
-Um aplicativo móvel precisa buscar exatamente os campos de álbuns, artistas e playlists em uma única consulta, com seleção variável a cada tela. Qual estilo atende melhor essa necessidade, e qual cuidado o acompanha?
+Um aplicativo móvel precisa buscar exatamente os campos de álbuns, artistas e playlists em uma única consulta, com seleção variável a cada tela. Qual estilo atende melhor essa necessidade e qual cuidado o acompanha?
 
 - (a) SOAP, com cuidado sobre a tradução do vocabulário do parceiro.
 - (b) WebSocket, com cuidado sobre reconexão e ordenação.

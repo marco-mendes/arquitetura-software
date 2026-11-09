@@ -1,21 +1,21 @@
-# Oficina de ferramentas: política declarada, trace verificável
+# Oficina de ferramentas: políticas no Kong e traces no Jaeger
 
-Esta oficina responde a uma pergunta que o livro-texto levanta: **como provar que uma política de governança está de fato valendo?** Uma decisão registrada em ata não governa nada; o que governa é a política aplicada em execução, deixando evidência que alguém consegue consultar depois.
+Esta oficina responde a uma pergunta que o livro-texto levanta: **como provar que uma política de governança está de fato valendo?** Um registro em ata não basta para isso: a política precisa ser aplicada em execução e deixar evidência que alguém consiga consultar depois.
 
 Você vai colocar um *gateway* na frente do serviço de Elegibilidade, declarar três políticas num arquivo de configuração e então verificar cada uma pelo seu efeito observável: um cabeçalho de correlação que aparece na resposta, um `429` quando o limite de chamadas é excedido, e um rastro da requisição consultável numa ferramenta de observabilidade.
 
-### O que você vai observar, e por que importa
+### O que a oficina mostra
 
 | O que a oficina mostra | O conceito do módulo |
 | --- | --- |
-| A rota, o limite e a correlação vivem num arquivo de configuração, não no código do serviço | [Gateway como borda técnica](padroes-e-decisoes.md#gateway-como-borda-tecnica): política de infraestrutura fora do domínio |
+| A rota, o limite e a correlação ficam num arquivo de configuração, fora do código do serviço | [Gateway como borda técnica](padroes-e-decisoes.md#gateway-como-borda-tecnica): política de infraestrutura fora do domínio |
 | Um identificador acompanha a requisição do gateway até o serviço | [Correlação e rastreamento distribuído](padroes-e-decisoes.md#correlacao-rastreabilidade-e-rastreamento-distribuido) |
 | Cada política declarada tem um efeito que se consegue medir | [Política como hipótese executável](conceitos.md#politica-como-hipotese-executavel) |
-| O gateway limita tráfego, e não decide elegibilidade | O [limite deliberado](index.md#limite-deliberado) entre borda técnica e regra de negócio |
+| O gateway limita tráfego e deixa a decisão de elegibilidade com o serviço | O [limite deliberado](index.md#limite-deliberado) entre borda técnica e regra de negócio |
 
 ![Políticas declaradas no gateway ligadas às evidências observáveis](../assets/images/m04-oficina-politica-trace.png)
 
-*Figura 7 — Cada política declarada em configuração, e a evidência que prova que ela está valendo. Fonte: curso.*
+*Figura 7 — Políticas declaradas em configuração e a evidência que comprova cada uma. Fonte: curso.*
 
 **Leitura textual da figura:** à esquerda, o arquivo `kong.yml` lista quatro declarações: a rota `/hospital` com `strip_path`, o plugin `correlation-id`, o plugin `rate-limiting` e o plugin `opentelemetry`. Setas ligam cada declaração à evidência correspondente, respectivamente o cabeçalho `X-Correlation-ID`, a resposta 429 na quarta chamada e o trace visível no Jaeger. Acima, o percurso completo vai do consumidor ao Kong, dele para o serviço de Elegibilidade, daí para o coletor OpenTelemetry e por fim para o Jaeger. O rodapé registra o limite deliberado: o gateway roteia, conta e propaga, sem decidir elegibilidade.
 
@@ -37,7 +37,7 @@ flowchart TB
 
 **Texto alternativo:** o consumidor chama o Kong, que aplica quatro declarações do seu arquivo de configuração, encaminha ao serviço quando está dentro do limite de taxa, devolve 429 quando está acima, e envia o rastro ao coletor, que o repassa ao Jaeger depois de remover o caminho bruto da URL.
 
-*Figura 12 — Onde cada política age, e o que sobra para o serviço decidir. Fonte: curso.*
+*Figura 12 — Local de aplicação de cada política e decisões que permanecem no serviço. Fonte: curso.*
 
 **Leitura textual:** a requisição chega ao Kong pelo endereço público. Quatro declarações do arquivo de configuração agem ali, antes de qualquer regra de negócio. A rota remove o prefixo do caminho e encaminha o resto ao serviço. O plugin de correlação gera um identificador e o devolve ao cliente no cabeçalho. O plugin de limite de taxa decide entre duas saídas: dentro do limite, a requisição segue ao serviço de elegibilidade, que responde 200. Acima do limite, o Kong devolve 429 e o serviço não chega a ser chamado, o que é o significado prático de proteger a dependência na borda. O plugin de telemetria envia o rastro, que passa pelo coletor antes de chegar ao Jaeger, e é no coletor que o caminho bruto da URL é removido, para que o identificador do beneficiário não fique registrado na ferramenta de consulta.
 
@@ -152,7 +152,7 @@ Os dois `__init__.py` ficam vazios e existem para tornar as pastas pacotes Pytho
 
 ```
 
-O `telemetria.py` instrumenta o serviço. Repare que ele registra o contrato da rota, e não o caminho concreto da requisição, que é a primeira barreira contra vazar identificador de beneficiário para a telemetria.
+O `telemetria.py` instrumenta o serviço. Repare que ele registra apenas o contrato da rota, sem o caminho concreto da requisição, e essa escolha é a primeira barreira contra vazar identificador de beneficiário para a telemetria.
 
 [`src/hospital/telemetria.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-4/src/hospital/telemetria.py)
 
@@ -802,7 +802,7 @@ Se o socket recusar conexão, siga o procedimento pós-instalação da documenta
 
 ## As políticas declaradas no `kong.yml`
 
-Vale ler este arquivo antes de subir a pilha, porque ele é o objeto de estudo do módulo: **a governança inteira desta oficina cabe em vinte linhas de configuração**, e nenhuma delas está no código do serviço.
+Vale ler este arquivo antes de subir a pilha, porque ele é o objeto de estudo do módulo: **as políticas de governança desta oficina ocupam cerca de vinte linhas de configuração**, que ficam fora do código do serviço.
 
 A primeira parte declara para onde encaminhar as requisições:
 
@@ -851,9 +851,9 @@ Cada uma dessas configurações merece uma leitura, porque são decisões de arq
 
 O `generator: uuid` resolve um problema concreto: se o consumidor não enviar um identificador de correlação, o gateway cria um. Assim nenhuma requisição fica sem rastro, mesmo vinda de um cliente que não coopera. E `echo_downstream: true` devolve esse identificador na resposta, permitindo que o consumidor cite o valor ao relatar um problema.
 
-O `fault_tolerant: false` é a decisão menos óbvia e a mais reveladora. Ele diz o que fazer quando o próprio mecanismo de contagem falha: recusar a requisição, em vez de deixá-la passar. É a escolha entre falhar fechado e falhar aberto, e ela declara que, aqui, exceder o limite é pior que negar serviço.
+O `fault_tolerant: false` é a decisão menos óbvia e a mais reveladora. Ele diz o que fazer quando o próprio mecanismo de contagem falha, e a resposta declarada é recusar a requisição. É a escolha entre falhar fechado e falhar aberto, e ela declara que, aqui, exceder o limite é pior que negar serviço.
 
-O `sampling_rate: 1` significa registrar todas as requisições. Em produção, com volume alto, esse valor costuma cair — e aí a decisão passa a ser qual fração do tráfego se aceita não conseguir investigar depois.
+O `sampling_rate: 1` significa registrar todas as requisições. Em produção, com volume alto, esse valor costuma ser reduzido, e a decisão passa a ser qual fração do tráfego se aceita não conseguir investigar depois.
 
 Repare no que nenhuma dessas linhas faz: decidir elegibilidade. O gateway sabe rotear, contar chamadas e propagar identificadores, sem saber o que torna um beneficiário elegível. Se essa regra migrasse para cá, ficaria fora do domínio a que pertence, longe de quem responde por ela e sem os testes que a cercam. É a fronteira que o módulo defende, visível na diferença entre este arquivo e o `elegibilidade.py`.
 
@@ -920,7 +920,7 @@ Percorra os dois arquivos separando o que acontece na borda do que acontece na t
 
 **Observe**
 
-Gateway aplica limite e correlação; Elegibilidade mantém consulta e banco. Collector transporta telemetria; regra clínica não passa por ele.
+O gateway aplica limite e correlação, e Elegibilidade mantém a consulta e o banco. O Collector transporta a telemetria e não recebe nenhuma regra clínica.
 
 **Compare**
 
@@ -1016,13 +1016,13 @@ X-Kong-Proxy-Latency: 31             ← tempo que o próprio gateway consumiu (
 Via: 1.1 kong/3.8.0
 ```
 
-Cada bloco é uma política se anunciando. Os três cabeçalhos `RateLimit` existem porque `hide_client_headers: false` foi declarado: o consumidor sabe quanto lhe resta antes de ser recusado, o que lhe permite se autorregular em vez de descobrir o limite batendo nele.
+Cada bloco de cabeçalhos corresponde a uma política declarada. Os três cabeçalhos `RateLimit` existem porque `hide_client_headers: false` foi declarado: o consumidor sabe quanto lhe resta antes de ser recusado, o que permite reduzir o ritmo antes de receber uma recusa.
 
 O `x-correlation-id` é o identificador que acompanhará esta requisição pelos registros e pelo rastro. Como a chamada não enviou um, o gateway gerou.
 
 Os dois cabeçalhos de latência separam o tempo do serviço do tempo do gateway, e essa distinção é o que permite responder "quem está lento?" sem abrir nenhuma ferramenta. Aqui a mediação custou 31 ms contra 7 ms do serviço, número típico da primeira chamada, quando o gateway ainda está aquecendo conexões.
 
-Já a chamada direta ao serviço, sem passar pelo gateway, não traz nenhum desses cabeçalhos. Ela serve para diagnosticar se o serviço e o banco estão de pé, e nada mais: sem gateway não há limite de tráfego nem correlação. **É essa diferença que mostra onde a política mora.**
+Já a chamada direta ao serviço, sem passar pelo gateway, não traz nenhum desses cabeçalhos. Ela serve apenas para diagnosticar se o serviço e o banco estão disponíveis, porque sem o gateway não há limite de tráfego nem correlação. **A diferença entre as duas respostas mostra que as políticas estão aplicadas no gateway.**
 
 **Compare**
 
@@ -1075,7 +1075,7 @@ A sequência de códigos é exatamente esta:
 5: 429
 ```
 
-Três passam, a quarta é recusada. O número não é acidente: é o `second: 3` do `kong.yml` produzindo efeito observável. **A política declarada em configuração acabou de ser verificada por experimento**, e é isso que o módulo quer dizer com política como hipótese executável.
+As três primeiras chamadas passam e a quarta é recusada, como efeito observável do `second: 3` declarado no `kong.yml`. **A política declarada em configuração acabou de ser verificada por experimento**, e é isso que o módulo quer dizer com política como hipótese executável.
 
 A resposta `429` traz um cabeçalho que a de sucesso não tinha:
 
@@ -1087,7 +1087,7 @@ X-RateLimit-Limit-Second: 3
 X-Correlation-ID: a0acc7f5-be3c-470b-970c-d023bd6cfac9
 ```
 
-O `Retry-After` transforma a recusa em instrução acionável: o consumidor não precisa adivinhar quanto esperar. E o identificador de correlação continua presente, porque a requisição recusada também precisa ser rastreável — investigar por que um cliente legítimo está sendo bloqueado exige encontrar essas chamadas depois.
+O `Retry-After` acrescenta à recusa o tempo de espera, e o consumidor não precisa adivinhar quanto esperar. E o identificador de correlação continua presente, porque a requisição recusada também precisa ser rastreável — investigar por que um cliente legítimo está sendo bloqueado exige encontrar essas chamadas depois.
 
 Passado um segundo, a contagem zera e as chamadas voltam a `200`. Elegibilidade nunca ficou indisponível: quem recusou foi o gateway, na borda, antes de a requisição alcançar o serviço.
 
@@ -1163,7 +1163,7 @@ Há evidência de cinco serviços saudáveis, consulta direta `200`, consulta go
 
 ## Interpretação
 
-Kong governa borda pública; Elegibilidade governa modelo e dado. Collector transporta telemetria; Jaeger guarda evidência de estudo. A cadeia une design-time — arquivos versionados, dono e decisão — a runtime — cabeçalho, código HTTP, log e trace. Métricas permanecem apenas como conceito de desenho e SLO nesta oficina, sem coleta nem consulta. Ela não demonstra alta disponibilidade, retenção, autorização corporativa ou limite distribuído.
+Kong governa a borda pública, Elegibilidade governa o modelo e o dado, o Collector transporta a telemetria e o Jaeger guarda a evidência de estudo. A cadeia une design-time — arquivos versionados, dono e decisão — a runtime — cabeçalho, código HTTP, log e trace. Métricas permanecem apenas como conceito de desenho e SLO nesta oficina, sem coleta nem consulta. Ela não demonstra alta disponibilidade, retenção, autorização corporativa ou limite distribuído.
 
 ## Limpeza e contingência
 

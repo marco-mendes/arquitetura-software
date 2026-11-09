@@ -2,7 +2,7 @@
 
 Esta oficina começa numa pasta vazia. Você vai escrever cada arquivo, construir a imagem da aplicação, criar um cluster Kubernetes descartável na sua própria máquina e ver o cluster recuperar o serviço sozinho depois de uma falha provocada. Nada é enviado para fora do computador. Não há cadastro, nuvem contratada nem custo.
 
-A aplicação é uma API mínima de elegibilidade, escrita para caber em trinta linhas. Ela existe para ter algo concreto rodando dentro do contêiner, e o conteúdo dela importa pouco. O que importa é o percurso.
+A aplicação é uma API mínima de elegibilidade, escrita para caber em trinta linhas. Ela existe para que haja algo concreto rodando dentro do contêiner, e o objeto de estudo da oficina é o percurso da imagem até o cluster.
 
 Todos os nomes e portas são fixos ao longo da página: pasta `oficina-nuvem`, imagem `hospital-api:1.0.0`, cluster `hospital-local`, namespace `hospital`, Deployment e Service `hospital-api`, porta do contêiner `8000` e acesso local em `http://127.0.0.1:18080`. Não aponte estes comandos para um cluster compartilhado.
 
@@ -14,7 +14,7 @@ O que exige cuidado é o que não é seu. O cluster criado aqui é descartável 
 
 ## Ferramenta
 
-Quatro peças entram aqui, e vale saber o que cada uma faz antes de instalar qualquer coisa.
+Quatro ferramentas entram nesta oficina, e a tabela abaixo descreve a função de cada uma antes da instalação.
 
 | Ferramenta | O que é | Para que serve aqui |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ Quatro peças entram aqui, e vale saber o que cada uma faz antes de instalar qua
 
 Docker e Kubernetes resolvem problemas diferentes, e confundi-los atrapalha o resto da oficina. O Docker executa contêineres em **uma** máquina. Ele não decide em qual máquina de um conjunto o contêiner deve rodar, não recria o que morreu e não reparte tráfego entre cópias. Esse é o trabalho do Kubernetes.
 
-Cinco palavras aparecem em quase todos os comandos adiante, e elas são o vocabulário mínimo.
+Cinco palavras aparecem em quase todos os comandos adiante e formam o vocabulário mínimo da oficina.
 
 Uma **imagem** é o pacote pronto da aplicação, imutável, identificado por um nome e uma versão, como `hospital-api:1.0.0`. Um **contêiner** é uma execução dessa imagem. A mesma imagem produz muitos contêineres, do jeito que uma classe produz muitos objetos.
 
@@ -37,7 +37,7 @@ Um **Service** dá um endereço estável para um conjunto de Pods que nascem e m
 
 E um **manifesto** é o arquivo YAML que descreve o estado desejado de um desses objetos. Você escreve o manifesto, entrega ao cluster, e o cluster passa a persegui-lo.
 
-A diferença que dá sentido à oficina inteira está aí. Você não vai mandar o Kubernetes criar dois Pods. Você vai **declarar que devem existir dois**, e ele passa a garantir isso. Apagar um Pod à mão faz o orquestrador criar outro, e é esse comportamento que se chama reconciliação.
+Essa diferença orienta a oficina inteira: você vai **declarar que devem existir dois Pods**, e o Kubernetes passa a garantir essa quantidade. Apagar um Pod à mão faz o orquestrador criar outro, e é esse comportamento que se chama reconciliação.
 
 ## Leia antes de executar comandos
 
@@ -78,7 +78,7 @@ oficina-nuvem/
         └── hpa.yaml              a faixa de réplicas para escala automática
 ```
 
-### O que você vai observar, e por que importa
+### Relação entre a oficina e os conceitos do módulo
 
 | O que a oficina mostra | O conceito do módulo |
 | --- | --- |
@@ -183,7 +183,7 @@ Se o socket recusar acesso, aplique a orientação oficial da distribuição em 
 
 A preparação tem quatro passos. O primeiro usa só o Docker, para você ver um contêiner funcionando antes de qualquer coisa mais complicada. O segundo escreve a aplicação e a empacota numa imagem. O terceiro cria o cluster. O quarto escreve os manifestos.
 
-### Passo 1 — o primeiro contêiner, sem Kubernetes nenhum
+### Passo 1 — o primeiro contêiner com Docker
 
 **Objetivo**
 
@@ -222,7 +222,7 @@ flowchart TB
 
 **Texto alternativo:** uma imagem ligada a dois contêineres criados a partir dela, e uma seta tracejada mostrando que remover um contêiner não remove a imagem.
 
-*Figura 18 — Uma imagem, muitos contêineres. Fonte: curso.*
+*Figura 18 — Relação entre uma imagem e os contêineres criados a partir dela. Fonte: curso.*
 
 **Leitura textual da figura:** à esquerda, a imagem `nginx:1.27`, que é o pacote imutável listado por `docker images`. Dela saem duas setas para dois contêineres diferentes, `web` e `web-2`, cada um uma execução independente da mesma imagem, listados por `docker ps`. Uma seta tracejada sai do primeiro contêiner indicando a remoção por `docker rm`, e o destino registra que a imagem permanece na máquina. A relação é de um para muitos, do mesmo jeito que uma classe produz muitos objetos.
 
@@ -524,7 +524,7 @@ Compare este `--dry-run=client` com a aplicação de verdade da próxima seção
 
 ### O `deployment.yaml` linha a linha
 
-Três blocos desse manifesto concentram as decisões da oficina, e vale lê-los com calma.
+Três blocos desse manifesto concentram as decisões da oficina e são comentados a seguir.
 
 O primeiro declara quantas cópias devem existir e como trocá-las de versão.
 
@@ -538,7 +538,7 @@ spec:
       maxSurge: 1                # pode subir 1 a mais durante a troca
 ```
 
-A combinação `maxUnavailable: 0` com `maxSurge: 1` é uma decisão de disponibilidade escrita como configuração. Ela diz: durante uma atualização, crie primeiro o Pod novo, espere que ele fique pronto, e só então remova o antigo. O cluster chega a ter três Pods por instantes, e nunca menos que dois atendendo. Trocar `maxUnavailable` para `1` tornaria a atualização mais rápida e aceitaria uma janela de capacidade reduzida.
+A combinação `maxUnavailable: 0` com `maxSurge: 1` é uma decisão de disponibilidade escrita como configuração. Ela diz: durante uma atualização, crie primeiro o Pod novo, espere que ele fique pronto, e só então remova o antigo. Durante a troca, o cluster chega a ter três Pods por instantes e mantém pelo menos dois atendendo. Trocar `maxUnavailable` para `1` tornaria a atualização mais rápida e aceitaria uma janela de capacidade reduzida.
 
 O segundo declara o que cada réplica precisa de recursos.
 
@@ -552,7 +552,7 @@ O segundo declara o que cada réplica precisa de recursos.
               memory: 256Mi
 ```
 
-A distinção entre pedido e teto costuma confundir, e as consequências são bem diferentes. O **pedido** é usado para decidir em qual nó o Pod cabe, já que o Kubernetes só o agenda onde houver 100 milicores livres. O **teto** é o que o Pod não pode ultrapassar em execução. Exceder o teto de memória faz o contêiner ser encerrado.
+Pedido e teto têm consequências diferentes. O **pedido** é usado para decidir em qual nó o Pod cabe, já que o Kubernetes só o agenda onde houver 100 milicores livres. O **teto** é o que o Pod não pode ultrapassar em execução. Exceder o teto de memória faz o contêiner ser encerrado.
 
 O terceiro declara duas verificações de saúde que parecem iguais e respondem perguntas opostas.
 
@@ -586,7 +586,7 @@ flowchart TB
 
 *Figura 19 — Como o Service escolhe para onde encaminhar. Fonte: curso.*
 
-**Leitura textual da figura:** o cliente chama sempre o mesmo endereço local, e o Service resolve o resto. Ele não guarda endereços de Pod, guarda um seletor de rótulo, e qualquer Pod marcado como `app: hospital-api` entra no conjunto automaticamente. Dois Pods com endereços diferentes aparecem recebendo tráfego, porque cumprem o rótulo e passaram na verificação de prontidão. Um terceiro Pod, ligado por seta tracejada, tem o rótulo certo e está reprovando a prontidão, por isso fica fora do encaminhamento sem ser reiniciado. Os endereços mudam a cada substituição, e o cliente nunca precisa saber quantos Pods existem.
+**Leitura textual da figura:** o cliente chama sempre o mesmo endereço local, e o Service resolve o resto. Ele guarda apenas um seletor de rótulo, e qualquer Pod marcado como `app: hospital-api` entra no conjunto automaticamente. Dois Pods com endereços diferentes aparecem recebendo tráfego, porque cumprem o rótulo e passaram na verificação de prontidão. Um terceiro Pod, ligado por seta tracejada, tem o rótulo certo e está reprovando a prontidão, por isso fica fora do encaminhamento sem ser reiniciado. Os endereços mudam a cada substituição, e o cliente nunca precisa saber quantos Pods existem.
 
 ## Execução
 
@@ -641,7 +641,7 @@ kubectl get pods -n hospital
 
 **Observe**
 
-O rollout informa duas réplicas disponíveis, e o endereço local devolve `{"status":"ready"}`. O `EndpointSlice` contém os endereços dos Pods prontos, que é a lista que o Service usa para distribuir tráfego. Depois de apagar um Pod, a listagem mostra um Pod novo com idade de poucos segundos, porque o estado desejado continua pedindo dois. O HPA pode não ter métrica atual no kind básico, e registrar esse fato vale mais do que inventar escalonamento.
+O rollout informa duas réplicas disponíveis, e o endereço local devolve `{"status":"ready"}`. O `EndpointSlice` contém os endereços dos Pods prontos, que é a lista que o Service usa para distribuir tráfego. Depois de apagar um Pod, a listagem mostra um Pod novo com idade de poucos segundos, porque o estado desejado continua pedindo dois. O HPA pode não ter métrica atual no kind básico, e esse fato deve ser registrado tal como foi observado.
 
 **Compare**
 
@@ -710,7 +710,7 @@ flowchart TB
 
 *Figura 20 — Por que o serviço não caiu durante a atualização bloqueada. Fonte: curso.*
 
-**Leitura textual da figura:** o percurso parte da revisão saudável, com dois Pods na versão 1.0.0 atendendo. A troca de imagem para uma tag inexistente produz dois efeitos ao mesmo tempo. De um lado, o Pod novo entra em erro de download da imagem e nunca fica pronto. De outro, a configuração de indisponibilidade zero impede o controlador de remover qualquer Pod antigo antes de o novo ficar pronto, e por isso os dois continuam atendendo. O status do rollout esgota o tempo, o comando de desfazer é executado e o desenho retorna à revisão inicial. O serviço não caiu em nenhum instante, e isso é consequência de uma linha de configuração.
+**Leitura textual da figura:** o percurso parte da revisão saudável, com dois Pods na versão 1.0.0 atendendo. A troca de imagem para uma tag inexistente produz dois efeitos ao mesmo tempo. De um lado, o Pod novo entra em erro de download da imagem e nunca fica pronto. De outro, a configuração de indisponibilidade zero impede o controlador de remover qualquer Pod antigo antes de o novo ficar pronto, e por isso os dois continuam atendendo. O status do rollout esgota o tempo, o comando de desfazer é executado e o desenho retorna à revisão inicial. O serviço permaneceu disponível durante o percurso inteiro por efeito da configuração `maxUnavailable: 0`.
 
 **Questões exploratórias**
 
@@ -755,7 +755,7 @@ Entregue texto ou capturas de tela, sem dados pessoais, contendo:
 
 Acrescente duas conclusões: uma garantia que o laboratório obteve e um limite que ele não prova.
 
-## Rotas complementares, fora da entrega
+## Rotas complementares opcionais
 
 As três sequências abaixo não fazem parte da evidência a entregar. Elas existem porque a prática do módulo usa um caminho só, kind mais kubectl, e convém conhecer o que existe antes e ao lado dele. Execute-as depois da entrega, se quiser, e nunca contra um cluster compartilhado.
 
@@ -791,7 +791,7 @@ docker exec -it mysql-container mysql -uroot -padmin -e "SHOW DATABASES;"
 
 A segunda chamada deve listar `information_schema`, `mysql`, `performance_schema` e `sys`. Remover o contêiner ao final é `docker rm -f mysql-container`.
 
-### Docker Swarm, a orquestração nativa
+### Orquestração nativa com Docker Swarm
 
 O Swarm transforma um host Docker em nó gerenciador e permite criar um cluster sem instalar nada além do próprio Docker. A figura do Swarm em [Padrões e decisões](padroes-e-decisoes.md) descreve a repartição entre gerenciadores e trabalhadores.
 
@@ -818,7 +818,7 @@ curl http://localhost:8080
 
 `docker service ls` mostra a proporção de réplicas ativas, no formato `3/3`. `docker service ps` mostra em qual nó cada réplica está, que é a evidência de distribuição. Para desfazer, execute `docker swarm leave --force` no nó que sai.
 
-### Minikube, um Kubernetes local alternativo
+### Minikube como alternativa local ao kind
 
 O Minikube resolve o mesmo problema que o kind e usa uma máquina virtual ou um contêiner como nó. A sequência abaixo repete, com outros comandos, o que a oficina fez com kind.
 

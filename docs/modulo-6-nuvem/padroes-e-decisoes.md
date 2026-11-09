@@ -104,7 +104,7 @@ Eles não substituem análise de domínio nem decisão de segurança. A regra de
 
 ## Elasticidade e escalabilidade
 
-**Escalabilidade** é a capacidade de crescer mantendo comportamento aceitável. **Elasticidade** é ajustar capacidade em resposta a demanda. Escalar horizontalmente aumenta réplicas. Escalar verticalmente muda recursos da mesma réplica. O HPA do laboratório declara mínimo de duas e máximo de cinco réplicas, com alvo de CPU. Isso é uma política, não uma prova: a métrica deve existir, o request de CPU deve ser definido e a equipe precisa observar latência, fila, erro e saturação para confirmar que CPU é um sinal útil.
+**Escalabilidade** é a capacidade de crescer mantendo comportamento aceitável. **Elasticidade** é ajustar capacidade em resposta a demanda. Escalar horizontalmente aumenta réplicas. Escalar verticalmente muda recursos da mesma réplica. O HPA do laboratório declara mínimo de duas e máximo de cinco réplicas, com alvo de CPU. Isso é uma política que ainda precisa de verificação: a métrica deve existir, o request de CPU deve ser definido e a equipe precisa observar latência, fila, erro e saturação para confirmar que CPU é um sinal útil.
 
 Cada réplica tem request de `100m` de CPU e `128Mi` de memória: são insumos para agendamento. Os limits de `250m` e `256Mi` estabelecem teto. CPU pode sofrer throttling, e memória excedida pode resultar em término. Escolher números por hábito é pior que não declarar hipótese. Comece com uma carga sintética, registre consumo e latência, ajuste e repita. A capacidade de banco, conexão e dependências também limita a escala. Aumentar somente a API pode amplificar uma falha posterior.
 
@@ -131,9 +131,9 @@ Um **rollback** retorna o Deployment à revisão anterior. Ele é útil se exist
 
 ## Orquestradores: Swarm e Kubernetes
 
-Orquestrar contêineres é automatizar cinco responsabilidades que, feitas à mão, não sobrevivem à escala. Gerenciar muitos contêineres distribuídos entre máquinas. Aumentar ou reduzir instâncias conforme a demanda. Distribuir carga entre os serviços. Monitorar e reiniciar o que falhou. Repartir recursos entre os nós de um cluster. Um orquestrador é a peça que transforma essas cinco em configuração declarada.
+Orquestrar contêineres é automatizar cinco responsabilidades que não se sustentam em escala quando executadas à mão: gerenciar muitos contêineres distribuídos entre máquinas, aumentar ou reduzir instâncias conforme a demanda, distribuir carga entre os serviços, monitorar e reiniciar o que falhou e repartir recursos entre os nós de um cluster. Um orquestrador é a peça que transforma essas cinco em configuração declarada.
 
-Duas opções aparecem com frequência, e elas não têm o mesmo peso operacional.
+Duas opções aparecem com frequência e têm pesos operacionais diferentes.
 
 O **Docker Swarm** é a orquestração nativa do Docker e usa o mesmo vocabulário de quem já constrói imagens.
 
@@ -182,6 +182,6 @@ Três leituras ajudam a não escolher no chute.
 
 **Rebuild** é para quem já tem maturidade e quer decompor monolitos em microsserviços, redesenhar a arquitetura para crescimento futuro sobre contêineres ou serverless, ou implantar controles avançados de segurança e conformidade. É o movimento mais caro e o que mais depende de agilidade organizacional.
 
-Os dois Rs restantes costumam ser esquecidos, e são os mais baratos. **Retire** remove custo e superfície de ataque de uma vez. **Retain** é uma decisão legítima, desde que registrada com a razão e com a data de reavaliação. Manter por omissão, sem registrar, é o que transforma dívida em surpresa.
+Os dois Rs restantes costumam ser esquecidos, embora sejam os mais baratos. **Retire** remove custo e superfície de ataque de uma vez. **Retain** é uma decisão legítima, desde que registrada com a razão e com a data de reavaliação. Manter por omissão, sem registro, deixa a dívida da aplicação sem razão declarada e sem data de reavaliação.
 
-O R não é um rótulo a colar na aplicação. Ele é o resumo de uma decisão que precisa citar o atributo que se quer melhorar, a restrição que limita a escolha e a evidência que confirmará o acerto.
+O R escolhido resume uma decisão que precisa citar o atributo que se quer melhorar, a restrição que limita a escolha e a evidência que confirmará o acerto.

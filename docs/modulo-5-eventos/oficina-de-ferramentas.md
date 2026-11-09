@@ -6,18 +6,18 @@ Você vai subir um serviço de mensageria na sua máquina, publicar duas vezes o
 
 O laboratório usa apenas dados inventados e nada sai da sua máquina. Kafka não é executado aqui: ele aparece ao final como comparação, quando já houver base para discutir o que mudaria.
 
-### O que você vai observar, e por que importa
+### O que a oficina demonstra
 
 | O que a oficina mostra | O conceito do livro-texto |
 | --- | --- |
 | O mesmo evento entregue duas vezes gera uma única cobrança | [Entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia) |
 | Uma mensagem fora do contrato é recusada antes de virar efeito | [Esquema, compatibilidade e evolução](padroes-e-decisoes.md#esquema-compatibilidade-e-evolucao) |
-| A mensagem recusada fica visível para inspeção | [Fila de erros como evidência](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito) |
+| A mensagem recusada fica visível para inspeção | [Fila de erros como evidência](padroes-e-decisoes.md#dead-letter-queue-como-registro-de-falhas) |
 | Quem publica não conhece quem consome | [Broker e mediator](conceitos.md#broker-e-mediator) |
 
 ![Entrega duplicada tratada com idempotência e mensagem inválida encaminhada à DLQ](../assets/images/m05-oficina-idempotencia-dlq.png)
 
-*Figura 17 — Duas entregas, uma cobrança, e a mensagem inválida visível na fila de erros. Fonte: curso.*
+*Figura 17 — Entrega duplicada com uma única cobrança e mensagem inválida visível na fila de erros. Fonte: curso.*
 
 **Leitura textual da figura:** `publicador.py` publica o evento e origina três caminhos. Nos dois primeiros, a mesma mensagem `ResultadoLaboratorialDisponibilizadoV1` com `event_id: A42` é entregue duas vezes e percorre `hospital.events`, depois `billing.resultados.v1`, até o consumidor. O banco `processed-events.sqlite3` registra duas tentativas e um único efeito, que é a idempotência funcionando. No terceiro caminho, uma mensagem fora do contrato é barrada na validação, nunca entra em `hospital.events` e segue para `hospital.events.dlx` e `billing.resultados.v1.dlq`, onde fica disponível para inspeção.
 
@@ -31,7 +31,7 @@ Duas siglas aparecem várias vezes a partir daqui. Uma **dead-letter exchange** 
 | --- | --- | --- |
 | [`infra/compose.eventos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/infra/compose.eventos.yml) | Sobe um RabbitMQ 4 isolado, com plugin de management e healthcheck, e declara as portas AMQP e HTTP que os comandos desta oficina vão usar. | A infraestrutura por trás do [broker](conceitos.md#broker-e-mediator): aqui ele é uma exchange `hospital.events` e uma fila de trabalho `billing.resultados.v1`. |
 | [`src/hospital/eventos/publicador.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/publicador.py) | Define o contrato `ResultadoLaboratorialDisponibilizadoV1` (modelo Pydantic) e publica na exchange `hospital.events`, com confirmação de publicação ligada. | O que [evento, comando e mensagem](conceitos.md#evento-comando-e-mensagem) chama de publicador: ele afirma um fato e não conhece quem vai reagir a ele. |
-| [`src/hospital/eventos/consumidor.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/consumidor.py) | Declara a fila `billing.resultados.v1`, valida o schema recebido, grava tentativa e efeito no SQLite `processed-events.sqlite3` por `event_id`, e liga a fila de rejeitados `billing.resultados.v1.dlq` à DLX `hospital.events.dlx`. | A implementação de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia) e de [dead-letter queue](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito). |
+| [`src/hospital/eventos/consumidor.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/src/hospital/eventos/consumidor.py) | Declara a fila `billing.resultados.v1`, valida o schema recebido, grava tentativa e efeito no SQLite `processed-events.sqlite3` por `event_id`, e liga a fila de rejeitados `billing.resultados.v1.dlq` à DLX `hospital.events.dlx`. | A implementação de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia) e de [dead-letter queue](padroes-e-decisoes.md#dead-letter-queue-como-registro-de-falhas). |
 | [`tests/test_event_idempotency.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/tests/test_event_idempotency.py) | Teste automatizado que publica o mesmo evento duas vezes e verifica, por código, que existe só um efeito de negócio e duas tentativas registradas. | A prova de que a garantia de repetição sem duplicidade de efeito, descrita na teoria, se sustenta neste código específico. |
 | [`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-5/pyproject.toml) | Declara as dependências do pacote (`aio-pika` para AMQP assíncrono, `pydantic` para o contrato, `pytest` para o teste) e o torna instalável. | Por que o comando de instalação, mais adiante, não pede nenhum argumento além do caminho do pacote. |
 
@@ -54,7 +54,7 @@ flowchart TB
 
 **Leitura textual:** o publicador afirma um fato e o entrega à exchange, que o roteia para a fila de trabalho. O consumidor então decide duas coisas, em ordem. A primeira é se a mensagem cumpre o schema. Quando não cumpre, ela segue para a dead-letter exchange e daí para a fila de erros, onde fica disponível para inspeção em vez de desaparecer ou voltar em laço. Quando cumpre, vem a segunda decisão: se aquele identificador de evento já foi processado antes. Na primeira vez, o consumidor grava a tentativa e o efeito de negócio, e imprime processado com uma tentativa. Na repetição, ele grava apenas a tentativa, e imprime não processado com duas tentativas. A ordem importa: validar antes de consultar o registro de idempotência evita gravar identificador de mensagem que nunca deveria ter entrado.
 
-### Os sete arquivos, um a um
+### Os sete arquivos da oficina
 
 Crie a estrutura antes de escrever. No macOS e no Linux:
 
@@ -730,12 +730,12 @@ Localize no publicador a publicação, a exchange e a chave de roteamento. Depoi
 
 **Compare**
 
-Compare o que a infraestrutura roteia com o que `ProcessedEventStore` decide. O broker não sabe se já houve lançamento administrativo; o consumidor não decide se uma mensagem inválida deve parecer sucesso. É a fronteira descrita em [broker e mediator](conceitos.md#broker-e-mediator): o RabbitMQ só encaminha, quem decide idempotência e rejeição é o código do consumidor.
+Compare o que a infraestrutura roteia com o que `ProcessedEventStore` decide. O broker não sabe se já houve lançamento administrativo; o consumidor não decide se uma mensagem inválida deve parecer sucesso. É a fronteira descrita em [broker e mediator](conceitos.md#broker-e-mediator): o RabbitMQ apenas encaminha a mensagem, e o código do consumidor decide a idempotência e a rejeição.
 
 **Questões exploratórias**
 
 - Qual mudança exigiria uma nova versão do evento?
-- Por que o store pertence ao consumidor, não à exchange?
+- Por que o store de idempotência pertence ao consumidor e não pode ficar na exchange?
 
 **Objetivo**
 
@@ -814,7 +814,7 @@ py -m pytest tests/test_event_idempotency.py -q
 
 **Observe**
 
-A primeira entrega válida imprime `processed=True attempts=1`. A segunda imprime `processed=False attempts=2`. O teste `test_event_idempotency.py` confirma uma linha de efeito e duas tentativas em banco temporário; a sequência manual preserva a mesma observação no arquivo de evidência. É a demonstração ao vivo de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia): a mensagem chega duas vezes, o efeito de negócio acontece uma.
+A primeira entrega válida imprime `processed=True attempts=1`. A segunda imprime `processed=False attempts=2`. O teste `test_event_idempotency.py` confirma uma linha de efeito e duas tentativas em banco temporário; a sequência manual preserva a mesma observação no arquivo de evidência. É a demonstração ao vivo de [entrega pelo menos uma vez e idempotência](padroes-e-decisoes.md#entrega-pelo-menos-uma-vez-e-idempotencia): a mensagem chega duas vezes e o efeito de negócio acontece uma única vez.
 
 **Compare**
 
@@ -917,7 +917,7 @@ py -m hospital.eventos.publicador --event-id 65e95d82-4f8c-4e93-9bb3-3e0e92deaf1
 py -m hospital.eventos.consumidor --once --store evidencias/modulo-5/processed-events.sqlite3
 ```
 
-Essa rejeição é a aplicação prática de [dead-letter queue como evidência](padroes-e-decisoes.md#dead-letter-queue-como-evidencia-nao-deposito): o schema barra a mensagem antes de qualquer regra de negócio rodar, e ela fica visível para inspeção em vez de desaparecer. A consulta HTTP que confirma essa evidência já usa portas e sintaxe específicas do PowerShell, por isso tem uma seção própria a seguir.
+Essa rejeição é a aplicação prática de [dead-letter queue como evidência](padroes-e-decisoes.md#dead-letter-queue-como-registro-de-falhas): o schema barra a mensagem antes de qualquer regra de negócio rodar, e ela fica visível para inspeção em vez de desaparecer. A consulta HTTP que confirma essa evidência já usa portas e sintaxe específicas do PowerShell, por isso tem uma seção própria a seguir.
 
 **Verificação no PowerShell**
 
@@ -973,7 +973,7 @@ O ambiente termina com RabbitMQ saudável, `hospital.events`, `billing.resultado
 
 ## Interpretação
 
-O experimento demonstra entrega pelo menos uma vez, não exactly-once. SQLite evita duplicação entre execuções; em sistemas distribuídos, trate-a com banco e efeitos externos. O Compose não é produção: não inclui cluster, TLS, credenciais, backup ou retenção. Use evidência para discutir semântica.
+O experimento demonstra entrega pelo menos uma vez, e o desenho não depende de garantia exactly-once. SQLite evita duplicação entre execuções; em sistemas distribuídos, trate-a com banco e efeitos externos. O Compose não é produção: não inclui cluster, TLS, credenciais, backup ou retenção. Use evidência para discutir semântica.
 
 ## Limpeza e contingência
 
@@ -1016,4 +1016,4 @@ Compare esta limpeza limitada com comandos globais do Docker: somente a primeira
 
 ## Evidência a entregar
 
-Entregue uma nota com: configuração validada; saídas `processed=True attempts=1` e `processed=False attempts=2`; consulta de um efeito; mensagem na DLQ; e a explicação de por que há entrega pelo menos uma vez com idempotência, não exactly-once. Use IDs sintéticos. Indique em que cenário Kafka valeria como extensão do desenho atual, sem substituí-lo automaticamente.
+Entregue uma nota com: configuração validada; saídas `processed=True attempts=1` e `processed=False attempts=2`; consulta de um efeito; mensagem na DLQ; e a explicação de por que o desenho adota entrega pelo menos uma vez com idempotência e não depende de exactly-once. Use IDs sintéticos. Indique em que cenário Kafka valeria como extensão do desenho atual, sem substituí-lo automaticamente.

@@ -2,15 +2,15 @@
 
 ## O fio do módulo
 
-Arquitetar uma API é desenhar um compromisso entre equipes e sistemas. O compromisso começa na necessidade do consumidor, usa a semântica do protocolo, modela sucesso e falha, explicita tempo e repetição, e termina em evidência reproduzível. Framework e ferramenta ajudam a executar essa intenção; não substituem a decisão.
+Arquitetar uma API é desenhar um compromisso entre equipes e sistemas. O compromisso começa na necessidade do consumidor, usa a semântica do protocolo, modela sucesso e falha, explicita tempo e repetição, e termina em evidência reproduzível. Framework e ferramenta ajudam a executar essa intenção, e a decisão continua sob responsabilidade do arquiteto.
 
 Guarde sete ideias:
 
-1. Contrato é comportamento observável, não uma cópia da implementação.
+1. Contrato é o comportamento observável pelo consumidor e independe da forma da implementação.
 2. REST usa recursos, representações e interface uniforme; JSON sobre HTTP não basta para caracterizá-lo.
 3. Métodos, status e cabeçalhos HTTP carregam semântica útil.
 4. Erros, paginação, idempotência e evolução pertencem ao contrato.
-5. RPC, GraphQL e gRPC são alternativas contextuais, não etapas inferiores ou superiores.
+5. RPC, GraphQL e gRPC são alternativas escolhidas pelo contexto, sem hierarquia de maturidade entre elas.
 6. Gateway aplica políticas de entrada, mas não resolve sozinho diferenças semânticas.
 7. OpenAPI, Bruno, Spectral e testes observam aspectos diferentes e devem concordar.
 
