@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 70 1200 380" role="img" aria-labelledby="title desc">
   <title id="title">Pipeline de pedidos com os quatro tipos de filtro</title>
-  <desc id="desc">Cinco filtros em sequência ligados por pipes: LeitorDePedido, do tipo producer, cria o pedido; ValidadorDePedido, do tipo tester, desvia os pedidos inválidos para a rejeição com lote, etapa e causa; AplicadorDeDesconto e CalculadorDeFrete, do tipo transformer, acrescentam desconto e frete sem descartar; FinalizadorDePedido, do tipo consumer, aprova e reporta. Abaixo de cada pipe aparece o estado do pedido naquele ponto.</desc>
+  <desc id="desc">Cinco filtros em sequência ligados por pipes. LeitorDePedido, do tipo producer, cria o pedido. ValidadorDePedido, do tipo tester, desvia os pedidos inválidos para a rejeição com lote, etapa e causa. AplicadorDeDesconto e CalculadorDeFrete, do tipo transformer, acrescentam desconto e frete sem descartar o pedido. FinalizadorDePedido, do tipo consumer, aprova e reporta. Abaixo de cada pipe aparece o estado do pedido naquele ponto.</desc>
   <defs>
     <style>
       .name { fill: #16243A; font: 700 16px Arial, sans-serif; }
@@ -84,6 +84,6 @@
   <!-- Regra -->
   <rect x="560" y="336" width="610" height="84" rx="12" fill="#FFFFFF" stroke="#D5DDE8"/>
   <text x="584" y="366" class="name">Nenhum filtro conhece o vizinho.</text>
-  <text x="584" y="390" class="note">Cada um recebe pelo pipe, devolve pelo pipe e não guarda estado;</text>
-  <text x="584" y="410" class="note">por isso pode ser trocado, reordenado ou testado sozinho.</text>
+  <text x="584" y="390" class="note">Cada filtro recebe e devolve dados pelo pipe e não guarda estado,</text>
+  <text x="584" y="410" class="note">e por isso pode ser trocado, reordenado ou testado sozinho.</text>
 </svg>

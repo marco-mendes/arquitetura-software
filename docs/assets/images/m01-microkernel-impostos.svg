@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" role="img" aria-labelledby="title desc">
   <title id="title">Núcleo fiscal, contrato CalculadorImposto e plugins por estado</title>
-  <desc id="desc">À esquerda, o núcleo SistemaFiscal contém o registro, que mapeia SP e RJ a plugins, o executor e os serviços compartilhados de log, segurança e configuração; o núcleo evolui devagar. No centro, o contrato CalculadorImposto é a única ligação entre núcleo e plugins. À direita, ImpostoSPPlugin aplica 12% a eletrônicos e 18% aos demais produtos, ImpostoRJPlugin aplica 20% em qualquer produto, e um novo estado entra como plugin tracejado, registrado sem alterar o núcleo. Os plugins não se conhecem.</desc>
+  <desc id="desc">À esquerda, o núcleo SistemaFiscal contém o registro, que mapeia SP e RJ a plugins, o executor e os serviços compartilhados de log, segurança e configuração, e evolui devagar. No centro, o contrato CalculadorImposto é a única ligação entre núcleo e plugins. À direita, ImpostoSPPlugin aplica 12% a eletrônicos e 18% aos demais produtos, ImpostoRJPlugin aplica 20% em qualquer produto, e um novo estado entra como plugin tracejado, registrado sem alterar o núcleo. Os plugins não se conhecem.</desc>
   <defs>
     <style>
       .h { fill: #FFFFFF; font: 700 22px Arial, sans-serif; }
@@ -18,7 +18,7 @@
   <!-- Núcleo -->
   <rect x="30" y="30" width="430" height="400" rx="18" fill="#16243A"/>
   <text x="56" y="68" class="h">SistemaFiscal</text>
-  <text x="56" y="92" class="hs">núcleo · evolui devagar</text>
+  <text x="56" y="92" class="hs">núcleo que evolui devagar</text>
 
   <rect x="56" y="112" width="378" height="124" rx="10" fill="#FFFFFF"/>
   <text x="74" y="140" class="name">Registro</text>
@@ -51,7 +51,7 @@
   <!-- Plugins -->
   <rect x="608" y="70" width="440" height="90" rx="12" class="box"/>
   <text x="630" y="104" class="name">ImpostoSPPlugin</text>
-  <text x="630" y="130" class="role">12% em eletrônicos, 18% nos demais produtos</text>
+  <text x="630" y="130" class="role">12% em eletrônicos e 18% nos demais produtos</text>
 
   <rect x="608" y="185" width="440" height="90" rx="12" class="box"/>
   <text x="630" y="219" class="name">ImpostoRJPlugin</text>
@@ -61,7 +61,7 @@
   <text x="630" y="334" fill="#254DB8" style="font: 700 18px Arial, sans-serif">Novo estado</text>
   <text x="630" y="360" class="role">registra-se no núcleo sem alterar uma linha dele</text>
 
-  <text x="828" y="430" text-anchor="middle" class="cap">PLUGINS · EVOLUEM RÁPIDO E NÃO SE CONHECEM</text>
+  <text x="828" y="430" text-anchor="middle" class="cap">PLUGINS QUE EVOLUEM RÁPIDO E NÃO SE CONHECEM</text>
 
   <!-- Core creep -->
   <rect x="30" y="456" width="1018" height="48" rx="10" fill="#FBE9E7" stroke="#B3261E" stroke-width="2"/>

@@ -27,7 +27,7 @@ Antes de comparar soluções, descubra que problema você tem. Este mapa não é
 
 **Problema:** manter uma aplicação compreensível quando suas regras, entradas e recursos técnicos começam a se misturar.
 
-**Ideia de organização:** declarar fronteiras internas e dependências permitidas. **Estilos abrangidos:** [Camadas](padroes-e-decisoes.md#camadas), MVC, Hexagonal, [Microkernel](padroes-e-decisoes.md#microkernel) e [Monólito modular](padroes-e-decisoes.md#monolito-modular-uma-implantacao-capacidades-com-autonomia-interna). 
+**Ideia de organização:** declarar fronteiras internas e dependências permitidas. **Estilos abrangidos:** [Camadas](padroes-e-decisoes.md#camadas), MVC, Hexagonal, [Microkernel](padroes-e-decisoes.md#microkernel) e [Monólito modular](padroes-e-decisoes.md#monolito-modular). 
 
 **Quando ajuda:** uma equipe precisa mudar uma regra ou uma interface sem atravessar detalhes de infraestrutura. 
 

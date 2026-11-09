@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 520" role="img" aria-labelledby="title desc">
-  <title id="title">MVC separa por papel técnico; DDD separa por conceito do domínio</title>
-  <desc id="desc">À esquerda, o ciclo MVC: o cliente HTTP envia POST /pedidos ao Controller, que aciona o Model e recebe os dados processados, aciona a View e devolve 200 OK. À direita, a estrutura DDD: dentro da fronteira do agregado, a raiz Pedido contém ItemPedido, que usa o objeto de valor Dinheiro; fora dela, PedidoRepositorio salva e busca o agregado inteiro e o grava na persistência.</desc>
+  <title id="title">Critério de separação no MVC e no DDD</title>
+  <desc id="desc">À esquerda, o ciclo MVC: o cliente HTTP envia POST /pedidos ao Controller, que aciona o Model e recebe os dados processados, aciona a View e devolve 200 OK. À direita, a estrutura DDD: dentro da fronteira do agregado, a raiz Pedido contém ItemPedido, que usa o objeto de valor Dinheiro. Fora dela, PedidoRepositorio salva e busca o agregado inteiro e o grava na persistência.</desc>
   <defs>
     <style>
       .h { fill: #16243A; font: 700 24px Arial, sans-serif; }

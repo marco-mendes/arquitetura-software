@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 600" role="img" aria-labelledby="title desc">
   <title id="title">Dependências permitidas, deliberadas e proibidas em camadas</title>
-  <desc id="desc">Apresentação chama Aplicação, que usa Domínio e Infraestrutura; a Infraestrutura acessa o banco. Uma seta tracejada azul liga a Apresentação à Infraestrutura como camada aberta deliberada; uma seta vermelha liga a Apresentação ao banco como atalho proibido.</desc>
+  <desc id="desc">Apresentação chama Aplicação, que usa Domínio e Infraestrutura, e a Infraestrutura acessa o banco. Uma seta tracejada azul liga a Apresentação à Infraestrutura como camada aberta deliberada. Uma seta vermelha liga a Apresentação ao banco como atalho proibido.</desc>
   <defs>
     <style>
       .name { fill: #16243A; font: 700 22px Arial, sans-serif; }

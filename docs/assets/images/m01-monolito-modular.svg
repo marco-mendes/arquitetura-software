@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 640" role="img" aria-labelledby="title desc">
   <title id="title">Monólito modular hoje e depois da extração de um módulo</title>
-  <desc id="desc">Na parte de cima, uma única unidade de implantação contém os módulos Triagem, Agenda e Faturamento, cada um com API pública, regras e dados próprios. O Faturamento chama a API pública da Agenda, o que é permitido; o acesso direto do Faturamento aos dados da Agenda é proibido. Na parte de baixo, depois de evidência medida, o Faturamento sai como serviço com implantação própria e continua chamando a Agenda pelo mesmo contrato, agora pela rede.</desc>
+  <desc id="desc">Na parte de cima, uma única unidade de implantação contém os módulos Triagem, Agenda e Faturamento, cada um com API pública, regras e dados próprios. O Faturamento chama a API pública da Agenda, o que é permitido. O acesso direto do Faturamento aos dados da Agenda é proibido. Na parte de baixo, depois de evidência medida, o Faturamento sai como serviço com implantação própria e continua chamando a Agenda pelo mesmo contrato, agora pela rede.</desc>
   <defs>
     <style>
       .stage { fill: #16243A; font: 700 20px Arial, sans-serif; }
@@ -22,7 +22,7 @@
 
   <!-- HOJE -->
   <text x="30" y="44" class="stage">Hoje</text>
-  <text x="90" y="44" class="stages">uma unidade de implantação, fronteiras verificadas por ferramenta</text>
+  <text x="90" y="44" class="stages">uma unidade de implantação com fronteiras verificadas por ferramenta</text>
   <rect x="30" y="64" width="1040" height="290" rx="16" class="bound"/>
   <text x="48" y="88" class="proc">UMA UNIDADE DE IMPLANTAÇÃO</text>
 

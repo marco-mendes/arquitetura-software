@@ -180,7 +180,7 @@ class ModuleOneTest(unittest.TestCase):
             self.assertIn(f"## {style}", text)
         self.assertRegex(
             text,
-            r"(?m)^### Monólito modular: uma implantação, capacidades com autonomia interna$",
+            r"(?m)^### Monólito modular \{#monolito-modular\}$",
         )
         for label in (
             "Responsabilidade",

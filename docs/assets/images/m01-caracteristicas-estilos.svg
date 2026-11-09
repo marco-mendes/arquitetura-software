@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 618" role="img" aria-labelledby="title desc">
   <title id="title">Características arquiteturais dos quatro estilos, de 1 a 5</title>
-  <desc id="desc">Mapa de calor com nove características nas linhas e quatro estilos nas colunas, em escala de 1, fraco, a 5, forte. Camadas: custo geral 5, simplicidade 5, escalabilidade 2, elasticidade 1, implantabilidade 2, testabilidade 3, desempenho 3, modularidade 2, confiabilidade 3. Pipes and Filters: custo geral 5, simplicidade 5, escalabilidade 2, elasticidade 2, implantabilidade 3, testabilidade 5, desempenho 2, modularidade 5, confiabilidade 3. Microkernel: custo geral 3, simplicidade 3, escalabilidade 3, elasticidade 3, implantabilidade 3, testabilidade 3, desempenho 3, modularidade 4, confiabilidade 3. Monólito modular: custo geral 5, simplicidade 4, escalabilidade 2, elasticidade 1, implantabilidade 3, testabilidade 4, desempenho 4, modularidade 4, confiabilidade 3. As notas de Monólito modular são do curso, na mesma escala; as demais seguem Richards e Ford.</desc>
+  <desc id="desc">Mapa de calor com nove características nas linhas e quatro estilos nas colunas, em escala de 1, fraco, a 5, forte. Camadas: custo geral 5, simplicidade 5, escalabilidade 2, elasticidade 1, implantabilidade 2, testabilidade 3, desempenho 3, modularidade 2, confiabilidade 3. Pipes and Filters: custo geral 5, simplicidade 5, escalabilidade 2, elasticidade 2, implantabilidade 3, testabilidade 5, desempenho 2, modularidade 5, confiabilidade 3. Microkernel: custo geral 3, simplicidade 3, escalabilidade 3, elasticidade 3, implantabilidade 3, testabilidade 3, desempenho 3, modularidade 4, confiabilidade 3. Monólito modular: custo geral 5, simplicidade 4, escalabilidade 2, elasticidade 1, implantabilidade 3, testabilidade 4, desempenho 4, modularidade 4, confiabilidade 3. As notas de Monólito modular são do curso, na mesma escala, e as notas dos demais estilos seguem Richards e Ford.</desc>
   <defs>
     <style>
       .rl { fill: #16243A; font: 400 17px Arial, sans-serif; }
@@ -66,6 +66,6 @@
   <rect x="342" y="522" width="52" height="30" rx="4" fill="#97B0E4"/><text x="368" y="543" text-anchor="middle" class="v" style="font-size:15px" fill="#16243A">3</text>
   <rect x="398" y="522" width="52" height="30" rx="4" fill="#4466C4"/><text x="424" y="543" text-anchor="middle" class="v" style="font-size:15px" fill="#FFFFFF">4</text>
   <rect x="454" y="522" width="52" height="30" rx="4" fill="#254DB8"/><text x="480" y="543" text-anchor="middle" class="v" style="font-size:15px" fill="#FFFFFF">5</text>
-  <text x="520" y="542" class="note">1 = fraco · 5 = forte (em custo, 5 significa custo baixo)</text>
+  <text x="520" y="542" class="note">1 significa fraco e 5 significa forte (em custo, 5 significa custo baixo)</text>
   <text x="30" y="588" class="note">Fonte: Richards e Ford, Fundamentals of Software Architecture, caps. 10 a 12. * Monólito modular: avaliação do curso na mesma escala.</text>
 </svg>
