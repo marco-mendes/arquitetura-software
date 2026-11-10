@@ -39,9 +39,34 @@ import os
 DATABASE_URL = os.environ["DATABASE_URL"]
 ```
 
+Para executar, salve o bloco acima como `config.py` e acrescente ao final do mesmo arquivo o bloco `main` abaixo.
+
+```python
+if __name__ == "__main__":
+    # A credencial não vai para o log. Só o destino da conexão é exibido.
+    destino = DATABASE_URL.split("@")[-1]
+    print(f"Configuração lida do ambiente. Banco de destino: {destino}")
+```
+
+O primeiro comando define a variável de ambiente apenas para aquela execução, e o segundo executa o mesmo arquivo sem ela.
+
+```sh
+DATABASE_URL="postgresql://app:segredo@banco-homologacao:5432/pedidos" python3 config.py
+env -u DATABASE_URL python3 config.py 2>&1 | tail -n 1
+```
+
+A execução imprime:
+
+```text
+Configuração lida do ambiente. Banco de destino: banco-homologacao:5432/pedidos
+KeyError: 'DATABASE_URL'
+```
+
 Usar `os.environ[...]` em vez de `os.environ.get(...)` é deliberado. A aplicação falha ao iniciar quando a configuração está ausente, em vez de subir e falhar mais tarde, no meio de uma requisição.
 
 **Fator 6, processos sem estado.** É o que torna a substituição de uma réplica indolor.
+
+A versão que viola o fator 6 fica no arquivo `carrinho_em_memoria.py` e é executada com `python3 carrinho_em_memoria.py`. A nova atribuição a `carrinhos` dentro do bloco `main` representa a réplica nova, que nasce com a memória vazia.
 
 ```python
 # Viola o fator 6: o carrinho vive na memória desta réplica.
@@ -50,11 +75,65 @@ carrinhos: dict[str, list] = {}
 def adicionar(cliente_id: str, item: dict) -> None:
     carrinhos.setdefault(cliente_id, []).append(item)
 
+if __name__ == "__main__":
+    adicionar("cliente-42", {"sku": "LIVRO-ARQ", "quantidade": 1})
+    print("Réplica A, carrinho do cliente-42:", carrinhos.get("cliente-42"))
+
+    # A réplica nova que substitui a réplica A começa com a memória vazia.
+    carrinhos = {}
+    print("Réplica B, carrinho do cliente-42:", carrinhos.get("cliente-42"))
+```
+
+A execução imprime:
+
+```text
+Réplica A, carrinho do cliente-42: [{'sku': 'LIVRO-ARQ', 'quantidade': 1}]
+Réplica B, carrinho do cliente-42: None
+```
+
+A versão que atende ao fator 6 fica no arquivo `carrinho_em_cache.py` e é executada com `python3 carrinho_em_cache.py`. A classe `CacheCompartilhado` é um substituto didático do Redis, declarado no próprio arquivo para que o exemplo rode sem contêiner.
+
+```python
+class CacheCompartilhado:
+    """Substituto didático de um cache compartilhado, como o Redis.
+
+    Ele guarda os valores num dicionário e ignora o ttl, o que basta para o exemplo.
+    """
+
+    def __init__(self) -> None:
+        self._valores: dict[str, list] = {}
+
+    def get(self, chave: str) -> list | None:
+        valor = self._valores.get(chave)
+        return list(valor) if valor is not None else None
+
+    def set(self, chave: str, valor: list, ttl: int) -> None:
+        self._valores[chave] = list(valor)
+
+
+cache = CacheCompartilhado()
+
 # Atende ao fator 6: o estado vive fora, e qualquer réplica atende o mesmo cliente.
 def adicionar(cliente_id: str, item: dict) -> None:
     carrinho = cache.get(f"carrinho:{cliente_id}") or []
     carrinho.append(item)
     cache.set(f"carrinho:{cliente_id}", carrinho, ttl=3600)
+
+if __name__ == "__main__":
+    # A réplica A atende a primeira requisição do cliente.
+    adicionar("cliente-42", {"sku": "LIVRO-ARQ", "quantidade": 1})
+    print("Réplica A gravou:", cache.get("carrinho:cliente-42"))
+
+    # A réplica A foi substituída, e a réplica B atende a requisição seguinte.
+    adicionar("cliente-42", {"sku": "CANETA-AZUL", "quantidade": 2})
+    print("Réplica B leu e gravou:", cache.get("carrinho:cliente-42"))
+```
+
+A execução imprime:
+
+```text
+Réplica A gravou: [{'sku': 'LIVRO-ARQ', 'quantidade': 1}]
+Réplica B leu e gravou: [{'sku': 'LIVRO-ARQ', 'quantidade': 1}, {'sku': 'CANETA-AZUL', 'quantidade': 2}]
 ```
 
 A primeira versão obriga o balanceador a mandar o mesmo cliente sempre para a mesma réplica. Quando essa réplica é substituída numa atualização gradual, o carrinho some. A segunda versão torna as réplicas intercambiáveis, que é a condição para a reconciliação funcionar.
@@ -85,6 +164,47 @@ def _encerrar(signum, frame):
     encerrando = True  # o readiness passa a responder 503 e a réplica sai do balanceamento
 
 signal.signal(signal.SIGTERM, _encerrar)
+```
+
+Para executar, salve o bloco acima como `descartabilidade.py`, acrescente ao final do mesmo arquivo o trecho abaixo e rode `python3 descartabilidade.py`. O bloco `main` envia `SIGTERM` ao próprio processo durante o segundo pedido, como o kubelet faria numa atualização gradual.
+
+```python
+import os
+
+
+def readiness() -> int:
+    return 503 if encerrando else 200
+
+
+def atender(pedidos: list[int]) -> None:
+    for numero in pedidos:
+        if encerrando:
+            print(f"Pedido {numero} recusado e devolvido à fila. Readiness: {readiness()}")
+            continue
+        print(f"Pedido {numero} aceito. Readiness: {readiness()}")
+        if numero == 2:
+            # Simula o kubelet enviando SIGTERM durante uma atualização gradual.
+            os.kill(os.getpid(), signal.SIGTERM)
+            print("SIGTERM recebido durante o pedido 2")
+        print(f"Pedido {numero} concluído")
+    print("Trabalho aceito concluído. O processo encerra sem erro.")
+
+
+if __name__ == "__main__":
+    atender([1, 2, 3, 4])
+```
+
+A execução imprime:
+
+```text
+Pedido 1 aceito. Readiness: 200
+Pedido 1 concluído
+Pedido 2 aceito. Readiness: 200
+SIGTERM recebido durante o pedido 2
+Pedido 2 concluído
+Pedido 3 recusado e devolvido à fila. Readiness: 503
+Pedido 4 recusado e devolvido à fila. Readiness: 503
+Trabalho aceito concluído. O processo encerra sem erro.
 ```
 
 ```yaml

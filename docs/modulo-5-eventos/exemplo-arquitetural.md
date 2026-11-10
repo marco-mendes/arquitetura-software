@@ -32,7 +32,14 @@ flowchart LR
 O contrato é um modelo Pydantic com cinco campos, `extra="forbid"` e o nome do evento como título. Isso significa que um campo desconhecido no payload derruba a mensagem antes de qualquer regra de negócio rodar.
 
 ```python
-# src/hospital/eventos/publicador.py
+# publicador.py (no laboratório: src/hospital/eventos/publicador.py)
+import json
+import os
+from datetime import datetime
+
+import aio_pika
+from pydantic import BaseModel, ConfigDict
+
 EVENT_NAME = "ResultadoLaboratorialDisponibilizado.v1"
 EXCHANGE_NAME = "hospital.events"
 ROUTING_KEY = "laboratory.result.available.v1"
@@ -48,6 +55,10 @@ class ResultadoLaboratorialDisponibilizadoV1(BaseModel):
     exam_id: str
     patient_id: str
     result_reference: str
+
+
+def amqp_url() -> str:
+    return os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:15672/")
 ```
 
 ## Publicador: declarar, serializar e confirmar
@@ -55,7 +66,7 @@ class ResultadoLaboratorialDisponibilizadoV1(BaseModel):
 O publicador abre uma conexão AMQP robusta (`aio_pika.connect_robust`, que reconecta sozinha em queda transitória), declara a exchange como `topic` e durável, e publica com `delivery_mode=PERSISTENT` para sobreviver a um restart do broker. O `message_id` recebe o `event_id`, o que permite correlacionar a mensagem AMQP à ocorrência de domínio ao inspecionar filas no management plugin.
 
 ```python
-# src/hospital/eventos/publicador.py
+# publicador.py (continuação)
 async def publicar_json(payload: dict[str, object], url: str | None = None) -> None:
     connection = await aio_pika.connect_robust(url or amqp_url())
     try:
@@ -85,78 +96,367 @@ async def publicar_json(payload: dict[str, object], url: str | None = None) -> N
 O consumidor declara a mesma exchange, a fila durável de trabalho, a exchange de dead-letter e a fila de rejeitados, e liga a DLQ à DLX com a **mesma routing key** da fila principal. Declarar a exchange de novo com os mesmos parâmetros é seguro: RabbitMQ trata declarações repetidas e idênticas como uma operação sem efeito colateral. Já o vínculo de routing key é fácil de esquecer: se a DLQ for ligada com uma chave diferente, mensagens rejeitadas somem em vez de aparecer na fila de erro.
 
 ```python
-# src/hospital/eventos/consumidor.py
+# consumidor.py (no laboratório: src/hospital/eventos/consumidor.py)
+import sqlite3
+from dataclasses import dataclass
+from pathlib import Path
+
+import aio_pika
+from pydantic import ValidationError
+
+from publicador import (
+    EVENT_NAME,
+    EXCHANGE_NAME,
+    ROUTING_KEY,
+    ResultadoLaboratorialDisponibilizadoV1,
+)
+
 QUEUE_NAME = "billing.resultados.v1"
 DLX_NAME = "hospital.events.dlx"
 DLQ_NAME = "billing.resultados.v1.dlq"
 
-async def declarar_fila(self, channel: aio_pika.abc.AbstractChannel):
-    exchange = await channel.declare_exchange(
-        EXCHANGE_NAME, aio_pika.ExchangeType.TOPIC, durable=True
-    )
-    dlx = await channel.declare_exchange(DLX_NAME, aio_pika.ExchangeType.DIRECT, durable=True)
-    queue = await channel.declare_queue(
-        QUEUE_NAME,
-        durable=True,
-        arguments={"x-dead-letter-exchange": DLX_NAME},
-    )
-    dlq = await channel.declare_queue(DLQ_NAME, durable=True)
-    await queue.bind(exchange, routing_key=ROUTING_KEY)
-    await dlq.bind(dlx, routing_key=ROUTING_KEY)
-    return queue
+
+@dataclass(frozen=True)
+class ProcessResult:
+    processed: bool
+    attempts: int
+
+
+class ConsumidorFaturamento:
+    def __init__(self, store: "ProcessedEventStore"):
+        self.store = store
+
+    def processar_evento(self, event: ResultadoLaboratorialDisponibilizadoV1) -> ProcessResult:
+        return self.store.record(event)
+
+    async def declarar_fila(self, channel: aio_pika.abc.AbstractChannel):
+        exchange = await channel.declare_exchange(
+            EXCHANGE_NAME, aio_pika.ExchangeType.TOPIC, durable=True
+        )
+        dlx = await channel.declare_exchange(DLX_NAME, aio_pika.ExchangeType.DIRECT, durable=True)
+        queue = await channel.declare_queue(
+            QUEUE_NAME,
+            durable=True,
+            arguments={"x-dead-letter-exchange": DLX_NAME},
+        )
+        dlq = await channel.declare_queue(DLQ_NAME, durable=True)
+        await queue.bind(exchange, routing_key=ROUTING_KEY)
+        await dlq.bind(dlx, routing_key=ROUTING_KEY)
+        return queue
 ```
 
 A validação de schema acontece antes de qualquer efeito, e a rejeição usa `requeue=False` para que o RabbitMQ aplique o binding de dead-letter em vez de reentregar a mensagem inválida em loop:
 
 ```python
-# src/hospital/eventos/consumidor.py
-async def consumir_uma(self, queue: aio_pika.abc.AbstractQueue) -> ProcessResult | None:
-    message = await queue.get(fail=False)
-    if message is None:
-        return None
-    try:
-        event = ResultadoLaboratorialDisponibilizadoV1.model_validate_json(message.body)
-    except ValidationError as error:
-        await message.reject(requeue=False)
-        print(f"Mensagem rejeitada para DLQ: schema inválido ({error.error_count()} erro)")
-        return None
-    async with message.process(requeue=False):
-        result = self.processar_evento(event)
-        print(
-            f"{EVENT_NAME} event_id={event.event_id} "
-            f"processed={result.processed} attempts={result.attempts}"
-        )
-        return result
+# consumidor.py (continuação da classe ConsumidorFaturamento)
+    async def consumir_uma(self, queue: aio_pika.abc.AbstractQueue) -> ProcessResult | None:
+        message = await queue.get(fail=False)
+        if message is None:
+            return None
+        try:
+            event = ResultadoLaboratorialDisponibilizadoV1.model_validate_json(message.body)
+        except ValidationError as error:
+            await message.reject(requeue=False)
+            print(f"Mensagem rejeitada para DLQ: schema inválido ({error.error_count()} erro)")
+            return None
+        async with message.process(requeue=False):
+            result = self.processar_evento(event)
+            print(
+                f"{EVENT_NAME} event_id={event.event_id} "
+                f"processed={result.processed} attempts={result.attempts}"
+            )
+            return result
 ```
 
 A deduplicação acontece dentro de uma transação SQLite imediata (`BEGIN IMMEDIATE`): `event_id` é chave primária em `processed_events`, e `billing_effects` também tem `event_id` como chave primária. Isso é o que garante que uma segunda entrega eleve `attempts` sem criar uma segunda linha de efeito, mesmo que o processo tenha reiniciado entre as duas entregas. Um `if` em memória não ofereceria essa garantia entre reinícios.
 
 ```python
-# src/hospital/eventos/consumidor.py
-def record(self, event: ResultadoLaboratorialDisponibilizadoV1) -> ProcessResult:
-    with self._connect() as connection:
-        connection.execute("BEGIN IMMEDIATE")
-        row = connection.execute(
-            "SELECT attempts FROM processed_events WHERE event_id = ?", (event.event_id,)
-        ).fetchone()
-        if row:
-            attempts = int(row[0]) + 1
-            connection.execute(
-                "UPDATE processed_events SET attempts = ? WHERE event_id = ?",
-                (attempts, event.event_id),
+# consumidor.py (continuação)
+class ProcessedEventStore:
+    """Tabela local para a demonstração. Em produção, pertence ao consumidor."""
+
+    def __init__(self, path: Path | str):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self._connect() as connection:
+            connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS processed_events (
+                    event_id TEXT PRIMARY KEY,
+                    attempts INTEGER NOT NULL,
+                    processed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS billing_effects (
+                    event_id TEXT PRIMARY KEY,
+                    exam_id TEXT NOT NULL,
+                    patient_id TEXT NOT NULL,
+                    result_reference TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                """
             )
-            return ProcessResult(processed=False, attempts=attempts)
-        connection.execute(
-            "INSERT INTO processed_events(event_id, attempts) VALUES (?, 1)",
-            (event.event_id,),
-        )
-        connection.execute(
-            """INSERT INTO billing_effects(event_id, exam_id, patient_id, result_reference)
-               VALUES (?, ?, ?, ?)""",
-            (event.event_id, event.exam_id, event.patient_id, event.result_reference),
-        )
-        return ProcessResult(processed=True, attempts=1)
+
+    def _connect(self) -> sqlite3.Connection:
+        return sqlite3.connect(self.path)
+
+    def record(self, event: ResultadoLaboratorialDisponibilizadoV1) -> ProcessResult:
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT attempts FROM processed_events WHERE event_id = ?", (event.event_id,)
+            ).fetchone()
+            if row:
+                attempts = int(row[0]) + 1
+                connection.execute(
+                    "UPDATE processed_events SET attempts = ? WHERE event_id = ?",
+                    (attempts, event.event_id),
+                )
+                return ProcessResult(processed=False, attempts=attempts)
+            connection.execute(
+                "INSERT INTO processed_events(event_id, attempts) VALUES (?, 1)",
+                (event.event_id,),
+            )
+            connection.execute(
+                """INSERT INTO billing_effects(event_id, exam_id, patient_id, result_reference)
+                   VALUES (?, ?, ?, ?)""",
+                (event.event_id, event.exam_id, event.patient_id, event.result_reference),
+            )
+            return ProcessResult(processed=True, attempts=1)
+
+    def attempts_for(self, event_id: str) -> int:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT attempts FROM processed_events WHERE event_id = ?", (event_id,)
+            ).fetchone()
+        return int(row[0]) if row else 0
+
+    def business_effect_count(self) -> int:
+        with self._connect() as connection:
+            return int(connection.execute("SELECT COUNT(*) FROM billing_effects").fetchone()[0])
 ```
+
+## Execução de ponta a ponta com um broker substituto
+
+No laboratório, o broker é o RabbitMQ real do `infra/compose.eventos.yml`. Para que o aluno observe o fluxo completo sem subir contêiner, o arquivo `broker_em_memoria.py` a seguir implementa um substituto didático em memória com a mesma interface do `aio_pika` que o publicador e o consumidor usam: conexão, canal, exchange, fila, binding, confirmação de publicação, ack e rejeição com dead-letter.
+
+```python
+# broker_em_memoria.py (substituto didático do RabbitMQ, sem contêiner)
+"""Broker em memória com a parte da interface do aio_pika usada pelo exemplo.
+
+O substituto entrega por igualdade de routing key, porque o exemplo não usa
+curingas de tópico. Ele também aplica o argumento x-dead-letter-exchange na
+rejeição sem reenfileiramento, como o RabbitMQ faz.
+"""
+from collections import deque
+from contextlib import asynccontextmanager
+
+
+class ExchangeEmMemoria:
+    def __init__(self, broker, name, type):
+        self.broker = broker
+        self.name = name
+        self.type = type
+        self.bindings = []
+
+    async def publish(self, message, routing_key):
+        for chave, fila in self.bindings:
+            if chave == routing_key:
+                fila.mensagens.append((routing_key, message))
+
+
+class ExchangeDoCanal:
+    """Exchange vista por um canal, que confirma a publicação quando pedido."""
+
+    def __init__(self, exchange, publisher_confirms):
+        self.exchange = exchange
+        self.publisher_confirms = publisher_confirms
+
+    async def publish(self, message, routing_key):
+        await self.exchange.publish(message, routing_key)
+        if self.publisher_confirms:
+            self.exchange.broker.confirmacoes.append(message.message_id)
+
+
+class FilaEmMemoria:
+    def __init__(self, broker, name, arguments):
+        self.broker = broker
+        self.name = name
+        self.dead_letter_exchange = (arguments or {}).get("x-dead-letter-exchange")
+        self.mensagens = deque()
+
+    async def bind(self, exchange, routing_key):
+        exchange.exchange.bindings.append((routing_key, self))
+
+    async def get(self, fail=True):
+        if not self.mensagens:
+            if fail:
+                raise LookupError(f"fila {self.name} vazia")
+            return None
+        routing_key, message = self.mensagens.popleft()
+        return MensagemRecebida(self, routing_key, message)
+
+
+class MensagemRecebida:
+    def __init__(self, fila, routing_key, message):
+        self.fila = fila
+        self.routing_key = routing_key
+        self.message = message
+        self.body = message.body
+        self.message_id = message.message_id
+
+    async def ack(self):
+        self.fila.broker.acks.append(self.message_id)
+
+    async def reject(self, requeue=False):
+        if requeue:
+            self.fila.mensagens.appendleft((self.routing_key, self.message))
+            return
+        if self.fila.dead_letter_exchange:
+            dlx = self.fila.broker.exchanges[self.fila.dead_letter_exchange]
+            await dlx.publish(self.message, self.routing_key)
+
+    @asynccontextmanager
+    async def process(self, requeue=False):
+        try:
+            yield self
+        except Exception:
+            await self.reject(requeue=requeue)
+            raise
+        await self.ack()
+
+
+class CanalEmMemoria:
+    def __init__(self, broker, publisher_confirms):
+        self.broker = broker
+        self.publisher_confirms = publisher_confirms
+
+    async def declare_exchange(self, name, type, durable=False):
+        exchange = self.broker.exchanges.setdefault(
+            name, ExchangeEmMemoria(self.broker, name, type)
+        )
+        return ExchangeDoCanal(exchange, self.publisher_confirms)
+
+    async def declare_queue(self, name, durable=False, arguments=None):
+        return self.broker.filas.setdefault(name, FilaEmMemoria(self.broker, name, arguments))
+
+
+class ConexaoEmMemoria:
+    def __init__(self, broker):
+        self.broker = broker
+
+    async def channel(self, publisher_confirms=True):
+        return CanalEmMemoria(self.broker, publisher_confirms)
+
+    async def close(self):
+        return None
+
+
+class BrokerEmMemoria:
+    def __init__(self):
+        self.exchanges = {}
+        self.filas = {}
+        self.confirmacoes = []
+        self.acks = []
+
+    async def connect_robust(self, url=None, **kwargs):
+        return ConexaoEmMemoria(self)
+```
+
+O `main.py` declara a topologia do consumidor antes de publicar, porque o RabbitMQ descarta a mensagem publicada numa exchange sem fila ligada. A entrega repetida é produzida pela republicação do mesmo payload, situação que ocorre quando o publicador perde a confirmação e tenta de novo, e o consumidor é recriado sobre o mesmo arquivo SQLite para representar um reinício do processo. Para executar, salve os dois blocos de `publicador.py` num arquivo, os três blocos de `consumidor.py` em outro, o substituto e o `main.py` na mesma pasta, instale as bibliotecas do laboratório com `pip install aio-pika pydantic` e rode `python3 main.py`.
+
+```python
+# main.py
+import asyncio
+import tempfile
+from datetime import UTC, datetime
+from pathlib import Path
+
+import aio_pika
+
+from broker_em_memoria import BrokerEmMemoria
+from consumidor import DLQ_NAME, QUEUE_NAME, ConsumidorFaturamento, ProcessedEventStore
+from publicador import ResultadoLaboratorialDisponibilizadoV1, publicar_json
+
+EVENTO = ResultadoLaboratorialDisponibilizadoV1(
+    event_id="evt-resultado-0001",
+    occurred_at=datetime(2026, 3, 10, 14, 30, tzinfo=UTC),
+    exam_id="exam-sintetico-001",
+    patient_id="patient-sintetico-001",
+    result_reference="resultados/exam-sintetico-001",
+)
+
+
+async def main() -> None:
+    broker = BrokerEmMemoria()
+    # Substituto didático: publicar_json e o consumidor passam a abrir conexão no broker em memória.
+    aio_pika.connect_robust = broker.connect_robust
+
+    with tempfile.TemporaryDirectory() as pasta:
+        banco = Path(pasta) / "processed-events.sqlite3"
+        consumidor = ConsumidorFaturamento(ProcessedEventStore(banco))
+        conexao = await aio_pika.connect_robust()
+        fila = await consumidor.declarar_fila(await conexao.channel())
+        print(f"Topologia declarada: filas {sorted(broker.filas)}")
+
+        print("\n1. Publicação com confirmação do broker")
+        payload = EVENTO.model_dump(mode="json")
+        await publicar_json(payload)
+        print(f"Confirmações recebidas pelo publicador: {broker.confirmacoes}")
+
+        print("\n2. Primeira entrega")
+        await consumidor.consumir_uma(fila)
+        print(f"Cobranças em billing_effects: {consumidor.store.business_effect_count()}")
+
+        print("\n3. Entrega repetida da mesma mensagem, com o consumidor reiniciado")
+        await publicar_json(payload)
+        consumidor = ConsumidorFaturamento(ProcessedEventStore(banco))
+        await consumidor.consumir_uma(fila)
+        print(f"Cobranças em billing_effects: {consumidor.store.business_effect_count()}")
+        print(f"Tentativas em processed_events: {consumidor.store.attempts_for(EVENTO.event_id)}")
+
+        print("\n4. Mensagem sem result_reference")
+        invalido = dict(payload, event_id="evt-resultado-0002")
+        invalido.pop("result_reference")
+        await publicar_json(invalido)
+        await consumidor.consumir_uma(fila)
+        dlq = broker.filas[DLQ_NAME]
+        print(f"Mensagens em {QUEUE_NAME}: {len(fila.mensagens)}")
+        print(f"Mensagens em {DLQ_NAME}: {[m.message_id for _, m in dlq.mensagens]}")
+        print(f"Cobranças em billing_effects: {consumidor.store.business_effect_count()}")
+        print(f"Acks enviados ao broker: {broker.acks}")
+        await conexao.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+A execução imprime:
+
+```text
+Topologia declarada: filas ['billing.resultados.v1', 'billing.resultados.v1.dlq']
+
+1. Publicação com confirmação do broker
+Confirmações recebidas pelo publicador: ['evt-resultado-0001']
+
+2. Primeira entrega
+ResultadoLaboratorialDisponibilizado.v1 event_id=evt-resultado-0001 processed=True attempts=1
+Cobranças em billing_effects: 1
+
+3. Entrega repetida da mesma mensagem, com o consumidor reiniciado
+ResultadoLaboratorialDisponibilizado.v1 event_id=evt-resultado-0001 processed=False attempts=2
+Cobranças em billing_effects: 1
+Tentativas em processed_events: 2
+
+4. Mensagem sem result_reference
+Mensagem rejeitada para DLQ: schema inválido (1 erro)
+Mensagens em billing.resultados.v1: 0
+Mensagens em billing.resultados.v1.dlq: ['evt-resultado-0002']
+Cobranças em billing_effects: 1
+Acks enviados ao broker: ['evt-resultado-0001', 'evt-resultado-0001']
+```
+
+A saída mostra a confirmação da publicação, a primeira entrega com `processed=True attempts=1` e uma cobrança, a segunda entrega com `processed=False attempts=2` sem nova cobrança e o payload inválido na DLQ sem ack e sem efeito em `billing_effects`.
 
 ## A infraestrutura que sustenta o exemplo
 

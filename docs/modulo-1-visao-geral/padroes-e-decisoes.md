@@ -125,6 +125,47 @@ class AgendamentoServico:
 
 O método `agendar` consulta a agenda do dia e recusa a sobreposição antes de chamar `salvar`, e essa decisão justifica a existência da camada de negócios. Se `agendar` apenas repassasse os argumentos ao repositório, a camada seria um caso de sumidouro, como o da figura 5, e acrescentaria uma chamada sem nenhuma decisão. A regra de conflito pode ser testada com um repositório dublê, sem banco de dados.
 
+Para executar o exemplo, copie o bloco anterior e o bloco a seguir, nessa ordem, para um arquivo `agendamento.py` e rode `python3 agendamento.py`. O `main` agenda quatro consultas, das quais a terceira se sobrepõe a uma consulta do mesmo médico.
+
+```python
+if __name__ == "__main__":
+    repositorio = EmMemoriaRepositorioConsulta()
+    servico = AgendamentoServico(repositorio)
+    dia = date(2026, 3, 10)
+
+    pedidos = [
+        (7, Horario(datetime(2026, 3, 10, 9, 0), datetime(2026, 3, 10, 9, 30))),
+        (7, Horario(datetime(2026, 3, 10, 10, 0), datetime(2026, 3, 10, 10, 30))),
+        (7, Horario(datetime(2026, 3, 10, 9, 15), datetime(2026, 3, 10, 9, 45))),
+        (8, Horario(datetime(2026, 3, 10, 9, 15), datetime(2026, 3, 10, 9, 45))),
+    ]
+    for medico_id, horario in pedidos:
+        intervalo = f"{horario.inicio:%H:%M}-{horario.fim:%H:%M}"
+        try:
+            servico.agendar(medico_id, horario)
+            print(f"Médico {medico_id}, {intervalo}: agendada")
+        except ConflitoDeAgendaError as erro:
+            print(f"Médico {medico_id}, {intervalo}: recusada ({erro})")
+
+    for medico_id in (7, 8):
+        agenda = repositorio.listar_do_dia(medico_id, dia)
+        horarios = [f"{h.inicio:%H:%M}-{h.fim:%H:%M}" for h in agenda]
+        print(f"Agenda do médico {medico_id} em {dia:%d/%m/%Y}: {horarios}")
+```
+
+A execução imprime:
+
+```text
+Médico 7, 09:00-09:30: agendada
+Médico 7, 10:00-10:30: agendada
+Médico 7, 09:15-09:45: recusada (Médico 7 já tem consulta sobreposta nesse intervalo)
+Médico 8, 09:15-09:45: agendada
+Agenda do médico 7 em 10/03/2026: ['09:00-09:30', '10:00-10:30']
+Agenda do médico 8 em 10/03/2026: ['09:15-09:45']
+```
+
+A camada de negócios recusa a consulta das 9h15 do médico 7 e aceita o mesmo intervalo para o médico 8, e o repositório guarda apenas as consultas aceitas.
+
 O exemplo executável completo, com a mesma invariante e um controller HTTP que devolve `409` em caso de conflito, está em `codigos/cap01-estilos-fundamentais/1.2-estilo-em-camadas` e é explorado na [oficina de ferramentas](oficina-de-ferramentas.md).
 
 ### MVC e DDD como variações do estilo em camadas
@@ -226,6 +267,37 @@ class FiltroTransformador:
         return {**dado, "valor_normalizado": dado["valor"] / 100}
 ```
 
+Para executar o exemplo, copie o bloco anterior e o bloco a seguir para um arquivo `filtros.py` e rode `python3 filtros.py`. O `main` envia os mesmos valores aos dois filtros e compara as saídas.
+
+```python
+if __name__ == "__main__":
+    print("Versão errada: a mesma instância processa os valores 10 e 20 duas vezes")
+    filtro = FiltroComEstado()
+    print("  ordem 10, 20:", [filtro.processar(v) for v in (10.0, 20.0)])
+    print("  ordem 20, 10:", [filtro.processar(v) for v in (20.0, 10.0)])
+    print("  processar(10.0) na quinta chamada:", filtro.processar(10.0))
+
+    print("Versão correta: a mesma entrada produz sempre a mesma saída")
+    transformador = FiltroTransformador()
+    for valor in (1000, 2500, 1000):
+        print(f"  {transformador.processar({'id': 'P-1', 'valor': valor})}")
+```
+
+A execução imprime:
+
+```text
+Versão errada: a mesma instância processa os valores 10 e 20 duas vezes
+  ordem 10, 20: [10.0, 30.0]
+  ordem 20, 10: [50.0, 60.0]
+  processar(10.0) na quinta chamada: 70.0
+Versão correta: a mesma entrada produz sempre a mesma saída
+  {'id': 'P-1', 'valor': 1000, 'valor_normalizado': 10.0}
+  {'id': 'P-1', 'valor': 2500, 'valor_normalizado': 25.0}
+  {'id': 'P-1', 'valor': 1000, 'valor_normalizado': 10.0}
+```
+
+Na versão errada, a entrada 10 produz 10 na primeira chamada e 70 na quinta, porque a saída depende das chamadas anteriores. Na versão correta, a entrada de valor 1000 produz o mesmo resultado na primeira e na terceira chamada.
+
 As forças do estilo são composição, reuso, facilidade de diagnóstico e controle de **throughput** (vazão de itens processados por unidade de tempo) em cada filtro. Os limites são o custo dos contratos intermediários, a latência acumulada, o tratamento de estado e a recuperação parcial. O estilo é indicado quando a sequência de dados e as entradas e saídas de cada etapa são claras, e não é indicado para interações ricas que exigem consistência imediata.
 
 No **Faturamento** hospitalar, as etapas de validar, normalizar códigos, enriquecer com dados do convênio e publicar formam um pipeline verificável. A rejeição preserva lote, etapa e causa, e a decisão pelo estilo exige medir o throughput em ambiente representativo e declarar a ordenação dos documentos de um mesmo atendimento.
@@ -283,6 +355,113 @@ class Pipeline:
 ```
 
 Com esse framework, o pipeline da figura 8 é montado por chamadas sucessivas a `adicionar` com `LeitorDePedido`, `ValidadorDePedido`, `AplicadorDeDesconto`, `CalculadorDeFrete` e `FinalizadorDePedido`, nessa ordem.
+
+Para executar o pipeline, copie o bloco anterior e o bloco a seguir para um arquivo `pipeline_pedidos.py` e rode `python3 pipeline_pedidos.py`. O bloco define os cinco filtros da figura 8 e uma rejeição explícita com lote, etapa e causa, e o `main` processa um lote de quatro pedidos.
+
+```python
+from dataclasses import dataclass, replace
+
+
+@dataclass(frozen=True)
+class Pedido:
+    lote: str
+    numero: int
+    uf: str
+    valor: float
+    desconto: float = 0.0
+    frete: float = 0.0
+    situacao: str = "recebido"
+
+
+FRETE_POR_UF = {"SP": 15.0, "RJ": 22.0, "MG": 25.0}
+
+
+class Rejeicao(Exception):
+    """Rejeição explícita: guarda lote, etapa e causa para reprocessamento."""
+
+    def __init__(self, lote: str, etapa: str, causa: str):
+        super().__init__(f"lote {lote}, etapa {etapa}: {causa}")
+        self.lote, self.etapa, self.causa = lote, etapa, causa
+
+
+class LeitorDePedido(Filtro):
+    """Producer: transforma a linha de entrada num Pedido."""
+
+    def processar(self, dados: dict) -> Pedido:
+        return Pedido(dados["lote"], dados["numero"], dados["uf"], dados["valor"])
+
+
+class ValidadorDePedido(Filtro):
+    """Tester: desvia o pedido inválido para a rejeição explícita."""
+
+    def processar(self, dados: Pedido) -> Pedido:
+        if dados.valor <= 0:
+            raise Rejeicao(dados.lote, "ValidadorDePedido", f"pedido {dados.numero} sem valor")
+        if dados.uf not in FRETE_POR_UF:
+            raise Rejeicao(dados.lote, "ValidadorDePedido", f"UF {dados.uf} sem entrega")
+        return dados
+
+
+class AplicadorDeDesconto(Filtro):
+    """Transformer: aplica 10% de desconto a pedidos a partir de R$ 500."""
+
+    def processar(self, dados: Pedido) -> Pedido:
+        desconto = round(dados.valor * 0.10, 2) if dados.valor >= 500 else 0.0
+        return replace(dados, desconto=desconto)
+
+
+class CalculadorDeFrete(Filtro):
+    """Transformer: acrescenta o frete pela UF de destino."""
+
+    def processar(self, dados: Pedido) -> Pedido:
+        return replace(dados, frete=FRETE_POR_UF[dados.uf])
+
+
+class FinalizadorDePedido(Filtro):
+    """Consumer: aprova o pedido e reporta o total."""
+
+    def processar(self, dados: Pedido) -> Pedido:
+        aprovado = replace(dados, situacao="aprovado")
+        total = aprovado.valor - aprovado.desconto + aprovado.frete
+        print(f"  pedido {aprovado.numero} {aprovado.situacao}: valor {aprovado.valor:.2f}, "
+              f"desconto {aprovado.desconto:.2f}, frete {aprovado.frete:.2f}, total {total:.2f}")
+        return aprovado
+
+
+if __name__ == "__main__":
+    pipeline = (
+        Pipeline()
+        .adicionar(LeitorDePedido())
+        .adicionar(ValidadorDePedido())
+        .adicionar(AplicadorDeDesconto())
+        .adicionar(CalculadorDeFrete())
+        .adicionar(FinalizadorDePedido())
+    )
+    entrada = [
+        {"lote": "L-042", "numero": 1, "uf": "SP", "valor": 800.0},
+        {"lote": "L-042", "numero": 2, "uf": "RJ", "valor": 120.0},
+        {"lote": "L-042", "numero": 3, "uf": "MG", "valor": 0.0},
+        {"lote": "L-042", "numero": 4, "uf": "AM", "valor": 300.0},
+    ]
+    print("Processamento do lote L-042")
+    for linha in entrada:
+        try:
+            pipeline.executar(linha)
+        except Rejeicao as rejeicao:
+            print(f"  rejeitado: {rejeicao}")
+```
+
+A execução imprime:
+
+```text
+Processamento do lote L-042
+  pedido 1 aprovado: valor 800.00, desconto 80.00, frete 15.00, total 735.00
+  pedido 2 aprovado: valor 120.00, desconto 0.00, frete 22.00, total 142.00
+  rejeitado: lote L-042, etapa ValidadorDePedido: pedido 3 sem valor
+  rejeitado: lote L-042, etapa ValidadorDePedido: UF AM sem entrega
+```
+
+Os pedidos 3 e 4 param no validador e não chegam ao aplicador de desconto, e a mensagem de rejeição registra o lote, a etapa e a causa de cada um.
 
 O acervo do curso traz um segundo exemplo, que processa linhas de log e mantém apenas os níveis ERROR e CRITICAL. Os dois exemplos executáveis estão em `codigos/cap01-estilos-fundamentais/1.3-pipes-and-filters` e são explorados na [oficina de ferramentas](oficina-de-ferramentas.md).
 
@@ -373,15 +552,108 @@ Richards e Ford usam sistemas tributários como caso de referência do Microkern
 O core creep aparece quando essa seleção é implementada como condicionais dentro do núcleo:
 
 ```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Pedido:
+    estado: str
+    categoria: str
+    valor_base: float
+
 # Errado: lógica de plugin dentro do núcleo
 class SistemaFiscalComCreep:
     def calcular(self, pedido: Pedido) -> float:
         if pedido.estado == "SP":
-            return pedido.valor_base * 0.12  # lógica de plugin no núcleo
+            aliquota = 0.12 if pedido.categoria == "eletronico" else 0.18
+            return pedido.valor_base * aliquota  # lógica de plugin no núcleo
         elif pedido.estado == "RJ":
             return pedido.valor_base * 0.20
         # cada novo estado exige modificar o núcleo
 ```
+
+A versão correta segue a figura 9. O núcleo `SistemaFiscal` guarda apenas o registro e chega aos plugins pelo contrato `CalculadorImposto`, e cada plugin aplica a regra do próprio estado:
+
+```python
+# Correto: o núcleo conhece apenas o contrato e o registro
+from typing import Protocol
+
+class CalculadorImposto(Protocol):
+    def calcular(self, pedido: Pedido) -> float: ...
+
+class ImpostoSPPlugin:
+    def calcular(self, pedido: Pedido) -> float:
+        aliquota = 0.12 if pedido.categoria == "eletronico" else 0.18
+        return pedido.valor_base * aliquota
+
+class ImpostoRJPlugin:
+    def calcular(self, pedido: Pedido) -> float:
+        return pedido.valor_base * 0.20
+
+class SistemaFiscal:
+    def __init__(self):
+        self._registro: dict[str, CalculadorImposto] = {}
+
+    def registrar(self, estado: str, plugin: CalculadorImposto) -> None:
+        self._registro[estado] = plugin
+
+    def calcular(self, pedido: Pedido) -> float:
+        plugin = self._registro.get(pedido.estado)
+        if plugin is None:
+            raise LookupError(f"Nenhum plugin registrado para {pedido.estado}")
+        return round(plugin.calcular(pedido), 2)
+```
+
+Para executar a comparação, copie os dois blocos anteriores e o bloco a seguir, nessa ordem, para um arquivo `impostos.py` e rode `python3 impostos.py`. O `main` calcula o imposto de quatro pedidos nas duas versões e, ao final, registra um plugin para Minas Gerais.
+
+```python
+if __name__ == "__main__":
+    pedidos = [
+        Pedido("SP", "eletronico", 1000.0),
+        Pedido("SP", "vestuario", 1000.0),
+        Pedido("RJ", "eletronico", 1000.0),
+        Pedido("MG", "eletronico", 1000.0),
+    ]
+
+    print("Versão com core creep")
+    nucleo_com_creep = SistemaFiscalComCreep()
+    for pedido in pedidos:
+        print(f"  {pedido.estado} {pedido.categoria}: {nucleo_com_creep.calcular(pedido)}")
+
+    print("Versão com plugins")
+    sistema = SistemaFiscal()
+    sistema.registrar("SP", ImpostoSPPlugin())
+    sistema.registrar("RJ", ImpostoRJPlugin())
+    for pedido in pedidos:
+        try:
+            print(f"  {pedido.estado} {pedido.categoria}: {sistema.calcular(pedido)}")
+        except LookupError as erro:
+            print(f"  {pedido.estado} {pedido.categoria}: {erro}")
+
+    class ImpostoMGPlugin:
+        def calcular(self, pedido: Pedido) -> float:
+            return pedido.valor_base * 0.18
+
+    sistema.registrar("MG", ImpostoMGPlugin())
+    print("  MG registrado sem alterar o núcleo:", sistema.calcular(pedidos[3]))
+```
+
+A execução imprime:
+
+```text
+Versão com core creep
+  SP eletronico: 120.0
+  SP vestuario: 180.0
+  RJ eletronico: 200.0
+  MG eletronico: None
+Versão com plugins
+  SP eletronico: 120.0
+  SP vestuario: 180.0
+  RJ eletronico: 200.0
+  MG eletronico: Nenhum plugin registrado para MG
+  MG registrado sem alterar o núcleo: 180.0
+```
+
+O núcleo com core creep devolve `None` para Minas Gerais sem sinalizar erro e só passaria a atender o estado com uma alteração no próprio núcleo. O núcleo com plugins recusa explicitamente o estado sem plugin e passa a atendê-lo depois de uma única chamada a `registrar`.
 
 Quando o núcleo acumula condicionais por tipo de cliente ou região, cada nova variação exige alterar o núcleo, e por isso toda lógica que varia entre clientes deve ficar num plugin. Um exemplo executável completo, com núcleo, contrato e plugins de impostos e frete, está em `codigos/cap01-estilos-fundamentais/1.4-microkernel` e é explorado na [oficina de ferramentas](oficina-de-ferramentas.md).
 
@@ -432,13 +704,17 @@ Um módulo consome outro apenas pela API pública, por chamada síncrona ou por 
 O anti-padrão característico é o módulo que lê a tabela ou o modelo interno de outro módulo, prática facilitada pelo fato de a pasta vizinha estar acessível por um import. Sem verificação automática, a separação em módulos existe apenas na estrutura de pastas:
 
 ```python
+# faturamento_errado.py
 # Errado: Faturamento lê o modelo interno da Agenda
 from agenda.infraestrutura.modelos import ReservaModel
 
 class RelatorioFaturamento:
     def gerar(self) -> list[dict]:
         return [r.como_dict() for r in ReservaModel.buscar_do_dia()]
+```
 
+```python
+# faturamento_correto.py
 # Correto: Faturamento consome o contrato público da Agenda
 from agenda.api import AgendaAPI
 
@@ -449,6 +725,123 @@ class RelatorioFaturamento:
     def gerar(self) -> list[dict]:
         return self._agenda.reservas_do_dia()
 ```
+
+Para executar o exemplo, crie uma pasta com a estrutura abaixo, salve os dois blocos anteriores como `faturamento_errado.py` e `faturamento_correto.py` e salve os blocos a seguir nos caminhos indicados no comentário da primeira linha de cada um. O comando de execução é `python3 main.py`, rodado na pasta que contém `main.py`.
+
+```text
+monolito/
+├── agenda/
+│   ├── api.py
+│   └── infraestrutura/
+│       └── modelos.py
+├── faturamento_correto.py
+├── faturamento_errado.py
+└── main.py
+```
+
+O módulo Agenda guarda o modelo interno e expõe o contrato público:
+
+```python
+# agenda/infraestrutura/modelos.py
+from dataclasses import dataclass
+
+@dataclass
+class ReservaModel:
+    """Modelo interno da Agenda. Somente o módulo Agenda deve importá-lo."""
+
+    id_reserva: int
+    paciente: str
+    procedimento: str
+    valor_centavos: int
+
+    @classmethod
+    def buscar_do_dia(cls) -> list["ReservaModel"]:
+        return [
+            cls(101, "Ana Lima", "consulta", 25000),
+            cls(102, "Bruno Reis", "raio-x", 18000),
+        ]
+
+    def como_dict(self) -> dict:
+        return {
+            "id_reserva": self.id_reserva,
+            "paciente": self.paciente,
+            "procedimento": self.procedimento,
+            "valor_centavos": self.valor_centavos,
+        }
+```
+
+```python
+# agenda/api.py
+from agenda.infraestrutura.modelos import ReservaModel
+
+class AgendaAPI:
+    """Contrato público da Agenda: os campos abaixo são estáveis."""
+
+    def reservas_do_dia(self) -> list[dict]:
+        return [
+            {"reserva": r.id_reserva, "procedimento": r.procedimento,
+             "valor": r.valor_centavos / 100}
+            for r in ReservaModel.buscar_do_dia()
+        ]
+```
+
+O `main` gera o relatório nas duas versões e aplica uma verificação mínima de fronteira, que lê os imports de cada arquivo do Faturamento e aceita apenas o contrato `agenda.api`, no papel que o import-linter cumpre num projeto real:
+
+```python
+# main.py
+import ast
+from pathlib import Path
+
+import faturamento_correto
+import faturamento_errado
+from agenda.api import AgendaAPI
+
+CONTRATOS_PUBLICOS = {"agenda.api"}
+
+def imports_proibidos(arquivo: str) -> list[str]:
+    """Verificação mínima de fronteira, no papel do import-linter."""
+    arvore = ast.parse(Path(arquivo).read_text(encoding="utf-8"))
+    modulos = [
+        no.module for no in ast.walk(arvore)
+        if isinstance(no, ast.ImportFrom) and no.module
+    ]
+    return [
+        m for m in modulos
+        if m.startswith("agenda.") and m not in CONTRATOS_PUBLICOS
+    ]
+
+if __name__ == "__main__":
+    print("Relatório da versão errada:")
+    for linha in faturamento_errado.RelatorioFaturamento().gerar():
+        print(" ", linha)
+
+    print("Relatório da versão correta:")
+    relatorio = faturamento_correto.RelatorioFaturamento(AgendaAPI())
+    for linha in relatorio.gerar():
+        print(" ", linha)
+
+    print("Verificação de fronteira do módulo Faturamento:")
+    for arquivo in ("faturamento_errado.py", "faturamento_correto.py"):
+        violacoes = imports_proibidos(arquivo)
+        situacao = f"viola a fronteira {violacoes}" if violacoes else "respeita a fronteira"
+        print(f"  {arquivo}: {situacao}")
+```
+
+A execução imprime:
+
+```text
+Relatório da versão errada:
+  {'id_reserva': 101, 'paciente': 'Ana Lima', 'procedimento': 'consulta', 'valor_centavos': 25000}
+  {'id_reserva': 102, 'paciente': 'Bruno Reis', 'procedimento': 'raio-x', 'valor_centavos': 18000}
+Relatório da versão correta:
+  {'reserva': 101, 'procedimento': 'consulta', 'valor': 250.0}
+  {'reserva': 102, 'procedimento': 'raio-x', 'valor': 180.0}
+Verificação de fronteira do módulo Faturamento:
+  faturamento_errado.py: viola a fronteira ['agenda.infraestrutura.modelos']
+  faturamento_correto.py: respeita a fronteira
+```
+
+A versão errada recebe os campos internos da Agenda, inclusive o nome do paciente, e passa a depender de qualquer mudança no modelo `ReservaModel`. A versão correta recebe apenas os três campos do contrato, e a verificação de fronteira reprova somente o arquivo que importa `agenda.infraestrutura.modelos`.
 
 #### Fronteiras verificadas por ferramenta
 

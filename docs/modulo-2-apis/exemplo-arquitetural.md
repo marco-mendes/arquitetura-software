@@ -30,7 +30,7 @@ sequenceDiagram
 
 `recebida` não quer dizer "aprovada": significa apenas que a plataforma aceitou o pedido.
 
-O código a seguir está dividido em quatro passos, escrito em **FastAPI** (um framework Python para construir APIs HTTP) com **Pydantic** (uma biblioteca que usa o tipo declarado em cada campo para validar os dados automaticamente). Os trechos abaixo são esqueletos, só para mostrar a forma; o código completo está no laboratório, em `src/hospital/api/`.
+O código a seguir está dividido em quatro passos, escrito em **FastAPI** (um framework Python para construir APIs HTTP) com **Pydantic** (uma biblioteca que usa o tipo declarado em cada campo para validar os dados automaticamente). Os trechos abaixo formam uma versão reduzida do serviço, que roda sozinha e está demonstrada no fim do Passo 4. O código completo está no laboratório, em `src/hospital/api/`.
 
 ## Passo 1 — O contrato vira classes
 
@@ -73,6 +73,7 @@ A rota `POST /elegibilidades` recebe o pedido já validado (pelo tipo `PedidoEle
 from uuid import uuid4
 from datetime import datetime, timezone
 from fastapi import FastAPI, Response, status
+from models import ElegibilidadeAceita, PedidoElegibilidade
 
 app = FastAPI(title="API de elegibilidades da plataforma hospitalar")
 _elegibilidades: dict[str, ElegibilidadeAceita] = {}   # memória: some ao reiniciar
@@ -111,6 +112,7 @@ O código usa `202` porque a API apenas aceitou o pedido e ainda não tomou nenh
 `GET /elegibilidades/{protocolo}` devolve a mesma representação enquanto o processo está de pé. Protocolo desconhecido vira `404`.
 
 ```python
+# main.py (continuação do Passo 2)
 from fastapi.responses import JSONResponse
 
 @app.get("/elegibilidades/{protocolo}")
@@ -130,6 +132,7 @@ def consultar_elegibilidade(protocolo: str):
 Quando falta `cpf`, o Pydantic detecta a violação antes de a rota rodar. Um tratador transforma o erro técnico na representação pública `ErroAPI` — `codigo` para automação, `mensagem` e `detalhes` para pessoas.
 
 ```python
+# main.py (continuação do Passo 3)
 from fastapi.exceptions import RequestValidationError
 
 @app.exception_handler(RequestValidationError)
@@ -158,6 +161,123 @@ O corpo do erro que o consumidor recebe:
 ```
 
 `422 Unprocessable Entity` é o status para um corpo que chegou, mas não cumpre o contrato.
+
+## Execução de ponta a ponta
+
+Para rodar o exemplo, crie uma pasta com três arquivos. O bloco do Passo 1 fica em `models.py`, e os blocos dos Passos 2, 3 e 4 ficam, nessa ordem, em um único `main.py`, porque as rotas e o tratador de erro usam o mesmo objeto `app`. O programa de demonstração abaixo fica em `demo.py`, com outro nome porque `main.py` já pertence ao serviço e o `demo.py` precisa importá-lo. As bibliotecas necessárias são `fastapi`, `pydantic` e `httpx`, as mesmas declaradas em `laboratorios/plataforma-hospitalar/pyproject.toml`, e a instalação é feita com `pip install fastapi pydantic httpx`.
+
+O `demo.py` usa `TestClient` para fazer as chamadas HTTP dentro do próprio processo, sem iniciar um servidor. Ele troca o gerador de UUID e o relógio do `main.py` por valores fixos, para que o protocolo e o horário impressos sejam iguais em cada execução. O programa percorre o caminho feliz (`202` no `POST` e `200` no `GET`) e os erros tratados pela página: protocolo inexistente (`404`), `cpf` ausente e `cpf` fora do padrão de onze dígitos (`422`).
+
+Na pasta dos três arquivos, o comando de execução é `python3 demo.py`.
+
+```python
+# demo.py
+import json
+from datetime import datetime
+from fastapi.testclient import TestClient
+import main
+
+# Protocolo e horário fixos tornam a saída igual em cada execução.
+main.uuid4 = lambda: "550e8400-e29b-41d4-a716-446655440000"
+
+class RelogioFixo:
+    @staticmethod
+    def now(fuso):
+        return datetime(2026, 7, 17, 13, 30, tzinfo=fuso)
+
+main.datetime = RelogioFixo
+
+def mostrar(metodo, rota, resposta):
+    print(f"{metodo} {rota} -> {resposta.status_code}")
+    if "location" in resposta.headers:
+        print(f"Location: {resposta.headers['location']}")
+    print(json.dumps(resposta.json(), ensure_ascii=False, indent=2))
+    print()
+
+if __name__ == "__main__":
+    cliente = TestClient(main.app)
+    pedido = {
+        "cpf": "12345678901",
+        "codigo_operadora": "OPS-001",
+        "matricula_plano": "MAT-2026-001",
+    }
+
+    # 1. Caminho feliz: o pedido é aceito e guardado em memória.
+    resposta = cliente.post("/elegibilidades", json=pedido)
+    mostrar("POST", "/elegibilidades", resposta)
+
+    # 2. A consulta usa o endereço devolvido no cabeçalho Location.
+    endereco = resposta.headers["location"]
+    mostrar("GET", endereco, cliente.get(endereco))
+
+    # 3. Protocolo que a API nunca emitiu devolve 404.
+    mostrar("GET", "/elegibilidades/protocolo-inexistente",
+            cliente.get("/elegibilidades/protocolo-inexistente"))
+
+    # 4. Pedido sem cpf é recusado antes de a rota rodar.
+    sem_cpf = {"codigo_operadora": "OPS-001", "matricula_plano": "MAT-2026-001"}
+    mostrar("POST", "/elegibilidades (sem cpf)",
+            cliente.post("/elegibilidades", json=sem_cpf))
+
+    # 5. Pedido com cpf fora do padrão de onze dígitos também é recusado.
+    cpf_curto = dict(pedido, cpf="123")
+    mostrar("POST", "/elegibilidades (cpf com 3 dígitos)",
+            cliente.post("/elegibilidades", json=cpf_curto))
+```
+
+A execução imprime:
+
+```text
+POST /elegibilidades -> 202
+Location: /elegibilidades/550e8400-e29b-41d4-a716-446655440000
+{
+  "protocolo": "550e8400-e29b-41d4-a716-446655440000",
+  "situacao": "recebida",
+  "criado_em": "2026-07-17T13:30:00Z"
+}
+
+GET /elegibilidades/550e8400-e29b-41d4-a716-446655440000 -> 200
+{
+  "protocolo": "550e8400-e29b-41d4-a716-446655440000",
+  "situacao": "recebida",
+  "criado_em": "2026-07-17T13:30:00Z"
+}
+
+GET /elegibilidades/protocolo-inexistente -> 404
+{
+  "codigo": "elegibilidade_nao_encontrada",
+  "mensagem": "Protocolo de elegibilidade não encontrado.",
+  "detalhes": []
+}
+
+POST /elegibilidades (sem cpf) -> 422
+{
+  "codigo": "dados_invalidos",
+  "mensagem": "A requisição não atende ao contrato.",
+  "detalhes": [
+    {
+      "campo": "body.cpf",
+      "mensagem": "Field required",
+      "tipo": "missing"
+    }
+  ]
+}
+
+POST /elegibilidades (cpf com 3 dígitos) -> 422
+{
+  "codigo": "dados_invalidos",
+  "mensagem": "A requisição não atende ao contrato.",
+  "detalhes": [
+    {
+      "campo": "body.cpf",
+      "mensagem": "String should match pattern '^\\d{11}$'",
+      "tipo": "string_pattern_mismatch"
+    }
+  ]
+}
+```
+
+Conforme a versão instalada do Starlette, um aviso de descontinuação sobre o `httpx` pode aparecer antes dessa saída, sem efeito sobre o resultado.
 
 ## O contrato explícito e o contrato gerado
 
