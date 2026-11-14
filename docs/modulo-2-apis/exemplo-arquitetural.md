@@ -1,10 +1,10 @@
-# Exemplo arquitetural: aceitar uma elegibilidade
+# Exemplo arquitetural
 
-## O que este exemplo mostra
+## Objetivo do exemplo
 
-A equipe administrativa precisa consultar a elegibilidade de um paciente no plano de saúde. A operadora externa é lenta e nem sempre está disponível. Neste incremento a API ainda **não** fala com a operadora: ela só **recebe** o pedido, guarda um protocolo e deixa consultar o estado depois. É o menor passo possível que já exercita um contrato HTTP.
+A equipe administrativa do hospital consulta a elegibilidade do paciente junto à operadora do plano de saúde antes do atendimento. A operadora externa responde com demora e nem sempre está disponível. Neste incremento, a API de elegibilidades ainda não se comunica com a operadora. Ela recebe o pedido e registra um protocolo com a situação `recebida`, que o consumidor consulta depois pelo endereço informado na resposta. O incremento exercita um contrato HTTP com resposta de sucesso, consulta e erro.
 
-## A sequência completa
+## Sequência das chamadas
 
 ```mermaid
 sequenceDiagram
@@ -22,19 +22,19 @@ sequenceDiagram
     API-->>Consumidor: 200 + ElegibilidadeAceita
 ```
 
-**Texto alternativo:** o consumidor envia `POST`, e a API valida, guarda protocolo `recebida` em memória e responde `202` com `Location`. Um `GET` devolve `200` com a representação aceita.
+**Texto alternativo:** o consumidor envia `POST /elegibilidades` à API, que valida o corpo, guarda o protocolo com a situação `recebida` em memória e responde `202` com o cabeçalho `Location`. Um `GET` posterior ao endereço informado devolve `200` com a representação aceita.
 
 *Figura 5 — Sequência de aceitação e consulta de uma elegibilidade armazenada em memória. Fonte: curso.*
 
-**Leitura textual:** o consumidor envia pedido, e a API valida, guarda estado efêmero e responde `202` com endereço de consulta. O uso do endereço devolve `200` e a representação aceita.
+**Leitura textual:** o consumidor envia o pedido de elegibilidade à API, que valida o corpo, guarda o estado em memória e responde `202` com o endereço de consulta. Uma chamada posterior a esse endereço devolve `200` com a mesma representação aceita.
 
-`recebida` não quer dizer "aprovada": significa apenas que a plataforma aceitou o pedido.
+A situação `recebida` indica somente que a plataforma aceitou o pedido, sem nenhuma decisão da operadora sobre a cobertura do paciente.
 
-O código a seguir está dividido em quatro passos, escrito em **FastAPI** (um framework Python para construir APIs HTTP) com **Pydantic** (uma biblioteca que usa o tipo declarado em cada campo para validar os dados automaticamente). Os trechos abaixo formam uma versão reduzida do serviço, que roda sozinha e está demonstrada no fim do Passo 4. O código completo está no laboratório, em `src/hospital/api/`.
+O código desta página usa o *framework* FastAPI, que constrói APIs HTTP em Python. A validação dos dados fica a cargo da biblioteca Pydantic, que verifica cada campo pelo tipo declarado na classe. Os trechos das quatro seções seguintes formam uma versão reduzida do serviço, executada por completo na seção Execução do exemplo completo. O código integral do serviço está no laboratório, na pasta `src/hospital/api/`.
 
-## Passo 1 — O contrato vira classes
+## Contrato do pedido em classes Pydantic
 
-O consumidor envia três campos:
+O corpo do pedido enviado pelo consumidor tem os três campos mostrados abaixo.
 
 ```json
 {
@@ -44,7 +44,7 @@ O consumidor envia três campos:
 }
 ```
 
-Em `models.py`, esse contrato vira classes Pydantic. O tipo de cada campo já funciona como regra de validação: se o corpo da requisição não bater com o tipo esperado, o FastAPI recusa o pedido antes mesmo de a sua lógica rodar.
+O arquivo `models.py` declara o contrato do pedido e o da resposta como classes Pydantic. O tipo de cada campo funciona como regra de validação. Quando o corpo da requisição não corresponde aos tipos declarados, o FastAPI recusa o pedido antes da execução da rota.
 
 ```python
 # models.py
@@ -62,11 +62,11 @@ class ElegibilidadeAceita(BaseModel):         # o que a API devolve
     criado_em: datetime
 ```
 
-O `cpf` aqui é só um identificador sintético de onze dígitos — nenhuma validação cadastral real é afirmada. O contrato não expõe XML, tabela nem código interno da operadora: `codigo_operadora` e `matricula_plano` já estão na linguagem da plataforma.
+O `cpf` do exemplo é um identificador sintético de onze dígitos, sem validação cadastral. Os campos `codigo_operadora` e `matricula_plano` usam o vocabulário da plataforma, de modo que o contrato não expõe XML, tabelas ou códigos internos da operadora.
 
-## Passo 2 — A rota que aceita e guarda
+## Rota de criação da elegibilidade
 
-A rota `POST /elegibilidades` recebe o pedido já validado (pelo tipo `PedidoElegibilidade`), cria um protocolo, guarda em memória e responde `202 Accepted` com o cabeçalho `Location` apontando onde consultar.
+A rota `POST /elegibilidades` recebe o pedido já validado pelo tipo `PedidoElegibilidade`. Ela gera um protocolo, guarda a elegibilidade num dicionário em memória e responde `202 Accepted` com o cabeçalho `Location`, que indica o endereço de consulta.
 
 ```python
 # main.py
@@ -76,7 +76,7 @@ from fastapi import FastAPI, Response, status
 from models import ElegibilidadeAceita, PedidoElegibilidade
 
 app = FastAPI(title="API de elegibilidades da plataforma hospitalar")
-_elegibilidades: dict[str, ElegibilidadeAceita] = {}   # memória: some ao reiniciar
+_elegibilidades: dict[str, ElegibilidadeAceita] = {}   # dados apagados ao reiniciar o processo
 
 @app.post("/elegibilidades", status_code=status.HTTP_202_ACCEPTED)
 def criar_elegibilidade(pedido: PedidoElegibilidade, response: Response) -> ElegibilidadeAceita:
@@ -90,7 +90,7 @@ def criar_elegibilidade(pedido: PedidoElegibilidade, response: Response) -> Eleg
     return aceita
 ```
 
-É isto que o consumidor observa:
+A resposta recebida pelo consumidor contém a linha de status, o cabeçalho `Location` e o corpo mostrados abaixo.
 
 ```http
 HTTP/1.1 202 Accepted
@@ -105,14 +105,14 @@ Location: /elegibilidades/550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
-O código usa `202` porque a API apenas aceitou o pedido e ainda não tomou nenhuma decisão, situação para a qual `200` e `201` não se aplicam. Guardar os dados num dicionário em memória é uma decisão simples de implementação: funciona enquanto o processo está rodando, mas tudo se perde se ele reiniciar. Esse limite precisa ficar declarado para quem consome a API.
+A rota responde `202` porque a API aceitou o pedido sem tomar decisão sobre ele, situação que os códigos `200` e `201` não descrevem. O dicionário em memória mantém os dados apenas enquanto o processo do servidor está em execução. Uma reinicialização apaga todas as elegibilidades registradas, limitação que precisa constar da documentação entregue ao consumidor.
 
-## Passo 3 — A rota que recupera
+## Rota de consulta por protocolo
 
-`GET /elegibilidades/{protocolo}` devolve a mesma representação enquanto o processo está de pé. Protocolo desconhecido vira `404`.
+A rota `GET /elegibilidades/{protocolo}` devolve a representação registrada enquanto o processo do servidor estiver em execução. Um protocolo que a API não emitiu recebe a resposta `404` com o corpo de erro padronizado da API.
 
 ```python
-# main.py (continuação do Passo 2)
+# main.py (continuação da rota de criação)
 from fastapi.responses import JSONResponse
 
 @app.get("/elegibilidades/{protocolo}")
@@ -127,12 +127,12 @@ def consultar_elegibilidade(protocolo: str):
     return encontrada
 ```
 
-## Passo 4 — O caminho de erro
+## Tratamento do erro de validação
 
-Quando falta `cpf`, o Pydantic detecta a violação antes de a rota rodar. Um tratador transforma o erro técnico na representação pública `ErroAPI` — `codigo` para automação, `mensagem` e `detalhes` para pessoas.
+Quando o corpo do pedido não contém o campo `cpf`, o Pydantic detecta a violação antes da execução da rota. O tratador abaixo converte o erro técnico na representação pública `ErroAPI`, cujo campo `codigo` serve à automação no consumidor e cujos campos `mensagem` e `detalhes` servem à leitura por pessoas.
 
 ```python
-# main.py (continuação do Passo 3)
+# main.py (continuação da rota de consulta)
 from fastapi.exceptions import RequestValidationError
 
 @app.exception_handler(RequestValidationError)
@@ -148,7 +148,7 @@ async def tratar_erro_de_validacao(_request, error) -> JSONResponse:
     })
 ```
 
-O corpo do erro que o consumidor recebe:
+O consumidor recebe o corpo de erro mostrado abaixo quando o pedido chega sem o campo `cpf`.
 
 ```json
 {
@@ -160,15 +160,19 @@ O corpo do erro que o consumidor recebe:
 }
 ```
 
-`422 Unprocessable Entity` é o status para um corpo que chegou, mas não cumpre o contrato.
+O status `422 Unprocessable Entity` indica um corpo que chegou ao servidor sem cumprir o contrato da API.
 
-## Execução de ponta a ponta
+## Execução do exemplo completo
 
-Para rodar o exemplo, crie uma pasta com três arquivos. O bloco do Passo 1 fica em `models.py`, e os blocos dos Passos 2, 3 e 4 ficam, nessa ordem, em um único `main.py`, porque as rotas e o tratador de erro usam o mesmo objeto `app`. O programa de demonstração abaixo fica em `demo.py`, com outro nome porque `main.py` já pertence ao serviço e o `demo.py` precisa importá-lo. As bibliotecas necessárias são `fastapi`, `pydantic` e `httpx`, as mesmas declaradas em `laboratorios/plataforma-hospitalar/pyproject.toml`, e a instalação é feita com `pip install fastapi pydantic httpx`.
+A execução local usa uma pasta com os três arquivos descritos na lista abaixo.
 
-O `demo.py` usa `TestClient` para fazer as chamadas HTTP dentro do próprio processo, sem iniciar um servidor. Ele troca o gerador de UUID e o relógio do `main.py` por valores fixos, para que o protocolo e o horário impressos sejam iguais em cada execução. O programa percorre o caminho feliz (`202` no `POST` e `200` no `GET`) e os erros tratados pela página: protocolo inexistente (`404`), `cpf` ausente e `cpf` fora do padrão de onze dígitos (`422`).
+- `models.py` contém o bloco da seção Contrato do pedido em classes Pydantic.
+- `main.py` contém os blocos das seções de criação, de consulta e de tratamento do erro na ordem da página. As rotas e o tratador ficam no mesmo arquivo porque usam o mesmo objeto `app`.
+- `demo.py` contém o programa de demonstração mostrado abaixo, que importa o `main.py`.
 
-Na pasta dos três arquivos, o comando de execução é `python3 demo.py`.
+As bibliotecas necessárias são `fastapi`, `pydantic` e `httpx`, as mesmas declaradas em `laboratorios/plataforma-hospitalar/pyproject.toml`. A instalação usa o comando `pip install fastapi pydantic httpx`.
+
+O `demo.py` usa o `TestClient` do FastAPI, que faz as chamadas HTTP dentro do próprio processo sem iniciar um servidor. O programa substitui o gerador de UUID e o relógio do `main.py` por valores fixos, para que o protocolo e o horário impressos sejam iguais em todas as execuções. Depois do fluxo principal, com `202` no `POST` e `200` no `GET`, o programa provoca os três erros tratados nesta página. O comando de execução na pasta dos três arquivos é `python3 demo.py`.
 
 ```python
 # demo.py
@@ -202,7 +206,7 @@ if __name__ == "__main__":
         "matricula_plano": "MAT-2026-001",
     }
 
-    # 1. Caminho feliz: o pedido é aceito e guardado em memória.
+    # 1. Fluxo principal: o pedido é aceito e guardado em memória.
     resposta = cliente.post("/elegibilidades", json=pedido)
     mostrar("POST", "/elegibilidades", resposta)
 
@@ -214,7 +218,7 @@ if __name__ == "__main__":
     mostrar("GET", "/elegibilidades/protocolo-inexistente",
             cliente.get("/elegibilidades/protocolo-inexistente"))
 
-    # 4. Pedido sem cpf é recusado antes de a rota rodar.
+    # 4. Pedido sem cpf é recusado antes da execução da rota.
     sem_cpf = {"codigo_operadora": "OPS-001", "matricula_plano": "MAT-2026-001"}
     mostrar("POST", "/elegibilidades (sem cpf)",
             cliente.post("/elegibilidades", json=sem_cpf))
@@ -225,7 +229,7 @@ if __name__ == "__main__":
             cliente.post("/elegibilidades", json=cpf_curto))
 ```
 
-A execução imprime:
+A execução do `demo.py` imprime a saída abaixo, com uma resposta por chamada na ordem em que o programa as faz.
 
 ```text
 POST /elegibilidades -> 202
@@ -277,23 +281,23 @@ POST /elegibilidades (cpf com 3 dígitos) -> 422
 }
 ```
 
-Conforme a versão instalada do Starlette, um aviso de descontinuação sobre o `httpx` pode aparecer antes dessa saída, sem efeito sobre o resultado.
+Conforme a versão instalada do Starlette, um aviso de descontinuação sobre o `httpx` pode aparecer antes dessa saída sem alterar o resultado.
 
-## O contrato explícito e o contrato gerado
+## Contrato escrito e contrato gerado
 
-Existem duas descrições da mesma API, e o arquivo `contratos/openapi.yaml` é o contrato **explícito**, escrito à mão por uma pessoa. O FastAPI também **gera** sozinho um `/openapi.json`, a partir do código. Os testes comparam os dois — operações, campos, exemplos — e conseguem pegar divergências pontuais, mas não garantem que os dois documentos sejam idênticos em tudo.
+A API de elegibilidades tem duas descrições do mesmo contrato. O arquivo `contratos/openapi.yaml` é o contrato explícito, escrito por uma pessoa. O FastAPI gera a segunda descrição, o documento `/openapi.json`, a partir do código. Os testes do laboratório comparam operações, campos e exemplos dos dois documentos e encontram divergências pontuais, sem garantir a equivalência completa entre eles.
 
-Esses testes usam `TestClient(app)`, uma ferramenta que simula requisições HTTP dentro do próprio processo de teste, sem precisar ligar um servidor separado. Assim dá para checar status, cabeçalho e formato da resposta rapidamente.
+Os testes usam `TestClient(app)`, que simula requisições HTTP dentro do processo de teste sem um servidor separado. Com ele, cada teste verifica status, cabeçalhos e formato da resposta sem depender de rede.
 
-## O mesmo caso em quatro estilos de API
+## Elegibilidade em quatro estilos de API
 
-Os passos anteriores expõem a elegibilidade como recurso REST. Esta seção expõe a mesma capacidade de negócio por gRPC, GraphQL e WebSocket, com programas Python curtos que mostram, na própria saída, o que muda para o consumidor em cada estilo. Os programas de REST e de gRPC recebem o mesmo pedido de elegibilidade e devolvem um protocolo com a situação `recebida`. Os programas de GraphQL e de WebSocket trabalham sobre elegibilidades já registradas, porque o interesse desses dois estilos está na consulta flexível e no aviso de mudança.
+As seções anteriores expõem a elegibilidade como recurso REST. Esta seção expõe a mesma capacidade de negócio por gRPC, GraphQL e WebSocket, com programas Python curtos cuja saída mostra o que muda para o consumidor em cada estilo. Os programas de REST e de gRPC recebem o mesmo pedido de elegibilidade e devolvem um protocolo com a situação `recebida`. Os programas de GraphQL e de WebSocket trabalham sobre elegibilidades já registradas, porque esses dois estilos tratam da consulta com seleção de campos e do aviso de mudança de situação.
 
-O código completo e executável fica no [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software), na pasta `codigo/oda-03` para REST e gRPC e na pasta `codigo/oda-04` para GraphQL e WebSocket. Cada pasta tem um `requirements.txt` com as versões das bibliotecas fixadas e um `demo.py` que roda sem servidor externo. A instalação é feita uma vez, num ambiente virtual, com `pip install -r requirements.txt`, e a execução de cada exemplo é feita com `python demo.py` dentro da pasta do estilo.
+O código executável está no [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software), na pasta `codigo/oda-03` para REST e gRPC e na pasta `codigo/oda-04` para GraphQL e WebSocket. Cada pasta tem um `requirements.txt` com as versões das bibliotecas e um `demo.py` que não depende de servidor externo. As bibliotecas são instaladas uma única vez num ambiente virtual com o comando `pip install -r requirements.txt`. Cada exemplo é executado com `python demo.py` dentro da pasta do respectivo estilo.
 
 ### Elegibilidade como recurso REST
 
-No exemplo REST, a elegibilidade é um **recurso** com endereço próprio, `/elegibilidades/{protocolo}`. O método HTTP declara a intenção da chamada, o código de status declara o resultado, e o cabeçalho `Location` informa onde o recurso aceito pode ser consultado. A validação dos onze dígitos do `cpf` vem do contrato: o Pydantic recusa o corpo inválido com `422` antes de a rota executar. O `demo.py` da pasta `codigo/oda-03/rest` repete os passos desta página e acrescenta uma medida que serve de base para a comparação com o gRPC:
+No exemplo REST, a elegibilidade é um recurso com endereço próprio, `/elegibilidades/{protocolo}`. O método HTTP declara a intenção da chamada e o código de status declara o resultado. O cabeçalho `Location` informa o endereço de consulta do recurso aceito. A regra dos onze dígitos do `cpf` faz parte do contrato, porque o Pydantic recusa o corpo inválido com `422` antes da execução da rota. O `demo.py` da pasta `codigo/oda-03/rest` repete as chamadas desta página e mede o tamanho do corpo do pedido, valor usado na comparação com o gRPC.
 
 ```text
 Corpo do pedido em JSON: 83 bytes
@@ -301,7 +305,7 @@ Corpo do pedido em JSON: 83 bytes
 
 ### Elegibilidade como operação gRPC
 
-O **gRPC** é um *framework* de chamada remota de procedimento (RPC) criado pelo Google. O contrato é um arquivo `.proto`, escrito na linguagem do **Protocol Buffers**, que declara as operações do serviço e as mensagens trocadas. O consumidor chama uma operação pelo nome, como se chamasse uma função local, e a mensagem viaja em formato binário sobre HTTP/2.
+O gRPC é um *framework* de chamada remota de procedimento, conhecido pela sigla RPC, criado pelo Google. O contrato gRPC é um arquivo `.proto` escrito na linguagem do Protocol Buffers, com a declaração das operações do serviço e das mensagens trocadas. O consumidor chama cada operação pelo nome, na forma de uma chamada de função local, por meio de mensagens binárias transmitidas sobre HTTP/2.
 
 ```protobuf
 // elegibilidade.proto
@@ -331,15 +335,18 @@ message ElegibilidadeAceita {
 }
 ```
 
-O número depois de cada campo é o **número do campo**, que identifica o campo dentro da mensagem binária. O nome do campo não viaja na mensagem. Por isso a renomeação de um campo preserva a compatibilidade com consumidores antigos, enquanto a troca do número ou a reutilização de um número removido quebra a leitura das mensagens já em circulação. A versão `v1` no nome do pacote marca a linha de evolução do contrato, no mesmo sentido do versionamento discutido na página de conceitos.
+O número que acompanha cada campo é o número do campo, usado para identificar o campo dentro da mensagem binária. A mensagem binária não contém o nome do campo. Por isso, a renomeação de um campo mantém a compatibilidade com consumidores antigos. A troca do número ou a reutilização de um número removido impede a leitura das mensagens já em circulação. A versão `v1` no nome do pacote identifica a linha de evolução do contrato, no mesmo sentido do versionamento descrito na página de conceitos.
 
-O compilador `protoc` lê o contrato e gera o código Python das duas pontas. O comando abaixo, executado na pasta do `.proto`, gera `elegibilidade_pb2.py`, com as classes das mensagens, e `elegibilidade_pb2_grpc.py`, com o *stub* do cliente e a classe base do servidor. O *stub* é o objeto que o cliente usa para chamar as operações remotas.
+O compilador `protoc` lê o contrato e gera o código Python usado pelo cliente e pelo servidor. O comando abaixo, executado na pasta do `.proto`, produz os dois arquivos descritos na lista que o segue.
 
 ```bash
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. elegibilidade.proto
 ```
 
-O servidor herda da classe gerada e implementa uma função Python para cada operação do contrato:
+- `elegibilidade_pb2.py` contém as classes das mensagens.
+- `elegibilidade_pb2_grpc.py` contém o *stub* do cliente e a classe base do servidor.
+
+O *stub* é o objeto que o cliente usa para chamar as operações remotas. O servidor herda da classe base gerada e implementa um método Python para cada operação declarada no contrato.
 
 ```python
 # servidor.py
@@ -364,7 +371,7 @@ class ServicoElegibilidades(pb_grpc.ElegibilidadesServicer):
         return encontrada
 ```
 
-O gRPC não usa os códigos de status do HTTP para o resultado da operação. Ele tem uma tabela própria de status, e o servidor encerra a chamada com `NOT_FOUND` quando o protocolo não existe e com `INVALID_ARGUMENT` quando o pedido viola uma regra. O Protocol Buffers declara o tipo de cada campo, sem recurso para padrões de texto, de modo que a regra dos onze dígitos, que no REST vinha do `Field(pattern=...)` do Pydantic, precisa ser escrita no código do servidor. O `demo.py` da pasta `codigo/oda-03/grpc` sobe o servidor numa porta livre, chama as duas operações pelo *stub* e imprime:
+O gRPC tem uma tabela própria de códigos de status, distinta da tabela do HTTP. No exemplo, o servidor encerra a chamada com `NOT_FOUND` quando o protocolo não existe e com `INVALID_ARGUMENT` quando o pedido viola uma regra. A regra dos onze dígitos, declarada no REST pelo `Field(pattern=...)` do Pydantic, precisa ser escrita no código do servidor gRPC porque o Protocol Buffers declara tipos sem padrões de texto. O `demo.py` da pasta `codigo/oda-03/grpc` inicia o servidor numa porta livre, chama as duas operações pelo *stub* e imprime a saída abaixo.
 
 ```text
 SolicitarElegibilidade -> OK
@@ -388,11 +395,13 @@ Corpo do pedido em Protocol Buffers: 36 bytes
 Primeiros bytes da mensagem binária: b'\n\x0b12345678901\x12\x07O'
 ```
 
-O mesmo pedido ocupa 83 bytes em JSON e 36 bytes em Protocol Buffers, porque a mensagem binária troca o nome de cada campo por um número e um tamanho. Os dois primeiros bytes, `\n` e `\x0b`, informam que o campo de número 1 vem a seguir com 11 bytes, e o texto `12345678901` aparece logo depois. A mensagem binária também tem custos para a arquitetura, porque ela não é legível num registro de rede sem o `.proto`, e um navegador não chama um serviço gRPC diretamente, o que exige a variante gRPC-Web e um *proxy* na borda. O gRPC oferece ainda operações com fluxo contínuo de mensagens, nas quais o servidor, o cliente ou os dois enviam várias mensagens na mesma chamada, recurso que este exemplo não usa.
+O mesmo pedido ocupa 83 bytes em JSON e 36 bytes em Protocol Buffers, porque a mensagem binária substitui o nome de cada campo por um número e um tamanho. Os bytes iniciais `\n` e `\x0b` indicam o campo de número 1 com 11 bytes de conteúdo, que correspondem ao texto `12345678901`.
+
+Uma mensagem binária não é legível num registro de rede sem o arquivo `.proto` que a descreve. Um navegador também não chama um serviço gRPC diretamente, o que exige a variante gRPC-Web e um *proxy* na borda da plataforma. O gRPC oferece ainda operações com fluxo contínuo de mensagens numa mesma chamada, recurso que o exemplo da elegibilidade não utiliza.
 
 ### Seleção de campos com GraphQL
 
-O **GraphQL** é uma linguagem de consulta para APIs com um *schema* tipado. O *schema* declara os tipos e os campos disponíveis, e cada consulta enviada pelo consumidor diz quais desses campos ele quer receber. Todas as operações vão ao mesmo endereço, em geral `POST /graphql`, e o corpo da requisição diz se a operação é uma **query**, que lê dados, ou uma **mutation**, que altera dados.
+O GraphQL é uma linguagem de consulta para APIs baseada num *schema* tipado, que declara os tipos e os campos disponíveis. Cada consulta enviada pelo consumidor indica quais desses campos ele quer receber. Todas as operações usam o mesmo endereço, em geral `POST /graphql`. O corpo da requisição indica o tipo de operação, que pode ser uma *query* para leitura ou uma *mutation* para alteração de dados.
 
 ```graphql
 # schema.graphql
@@ -426,7 +435,9 @@ type Operadora {
 }
 ```
 
-O sinal de exclamação marca um campo que nunca vem nulo. O campo `elegibilidade` não tem exclamação, e por isso um protocolo inexistente devolve `null` nesse campo, com status `200` e sem nenhuma entrada na lista de erros da resposta. O valor de cada campo é produzido por um **resolver**, que é a função chamada quando a consulta pede aquele campo. No exemplo, as operadoras ficam num cadastro separado, e o resolver do campo `operadora` consulta esse cadastro:
+O sinal de exclamação marca um campo que nunca vem nulo. Como o campo `elegibilidade` não tem esse sinal, um protocolo inexistente produz o valor `null` nesse campo, com status `200` e sem entrada na lista de erros da resposta.
+
+O valor de cada campo é produzido por um *resolver*, que é a função executada quando a consulta pede aquele campo. No exemplo, as operadoras ficam num cadastro separado das elegibilidades, consultado pelo *resolver* do campo `operadora`.
 
 ```python
 # api.py
@@ -437,7 +448,7 @@ def resolver_operadora(registro, info):
     return OPERADORAS[registro["codigoOperadora"]]
 ```
 
-O `demo.py` da pasta `codigo/oda-04/graphql` usa a biblioteca Ariadne e envia seis operações ao mesmo endereço. Os trechos abaixo reproduzem quatro delas:
+O `demo.py` da pasta `codigo/oda-04/graphql` usa a biblioteca Ariadne e envia seis operações ao mesmo endereço, das quais a saída abaixo reproduz quatro.
 
 ```text
 --- Consulta do aplicativo móvel
@@ -477,13 +488,17 @@ POST /graphql -> 400 (125 bytes na resposta)
 }
 ```
 
-O aplicativo móvel pediu só a situação e recebeu 50 bytes. O painel administrativo pediu mais campos e os dados da operadora na mesma consulta e recebeu 165 bytes, sem uma segunda chamada. Na consulta do aplicativo o resolver da operadora não executou, porque o campo não foi pedido. Na lista de três elegibilidades o resolver executou três vezes, uma por item. Esse efeito é conhecido como **problema N+1**: uma consulta que traz N itens dispara N consultas adicionais a outra fonte de dados, e a mitigação usual é agrupar as buscas de uma mesma consulta numa só, técnica que a biblioteca DataLoader popularizou. O campo `senhaDoPaciente` não existe no *schema*, e a consulta foi recusada com `400` antes de qualquer resolver executar.
+A consulta do aplicativo móvel pediu apenas a situação e recebeu 50 bytes, sem execução do *resolver* da operadora. A consulta do painel administrativo pediu mais campos e os dados da operadora na mesma chamada e recebeu 165 bytes. Na lista de três elegibilidades, o *resolver* da operadora executou três vezes, uma para cada item. O campo `senhaDoPaciente` não existe no *schema*, de modo que a consulta foi recusada com `400` antes da execução de qualquer *resolver*.
 
-O endereço único tem consequências para a plataforma. Quando todas as consultas usam `POST /graphql`, o cache HTTP baseado no endereço e no método deixa de distinguir uma consulta de outra, e o guia oficial do GraphQL descreve o envio de consultas por `GET` como alternativa para recuperar esse cache. A autorização precisa ser decidida por campo ou por tipo, porque a mesma chamada pode pedir dados de sensibilidades diferentes. E uma consulta com muitos níveis de aninhamento pode custar caro ao servidor, o que exige limite de profundidade ou de custo por consulta.
+O problema N+1 é o efeito em que uma consulta que devolve N itens dispara N consultas adicionais a outra fonte de dados. A mitigação usual agrupa numa única busca os acessos feitos durante a mesma consulta, técnica difundida pela biblioteca DataLoader.
+
+Quando todas as consultas usam `POST /graphql`, o cache HTTP baseado em endereço e método não distingue uma consulta de outra. O guia oficial do GraphQL descreve o envio de consultas por `GET` como forma de recuperar esse cache. A autorização precisa ser decidida por campo ou por tipo, porque uma mesma chamada pode pedir dados de sensibilidades diferentes. Consultas com muitos níveis de aninhamento podem ter custo alto para o servidor, o que exige limite de profundidade ou de custo por consulta.
 
 ### Aviso de mudança por WebSocket
 
-O **WebSocket**, definido pela RFC 6455, mantém uma conexão aberta entre cliente e servidor. A conexão começa como uma requisição HTTP com o cabeçalho `Upgrade: websocket`, o servidor responde `101 Switching Protocols`, e a partir daí as duas pontas enviam mensagens a qualquer momento, sem o par requisição e resposta do HTTP. No exemplo, o cliente envia uma mensagem pedindo para acompanhar um protocolo, e o servidor passa a enviar uma mensagem a cada mudança de situação vinda da operadora. O protocolo transporta mensagens de texto ou binárias sem definir o formato delas, e o formato JSON com os campos `tipo`, `protocolo` e `situacao` é uma decisão da aplicação.
+O WebSocket é um protocolo, definido pela RFC 6455, que mantém aberta uma conexão entre cliente e servidor. A conexão começa com uma requisição HTTP que contém o cabeçalho `Upgrade: websocket`, à qual o servidor responde com `101 Switching Protocols`. A partir dessa resposta, cliente e servidor enviam mensagens a qualquer momento, sem a correspondência entre requisição e resposta do HTTP.
+
+No exemplo, o cliente envia uma mensagem com o pedido de acompanhamento de um protocolo. O servidor passa então a enviar uma mensagem a cada mudança de situação informada pela operadora. O protocolo WebSocket transporta mensagens de texto ou binárias sem definir o formato delas. O formato JSON com os campos `tipo`, `protocolo` e `situacao` é uma decisão da aplicação.
 
 ```python
 # servidor.py
@@ -500,10 +515,10 @@ async def publicar(self, protocolo: str, situacao: str):
             pass  # a mensagem não é guardada para quem caiu
 ```
 
-O `demo.py` da pasta `codigo/oda-04/websocket` usa a biblioteca `websockets` e executa duas cenas, a primeira com um painel e um aplicativo que acompanham a mesma elegibilidade e a segunda com uma mudança de situação ocorrida enquanto nenhum cliente está conectado:
+O `demo.py` da pasta `codigo/oda-04/websocket` usa a biblioteca `websockets` para executar dois cenários. No primeiro cenário, um painel e um aplicativo acompanham a mesma elegibilidade durante uma mudança de situação. O segundo cenário registra uma mudança de situação ocorrida quando nenhum cliente está conectado ao servidor.
 
 ```text
---- Cena 1: painel e aplicativo acompanham ELG-001
+--- Cenário 1: painel e aplicativo acompanham ELG-001
   [painel] enviou: {"acao": "acompanhar", "protocolo": "ELG-001"}
   [painel] recebeu: {"tipo": "estado_atual", "protocolo": "ELG-001", "situacao": "recebida"}
   [aplicativo] enviou: {"acao": "acompanhar", "protocolo": "ELG-001"}
@@ -513,14 +528,16 @@ O `demo.py` da pasta `codigo/oda-04/websocket` usa a biblioteca `websockets` e e
   [aplicativo] recebeu: {"tipo": "mudanca", "protocolo": "ELG-001", "situacao": "em_analise"}
   [painel] e [aplicativo] fecharam a conexão
 
---- Cena 2: uma mudança acontece sem nenhuma conexão aberta
+--- Cenário 2: mudança de situação sem nenhuma conexão aberta
   [servidor] ELG-001 mudou para elegivel, 0 conexão(ões) aberta(s)
   [painel] enviou: {"acao": "acompanhar", "protocolo": "ELG-001"}
   [painel] recebeu: {"tipo": "estado_atual", "protocolo": "ELG-001", "situacao": "elegivel"}
   O painel recebeu o estado atual. A mensagem de mudança para elegivel não foi entregue.
 ```
 
-Na primeira cena, os dois clientes receberam a mudança para `em_analise` sem enviar nova requisição. Na segunda cena, a mudança para `elegivel` aconteceu sem nenhuma conexão aberta, e o WebSocket não guarda mensagens para entrega posterior. O painel só conheceu a situação nova porque o servidor do exemplo envia o estado atual a cada cliente que pede para acompanhar um protocolo, inclusive a quem volta depois de uma queda. Quando o consumidor precisa receber cada transição de situação, a garantia de entrega exige um mecanismo durável de mensageria, tema do Módulo 5. Cada conexão aberta também ocupa memória no servidor que a mantém. Com várias instâncias do serviço, a instância que recebe a resposta da operadora pode não ser a que mantém a conexão do painel, e a mudança precisa circular entre as instâncias por um canal compartilhado. Um cliente lento acumula mensagens pendentes no servidor, que precisa de uma política para esse acúmulo, como limite de fila ou descarte das mensagens mais antigas.
+No primeiro cenário, os dois clientes receberam a mudança para `em_analise` sem enviar nova requisição. No segundo cenário, a mudança para `elegivel` ocorreu sem conexão aberta. O WebSocket não guarda mensagens para entrega posterior, de modo que essa mensagem não chegou a nenhum cliente. O painel conheceu a situação nova porque o servidor do exemplo envia o estado atual a cada cliente que pede o acompanhamento de um protocolo, inclusive depois de uma reconexão.
+
+A entrega de cada transição de situação ao consumidor exige um mecanismo durável de mensageria, tema do Módulo 5. Cada conexão aberta ocupa memória no servidor que a mantém. Quando o serviço executa em várias instâncias, a instância que recebe a resposta da operadora pode ser diferente da instância que mantém a conexão do painel. Nesse caso, a mudança precisa circular entre as instâncias por um canal compartilhado. Um cliente lento acumula mensagens pendentes no servidor, que precisa de uma política para esse acúmulo, como limite de fila ou descarte das mensagens mais antigas.
 
 ### Comparação dos quatro estilos no caso hospitalar
 
@@ -532,14 +549,14 @@ Na primeira cena, os dois clientes receberam a mudança para `em_analise` sem en
 | Formato no exemplo | JSON | Protocol Buffers sobre HTTP/2 | JSON | JSON escolhido pela aplicação |
 | Quem inicia a troca | cliente | cliente | cliente | as duas pontas, depois da conexão |
 | Protocolo inexistente | `404` | `NOT_FOUND` | `null` no campo, com `200` | definido pela aplicação |
-| Onze dígitos do `cpf` | regra no contrato, `422` | regra no servidor, `INVALID_ARGUMENT` | regra no resolver | regra na aplicação |
+| Onze dígitos do `cpf` | regra no contrato, `422` | regra no servidor, `INVALID_ARGUMENT` | regra no *resolver* | regra na aplicação |
 | Consumidor indicado no caso | sistema administrativo e parceiros web | serviços internos da plataforma | telas com necessidades de dados diferentes | painel que acompanha a situação |
 
-A tabela da seção [Além do HTTP](conceitos.md#alem-do-http-estilos-de-apis), na página de conceitos, resume quando cada estilo ajuda e qual cuidado arquitetural cada um exige.
+A tabela da seção [Além do HTTP](conceitos.md#alem-do-http-estilos-de-apis) da página de conceitos indica quando cada estilo é adequado e qual cuidado arquitetural cada um exige.
 
 ## Gateway e adaptador de operadora
 
-O laboratório roda apenas uma FastAPI, em `http://127.0.0.1:8000`, sem gateway. Mas quando a plataforma cresce e ganha várias capacidades, a porta de entrada (borda pública) e a integração com sistemas externos passam a ter responsabilidades diferentes:
+O laboratório executa uma única aplicação FastAPI, no endereço `http://127.0.0.1:8000`, sem gateway. Com o crescimento da plataforma e o aumento do número de capacidades, a borda pública e a integração com sistemas externos passam a ter responsabilidades distintas, representadas na figura abaixo.
 
 ```mermaid
 flowchart LR
@@ -550,10 +567,10 @@ flowchart LR
     E --> M[(estado do pedido)]
 ```
 
-**Texto alternativo:** o sistema administrativo chama o gateway, que encaminha à API, e a API mantém o estado e usa adaptador para chamar a operadora.
+**Texto alternativo:** o sistema administrativo chama o gateway, que encaminha a chamada à API. A API mantém o estado do pedido e usa o adaptador para chamar a operadora.
 
-*Figura 6 — Uma evolução possível: políticas técnicas na borda, tradução no adaptador e estado na plataforma. Fonte: curso.*
+*Figura 6 — Evolução possível com políticas técnicas na borda, tradução no adaptador e estado na plataforma. Fonte: curso.*
 
-**Leitura textual:** o gateway aplica políticas, o adaptador traduz vocabulário e protocolo da operadora e o estado pertence à API, numa hipótese de evolução sem componente correspondente no laboratório.
+**Leitura textual:** o gateway aplica políticas técnicas na borda e o adaptador traduz o vocabulário e o protocolo da operadora. O estado do pedido pertence à API de elegibilidade, numa hipótese de evolução sem componente correspondente no laboratório.
 
-O gateway pode autenticar, limitar tráfego e rotear as chamadas. O que ele **não** deve fazer é traduzir `beneficiaryKey` da operadora para `matricula_plano`, nem decidir que um estado desconhecido significa `negada`. Essas traduções são responsabilidade do **adaptador**, onde podem ser testadas e observadas de forma isolada. Assim, o formato SOAP/XML da operadora e suas regras específicas não vazam para o resto da plataforma.
+O gateway autentica, limita o tráfego e encaminha as chamadas para a API correspondente. A tradução do campo `beneficiaryKey` da operadora para `matricula_plano` é responsabilidade do adaptador, assim como a interpretação de estados que a operadora devolve sem correspondência no vocabulário da plataforma. No adaptador, essas traduções são testadas e observadas isoladamente, o que mantém o formato SOAP/XML e as regras específicas da operadora fora do restante da plataforma.
