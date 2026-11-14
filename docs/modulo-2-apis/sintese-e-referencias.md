@@ -10,7 +10,7 @@ Guarde sete ideias:
 2. REST usa recursos, representações e interface uniforme; JSON sobre HTTP não basta para caracterizá-lo.
 3. Métodos, status e cabeçalhos HTTP carregam semântica útil.
 4. Erros, paginação, idempotência e evolução pertencem ao contrato.
-5. RPC, GraphQL e gRPC são alternativas escolhidas pelo contexto, sem hierarquia de maturidade entre elas.
+5. RPC, GraphQL, gRPC e WebSocket são alternativas escolhidas pelo contexto, sem hierarquia de maturidade entre elas.
 6. Gateway aplica políticas de entrada, mas não resolve sozinho diferenças semânticas.
 7. OpenAPI, Bruno, Spectral e testes observam aspectos diferentes e devem concordar.
 
@@ -38,12 +38,19 @@ Antes de publicar um contrato, verifique:
 - [OpenAPI Specification 3.1.0](https://spec.openapis.org/oas/v3.1.0): estrutura normativa usada pelo contrato do laboratório.
 - [REST — dissertação de Roy Fielding](https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm): definição original das restrições do estilo.
 - [GraphQL Specification](https://spec.graphql.org/): linguagem, sistema de tipos e execução.
-- [Protocol Buffers — Language Guide](https://protobuf.dev/programming-guides/proto3/): regras do formato usado frequentemente com gRPC.
+- [Protocol Buffers — Language Guide](https://protobuf.dev/programming-guides/proto3/): regras do formato usado frequentemente com gRPC, incluindo a estabilidade dos números de campo.
+- [RFC 6455 — The WebSocket Protocol](https://www.rfc-editor.org/rfc/rfc6455): abertura da conexão por `Upgrade`, resposta `101` e troca de mensagens nas duas direções.
 
 ## Estilos e tecnologias
 
 - [Introdução oficial ao gRPC](https://grpc.io/docs/what-is-grpc/introduction/): serviços, métodos e mensagens.
 - [Guia oficial do GraphQL](https://graphql.org/learn/): schemas, consultas e evolução.
+- [Códigos de status do gRPC](https://grpc.io/docs/guides/status-codes/): significado de `NOT_FOUND`, `INVALID_ARGUMENT` e dos demais status.
+- [gRPC-Web](https://grpc.io/docs/platforms/web/basics/): chamada a serviços gRPC a partir do navegador por meio de um proxy.
+- [Início rápido do gRPC em Python](https://grpc.io/docs/languages/python/quickstart/): geração de código com `grpc_tools.protoc` e servidor em Python.
+- [Desempenho no GraphQL](https://graphql.org/learn/performance/): problema N+1, DataLoader e consultas por `GET`.
+- [Ariadne](https://ariadnegraphql.org/): biblioteca Python de GraphQL usada no exemplo, com schema escrito em SDL.
+- [websockets](https://websockets.readthedocs.io/): biblioteca Python de WebSocket usada no exemplo.
 - [FastAPI](https://fastapi.tiangolo.com/): documentação da implementação Python e geração OpenAPI.
 - [Spring Boot para aplicações web](https://docs.spring.io/spring-boot/reference/web/servlet.html): referência para controladores e aplicações servlet.
 - [ASP.NET Core Web API](https://learn.microsoft.com/en-us/aspnet/core/web-api/): referência para APIs em .NET.

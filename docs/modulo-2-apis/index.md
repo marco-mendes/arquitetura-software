@@ -41,7 +41,7 @@ Ao concluir o percurso, você será capaz de:
 1. **Visão geral:** delimita problema, resultado e contrato do encontro.
 2. **Conceitos:** do estilo de APIs e dos fundamentos da web às restrições REST de Fielding e à evolução do contrato.
 3. **Padrões e decisões:** tipos de APIs por contexto, a lente da plataforma e a agenda do arquiteto.
-4. **Exemplo arquitetural:** percorre o contrato de elegibilidade de ponta a ponta.
+4. **Exemplo arquitetural:** percorre o contrato de elegibilidade de ponta a ponta e expõe a mesma capacidade por gRPC, GraphQL e WebSocket, com programas Python executáveis.
 5. **Estudo de caso:** aplica as decisões à plataforma hospitalar e às integrações externas.
 6. **[Casos reais](casos-reais.md):** acompanha o Twitter abrir uma API, criar um ecossistema inteiro e depois desligá-lo três vezes.
 7. **Oficina de ferramentas:** executa FastAPI, OpenAPI, Bruno, Spectral, testes automatizados e a extensão com o gateway Ocelot.
