@@ -2,70 +2,77 @@
 
 ## O fio do módulo
 
-Arquitetar uma API é desenhar um compromisso entre equipes e sistemas. O compromisso começa na necessidade do consumidor, usa a semântica do protocolo, modela sucesso e falha, explicita tempo e repetição, e termina em evidência reproduzível. Framework e ferramenta ajudam a executar essa intenção, e a decisão continua sob responsabilidade do arquiteto.
+A arquitetura de uma API define um compromisso entre equipes e sistemas. O compromisso parte da necessidade do consumidor e usa a semântica do protocolo para modelar sucesso e falha. Ele também explicita o tempo de resposta e a política de repetição e se completa com evidência reproduzível. *Frameworks* e ferramentas ajudam a executar essa intenção, enquanto a decisão continua sob responsabilidade do arquiteto.
 
-Guarde sete ideias:
+As ideias centrais do módulo estão na lista abaixo.
 
 1. Contrato é o comportamento observável pelo consumidor e independe da forma da implementação.
-2. REST usa recursos, representações e interface uniforme; JSON sobre HTTP não basta para caracterizá-lo.
+2. REST usa recursos, representações e interface uniforme, de modo que JSON sobre HTTP não basta para caracterizá-lo.
 3. Métodos, status e cabeçalhos HTTP carregam semântica útil.
 4. Erros, paginação, idempotência e evolução pertencem ao contrato.
-5. RPC, GraphQL, gRPC e WebSocket são alternativas escolhidas pelo contexto, sem hierarquia de maturidade entre elas.
-6. Gateway aplica políticas de entrada, mas não resolve sozinho diferenças semânticas.
+5. RPC, GraphQL, gRPC e WebSocket são alternativas escolhidas pelo contexto e não formam uma hierarquia de maturidade.
+6. O *gateway* aplica políticas de entrada e não resolve sozinho diferenças semânticas.
 7. OpenAPI, Bruno, Spectral e testes observam aspectos diferentes e devem concordar.
 
-O exemplo `POST /elegibilidades` demonstra aceitação com `202` e acompanhamento por `Location`. A escolha não promete decisão final. O armazenamento em memória torna a oficina simples e evidencia o que falta para múltiplas instâncias e reinícios. O próximo módulo usará essas operações para discutir limites de serviços, propriedade de dados e coordenação.
+O exemplo `POST /elegibilidades` demonstra a aceitação com `202` e o acompanhamento por `Location`, escolha que não promete decisão final ao consumidor. O armazenamento em memória simplifica a oficina e evidencia o que falta para suportar múltiplas instâncias e reinícios do processo. O Módulo 3 usará essas operações para discutir limites de serviços, propriedade de dados e coordenação.
 
 ## Checklist de revisão
 
-Antes de publicar um contrato, verifique:
+Antes de publicar um contrato, recomenda-se verificar os itens abaixo.
 
-- consumidor e tarefa estão identificados;
-- nomes pertencem à linguagem da fronteira;
-- método, status e cabeçalhos preservam a semântica HTTP;
-- schemas distinguem campos obrigatórios e opcionais;
-- erros têm código estável e não expõem internals;
-- repetição e idempotência têm política explícita quando relevantes;
-- coleções têm ordenação, limite e continuação;
-- mudanças aditivas e incompatíveis têm estratégia;
-- exemplos validam e executam;
-- contrato, implementação e testes não divergem;
-- limitações e gatilhos de revisão estão registrados.
+- Consumidor e tarefa estão identificados.
+- Nomes pertencem à linguagem da fronteira.
+- Método, status e cabeçalhos preservam a semântica HTTP.
+- Schemas distinguem campos obrigatórios e opcionais.
+- Erros têm código estável e não expõem detalhes internos.
+- Repetição e idempotência têm política explícita quando relevantes.
+- Coleções têm ordenação, limite e continuação.
+- Mudanças aditivas e incompatíveis têm estratégia.
+- Exemplos validam e executam.
+- Contrato, implementação e testes não divergem.
+- Limitações e gatilhos de revisão estão registrados.
 
 ## Especificações primárias
 
-- [RFC 9110 — HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110): fonte normativa para métodos, status, campos e semântica HTTP.
-- [OpenAPI Specification 3.1.0](https://spec.openapis.org/oas/v3.1.0): estrutura normativa usada pelo contrato do laboratório.
-- [REST — dissertação de Roy Fielding](https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm): definição original das restrições do estilo.
-- [GraphQL Specification](https://spec.graphql.org/): linguagem, sistema de tipos e execução.
-- [Protocol Buffers — Language Guide](https://protobuf.dev/programming-guides/proto3/): regras do formato usado frequentemente com gRPC, incluindo a estabilidade dos números de campo.
-- [RFC 6455 — The WebSocket Protocol](https://www.rfc-editor.org/rfc/rfc6455): abertura da conexão por `Upgrade`, resposta `101` e troca de mensagens nas duas direções.
+- [RFC 9110 — HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110). Fonte normativa para métodos, status, campos e semântica HTTP.
+- [OpenAPI Specification 3.1.0](https://spec.openapis.org/oas/v3.1.0). Estrutura normativa usada pelo contrato do laboratório.
+- [REST — dissertação de Roy Fielding](https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm). Definição original das restrições do estilo.
+- [GraphQL Specification](https://spec.graphql.org/). Linguagem, sistema de tipos e execução.
+- [Protocol Buffers — Language Guide](https://protobuf.dev/programming-guides/proto3/). Regras do formato usado frequentemente com gRPC, incluindo a estabilidade dos números de campo.
+- [RFC 6455 — The WebSocket Protocol](https://www.rfc-editor.org/rfc/rfc6455). Abertura da conexão por `Upgrade`, resposta `101` e troca de mensagens nas duas direções.
 
 ## Estilos e tecnologias
 
-- [Introdução oficial ao gRPC](https://grpc.io/docs/what-is-grpc/introduction/): serviços, métodos e mensagens.
-- [Guia oficial do GraphQL](https://graphql.org/learn/): schemas, consultas e evolução.
-- [Códigos de status do gRPC](https://grpc.io/docs/guides/status-codes/): significado de `NOT_FOUND`, `INVALID_ARGUMENT` e dos demais status.
-- [gRPC-Web](https://grpc.io/docs/platforms/web/basics/): chamada a serviços gRPC a partir do navegador por meio de um proxy.
-- [Início rápido do gRPC em Python](https://grpc.io/docs/languages/python/quickstart/): geração de código com `grpc_tools.protoc` e servidor em Python.
-- [Desempenho no GraphQL](https://graphql.org/learn/performance/): problema N+1, DataLoader e consultas por `GET`.
-- [Ariadne](https://ariadnegraphql.org/): biblioteca Python de GraphQL usada no exemplo, com schema escrito em SDL.
-- [websockets](https://websockets.readthedocs.io/): biblioteca Python de WebSocket usada no exemplo.
-- [FastAPI](https://fastapi.tiangolo.com/): documentação da implementação Python e geração OpenAPI.
-- [Spring Boot para aplicações web](https://docs.spring.io/spring-boot/reference/web/servlet.html): referência para controladores e aplicações servlet.
-- [ASP.NET Core Web API](https://learn.microsoft.com/en-us/aspnet/core/web-api/): referência para APIs em .NET.
+- [Introdução oficial ao gRPC](https://grpc.io/docs/what-is-grpc/introduction/). Serviços, métodos e mensagens.
+- [Guia oficial do GraphQL](https://graphql.org/learn/). Schemas, consultas e evolução.
+- [Códigos de status do gRPC](https://grpc.io/docs/guides/status-codes/). Significado de `NOT_FOUND`, `INVALID_ARGUMENT` e dos demais status.
+- [gRPC-Web](https://grpc.io/docs/platforms/web/basics/). Chamada a serviços gRPC a partir do navegador por meio de um proxy.
+- [Início rápido do gRPC em Python](https://grpc.io/docs/languages/python/quickstart/). Geração de código com `grpc_tools.protoc` e servidor em Python.
+- [Desempenho no GraphQL](https://graphql.org/learn/performance/). Problema N+1, DataLoader e consultas por `GET`.
+- [Ariadne](https://ariadnegraphql.org/). Biblioteca Python de GraphQL usada no exemplo, com schema escrito em SDL.
+- [websockets](https://websockets.readthedocs.io/). Biblioteca Python de WebSocket usada no exemplo.
+- [FastAPI](https://fastapi.tiangolo.com/). Documentação da implementação Python e geração OpenAPI.
+- [Spring Boot para aplicações web](https://docs.spring.io/spring-boot/reference/web/servlet.html). Referência para controladores e aplicações servlet.
+- [ASP.NET Core Web API](https://learn.microsoft.com/en-us/aspnet/core/web-api/). Referência para APIs em .NET.
 
 ## Ferramentas
 
-- [Documentação do Bruno](https://docs.usebruno.com/): importação e execução de coleções locais.
-- [Repositório oficial do Spectral](https://github.com/stoplightio/spectral): instalação, uso, rulesets e documentação mantida pelo projeto.
-- [Instalação oficial do Python](https://docs.python.org/3/using/index.html): preparação do interpretador por sistema operacional.
-- [Site oficial do Homebrew](https://brew.sh/): instalação do gerenciador usado nos comandos de macOS.
-- [Node.js](https://nodejs.org/en/download): instalação do runtime que fornece npm e npx.
-- [TestClient do FastAPI](https://fastapi.tiangolo.com/tutorial/testing/): testes HTTP em processo.
-- [Documentação do Uvicorn](https://www.uvicorn.org/): servidor ASGI usado na oficina.
-- [Documentação do Ocelot](https://ocelot.readthedocs.io/): gateway de API para .NET usado na extensão opcional da oficina.
+- [Documentação do Bruno](https://docs.usebruno.com/). Importação e execução de coleções locais.
+- [Repositório oficial do Spectral](https://github.com/stoplightio/spectral). Instalação, uso, rulesets e documentação mantida pelo projeto.
+- [Instalação oficial do Python](https://docs.python.org/3/using/index.html). Preparação do interpretador por sistema operacional.
+- [Site oficial do Homebrew](https://brew.sh/). Instalação do gerenciador usado nos comandos de macOS.
+- [Node.js](https://nodejs.org/en/download). Instalação do runtime que fornece npm e npx.
+- [TestClient do FastAPI](https://fastapi.tiangolo.com/tutorial/testing/). Testes HTTP em processo.
+- [Documentação do Uvicorn](https://www.uvicorn.org/). Servidor ASGI usado na oficina.
+- [Documentação do Ocelot](https://ocelot.readthedocs.io/). Gateway de API para .NET usado na extensão opcional da oficina.
 
 ## Continuidade
 
-Atualize a baseline do projeto com o contrato validado, exemplos, mapa de erros, diagramas e `ADR-002`. Na preparação do módulo 3, marque para cada operação: capacidade responsável, dados que precisa possuir, efeito de falha parcial e estado que precisa sobreviver a reinício. Essas respostas ajudarão a distinguir fronteira de API de fronteira de serviço.
+Atualize a *baseline* do projeto com o contrato validado e seus exemplos, o mapa de erros, os diagramas e o `ADR-002`. Na preparação do Módulo 3, registre para cada operação os itens da lista abaixo.
+
+- Capacidade responsável pela operação.
+- Dados que a operação precisa possuir.
+- Efeito de uma falha parcial.
+- Estado que precisa sobreviver a uma reinicialização.
+
+As respostas ajudarão a distinguir a fronteira de API da fronteira de serviço no Módulo 3.

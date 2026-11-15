@@ -1,36 +1,36 @@
-# Twitter: a API que criou um ecossistema e depois o desligou
+# Caso Twitter e o fechamento progressivo da API pública
 
-Boa parte do vocabulário do Twitter não foi inventada pelo Twitter. O termo *tweet* apareceu num cliente de terceiro, o Twitterrific. A resposta com arroba, a repostagem e a marcação com cerquilha nasceram do uso e foram absorvidas depois. Durante alguns anos, a plataforma foi projetada por gente que não trabalhava lá, através de uma API aberta.
+Boa parte do vocabulário do Twitter surgiu fora da empresa. O termo *tweet* apareceu num cliente de terceiro chamado Twitterrific. A resposta com arroba, a repostagem e a marcação com cerquilha nasceram do uso e foram incorporadas depois pela empresa. Durante alguns anos, a plataforma foi moldada por desenvolvedores externos que usavam a API aberta do Twitter.
 
-Depois a empresa restringiu o acesso à API em três ocasiões, com onze anos de intervalo entre a primeira e a última, e cada restrição eliminou uma categoria inteira de software.
+Depois a empresa restringiu o acesso à API em três ocasiões, com onze anos de intervalo entre a primeira e a última. Cada restrição eliminou uma categoria inteira de *software* construída sobre a API.
 
-O tema deste caso é a situação de quem construiu produtos sobre o contrato publicado por outra empresa.
+O caso examina a situação das empresas que construíram produtos sobre o contrato publicado pelo Twitter.
 
-## 2006 a 2010: a API como estratégia de produto
+## A API como estratégia de produto entre 2006 e 2010
 
-O Twitter abriu a API cedo e ela virou o principal motor de adoção. Clientes de terceiros disputavam usuário entre si, e a competição produziu mais inovação de interface do que a empresa conseguiria sozinha. Tweetie, Twitterrific, TweetDeck e Echofon eram, para muita gente, o Twitter.
+O Twitter abriu a API cedo e ela se tornou o principal motor de adoção da plataforma. Os clientes de terceiros disputavam usuários entre si, de modo que a competição produziu mais inovação de interface do que a empresa conseguiria produzir sozinha. Os aplicativos Tweetie, Twitterrific, TweetDeck e Echofon eram a forma de acesso ao Twitter para muitos usuários.
 
-A consequência arquitetural é a que interessa a este módulo. O Twitter tinha um contrato público e milhares de consumidores independentes, cada um com o próprio ciclo de entrega. Isso é o cenário em que uma API deixa de ser um detalhe de integração e passa a ser a fronteira que define o produto.
+A consequência arquitetural é o aspecto relevante para este módulo. O Twitter tinha um contrato público e milhares de consumidores independentes, cada um com o próprio ciclo de entrega. Nesse cenário, a API deixa de ser um detalhe de integração e passa a ser a fronteira que define o produto.
 
-Em 2010 a empresa comprou o Tweetie e o transformou no cliente oficial para iPhone. A partir daí, o dono do contrato passou a competir com os consumidores do contrato.
+Em 2010 a empresa comprou o Tweetie e o transformou no cliente oficial para iPhone. A partir dessa compra, o dono do contrato passou a competir com os consumidores do contrato.
 
-## Março de 2011: o aviso
+## Aviso aos desenvolvedores em março de 2011
 
-Ryan Sarver, então responsável pela plataforma, escreveu à lista de desenvolvedores uma mensagem que ficou conhecida. O trecho reproduzido em toda a cobertura da época diz que os desenvolvedores não deveriam construir aplicativos clientes que imitassem ou reproduzissem a experiência de consumo principal do Twitter.
+Ryan Sarver, então responsável pela plataforma, enviou à lista de desenvolvedores uma mensagem amplamente divulgada. O trecho reproduzido pela cobertura da época diz que os desenvolvedores não deveriam construir aplicativos clientes que imitassem ou reproduzissem a experiência de consumo principal do Twitter.
 
-A mensagem era apenas um aviso, e o contrato continuou funcionando exatamente como antes. A mudança estava na declaração pública sobre o que seria tolerado dali em diante.
+A mensagem era apenas um aviso e o contrato técnico continuou funcionando exatamente como antes. A mudança estava na declaração pública sobre o que a empresa toleraria a partir de março de 2011.
 
-Quem tinha um cliente em produção nesse momento enfrentou uma decisão difícil de tomar com racionalidade: continuar investindo numa base de código cuja permissão de existir tinha acabado de ser posta em dúvida por um aviso informal.
+As equipes com um cliente em produção nesse momento enfrentaram uma decisão difícil de fundamentar. Elas precisavam decidir se continuariam investindo numa base de código cuja permissão de existir tinha sido posta em dúvida por um aviso informal.
 
-## Agosto de 2012: a restrição vira código
+## Restrição implementada na versão 1.1 em agosto de 2012
 
-A versão 1.1 da API tornou a intenção executável. As mudanças anunciadas em 16 de agosto de 2012 incluíam autenticação obrigatória em todos os *endpoints* (os endereços que a API expõe), limites de taxa recalculados por *endpoint* em vez de globais, e uma regra nova que atingia especificamente uma categoria de aplicativo.
+A versão 1.1 da API tornou a intenção executável. As mudanças anunciadas em 16 de agosto de 2012 incluíam autenticação obrigatória em cada *endpoint*, isto é, em cada endereço exposto pela API. O anúncio também trouxe limites de taxa recalculados por *endpoint* no lugar dos limites globais e uma regra nova dirigida a uma categoria específica de aplicativo.
 
-Clientes de terceiros passaram a ter teto de **100 mil tokens de usuário**. Um aplicativo que atingisse cem mil usuários precisava negociar diretamente com o Twitter para crescer. Quem já estava acima do teto podia crescer até o dobro da base daquele momento.
+Os clientes de terceiros passaram a ter um teto de **100 mil tokens de usuário**. Um aplicativo que atingisse cem mil usuários precisava negociar diretamente com o Twitter para crescer. Os aplicativos que já estavam acima do teto podiam crescer até o dobro da base que tinham na data do anúncio.
 
-Repare no desenho do controle. O teto limita o número de **usuários** e protege o modelo de negócio, enquanto um limite de requisições protegeria a infraestrutura. Na documentação, o limite de taxa e o teto de tokens parecem o mesmo tipo de mecanismo, embora resolvam problemas de natureza completamente diferente.
+O desenho do controle merece atenção. O teto limita o número de **usuários** e protege o modelo de negócio, enquanto um limite de requisições protegeria a infraestrutura. Na documentação, o limite de taxa e o teto de tokens parecem o mesmo tipo de mecanismo, embora resolvam problemas de natureza diferente.
 
-O prazo de migração da 1.0 para a 1.1 foi de seis meses. Depois disso, a versão antiga foi desligada.
+O prazo de migração da versão 1.0 para a versão 1.1 foi de seis meses, ao fim dos quais a versão 1.0 foi desligada.
 
 ```mermaid
 timeline
@@ -44,37 +44,42 @@ timeline
     2023 : Acesso gratuito encerrado; API passa a ser paga
 ```
 
-**Texto alternativo:** linha do tempo do Twitter de 2006 a 2023, marcando a abertura da API e o nascimento do ecossistema, a compra do Tweetie, o aviso de 2011, o teto de tokens da versão 1.1 em 2012, o desligamento das APIs de fluxo contínuo em 2018 e o fim do acesso gratuito em 2023.
+**Texto alternativo:** linha do tempo do Twitter de 2006 a 2023. A linha marca a abertura da API com o surgimento do ecossistema, a compra do Tweetie e o aviso de 2011. Em seguida marca o teto de tokens da versão 1.1 em 2012, o desligamento das APIs de fluxo contínuo em 2018 e o fim do acesso gratuito em 2023.
 
 *Figura 9 — Dezessete anos de decisões sobre a fronteira pública do Twitter. Fonte: curso, a partir dos anúncios oficiais e da cobertura de imprensa da época.*
 
-**Leitura textual da figura:** a sequência mostra três fechamentos sucessivos, cada um atingindo uma classe diferente de consumidor. O de 2012 atingiu clientes de leitura; o de 2018, aplicativos que dependiam de fluxo contínuo de eventos; o de 2023, qualquer consumidor sem orçamento. Entre um e outro passam anos, tempo suficiente para uma nova geração de produtos ser construída sobre a mesma fronteira.
+**Leitura textual da figura:** a sequência mostra três fechamentos sucessivos, cada um dirigido a uma classe diferente de consumidor. O fechamento de 2012 atingiu os clientes de leitura e o de 2018 atingiu os aplicativos que dependiam de fluxo contínuo de eventos. O fechamento de 2023 atingiu qualquer consumidor sem orçamento para pagar pelo acesso. Entre um fechamento e outro passaram anos, prazo suficiente para que uma nova geração de produtos fosse construída sobre a mesma fronteira.
 
-## Agosto de 2018: muda o estilo de interação
+## Mudança do estilo de interação em agosto de 2018
 
-O segundo fechamento foi mais técnico e, para quem estava do lado de fora, mais caro.
+O segundo fechamento foi mais técnico e, para os consumidores externos, mais caro que o primeiro.
 
-As APIs de fluxo contínuo conhecidas como User Streams e Site Streams foram desligadas em 16 de agosto de 2018, substituídas pela Account Activity API. A mudança alterou o **estilo de interação**. Uma conexão persistente que empurra eventos foi trocada por um modelo em que a plataforma chama um endereço do consumidor.
+As APIs de fluxo contínuo conhecidas como User Streams e Site Streams foram desligadas em 16 de agosto de 2018 e substituídas pela Account Activity API. A mudança alterou o **estilo de interação** entre a plataforma e os consumidores. Uma conexão persistente que enviava eventos ao consumidor foi substituída por um modelo em que a plataforma chama um endereço do consumidor.
 
-A adaptação exigia mais do que trocar a URL. Um aplicativo que recebia eventos por conexão aberta não precisava de endereço público, de certificado nem de disponibilidade permanente para receber chamadas de entrada, e depois da mudança passou a precisar dos três. Produtos inteiros fecharam por não conseguirem pagar essa mudança, entre eles o Favstar.
+A adaptação exigia mais do que a troca da URL. Um aplicativo que recebia eventos por conexão aberta não precisava de endereço público, de certificado nem de disponibilidade permanente para receber chamadas de entrada. Depois da mudança, o aplicativo passou a precisar desses três elementos. Produtos como o Favstar encerraram as atividades por não conseguirem arcar com esse custo.
 
-## Fevereiro de 2023: o acesso gratuito acaba
+## Fim do acesso gratuito em fevereiro de 2023
 
-O terceiro fechamento veio sem transição. Em 2 de fevereiro de 2023 a empresa anunciou que, a partir do dia 9, o acesso gratuito à API terminaria nas versões 1.1 e 2, o que deu aos consumidores sete dias de prazo.
+O terceiro fechamento ocorreu sem período de transição. Em 2 de fevereiro de 2023 a empresa anunciou que o acesso gratuito à API terminaria nas versões 1.1 e 2 a partir do dia 9, o que deu aos consumidores sete dias de prazo.
 
-Dessa vez os produtos encerrados pertenciam a outra categoria: bots públicos de utilidade, ferramentas de acessibilidade, projetos de pesquisa acadêmica e serviços gratuitos mantidos por uma pessoa só. Nenhum deles tinha receita para migrar para um plano pago.
+Desta vez os produtos encerrados pertenciam a outra categoria, descrita na lista abaixo. Nenhum deles tinha receita para migrar para um plano pago.
+
+- *Bots* públicos de utilidade.
+- Ferramentas de acessibilidade.
+- Projetos de pesquisa acadêmica.
+- Serviços gratuitos mantidos por uma única pessoa.
 
 ## A lição que o caso ensina sobre contratos
 
-Uma API pública tem dois aspectos, e o módulo trata ambos. Para quem a publica, a API é um contrato que precisa ser versionado, documentado e testado, e para quem a consome ela é uma **dependência que você não controla**.
+Uma API pública tem dois aspectos e o módulo trata de ambos ao longo das suas páginas. Para quem a publica, a API é um contrato que precisa ser versionado, documentado e testado. Para quem a consome, ela é uma **dependência que o consumidor não controla**, como mostram os três fechamentos do Twitter.
 
-Toda decisão de consumir uma API de terceiro é uma aposta sobre o comportamento futuro de uma empresa. O contrato técnico não protege contra mudança de estratégia, e o histórico do Twitter mostra que o aviso costuma vir antes da restrição, às vezes com anos de antecedência.
+A decisão de consumir uma API de terceiro é uma aposta sobre o comportamento futuro de outra empresa. O contrato técnico não protege contra mudança de estratégia. O histórico do Twitter mostra que o aviso costuma preceder a restrição, às vezes com anos de antecedência, como ocorreu entre 2011 e 2012.
 
-O histórico recomenda tratar a integração com API de terceiro como decisão arquitetural registrada, com o custo de saída estimado antes de começar.
+O histórico recomenda tratar a integração com API de terceiro como decisão arquitetural registrada, com o custo de saída estimado antes do início da integração.
 
 ## Questões para discussão
 
-Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os fatos, explicar os mecanismos e comparar as escolhas descritas no próprio caso.
+As questões abaixo examinam o caso com a lente do arquiteto e pedem a recuperação dos fatos, a explicação dos mecanismos e a comparação das escolhas descritas no próprio caso.
 
 **1.** A página descreve três fechamentos sucessivos da fronteira pública. Diga o ano de cada um e que classe de consumidor cada um atingiu.
 
@@ -88,7 +93,7 @@ Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os f
 
 ## Fontes
 
-- Twitter, **Changes coming in Version 1.1 of the Twitter API** — anúncio oficial de 16 de agosto de 2012, origem das mudanças de autenticação, limites por *endpoint* e do teto de tokens. Página instável no domínio atual; use a [cópia arquivada](https://web.archive.org/web/20240416135831/https://blog.twitter.com/developer/en_us/a/2012/changes-coming-to-twitter-api).
-- Twitter, [Delivering a consistent Twitter experience](https://blog.x.com/developer/en_us/a/2012/delivering-consistent-twitter-experience) — postagem de junho de 2012 que antecede e justifica as mudanças da versão 1.1.
-- X, [Account Activity API — guia de migração a partir de User Streams e Site Streams](https://developer.x.com/en/docs/x-api/enterprise/account-activity-api/migration/us-ss-migration-guide) — documentação oficial da substituição de 2018, incluindo o que o consumidor precisa passar a operar.
-- Fontes secundárias, identificadas como tais: a mensagem de Ryan Sarver de março de 2011 à lista de desenvolvedores é conhecida por reprodução na imprensa técnica, entre elas [O'Reilly Radar](http://radar.oreilly.com/2011/03/twitter-developers.html). O encerramento do acesso gratuito em fevereiro de 2023 foi noticiado por [Forbes](https://www.forbes.com/sites/jenaebarnes/2023/02/03/twitter-ends-its-free-api-heres-who-will-be-affected/) e [Engadget](https://www.engadget.com/twitter-shutting-off-free-api-prepare-174340770.html), e o fechamento do Favstar em 2018 por [TechCrunch](https://techcrunch.com/2018/05/14/favstar-twitter/).
+- Twitter, **Changes coming in Version 1.1 of the Twitter API**. Anúncio oficial de 16 de agosto de 2012, origem das mudanças de autenticação, dos limites por *endpoint* e do teto de tokens. A página é instável no domínio atual e deve ser consultada na [cópia arquivada](https://web.archive.org/web/20240416135831/https://blog.twitter.com/developer/en_us/a/2012/changes-coming-to-twitter-api).
+- Twitter, [Delivering a consistent Twitter experience](https://blog.x.com/developer/en_us/a/2012/delivering-consistent-twitter-experience). Postagem de junho de 2012 que antecede e justifica as mudanças da versão 1.1.
+- X, [Account Activity API — guia de migração a partir de User Streams e Site Streams](https://developer.x.com/en/docs/x-api/enterprise/account-activity-api/migration/us-ss-migration-guide). Documentação oficial da substituição de 2018, que inclui o que o consumidor passou a operar.
+- Fontes secundárias, identificadas como tais. A mensagem de Ryan Sarver de março de 2011 à lista de desenvolvedores é conhecida pela reprodução na imprensa técnica, como no [O'Reilly Radar](http://radar.oreilly.com/2011/03/twitter-developers.html). O encerramento do acesso gratuito em fevereiro de 2023 foi noticiado por [Forbes](https://www.forbes.com/sites/jenaebarnes/2023/02/03/twitter-ends-its-free-api-heres-who-will-be-affected/) e [Engadget](https://www.engadget.com/twitter-shutting-off-free-api-prepare-174340770.html). O fechamento do Favstar em 2018 foi noticiado pelo [TechCrunch](https://techcrunch.com/2018/05/14/favstar-twitter/).

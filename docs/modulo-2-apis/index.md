@@ -1,55 +1,59 @@
-# Módulo 2 — Arquitetura de APIs
+# Arquitetura de APIs
 
 **Encontro:** 2 de 6
 
-**Resultado principal:** decidir onde uma capacidade de negócio vira fronteira pública, escolher o estilo de interação adequado a cada consumidor e projetar um contrato compreensível, evolutivo e verificável.
+**Resultado principal:** decidir em que situação uma capacidade de negócio se torna fronteira pública, escolher o estilo de interação adequado a cada consumidor e projetar um contrato compreensível, evolutivo e verificável.
 
-Uma API é mais do que uma interface técnica: é o elemento que conecta sistemas, parceiros e dispositivos em ecossistemas digitais, viabilizando modelos de negócio inteiros. Ao expor uma API, a organização transforma nomes, formatos, métodos, estados e erros em compromissos públicos. A questão deixa de ser “qual framework usar?” e passa a ser “qual contrato permite colaboração sem expor decisões internas?”. API também não é sinônimo de REST, JSON ou URL: web, mobile, cloud, integração entre organizações, omnichannel e IoT pedem estilos, protocolos e formatos diferentes.
+Uma API conecta sistemas, parceiros e dispositivos em ecossistemas digitais e viabiliza modelos de negócio inteiros, de modo que não se limita a uma interface técnica. A organização que expõe uma API transforma nomes, formatos e métodos em compromissos públicos, assim como os estados e os erros. A decisão central deixa de ser a escolha do *framework* e passa a ser a definição do contrato que permite colaboração sem expor decisões internas. API também não é sinônimo de REST, JSON ou URL. Os contextos web, mobile e cloud pedem estilos, protocolos e formatos de dados próprios de cada contexto de uso. A mesma diferença vale para a integração entre organizações, o omnichannel e a IoT.
 
 ## O que este módulo cobre
 
-O percurso trata a API como um **estilo arquitetural** e percorre quatro planos:
+O percurso trata a API como um **estilo arquitetural** e abrange os planos descritos na lista abaixo.
 
-- **Fundamentos:** a web como ecossistema, o HTTP como protocolo com semântica e a API como fronteira de colaboração — interface, contrato e implementação como camadas distintas;
-- **Estilos e tipos:** REST e as restrições de Fielding, RPC, GraphQL, gRPC, WebSocket e SOAP, comparados pela necessidade do consumidor, e os tipos de APIs conforme o contexto de solução;
-- **Contrato e evolução:** OpenAPI como promessa explícita, erros como parte do contrato, paginação, idempotência e versionamento como decisões de compatibilidade;
-- **Borda e plataforma:** gateway de API, adaptadores e as três capacidades de uma plataforma — desenvolvimento, execução e engajamento —, fechando com a agenda do arquiteto para APIs.
+- **Fundamentos:** a web como ecossistema, o HTTP como protocolo com semântica e a API como fronteira de colaboração em que interface, contrato e implementação são camadas distintas.
+- **Estilos e tipos:** REST e as restrições de Fielding comparados a RPC, GraphQL e gRPC e a WebSocket e SOAP segundo a necessidade do consumidor, além dos tipos de APIs conforme o contexto de solução.
+- **Contrato e evolução:** OpenAPI como promessa explícita e erros como parte do contrato, com paginação, idempotência e versionamento tratados como decisões de compatibilidade.
+- **Borda e plataforma:** *gateway* de API e adaptadores, as capacidades de desenvolvimento, execução e engajamento de uma plataforma e a agenda do arquiteto.
 
 ## Questão orientadora
 
-Sua organização precisa expor capacidades a consumidores que ela não controla: aplicações web e móveis, parceiros, outras nuvens e dispositivos. Quais fronteiras merecem virar contrato público e quais devem permanecer internas? Que estilo de interação serve cada consumidor sem acorrentar a evolução do sistema? O que a borda e a plataforma precisam oferecer para que dezenas de APIs continuem seguras, observáveis e compatíveis ao longo dos anos?
+A organização precisa expor capacidades a consumidores que ela não controla, como aplicações web e móveis, parceiros e outras nuvens ou dispositivos. A questão orientadora do encontro se desdobra nas perguntas abaixo.
 
-A pergunta do encontro é arquitetural e trata de quais promessas uma fronteira pública faz, a que custo, e como ela evolui sem quebrar quem depende dela. O raciocínio será:
+- Quais fronteiras merecem se tornar contrato público e quais devem permanecer internas?
+- Que estilo de interação atende cada consumidor sem restringir a evolução do sistema?
+- O que a borda e a plataforma precisam oferecer para que dezenas de APIs continuem seguras, observáveis e compatíveis ao longo dos anos?
+
+A pergunta do encontro é arquitetural e trata das promessas que uma fronteira pública faz, do custo dessas promessas e da forma de evoluir a fronteira sem quebrar os consumidores que dependem dela. O raciocínio segue a sequência abaixo.
 
 > capacidade de negócio → consumidor → estilo de interação → contrato observável → borda e plataforma → evolução compatível
 
-O laboratório materializa esse raciocínio num recorte mínimo de duas operações de elegibilidade, suficiente para observar contrato, semântica e verificação sem esconder o argumento sob um domínio extenso.
+O laboratório aplica esse raciocínio num recorte mínimo de duas operações de elegibilidade. O recorte basta para observar contrato, semântica e verificação sem que um domínio extenso encubra o argumento arquitetural.
 
 ## Objetivos de aprendizagem
 
 Ao concluir o percurso, você será capaz de:
 
-1. explicar API como fronteira de colaboração, separando interface, contrato e implementação;
-2. comparar REST, RPC, GraphQL, gRPC, WebSocket e SOAP pela necessidade do consumidor;
-3. reconhecer os tipos de APIs conforme o contexto de solução e suas consequências;
-4. modelar sucesso, erro, evolução e compatibilidade em OpenAPI;
-5. explicar gateway, adaptador e as capacidades de uma plataforma de APIs;
-6. produzir evidência com FastAPI, `TestClient`, Bruno, Spectral e Ocelot.
+1. explicar API como fronteira de colaboração, separando interface, contrato e implementação.
+2. comparar REST, RPC e GraphQL e também gRPC, WebSocket e SOAP pela necessidade do consumidor.
+3. reconhecer os tipos de APIs conforme o contexto de solução e suas consequências.
+4. modelar sucesso, erro, evolução e compatibilidade em OpenAPI.
+5. explicar *gateway*, adaptador e as capacidades de uma plataforma de APIs.
+6. produzir evidência com FastAPI e `TestClient` e com Bruno, Spectral e Ocelot.
 
 ## Percurso em nove páginas
 
 1. **Visão geral:** delimita problema, resultado e contrato do encontro.
-2. **Conceitos:** do estilo de APIs e dos fundamentos da web às restrições REST de Fielding e à evolução do contrato.
-3. **Padrões e decisões:** tipos de APIs por contexto, a lente da plataforma e a agenda do arquiteto.
-4. **Exemplo arquitetural:** percorre o contrato de elegibilidade de ponta a ponta e expõe a mesma capacidade por gRPC, GraphQL e WebSocket, com programas Python executáveis.
+2. **Conceitos:** apresenta o estilo de APIs e os fundamentos da web, as restrições REST de Fielding e a evolução do contrato.
+3. **Padrões e decisões:** apresenta os tipos de APIs por contexto, a lente da plataforma e a agenda do arquiteto.
+4. **Exemplo arquitetural:** percorre o contrato de elegibilidade completo e expõe a mesma capacidade por gRPC, GraphQL e WebSocket, com programas Python executáveis.
 5. **Estudo de caso:** aplica as decisões à plataforma hospitalar e às integrações externas.
-6. **[Casos reais](casos-reais.md):** acompanha o Twitter abrir uma API, criar um ecossistema inteiro e depois desligá-lo três vezes.
-7. **Oficina de ferramentas:** executa FastAPI, OpenAPI, Bruno, Spectral, testes automatizados e a extensão com o gateway Ocelot.
+6. **[Casos reais](casos-reais.md):** acompanha a abertura da API do Twitter, a formação de um ecossistema de clientes e os três fechamentos posteriores dessa API.
+7. **Oficina de ferramentas:** executa FastAPI e OpenAPI com Bruno e Spectral, os testes automatizados e a extensão com o *gateway* Ocelot.
 8. **Exercícios:** pratica os seis níveis da Taxonomia de Bloom.
 9. **Síntese e referências:** consolida o método e aponta fontes públicas.
 
 ## Entregas do encontro
 
-Guarde `openapi.yaml` validado, execução Bruno, testes de contrato e `ADR-002`. O conjunto compara intenção, implementação e perspectiva do consumidor.
+As entregas do encontro são o `openapi.yaml` validado, a execução no Bruno, os testes de contrato e o `ADR-002`. O conjunto permite comparar a intenção, a implementação e a perspectiva do consumidor.
 
 O [incremento 2 do projeto integrador](../projeto-integrador/incrementos.md#incremento-2-contratos-de-apis-e-integracoes-externas) reutiliza essas evidências. Consulte o [contexto hospitalar](../projeto-integrador/contexto-hospitalar.md) para preservar as fronteiras e o [template de ADR](../referencia/template-adr.md) para registrar a decisão.

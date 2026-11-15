@@ -2,105 +2,107 @@
 
 ## Tipos de APIs
 
-![Tipos de APIs conforme o contexto de solução: web, mobile, cloud, integração, omnichannel e IoT, cada um com exemplo real, protocolos de transporte e formatos de dados.](https://github.com/user-attachments/assets/8d90f8d0-aafd-41c4-9c82-0252819ce133)
+![Quadro dos tipos de APIs conforme o contexto de solução com as categorias web, mobile e cloud e as categorias integração, omnichannel e IoT. Cada categoria traz um exemplo real com seus protocolos de transporte e formatos de dados.](https://github.com/user-attachments/assets/8d90f8d0-aafd-41c4-9c82-0252819ce133)
 
-**Leitura textual da figura:** o quadro compara seis contextos. APIs web alimentam sites e aplicações dinâmicas com HTTP/HTTPS e JSON, XML ou HTML, como a busca de produtos da Amazon. APIs mobile priorizam dados leves e experiência otimizada com HTTPS, HTTP/2, gRPC e WebSocket, como Uber e Instagram. APIs cloud expõem plataformas SaaS para automação e integração entre nuvens, como o Dropbox. APIs de integração conectam empresas e parceiros com contratos rígidos, usando HTTPS, gRPC, SOAP e JMS ou AMQP, como o SAP e as APIs de governo. APIs omnichannel garantem experiência consistente entre canais e dispositivos, como a Shopify. APIs de IoT coletam dados e enviam comandos com MQTT, CoAP, HTTPS e AMQP, como o Google Nest. Uma legenda final resume os protocolos e formatos citados.
+**Leitura textual da figura:** o quadro compara seis contextos de uso de APIs. As APIs web alimentam sites e aplicações dinâmicas com HTTP/HTTPS e com os formatos JSON, XML ou HTML, como a busca de produtos da Amazon. As APIs mobile priorizam dados leves e experiência otimizada com HTTPS e HTTP/2, além de gRPC e WebSocket, como nos casos da Uber e do Instagram. As APIs cloud expõem plataformas SaaS para automação e integração entre nuvens, como o Dropbox. As APIs de integração conectam empresas e parceiros por contratos rígidos sobre HTTPS, gRPC e SOAP ou sobre JMS e AMQP, como o SAP e as APIs de governo. As APIs omnichannel garantem experiência consistente entre canais e dispositivos, como a Shopify. As APIs de IoT coletam dados e enviam comandos com MQTT e CoAP ou com HTTPS e AMQP, como o Google Nest. Uma legenda no rodapé do quadro resume os protocolos e formatos citados nas seis categorias.
 
 ---
 
 ### API para Soluções Web
 
-Aplicativos da Web exibem páginas da Web dinâmicas. Com base nas solicitações dos usuários, as páginas da Web são criadas dinamicamente com os dados disponíveis no back-end. Os dados exibidos nas páginas da web podem ser exibidos por APIs. O aplicativo da Web extrai os dados brutos das APIs, processa os dados e os exibe em páginas HTML.
+Aplicativos web exibem páginas criadas dinamicamente a partir das solicitações dos usuários e dos dados disponíveis no *back-end*. As APIs fornecem esses dados ao aplicativo web, que extrai os dados brutos, processa o conteúdo e o exibe em páginas HTML.
 
-Um aplicativo da Web de comércio eletrônico, por exemplo, exibe produtos em um site com base nos critérios de pesquisa do cliente. Os dados do produto são atendidos pela API do produto, que busca os dados do produto de um banco de dados e retorna campos relevantes na forma de uma estrutura JSON. O aplicativo da Web interpreta a estrutura JSON e a transforma em uma página HTML.
+Um aplicativo web de comércio eletrônico, por exemplo, exibe produtos com base nos critérios de pesquisa do cliente. A API de produtos busca os dados num banco de dados e retorna os campos relevantes numa estrutura JSON, que o aplicativo web interpreta e transforma em página HTML.
 
 **Exemplo Real:**
 
-- **API de Busca de Produtos da Amazon:** Permite que desenvolvedores integrem funções de busca e apresentação de produtos em seus aplicativos personalizados, como sistemas de afiliados.
+- **API de Busca de Produtos da Amazon:** permite que desenvolvedores integrem funções de busca e apresentação de produtos em aplicativos próprios, como sistemas de afiliados.
 - **Protocolos de Transporte e Dados:** HTTP/HTTPS para transporte e formatos como JSON ou XML para dados.
 
 ---
 
 ### API para Soluções Móveis
 
-O número de dispositivos móveis e tablets superou o número de computadores. Os aplicativos para celular são diferentes dos aplicativos de desktop tradicionais, já que a maioria dos aplicativos móveis não é autônoma nem autossuficiente.
+O número de dispositivos móveis e *tablets* superou o número de computadores. Os aplicativos para celular diferem dos aplicativos de *desktop* tradicionais porque a maioria deles não é autônoma nem autossuficiente.
 
-Os aplicativos precisam se conectar aos servidores na Internet para serem utilizáveis ou, pelo menos, serem utilizáveis em seu pleno potencial.
+Os aplicativos móveis precisam se conectar a servidores na internet para funcionar ou, pelo menos, para oferecer a totalidade de suas funções.
 
-Os dados entregues pelas APIs precisam ser leves e particionados. Isso garante que a API possa ser consumida por dispositivos com capacidade de processamento limitada e largura de banda limitada de conexão à Internet.
+Os dados entregues pelas APIs a esses aplicativos precisam ser leves e particionados. Essa característica permite o consumo da API por dispositivos com capacidade de processamento limitada e com largura de banda restrita na conexão à internet.
 
 **Exemplo Real:**
 
-- **API da Uber:** Fornece acesso aos motoristas e passageiros. Se iniciou em protocolo HTTP e JSON. Com o crescimento da Uber, foi modificada para protocolos de alta escalabilidade como o gRPC e o ProtoBuffer.
-- **API do Instagram:** Fornece acesso a dados como posts, comentários e publicações recentes, permitindo a criação de experiências otimizadas para dispositivos móveis.
-- **GraphQL no Spotify:** Usado para permitir que aplicativos móveis busquem exatamente os dados de álbuns, artistas e playlists em uma única consulta, otimizando a experiência do usuário.
+- **API da Uber:** fornece acesso a motoristas e passageiros. A API começou com o protocolo HTTP e o formato JSON e, com o crescimento da Uber, foi modificada para protocolos de alta escalabilidade como o gRPC e o ProtoBuffer.
+- **API do Instagram:** fornece acesso a dados como *posts*, comentários e publicações recentes e permite a criação de experiências otimizadas para dispositivos móveis.
+- **GraphQL no Spotify:** permite que aplicativos móveis busquem numa única consulta exatamente os dados de álbuns, artistas e *playlists* de que precisam, o que otimiza a experiência do usuário.
 - **Protocolos de Transporte e Dados:** HTTP/HTTPS com JSON para APIs REST e consultas estruturadas no caso de GraphQL.
 
 ---
 
 ### APIs para Soluções de Nuvens
 
-As soluções em nuvem SaaS normalmente consistem em um aplicativo da Web e APIs. O aplicativo da web é visível para os consumidores.
+As soluções SaaS em nuvem normalmente consistem num aplicativo web visível para os consumidores e em APIs que operam por trás desse aplicativo.
 
-Embaixo do capô, as soluções em nuvem geralmente oferecem uma API também, no entanto, a API normalmente permanece sob a superfície. Essa API pode ser usada para conectar o aplicativo de nuvem a outros aplicativos de nuvem para realizar a automação ou para conectar a solução de nuvem a aplicativos móveis e software de desktop.
+As soluções em nuvem geralmente oferecem também uma API que permanece oculta ao usuário final. Essa API conecta o aplicativo de nuvem a outros aplicativos de nuvem para fins de automação ou conecta a solução a aplicativos móveis e a *software* de *desktop*.
 
 **Exemplo Real:**
 
-- **API do Dropbox:** Permite a sincronização de arquivos com aplicativos de terceiros, como Google Workspace e Microsoft Office.
-- **Protocolos de Transporte e Dados:** HTTPS é usado para transporte seguro; os dados são geralmente enviados em JSON para simplicidade.
+- **API do Dropbox:** permite a sincronização de arquivos com aplicativos de terceiros, como Google Workspace e Microsoft Office.
+- **Protocolos de Transporte e Dados:** HTTPS para transporte seguro e dados geralmente enviados em JSON pela simplicidade do formato.
 
 ---
 
 ### APIs para Soluções de Integração
 
-APIs fornecem os recursos, que são essenciais para conectar, estender e integrar software. Ao integrar software, as APIs conectam empresas a outras empresas. Eles são usados em soluções de integração de negócios para empresas.
+As APIs fornecem os recursos essenciais para conectar, estender e integrar *software*. Na integração de *software*, as APIs conectam uma empresa a outras empresas e sustentam soluções de integração de negócios entre organizações.
 
-O negócio de uma empresa pode ser expandido conectando-se os negócios aos parceiros para cima e para baixo na cadeia de valor.
+O negócio de uma empresa pode ser expandido pela conexão com fornecedores e clientes ao longo da cadeia de valor.
 
-Como os negócios são executados pela TI, os negócios podem ser mais bem vinculados, integrando os sistemas de TI de um negócio em toda a cadeia de valor aos sistemas de TI de outras empresas, parceiros, funcionários e, é claro, aos clientes.
+Como a TI executa os processos de negócio, a integração dos sistemas de TI de uma empresa aos sistemas de parceiros, de funcionários e de clientes vincula os negócios ao longo de toda a cadeia de valor.
 
 **Exemplo Real:**
 
-- **gRPC no Uber:** Usado para comunicação de alta performance entre microserviços e sistemas internos de integração, garantindo baixa latência e maior eficiência.
-- **API do SAP:** Integra ERPs corporativos com outros sistemas de TI, permitindo transações entre parceiros de negócios, como fornecedores e clientes.
-- **API do Governo Brasileirao (NF-e, e-Social, TISS):** Faz uso extensivo de XML como protocolo de dados devido aos mecansimos avançados da pilha XML para a validacão de dados e segurança da informação.
-- **Protocolos de Transporte e Dados:** gRPC (Protocol Buffers) para comunicações de alta eficiência e SOAP ou REST para integrações mais tradicionais.
+- **gRPC no Uber:** usado na comunicação de alto desempenho entre microsserviços e sistemas internos de integração, com baixa latência e maior eficiência.
+- **API do SAP:** integra ERPs corporativos a outros sistemas de TI e permite transações entre parceiros de negócios, como fornecedores e clientes.
+- **API do Governo Brasileiro (NF-e, e-Social, TISS):** faz uso extensivo de XML como formato de dados devido aos mecanismos da pilha XML para validação de dados e segurança da informação.
+- **Protocolos de Transporte e Dados:** gRPC com Protocol Buffers para comunicações de alta eficiência e SOAP ou REST para integrações mais tradicionais.
 
 ---
 
 ### APIs para Soluções Multicanal
 
-Essas APIs são projetadas para conectar sistemas diferentes, geralmente entre organizações ou dentro de cadeias de valor, possibilitando a automação de processos e troca de dados.
+As APIs multicanal conectam sistemas diferentes entre organizações ou dentro de cadeias de valor e possibilitam a automação de processos e a troca de dados.
 
-Para melhorar a experiência de compra, os mesmos dados e ações do usuário precisam estar disponíveis em todos os dispositivos do usuário, mesmo que sejam construídos em hardware diferente, executem sistemas operacionais diferentes e aplicativos diferentes.
+Para melhorar a experiência de compra, os mesmos dados e ações do usuário precisam estar disponíveis em cada dispositivo que ele usa. Essa exigência vale mesmo quando os dispositivos têm *hardware* diferente e executam sistemas operacionais e aplicativos diferentes.
 
-Soluções Omni-Canal ou soluções multicanais fornecem exatamente isso. Independentemente do canal usado pelos clientes, eles obtêm uma experiência consistente em todos os dispositivos e podem alternar facilmente entre os dispositivos.
+As soluções omnicanal ou multicanal atendem a essa exigência. Os clientes obtêm uma experiência consistente em qualquer canal ou dispositivo e alternam entre os dispositivos sem perder o estado da interação.
 
 **Exemplo Real:**
 
-- **API da Shopify:** Permite a integração de lojas virtuais para oferecer experiências consistentes em dispositivos móveis, desktops e quiosques.
-- **Protocolos de Transporte e Dados:** HTTP/HTTPS para transporte, JSON para dados e WebSockets para atualizações em tempo real.
+- **API da Shopify:** permite a integração de lojas virtuais para oferecer experiências consistentes em dispositivos móveis, *desktops* e quiosques.
+- **Protocolos de Transporte e Dados:** HTTP/HTTPS para transporte e JSON para dados, com WebSockets para atualizações em tempo real.
 
 ---
 
 ### APIs para Soluções IoT
 
-A internet das coisas é composta de dispositivos físicos com uma conexão à internet. Os dispositivos são controlados por software por meio de seus atores ou os dispositivos podem coletar dados por meio de seus sensores. Assim, o dispositivo em si não precisa ser "inteligente", no entanto, ele pode se comportar como um dispositivo inteligente.
+A internet das coisas é composta de dispositivos físicos conectados à internet. O *software* controla esses dispositivos por meio de seus atuadores e os dispositivos coletam dados por meio de seus sensores. O dispositivo em si não precisa ter capacidade de processamento sofisticada para se comportar como um dispositivo inteligente.
 
-O dispositivo se conecta a funções inteligentes, que são expostas na internet por meio de APIs.
+O dispositivo se conecta a funções inteligentes expostas na internet por meio de APIs.
 
-Exemplos de tais soluções API incluem wearables inteligentes, carros inteligentes, casas inteligentes ou cidades inteligentes.
+Exemplos dessas soluções incluem dispositivos vestíveis, carros, casas e cidades inteligentes.
 
 **Exemplo Real:**
 
-- **API do Google Nest:** Gerencia dispositivos inteligentes como termostatos e câmeras de segurança remotamente.
-- **Protocolos de Transporte e Dados:** MQTT (protocolo leve para dispositivos IoT) ou HTTP/HTTPS para transporte; dados em JSON ou Protocol Buffers para comunicações otimizadas.
+- **API do Google Nest:** gerencia remotamente dispositivos inteligentes como termostatos e câmeras de segurança.
+- **Protocolos de Transporte e Dados:** MQTT, protocolo leve para dispositivos IoT, ou HTTP/HTTPS para transporte e dados em JSON ou em Protocol Buffers para comunicações otimizadas.
 
 ## Como pensar em APIs a partir da lente de uma plataforma
 
-![Arquitetura de referência moderna com firewall, gateway de API, servidor web, fila de mensagens, sistemas legados e banco de dados, ao lado da visão de plataforma de APIs com desenvolvimento, execução e engajamento.](https://github.com/user-attachments/assets/1cad9c6b-da09-4bf6-91e4-0620428e4809)
+![Arquitetura de referência moderna com firewall, gateway de API e servidor web, além de fila de mensagens e sistemas legados com banco de dados. Ao lado aparece a visão de plataforma de APIs com desenvolvimento, execução e engajamento.](https://github.com/user-attachments/assets/1cad9c6b-da09-4bf6-91e4-0620428e4809)
 
-**Leitura textual da figura:** à esquerda, usuários web e mobile acessam o sistema principal: o firewall encaminha as requisições ao gateway de API, que roteia para o servidor web com a lógica de negócios, publica mensagens na fila e consulta e atualiza dois sistemas legados; o servidor web grava no banco de dados. À direita, a plataforma de APIs tem três camadas: a plataforma de desenvolvimento (IDE e extensões, templates, mock servers, testes locais e governança) implanta as APIs na plataforma de execução (gateway, roteamento e transformação, segurança e OAuth, rate limiting e observabilidade), que as publica na plataforma de engajamento (portal do desenvolvedor, documentação e SDKs, catálogo, planos e assinaturas, analytics e feedback). Na base, segurança, escalabilidade, observabilidade, padronização e experiência atravessam o conjunto.
+**Leitura textual da figura:** à esquerda, usuários web e mobile acessam o sistema principal por um *firewall* que encaminha as requisições ao *gateway* de API. O *gateway* roteia as requisições para o servidor web com a lógica de negócios, publica mensagens na fila e consulta e atualiza dois sistemas legados. O servidor web grava os dados de negócio no banco de dados da arquitetura de referência.
+
+À direita, a plataforma de APIs tem três camadas encadeadas, da mais próxima do desenvolvedor para a mais próxima do consumidor. A plataforma de desenvolvimento reúne IDE e extensões, *templates* e *mock servers*, testes locais e governança e implanta as APIs na plataforma de execução. A plataforma de execução reúne *gateway*, roteamento e transformação e também cuida da segurança com OAuth, do *rate limiting* e da observabilidade. Essa camada publica as APIs na plataforma de engajamento. A plataforma de engajamento oferece portal do desenvolvedor, documentação e SDKs e catálogo de APIs. Ela também oferece planos e assinaturas, *analytics* e *feedback*. Na base da figura, as preocupações de segurança e escalabilidade atravessam o conjunto das três camadas. A observabilidade, a padronização e a experiência do desenvolvedor também se aplicam às três camadas.
 
 ### Ferramentas para Cada Parte da Plataforma de APIs
 
@@ -109,7 +111,7 @@ Exemplos de tais soluções API incluem wearables inteligentes, carros inteligen
 1. **Swagger Editor** - Ferramenta para criar especificações de APIs: [Swagger Editor](https://swagger.io/tools/swagger-editor/)
 2. **Postman** - Ideal para desenvolvimento e simulação de APIs: [Postman](https://www.postman.com/)
 3. **Insomnia** - Cliente HTTP para testar e organizar APIs: [Insomnia](https://insomnia.rest/)
-4. **Visual Studio Code (com extensões)** - Oferece suporte para desenvolvimento de APIs: [VS Code](https://code.visualstudio.com/)
+4. **Visual Studio Code com extensões** - Oferece suporte para desenvolvimento de APIs: [VS Code](https://code.visualstudio.com/)
 5. **OpenAPI Generator** - Gera SDKs a partir de especificações de APIs: [OpenAPI Generator](https://openapi-generator.tech/)
 
 ---
@@ -136,19 +138,28 @@ Exemplos de tais soluções API incluem wearables inteligentes, carros inteligen
 
 ## Resumo - A Agenda do Arquiteto para APIs
 
-![A agenda do arquiteto para APIs em seis frentes: desenhar, implementar e testar, documentar, definir tecnologias, gerenciar e reutilizar APIs, com etapas conduzidas junto com o time.](https://github.com/user-attachments/assets/cf10adc2-d2a1-4a37-b95f-57d59151afaf)
+![Agenda do arquiteto para APIs em seis frentes. As frentes são o desenho, a implementação com teste e a documentação de APIs, além da definição de tecnologias e da gestão e reutilização de APIs. As etapas são conduzidas junto com o time.](https://github.com/user-attachments/assets/cf10adc2-d2a1-4a37-b95f-57d59151afaf)
 
-**Leitura textual da figura:** o infográfico organiza a agenda em seis perguntas. Como identificar, escolher e desenhar APIs: entender requisitos, definir escopo, escolher o estilo arquitetural e criar um protótipo. Como implementar e testar: escolher plataforma, implementar endpoints, testar e iterar. Como documentar e comunicar: gerar documentação, adicionar exemplos e publicar um portal. Como definir tecnologias: avaliar requisitos, escolher linguagens e frameworks e selecionar protocolos. Como gerenciar: publicar, monitorar, versionar e proteger. Como descobrir e reutilizar: mapear catálogos, avaliar compatibilidade e reutilizar com SDKs e conectores. Cada frente lista ferramentas de apoio, e a moldura lembra que arquitetura é sociotécnica: o arquiteto conduz junto com o time e responde pelas consequências das decisões.
+**Leitura textual da figura:** o infográfico organiza a agenda do arquiteto em seis perguntas, cada uma com suas etapas.
+
+- Identificar, escolher e desenhar APIs envolve entender requisitos e definir escopo, escolher o estilo arquitetural e criar um protótipo.
+- Implementar e testar envolve escolher a plataforma, implementar *endpoints*, testar e iterar.
+- Documentar e comunicar envolve gerar documentação, adicionar exemplos e publicar um portal.
+- Definir tecnologias envolve avaliar requisitos, escolher linguagens e *frameworks* e selecionar protocolos.
+- Gerenciar envolve publicar, monitorar, versionar e proteger as APIs.
+- Descobrir e reutilizar envolve mapear catálogos, avaliar compatibilidade e reutilizar com SDKs e conectores.
+
+Cada frente lista ferramentas de apoio. A moldura da figura registra que a arquitetura é sociotécnica, de modo que o arquiteto conduz as etapas junto com o time e responde pelas consequências das decisões.
 
 ### Como identificar, escolher e desenhar APIs?
 
 **Detalhes:**  
 
-O processo de identificar e desenhar uma API começa com o entendimento dos requisitos de negócios e das necessidades dos consumidores da API. As etapas incluem:
+O processo de identificar e desenhar uma API começa com o entendimento dos requisitos de negócio e das necessidades dos consumidores da API. As etapas incluem:
 
-1. **Entender os requisitos:** Identifique os dados e funcionalidades que a API deve fornecer. Use técnicas como entrevistas com stakeholders e levantamento de casos de uso.
+1. **Entender os requisitos:** Identifique os dados e funcionalidades que a API deve fornecer. Use técnicas como entrevistas com *stakeholders* e levantamento de casos de uso.
 2. **Definir escopo e objetivo:** Determine o que a API deve resolver e quais consumidores ela atenderá.
-3. **Escolher o estilo arquitetural:** Decida entre REST, GraphQL, gRPC, SOAP ou WebSocket com base no contexto do uso.
+3. **Escolher o estilo arquitetural:** Decida entre REST, GraphQL e gRPC ou entre SOAP e WebSocket com base no contexto do uso.
 4. **Criar um protótipo:** Utilize ferramentas como Swagger ou Postman para modelar e simular a API antes de sua implementação.
 
 **Ferramentas de ajuda:**
@@ -162,17 +173,17 @@ O processo de identificar e desenhar uma API começa com o entendimento dos requ
 
 **Detalhes:**  
 
-A implementação de APIs segue a definição do design e seu desenvolvimento em linguagens e frameworks compatíveis. O ciclo de desenvolvimento inclui:
+A implementação de APIs segue a definição do desenho e ocorre em linguagens e *frameworks* compatíveis. O ciclo de desenvolvimento inclui:
 
 1. **Escolher uma plataforma ou framework:** Frameworks como Express.js (Node.js), Flask (Python) ou Spring Boot (Java) podem ser usados.
-2. **Implementar endpoints:** Desenvolva cada endpoint conforme especificado no protótipo da API.
+2. **Implementar endpoints:** Desenvolva cada *endpoint* conforme especificado no protótipo da API.
 3. **Testar a API:** Realize testes unitários, de integração e de carga usando ferramentas automatizadas.
-4. **Iterar e corrigir:** Ajuste o código conforme resultados de testes.
+4. **Iterar e corrigir:** Ajuste o código conforme os resultados dos testes.
 
 **Ferramentas de ajuda:**
 
 - Postman para testes manuais: [https://www.postman.com/](https://www.postman.com/)
-- Newman (CLI para testes com Postman): [https://github.com/postmanlabs/newman](https://github.com/postmanlabs/newman)
+- Newman, CLI para testes com Postman: [https://github.com/postmanlabs/newman](https://github.com/postmanlabs/newman)
 - JMeter para testes de carga: [https://jmeter.apache.org/](https://jmeter.apache.org/)
 
 ---
@@ -181,11 +192,11 @@ A implementação de APIs segue a definição do design e seu desenvolvimento em
 
 **Detalhes:**  
 
-Uma boa documentação é essencial para que os consumidores possam usar a API de forma eficiente. Os passos incluem:
+Uma documentação completa permite que os consumidores usem a API de forma eficiente. Os passos incluem:
 
 1. **Gerar documentação automática:** Use ferramentas como Swagger ou API Blueprint para gerar documentação a partir do código.
-2. **Adicionar exemplos:** Inclua exemplos de uso de cada endpoint e possíveis respostas.
-3. **Publicar a documentação:** Disponibilize um portal para desenvolvedores com acesso à documentação e exemplos.
+2. **Adicionar exemplos:** Inclua exemplos de uso de cada *endpoint* e as respostas possíveis.
+3. **Publicar a documentação:** Disponibilize um portal para desenvolvedores com acesso à documentação e aos exemplos.
 
 **Ferramentas de ajuda:**
 
@@ -217,12 +228,12 @@ A definição de tecnologias para APIs depende de fatores como desempenho, escal
 
 **Detalhes:**  
 
-Gerenciar APIs inclui publicação, monitoramento, controle de versão e segurança. As etapas incluem:
+O gerenciamento de APIs inclui publicação, monitoramento, controle de versão e segurança. As etapas incluem:
 
 1. **Publicar APIs:** Use plataformas como AWS API Gateway ou Apigee para hospedar APIs.
 2. **Monitorar desempenho:** Utilize ferramentas para rastrear latência, erros e uso.
 3. **Controlar versões:** Defina versões claras e mantenha compatibilidade com consumidores.
-4. **Proteger APIs:** Implemente autenticação (OAuth, API keys) e crie limites de taxa para evitar abuso.
+4. **Proteger APIs:** Implemente autenticação com OAuth ou com chaves de API e crie limites de taxa para evitar abuso.
 
 **Ferramentas de ajuda:**
 
@@ -237,11 +248,11 @@ Gerenciar APIs inclui publicação, monitoramento, controle de versão e seguran
 
 **Detalhes:**  
 
-Reutilizar APIs existentes acelera o desenvolvimento e promove padronização. As etapas incluem:
+A reutilização de APIs existentes acelera o desenvolvimento e promove padronização. As etapas incluem:
 
-1. **Mapear APIs internas e externas:** Identifique APIs existentes em catálogos internos ou em marketplaces como API Landscape.
+1. **Mapear APIs internas e externas:** Identifique APIs existentes em catálogos internos ou em *marketplaces* como API Landscape.
 2. **Avaliar compatibilidade:** Certifique-se de que a API atende às necessidades do projeto.
-3. **Reutilizar APIs:** Use SDKs ou ferramentas para integração fácil.
+3. **Reutilizar APIs:** Use SDKs ou ferramentas de integração.
 
 **Ferramentas de ajuda:**
 

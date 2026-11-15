@@ -1,89 +1,99 @@
 # Exercícios por Taxonomia de Bloom
 
-Responda primeiro e abra “Ver resposta” somente depois da tentativa. Nas atividades de Aplicar, Analisar, Avaliar e Criar, siga o roteiro completo: ele apresenta o artefato, a condição de início, a evidência e os limites da prática antes de pedir uma decisão.
+Responda primeiro e abra “Ver resposta” somente depois da tentativa. Nas atividades dos níveis Aplicar, Analisar, Avaliar e Criar o roteiro completo antecede o pedido de decisão. O roteiro apresenta o artefato, a condição de início, a evidência e os limites da prática.
 
 ## Recordar
 
-1\. Toda API tem três camadas fáceis de confundir: a **interface** (a porta oferecida), o **contrato** (as promessas observáveis) e a **implementação** (como elas são cumpridas). O que diferencia essas três?
+1\. O que diferencia a **interface**, o **contrato** e a **implementação**, as três camadas de uma API que costumam ser confundidas pelas equipes de desenvolvimento?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Interface é a fronteira oferecida; contrato torna explícitas as promessas observáveis; implementação é o mecanismo que as cumpre. Um consumidor deveria depender somente do contrato, sem depender do framework ou do banco usados internamente.
+A interface é a fronteira oferecida ao consumidor e o contrato torna explícitas as promessas observáveis dessa fronteira. A implementação é o mecanismo que cumpre essas promessas. Um consumidor deveria depender somente do contrato, sem depender do *framework* ou do banco de dados usados internamente pelo provedor da API.
+
 </details>
 
-2\. Os métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`...) têm papéis diferentes por convenção. Qual é a diferença fundamental de propósito entre `GET` e `POST`?
+2\. Qual é a diferença fundamental de propósito entre os métodos `GET` e `POST` do protocolo HTTP, considerando que cada método HTTP tem um papel definido por convenção?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-`GET` solicita a representação atual de um recurso, sem a intenção de alterar estado no servidor. `POST` normalmente cria algo novo ou dispara um processamento, alterando o estado do servidor.
+O método `GET` solicita a representação atual de um recurso sem a intenção de alterar o estado do servidor. O método `POST` normalmente cria algo novo ou dispara um processamento e, com isso, altera o estado do servidor HTTP.
+
 </details>
 
-3\. Por que uma API REST evita colocar o nome da ação na própria URL — como `/criarPedido` ou `/listarPedidos` — e prefere algo como `POST /pedidos` e `GET /pedidos`?
+3\. Por que uma API REST evita colocar o nome da ação na própria URL, como em `/criarPedido` ou `/listarPedidos`, preferindo formas como `POST /pedidos` e `GET /pedidos`?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Porque REST organiza a API em torno de **recursos** (substantivos) e deixa a ação a cargo do **verbo HTTP**. Repetir a ação na URL duplica a semântica e quebra a uniformidade que permite tratamento genérico por ferramentas, cache e roteamento.
+O estilo REST organiza a API em torno de **recursos** nomeados por substantivos e deixa a ação a cargo do **método HTTP**. A repetição da ação na URL duplica a semântica e quebra a uniformidade que permite o tratamento genérico das requisições por ferramentas, *caches* e roteadores HTTP.
+
 </details>
 
-4\. Em integrações, a mesma chamada às vezes chega repetida. O que significa dizer que uma operação é **idempotente**?
+4\. O que significa dizer que uma operação de uma API HTTP é **idempotente**, considerando que em integrações entre sistemas a mesma chamada às vezes chega repetida ao servidor?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Repetir a mesma intenção produz o mesmo efeito pretendido no servidor. Isso não exige que cada resposta seja idêntica nem cria deduplicação automática em uma integração distribuída.
+Uma operação idempotente é aquela em que a repetição da mesma intenção produz o mesmo efeito pretendido no servidor. A idempotência não exige que cada resposta seja idêntica e não cria deduplicação automática numa integração distribuída entre sistemas HTTP.
+
 </details>
 
-5\. Existe um formato padrão para descrever por escrito os paths, operações, schemas, exemplos e respostas de uma API HTTP. Que artefato é esse?
+5\. Que artefato padronizado descreve por escrito os *paths*, as operações e os *schemas* de uma API HTTP com seus exemplos e respostas?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Um documento OpenAPI. No laboratório, o contrato explícito está em `laboratorios/plataforma-hospitalar/contratos/openapi.yaml`.
+O artefato é um documento OpenAPI, que no laboratório corresponde ao contrato explícito gravado em `laboratorios/plataforma-hospitalar/contratos/openapi.yaml`.
+
 </details>
 
-6\. Um **API gateway** fica na borda, entre os consumidores e as APIs internas. Cite duas responsabilidades técnicas adequadas a ele e uma responsabilidade que **não** deveria ficar nele.
+6\. Cite duas responsabilidades técnicas adequadas ao ***API gateway*** que fica na borda da arquitetura entre os consumidores e as APIs internas e uma responsabilidade que **não** deveria ser atribuída a esse componente.
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Roteamento, terminação TLS, autenticação técnica, limite de tráfego, correlação e telemetria são responsabilidades possíveis. Tradução de vocabulário do laboratório e regras de elegibilidade não devem ser despejadas no gateway.
+O roteamento, a terminação TLS e a autenticação técnica são responsabilidades possíveis do *gateway*. O limite de tráfego, a correlação e a telemetria também são responsabilidades adequadas a ele. A tradução de vocabulário do laboratório e as regras de elegibilidade não devem ser colocadas no *gateway* da API.
+
 </details>
 
 ## Compreender
 
-1\. Uma operação `POST /aprovarAutomaticamente` usa JSON e HTTP. Por que ela pode ser um RPC coerente, mas não deve ser chamada de REST só por causa disso?
+1\. Por que a operação `POST /aprovarAutomaticamente`, que usa JSON e HTTP, pode ser um RPC coerente e ainda assim não deve ser chamada de REST apenas por usar JSON e HTTP?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-RPC organiza a colaboração por operações nomeadas. REST requer restrições e semântica de recursos, representações e mensagens HTTP; uma URL com HTTP não comprova essas propriedades.
+O RPC organiza a colaboração por operações nomeadas. O REST requer restrições e a semântica de recursos, representações e mensagens HTTP, de modo que uma URL acessada por HTTP não comprova essas propriedades do estilo REST.
+
 </details>
 
-2\. Comparado a uma API de leitura com campos fixos, quando o GraphQL tende a ajudar mais?
+2\. Em comparação com uma API de leitura com campos fixos, em que situação o GraphQL tende a ajudar mais o consumidor?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Quando consumidores precisam de combinações de campos e relações muito variáveis. Ainda é necessário controlar custo das consultas, autorização por campo e cache; não é a escolha automática para qualquer tela móvel.
+O GraphQL ajuda mais quando os consumidores precisam de combinações de campos e de relações muito variáveis. O provedor ainda precisa controlar o custo das consultas, a autorização por campo e o *cache*. O GraphQL não é a escolha automática para qualquer tela de aplicativo móvel.
+
 </details>
 
-3\. O **WebSocket** mantém um canal aberto entre cliente e servidor. O que ele resolve e o que ele não resolve sozinho?
+3\. Considerando que o **WebSocket** mantém um canal aberto entre cliente e servidor, o que o WebSocket resolve e o que ele não resolve sozinho?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Ele mantém um canal bidirecional persistente para atualização em tempo real. Não garante entrega durável, reprocessamento, ordenação de negócio ou recuperação após desconexão; essas políticas precisam ser projetadas.
+O WebSocket mantém um canal bidirecional persistente para atualização em tempo real entre cliente e servidor. Ele não garante entrega durável, reprocessamento e ordenação de negócio nem recuperação após desconexão, políticas que precisam ser projetadas fora do protocolo WebSocket.
+
 </details>
 
-4\. O laboratório fala **SOAP/TISS** (o padrão de troca das operadoras) e a plataforma usa o próprio vocabulário. Por que traduzir entre os dois é mais apropriado num **adaptador** do que no **gateway**?
+4\. O laboratório usa **SOAP/TISS**, padrão de troca de dados das operadoras de saúde, enquanto a plataforma hospitalar usa o próprio vocabulário de negócio. Por que a tradução entre os dois vocabulários é mais apropriada num **adaptador** do que no ***gateway*** da plataforma hospitalar?
 
 <details markdown="1">
 <summary>Ver resposta</summary>
 
-Porque a tradução contém conhecimento da dependência e de seus significados. O gateway pode aplicar políticas técnicas; o adaptador isola mudanças externas e protege o domínio interno da plataforma.
+A tradução contém conhecimento da dependência externa e dos significados que ela atribui aos dados. O *gateway* pode aplicar políticas técnicas, enquanto o adaptador isola as mudanças externas e protege o domínio interno da plataforma contra o vocabulário SOAP/TISS.
+
 </details>
 
 ## Aplicar
@@ -91,26 +101,26 @@ Porque a tradução contém conhecimento da dependência e de seus significados.
 
 **Objetivo**
 
-Recomendar um entre quatro estilos de interação para entregar resultados de exame a uma operadora parceira, declarando ganho, custo e o fato que decide.
+Recomendar um entre quatro estilos de interação para entregar resultados de exame a uma operadora parceira, com a declaração do ganho, do custo e do fato que decide a escolha.
 
 **Situação**
 
-O hospital precisa entregar o resultado de exames a uma operadora de saúde parceira. O resultado nasce no laboratório e fica pronto muito depois do pedido. A operadora usa esse resultado para liberar procedimentos seguintes, então o atraso tem consequência para o paciente.
+O hospital precisa entregar o resultado de exames a uma operadora de saúde parceira. O resultado é produzido pelo laboratório e fica pronto muito depois do pedido. A operadora usa esse resultado para liberar os procedimentos seguintes, de modo que o atraso tem consequência para o paciente.
 
-Hoje não existe integração. Alguém exporta uma planilha no fim do dia e envia por correio eletrônico. A operadora reclama do atraso e o hospital reclama do retrabalho.
+Atualmente não existe integração entre as duas empresas. Um funcionário exporta uma planilha no fim do dia e a envia por correio eletrônico à operadora. A operadora reclama do atraso na entrega e o hospital reclama do retrabalho manual que a planilha exige.
 
 A área de integração pediu uma recomendação de contrato antes de abrir o projeto.
 
-Seis fatos foram apurados nas duas empresas:
+A lista abaixo reúne os seis fatos apurados nas duas empresas.
 
 1. O resultado fica pronto entre vinte minutos e seis horas depois do pedido, sem previsibilidade.
 2. A operadora processa no máximo quatrocentos resultados por dia.
 3. O contrato entre as empresas exige comprovar a entrega de cada resultado, com identificador e carimbo de tempo.
-4. A operadora não mantém endereço público para receber chamadas de entrada, e a área de segurança dela não pretende abrir um.
-5. O hospital não opera fila nem *broker* hoje, e a infraestrutura tem uma pessoa.
+4. A operadora não mantém endereço público para receber chamadas de entrada e a área de segurança dela não pretende abrir um.
+5. O hospital não opera fila nem *broker* atualmente e a equipe de infraestrutura tem uma pessoa.
 6. Um atraso de até quinze minutos entre o resultado ficar pronto e chegar à operadora é aceitável.
 
-As quatro alternativas em avaliação:
+A tabela abaixo descreve as quatro alternativas em avaliação.
 
 | Alternativa | O que muda no contrato |
 | --- | --- |
@@ -125,28 +135,28 @@ Você é a pessoa arquiteta responsável pela recomendação de contrato. A impl
 
 **O que fazer**
 
-Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido uma resposta para cada item da lista abaixo, sem necessidade de diagramas.
 
-1. Recomende uma das quatro alternativas, em uma frase.
-2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do problema descrito e o que ela cobra em troca.
-3. Na alternativa recomendada, diga o que a operadora recebe quando o resultado ainda não ficou pronto, e onde fica registrada a comprovação de entrega que o fato 3 exige.
-4. Aponte a alternativa que você descartaria de imediato e diga qual fato a derruba.
-5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria trocar de alternativa.
+1. Recomende uma das quatro alternativas em uma frase.
+2. Escreva duas frases sobre cada uma das quatro alternativas, que indiquem o que ela resolve do problema descrito e o que ela exige em troca.
+3. Na alternativa recomendada, diga o que a operadora recebe quando o resultado ainda não ficou pronto. Diga também onde fica registrada a comprovação de entrega que o fato 3 exige.
+4. Aponte a alternativa que você descartaria de imediato e diga qual fato a elimina.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que levaria à troca de alternativa.
 
 **Evidência esperada**
 
-O artefato traz o quadro comparativo completo, a recomendação em uma frase, o contrato de erro escrito com código de status e identificador, a resposta sobre comprovação de entrega, a alternativa descartada com o fato que a derruba, o risco aceito e o sinal de revisão observável.
+O artefato traz o quadro comparativo completo e a recomendação em uma frase. Ele também traz o contrato de erro escrito com código de status e identificador e a resposta sobre a comprovação de entrega. Por fim, registra a alternativa descartada com o fato que a elimina, o risco aceito e o sinal de revisão observável.
 
 ## Analisar
 **Objetivo**
 
-Explicar por que três contratos de consulta que funcionam isoladamente quebram quando usados juntos, e comparar as saídas possíveis.
+Explicar por que três contratos de consulta que funcionam isoladamente falham quando usados em conjunto e comparar as saídas possíveis.
 
 **Situação**
 
-Um sistema de agendamento hospitalar consulta a agenda de três parceiros diferentes para montar uma lista única de horários livres. São até quarenta mil horários futuros, e o aplicativo do paciente carrega vinte por vez, conforme ele rola a tela.
+Um sistema de agendamento hospitalar consulta a agenda de três parceiros diferentes para montar uma lista única de horários livres. A lista tem até quarenta mil horários futuros e o aplicativo do paciente carrega vinte por vez, conforme o paciente rola a tela.
 
-Os três parceiros paginam de jeitos diferentes:
+A tabela abaixo descreve a forma de paginação de cada parceiro.
 
 | Parceiro | Como pagina |
 | --- | --- |
@@ -154,16 +164,16 @@ Os três parceiros paginam de jeitos diferentes:
 | **B** | Aceita pular um número de registros e devolve os horários numa ordem própria, que muda entre uma chamada e outra. |
 | **C** | Entrega um cursor próprio, uma marca opaca que o consumidor devolve para pedir a página seguinte. |
 
-Enquanto o paciente rola a tela, horários são criados e cancelados o tempo inteiro. Pacientes relatam duas coisas: horários que aparecem duas vezes na lista e horários que existem mas nunca aparecem.
+Enquanto o paciente rola a tela, horários são criados e cancelados continuamente. Os pacientes relatam dois problemas, que são horários repetidos na lista e horários existentes que nunca aparecem nela.
 
-Quatro fatos foram apurados:
+A lista abaixo reúne os quatro fatos apurados.
 
-1. O aplicativo pede vinte horários por vez, e o paciente costuma rolar de cinco a dez páginas.
+1. O aplicativo pede vinte horários por vez e o paciente costuma rolar de cinco a dez páginas.
 2. Criações e cancelamentos acontecem durante a navegação, em média quatro por minuto.
 3. Os três parceiros respondem em menos de trezentos milissegundos.
 4. Nenhum dos três aceita alterar o contrato antes de seis meses.
 
-Três saídas estão sobre a mesa:
+As três saídas em discussão estão descritas a seguir.
 
 #### Saída A
 
@@ -175,40 +185,40 @@ O sistema mantém a paginação de cada parceiro como está e passa a devolver, 
 
 #### Saída C
 
-O sistema adota um cursor próprio para o aplicativo e, por baixo, traduz esse cursor para o mecanismo de cada parceiro, guardando a posição de leitura de cada um.
+O sistema adota um cursor próprio para o aplicativo e traduz internamente esse cursor para o mecanismo de cada parceiro, com o registro da posição de leitura de cada um.
 
 Os quatro fatos numerados, a tabela de paginação dos três parceiros e as três saídas estão descritos nesta página.
 
 **Seu papel**
 
-Você conduz a análise antes de qualquer mudança de contrato. Nenhum parceiro será convencido a mudar nesta semana.
+Você conduz a análise antes de qualquer mudança de contrato. Nenhum parceiro aceitará mudar o próprio contrato nesta semana.
 
 **O que fazer**
 
-Escreva em texto corrido, uma resposta por item.
+Escreva em texto corrido uma resposta para cada item da lista abaixo.
 
-1. Explique por que o parceiro B produz horários repetidos e horários invisíveis, ligando o defeito ao fato 2.
-2. Diga se o mesmo defeito aparece com o parceiro A, e por quê. Depois faça o mesmo para o parceiro C.
-3. Sobre cada uma das três saídas, escreva duas frases: o que ela resolve e o que ela cobra em troca.
-4. Recomende uma das três e cite o fato que mais pesou na escolha.
-5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria revê-la.
+1. Explique por que o parceiro B produz horários repetidos e horários invisíveis, com a ligação entre o defeito e o fato 2.
+2. Diga se o mesmo defeito aparece com o parceiro A e explique o motivo. Depois faça a mesma análise para o parceiro C.
+3. Escreva duas frases sobre cada uma das três saídas, que indiquem o que ela resolve e o que ela exige em troca.
+4. Recomende uma das três saídas e cite o fato que mais pesou na escolha.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que levaria à revisão dela.
 
 **Evidência esperada**
 
-O arquivo entregue explica o mecanismo do defeito em vez de apenas nomeá-lo, distingue o comportamento dos três parceiros, traz ganho e custo das três saídas e registra o sinal de revisão como condição observável.
+O arquivo entregue explica o mecanismo do defeito além de nomeá-lo e distingue o comportamento dos três parceiros. Ele também traz o ganho e o custo das três saídas e registra o sinal de revisão como condição observável.
 
 ## Avaliar
 **Objetivo**
 
-Julgar três propostas de contrato para uma operação lenta e instável, declarando critérios antes de escolher e nomeando o que a evidência não alcança.
+Julgar três propostas de contrato para uma operação lenta e instável, com a declaração dos critérios antes da escolha e a identificação do que a evidência não alcança.
 
 **Situação**
 
-Um hospital consulta a operadora para autorizar procedimentos. No horário de pico chegam doze mil pedidos de autorização por hora.
+Um hospital consulta a operadora para autorizar procedimentos e recebe doze mil pedidos de autorização por hora no horário de pico.
 
-A operadora é lenta e irregular: responde entre duzentos milissegundos e vinte e cinco segundos, sem padrão. Duas vezes por mês fica indisponível por até dez minutos seguidos.
+A operadora tem tempo de resposta lento e irregular, que varia entre duzentos milissegundos e vinte e cinco segundos sem padrão definido. Duas vezes por mês, a operadora fica indisponível por até dez minutos seguidos.
 
-O comportamento do consumidor piora o quadro. Cinco por cento dos pedidos são repetidos pelo próprio sistema do hospital dois segundos depois, quando a primeira chamada demora.
+O comportamento do consumidor agrava a situação. Cinco por cento dos pedidos são repetidos pelo próprio sistema do hospital dois segundos depois, quando a primeira chamada demora.
 
 Três propostas chegaram ao comitê.
 
@@ -224,60 +234,60 @@ O hospital aceita o pedido, devolve imediatamente um protocolo e resolve a autor
 
 O hospital aceita o pedido e devolve na hora a última decisão conhecida para aquele beneficiário e procedimento, quando existir, marcando a resposta como provisória.
 
-O que foi medido nos últimos três meses:
+A lista abaixo reúne o que foi medido nos últimos três meses.
 
-1. O tempo de resposta da operadora fica entre duzentos milissegundos e um segundo em metade dos pedidos, passa de dois segundos em cerca de cinco por cento deles e chega a vinte e cinco segundos no pior caso.
+1. O tempo de resposta da operadora fica entre duzentos milissegundos e um segundo em metade dos pedidos. Ele passa de dois segundos em cerca de cinco por cento deles e chega a vinte e cinco segundos no pior caso.
 2. A operadora ficou indisponível seis vezes no período, por até dez minutos seguidos em cada uma.
 3. O pico chega a doze mil pedidos de autorização por hora.
 4. Cinco por cento dos pedidos são repetidos pelo sistema do hospital dois segundos depois da primeira chamada.
 
-O que não foi medido:
+A lista abaixo reúne o que não foi medido.
 
-5. Ninguém mediu quantos pedidos repetidos viram autorização duplicada hoje.
+5. Ninguém mediu quantos pedidos repetidos resultam hoje em autorização duplicada.
 6. Ninguém mediu por quanto tempo uma decisão anterior continua válida para o mesmo beneficiário e procedimento.
 
-Há ainda uma restrição de operação:
+Há ainda uma restrição de operação.
 
-7. A equipe de operação trabalha em horário comercial, e ninguém acompanha a integração à noite.
+7. A equipe de operação trabalha em horário comercial e ninguém acompanha a integração à noite.
 
 As três propostas e as listas numeradas do que foi medido, do que não foi medido e da restrição de operação estão descritas nesta página.
 
 **Seu papel**
 
-Você emite o parecer que o comitê vai discutir. Pode aprovar uma proposta, recusar todas ou aprovar com condição.
+Você emite o parecer que o comitê vai discutir. O parecer pode aprovar uma proposta, recusar as três ou aprovar uma delas com condição.
 
 **O que fazer**
 
-Escreva em texto corrido, uma resposta por item.
+Escreva em texto corrido uma resposta para cada item da lista abaixo.
 
-1. Declare de três a cinco critérios de julgamento e diga qual pesa mais neste caso, justificando pelo risco de errar.
-2. Avalie as três propostas contra os seus critérios, um parágrafo por proposta, dizendo o que cada uma protege e o que expõe.
-3. A proposta C depende de uma medida que ninguém tem. Diga qual é, e o que aconteceria se a equipe adotasse C sem ela.
-4. Emita o parecer e escreva o contrato de resposta da proposta que você aprovar: o que o consumidor recebe no caso de sucesso, e o que recebe enquanto a decisão não existe.
+1. Declare de três a cinco critérios de julgamento e diga qual pesa mais neste caso, com justificativa baseada no risco de errar.
+2. Avalie as três propostas segundo os seus critérios, em um parágrafo por proposta, com o que cada uma protege e o que expõe.
+3. A proposta C depende de uma medida que ninguém tem. Diga qual é essa medida e o que aconteceria se a equipe adotasse C sem ela.
+4. Emita o parecer e escreva o contrato de resposta da proposta que você aprovar. O contrato deve indicar o que o consumidor recebe no caso de sucesso e o que recebe enquanto a decisão não existe.
 5. Escreva a objeção mais forte contra o seu parecer e responda a ela.
 
 **Evidência esperada**
 
-O parecer traz critérios escritos antes da escolha, as três propostas julgadas contra eles, a medida ausente nomeada com a consequência de ignorá-la, o contrato de resposta descrito e uma objeção respondida.
+O parecer traz critérios escritos antes da escolha e as três propostas julgadas segundo esses critérios. Ele também nomeia a medida ausente com a consequência de ignorá-la e descreve o contrato de resposta e uma objeção respondida.
 
 ## Criar
 **Objetivo**
 
-Propor o contrato inicial de uma capacidade que será consumida por três públicos diferentes, escolhendo entre três esboços e declarando o que fica de fora.
+Propor o contrato inicial de uma capacidade que será consumida por três públicos diferentes, com a escolha entre três esboços e a declaração do que fica de fora.
 
 **Situação**
 
-O hospital vai expor, pela primeira vez, a consulta de elegibilidade de um beneficiário. Três públicos com necessidades diferentes vão consumir essa capacidade:
+O hospital vai expor pela primeira vez a consulta de elegibilidade de um beneficiário. A lista abaixo descreve os três públicos com necessidades diferentes que vão consumir essa capacidade.
 
-1. O aplicativo do paciente precisa de uma resposta curta e rápida, porque roda em rede móvel e mostra apenas se o beneficiário está apto.
-2. O sistema interno de recepção precisa da resposta completa, com vigência, categoria do plano e motivo da recusa, para orientar o atendente.
-3. Uma operadora parceira quer receber a mesma informação, e o contrato que ela mantém com outros hospitais usa XML sobre um envelope antigo, que o hospital não usa em lugar nenhum.
+1. O aplicativo do paciente precisa de uma resposta curta e rápida, porque é executado em rede móvel e mostra apenas se o beneficiário está apto.
+2. O sistema interno de recepção precisa da resposta completa com vigência, categoria do plano e motivo da recusa para orientar o atendente.
+3. Uma operadora parceira quer receber a mesma informação. O contrato que ela mantém com outros hospitais usa XML sobre um envelope antigo, que o hospital não usa em nenhum outro sistema.
 
-A restrição de execução também está definida:
+A restrição de execução também está definida.
 
 4. A equipe tem quatro pessoas e três meses até a primeira entrega.
 
-Três esboços estão sobre a mesa:
+Os três esboços em discussão estão descritos a seguir.
 
 #### Esboço A
 
@@ -285,35 +295,35 @@ Um contrato único, com a resposta completa, servindo os três públicos. Quem p
 
 #### Esboço B
 
-Dois contratos sobre a mesma capacidade: um enxuto para o aplicativo e um completo para a recepção. A operadora consome o completo.
+Dois contratos sobre a mesma capacidade, sendo um enxuto para o aplicativo e um completo para a recepção. A operadora consome o contrato completo.
 
 #### Esboço C
 
-Dois contratos internos, como no esboço B, mais um adaptador dedicado que traduz para o envelope XML da operadora, isolado do resto.
+Dois contratos internos iguais aos do esboço B, acrescidos de um adaptador dedicado e isolado que traduz a resposta para o envelope XML da operadora.
 
 As três necessidades de consumo numeradas de 1 a 3, a restrição de equipe e prazo no item 4 e os três esboços estão descritos nesta página.
 
 **Seu papel**
 
-Você propõe o contrato inicial. Ele será a fronteira pública do hospital por vários anos, e mudá-lo depois exige combinar com quem já consome.
+Você propõe o contrato inicial. Esse contrato será a fronteira pública do hospital por vários anos e qualquer mudança posterior exige acordo com os consumidores existentes.
 
 **O que fazer**
 
-Escreva em texto corrido, uma resposta por item.
+Escreva em texto corrido uma resposta para cada item da lista abaixo.
 
-1. Escolha um dos três esboços e defenda a escolha citando pelo menos duas das necessidades descritas.
-2. Sobre os dois esboços que você não escolheu, escreva duas frases cada: o que ganhariam e o que custariam.
-3. Descreva o que o consumidor recebe em três situações: beneficiário apto, beneficiário sem cobertura para o procedimento e identificador desconhecido. Diga o que muda entre a segunda e a terceira.
-4. A operadora usa um formato que o hospital não usa. Diga onde essa tradução deve morar na sua proposta, e o que aconteceria se ela vazasse para o contrato interno.
-5. Escreva o sinal que indicaria que o contrato escolhido precisa evoluir, e diga como você faria essa evolução sem quebrar quem já consome.
+1. Escolha um dos três esboços e defenda a escolha com a citação de pelo menos duas das necessidades descritas.
+2. Escreva duas frases sobre cada um dos dois esboços que você não escolheu, com o que ganhariam e o que custariam.
+3. Descreva o que o consumidor recebe quando o beneficiário está apto, quando o beneficiário não tem cobertura para o procedimento e quando o identificador é desconhecido. Diga o que muda entre a segunda e a terceira situação.
+4. A operadora usa um formato que o hospital não usa. Diga onde essa tradução deve ficar na sua proposta e o que aconteceria se ela fosse transferida para o contrato interno.
+5. Escreva o sinal que indicaria que o contrato escolhido precisa evoluir. Diga também como você faria essa evolução sem quebrar os consumidores existentes.
 
 **Evidência esperada**
 
-O arquivo entregue traz o esboço escolhido com duas necessidades citadas, os outros dois avaliados, as três situações de resposta descritas com a diferença entre elas explicada, o lugar da tradução justificado e um caminho de evolução compatível.
+O arquivo entregue traz o esboço escolhido com duas necessidades citadas e a avaliação dos outros dois esboços. Ele também descreve as três situações de resposta com a diferença entre elas explicada, justifica o lugar da tradução e apresenta um caminho de evolução compatível.
 
 ## Questões de múltipla escolha
 
-As vinte questões a seguir formam a atividade de fixação da Unidade 2 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+As vinte questões a seguir formam a atividade de fixação da Unidade 2 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes. As questões simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
 
 ### Questões simples
 
@@ -364,7 +374,7 @@ Qual cabeçalho HTTP informa ao cliente onde acompanhar um recurso aceito, como 
 
 #### Questão 6 [Simples]
 
-Qual especificação descreve caminhos, operações, parâmetros, corpos, respostas e schemas de uma API HTTP em YAML ou JSON?
+Qual especificação descreve em YAML ou JSON os caminhos e as operações de uma API HTTP com seus parâmetros, corpos, respostas e schemas?
 
 - (a) Protocol Buffers.
 - (b) WSDL.
@@ -398,13 +408,13 @@ A API recebe POST /elegibilidades e responde 202 Accepted com o cabeçalho Locat
 - (a) Que a operadora já aprovou a elegibilidade e o recurso foi criado.
 - (b) Que a solicitação foi rejeitada por dados inválidos.
 - (c) Que o consumidor deve repetir a requisição até receber 200.
-- (d) Que a solicitação foi aceita para processamento, ainda sem decisão, e pode ser acompanhada no endereço informado.
+- (d) Que a solicitação foi aceita para processamento ainda sem decisão e pode ser acompanhada no endereço informado.
 
 #### Questão 10 [Média]
 
 Uma equipe criou a rota POST /aprovarAutomaticamente com corpo em JSON e afirma que a API é REST. Como o módulo avalia essa afirmação?
 
-- (a) Incorreta, porque a operação é coerente como RPC, mas usar JSON e HTTP não a torna REST.
+- (a) Incorreta, porque a operação é coerente como RPC, embora o uso de JSON e HTTP não a torne REST.
 - (b) Correta, porque usa HTTP e JSON.
 - (c) Correta, porque toda rota com verbo é REST.
 - (d) Incorreta, porque POST não pode ser usado em APIs REST.
@@ -420,10 +430,10 @@ Um aplicativo móvel precisa buscar exatamente os campos de álbuns, artistas e 
 
 #### Questão 12 [Média]
 
-Uma integração com o governo exige XML e SOAP. A equipe pergunta se a plataforma interna também precisa adotar XML. Qual é a orientação do módulo?
+Uma integração com o governo exige XML e SOAP e a equipe pergunta se a plataforma interna também precisa adotar XML. Qual é a orientação do módulo sobre o uso de XML na plataforma interna?
 
 - (a) Sim, porque o formato do parceiro deve ser o formato canônico interno.
-- (b) Não, porque usar SOAP com o parceiro não obriga a plataforma a adotar XML internamente, e a tradução deve ficar isolada do domínio.
+- (b) Não, porque usar SOAP com o parceiro não obriga a plataforma a adotar XML internamente e a tradução deve ficar isolada do domínio.
 - (c) Sim, porque XML tem validação mais forte que JSON em qualquer cenário.
 - (d) Não, porque SOAP está obsoleto e deve ser substituído pelo parceiro.
 
@@ -440,10 +450,10 @@ O schema ErroAPI do laboratório usa codigo estável, mensagem legível e detalh
 
 Uma coleção de agendamentos muda com frequência e é paginada por offset e limit. Qual risco o módulo aponta e qual alternativa sugere?
 
-- (a) A paginação pode repetir ou omitir itens, e um cursor opaco lida melhor com a mudança.
-- (b) A paginação aumenta a latência, e a alternativa é retornar a coleção inteira.
-- (c) A paginação impede o cache, e a alternativa é usar ETag em cada item.
-- (d) A paginação quebra a idempotência do GET, e a alternativa é usar POST.
+- (a) A paginação pode repetir ou omitir itens e um cursor opaco lida melhor com a mudança.
+- (b) A paginação aumenta a latência e a alternativa é retornar a coleção inteira.
+- (c) A paginação impede o cache e a alternativa é usar ETag em cada item.
+- (d) A paginação quebra a idempotência do GET e a alternativa é usar POST.
 
 #### Questão 15 [Média]
 
@@ -451,7 +461,7 @@ O arquivo openapi.yaml do laboratório é válido sintaticamente. Por que o mód
 
 - (a) Porque o OpenAPI não aceita exemplos de requisição.
 - (b) Porque as três ferramentas geram o código do servidor a partir do contrato.
-- (c) Porque um contrato válido ainda pode ser fraco, e as três ferramentas examinam o documento, o consumo e a execução HTTP.
+- (c) Porque um contrato válido ainda pode ser fraco e as três ferramentas examinam o documento, o consumo e a execução HTTP.
 - (d) Porque o FastAPI exige essas ferramentas para iniciar.
 
 ### Questões difíceis
@@ -467,7 +477,7 @@ Uma API pública precisa evoluir. Qual das mudanças abaixo tende a ser compatí
 
 #### Questão 17 [Difícil]
 
-O cliente de um POST de autorização sofreu timeout e vai repetir a requisição. A equipe decide usar uma chave de idempotência. O que o módulo exige para que essa chave funcione?
+O cliente de um POST de autorização sofreu timeout e vai repetir a requisição, de modo que a equipe decide usar uma chave de idempotência. O que o módulo exige para que essa chave de idempotência funcione?
 
 - (a) Apenas gerar um UUID novo a cada tentativa.
 - (b) Trocar POST por PUT, porque PUT é idempotente por definição.
@@ -476,11 +486,11 @@ O cliente de um POST de autorização sofreu timeout e vai repetir a requisiçã
 
 #### Questão 18 [Difícil]
 
-Uma dependência externa responde lentamente, e a equipe propõe trocar REST por gRPC para resolver a latência. Como o módulo avalia a proposta?
+Uma dependência externa responde lentamente e a equipe propõe trocar REST por gRPC para resolver a latência. Como o módulo avalia a proposta?
 
 - (a) Adequada, porque gRPC sempre reduz a latência total.
 - (b) Adequada, porque gRPC elimina a necessidade de contrato.
-- (c) Insuficiente, porque gRPC não resolve por si só a lentidão de uma dependência externa, e a escolha deve partir da força e da evidência.
+- (c) Insuficiente, porque gRPC não resolve por si só a lentidão de uma dependência externa e a escolha deve partir da força e da evidência.
 - (d) Insuficiente, porque gRPC só funciona com XML.
 
 #### Questão 19 [Difícil]
@@ -497,6 +507,6 @@ Uma equipe quer substituir mensageria por WebSocket para notificar consumidores 
 No caso real do módulo, o Twitter abriu uma API, viu um ecossistema inteiro crescer sobre ela e depois a desligou três vezes. Qual princípio do módulo esse caso ilustra?
 
 - (a) Que APIs públicas devem ser abertas sem qualquer contrato para estimular a adoção.
-- (b) Que expor uma API transforma nomes, formatos e regras em compromissos públicos, e mudar ou remover esse contrato afeta quem depende dele.
+- (b) Que expor uma API transforma nomes, formatos e regras em compromissos públicos cuja mudança ou remoção afeta quem depende deles.
 - (c) Que REST é inadequado para APIs públicas de grande escala.
 - (d) Que ecossistemas de terceiros não dependem do contrato da API.
