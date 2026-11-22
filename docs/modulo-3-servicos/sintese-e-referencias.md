@@ -22,6 +22,8 @@ A consistência entre serviços requer estados intermediários legítimos e meca
 ## Referências fundamentais e oficiais
 
 - Eric Evans, [Domain-Driven Design Reference](https://www.domainlanguage.com/ddd/reference/) — síntese pública de bounded context e outros padrões de modelagem.
+- Martin Fowler, [BoundedContext](https://martinfowler.com/bliki/BoundedContext.html) e [UbiquitousLanguage](https://martinfowler.com/bliki/UbiquitousLanguage.html) — o problema do modelo único numa organização grande, com o exemplo do medidor de energia elétrica.
+- Chris Richardson, [Decompose by business capability](https://microservices.io/patterns/decomposition/decompose-by-business-capability.html) — capacidade de negócio como critério para definir serviços.
 - Martin Fowler e James Lewis, [Microservices](https://martinfowler.com/articles/microservices.html) — caracterização influente do estilo e de suas consequências.
 - Martin Fowler, [Monolith First](https://martinfowler.com/bliki/MonolithFirst.html) — argumento para estabilizar limites antes de distribuir.
 - Microsoft Azure Architecture Center, [CQRS pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) e [Saga pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga) — descrições, forças e limitações.

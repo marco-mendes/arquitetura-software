@@ -6,15 +6,45 @@ Os exemplos desta página vêm do caso usado ao longo do módulo, a plataforma d
 
 ## Capacidade de negócio
 
-Uma **capacidade de negócio** descreve algo que a organização sabe fazer para produzir um resultado, independentemente da tela ou da tecnologia usada hoje. “Verificar elegibilidade”, “agendar atendimento” e “solicitar exame” são capacidades do caso hospitalar. “Salvar no PostgreSQL” e “enviar JSON” são mecanismos técnicos e não descrevem nenhum resultado para o negócio.
+Uma **capacidade de negócio** é algo que a organização faz para gerar valor, descrito pelo resultado que entrega independentemente da tela, do processo ou da tecnologia usados hoje. O conceito vem da modelagem de arquitetura de negócio. Chris Richardson o usa no padrão de decomposição por capacidade de negócio, em que cada serviço corresponde a uma capacidade da organização.
 
-As capacidades ajudam a evitar serviços recortados por camadas técnicas, como um serviço só de controladores ou um serviço só de acesso a banco. Um recorte útil reúne o comportamento, as regras e a informação necessários a um resultado, com um nome que costuma permanecer estável mesmo quando o processo muda. Ainda assim, um mapa de capacidades serve à análise estratégica e não define quais executáveis devem existir. Uma capacidade ampla pode conter vários contextos, assim como várias capacidades pequenas podem coexistir num mesmo contexto.
+A capacidade interessa ao arquiteto porque muda pouco ao longo do tempo. Um banco concede crédito há décadas, embora a análise de crédito tenha passado do papel para planilhas e depois para modelos estatísticos. Uma loja virtual continua gerenciando estoque quando troca de sistema ou de banco de dados. Uma fronteira de serviço desenhada sobre uma capacidade tende a mudar menos do que uma fronteira desenhada sobre as telas ou as tabelas do sistema atual.
+
+A tabela ajuda a distinguir uma capacidade de outros elementos com que ela costuma ser confundida.
+
+| Item | É capacidade de negócio? | Motivo |
+| --- | --- | --- |
+| Conceder crédito, num banco | Sim | Descreve um resultado para o cliente, independente da tecnologia |
+| Calcular o escore no modelo estatístico, num banco | Não | Descreve um mecanismo usado pela capacidade de conceder crédito |
+| Gerenciar estoque, numa loja virtual | Sim | Descreve o resultado de saber o que pode ser vendido e onde está |
+| Departamento financeiro | Não | Descreve uma unidade da organização, que pode executar várias capacidades |
+| Digitar os dados do pedido no formulário | Não | Descreve um passo de processo, que muda quando o processo muda |
+| Salvar no PostgreSQL | Não | Descreve um mecanismo técnico de armazenamento |
+| Verificar elegibilidade, na rede hospitalar | Sim | Descreve o resultado de saber se o paciente tem cobertura do plano |
+
+As capacidades costumam ser organizadas em níveis. Na rede hospitalar, a capacidade ampla de atendimento ao paciente contém as capacidades mais específicas de verificar elegibilidade, solicitar exame e agendar atendimento. O nível útil para discutir serviços é aquele em que cada capacidade tem regras e dados próprios e pode ser explicada a uma pessoa do negócio sem termos técnicos.
 
 Na plataforma hospitalar, verificar elegibilidade e solicitar exame são capacidades distintas. Para decidir se o paciente tem cobertura, Elegibilidade interpreta o vínculo do paciente com a operadora do plano, a vigência do plano e as regras do contrato. Para registrar o pedido do médico, Exames conhece os códigos dos exames, as solicitações e as etapas do fluxo clínico. Exames precisa saber se o paciente tem cobertura e não precisa conhecer as tabelas, os algoritmos ou os documentos que Elegibilidade usa para chegar a essa resposta.
 
+As capacidades ajudam a evitar serviços recortados por camadas técnicas, como um serviço só de controladores ou um serviço só de acesso a banco. Um recorte útil reúne o comportamento, as regras e a informação necessários a um resultado, com um nome que permanece estável mesmo quando o processo muda. Ainda assim, um mapa de capacidades serve à análise estratégica e não define sozinho quais executáveis devem existir, decisão que depende também dos conceitos das próximas seções.
+
 ## Bounded context
 
-Em *Domain-Driven Design*, abordagem de modelagem proposta por Eric Evans, um ***bounded context*** delimita a parte do sistema em que um modelo e a sua linguagem possuem significado consistente. A palavra “situação” pode significar vigência cadastral em Elegibilidade e etapa operacional em Exames. Dentro de cada contexto, os termos, as invariantes e os responsáveis precisam ser claros. A passagem de um contexto para outro exige tradução explícita entre os dois modelos.
+Numa organização grande, a mesma palavra assume significados diferentes em cada área. Martin Fowler relata o caso de uma empresa de energia elétrica em que a palavra “medidor” tinha três significados conforme a área. Ela podia indicar a ligação entre a rede e um endereço, a ligação entre a rede e um cliente ou o próprio aparelho físico instalado. Numa loja virtual, “produto” significa um item com fotos e descrição para o catálogo e uma unidade com localização no armazém para o estoque. Um modelo único que tente atender a esses significados ao mesmo tempo acumula exceções e contradições, de modo que uma mudança pedida pelo catálogo pode quebrar o comportamento esperado pelo estoque.
+
+Eric Evans propôs o ***bounded context*** no livro *Domain-Driven Design*, de 2003, como resposta a esse problema. Um *bounded context* delimita a parte do sistema em que um modelo e a sua linguagem têm significado único e consistente. Dentro do contexto, a equipe usa uma **linguagem ubíqua**, que é o vocabulário compartilhado por especialistas do negócio e desenvolvedores e que aparece também no código. A passagem de um contexto para outro exige tradução explícita entre os dois modelos.
+
+Na rede hospitalar, a mesma pessoa aparece nos três contextos com nomes e significados diferentes, como mostra a tabela.
+
+| Contexto | Nome usado para a pessoa | Informação de que o contexto precisa | Significado de “situação” |
+| --- | --- | --- | --- |
+| Elegibilidade | Beneficiário | Plano, vínculo com a operadora e vigência | Vigência cadastral do plano |
+| Exames | Paciente | Pedidos de exame, códigos e médico solicitante | Etapa do pedido no fluxo clínico |
+| Agendamento | Paciente | Horários, contato e confirmação | Estado da reserva de horário |
+
+Exames não precisa saber como Elegibilidade calcula a vigência do plano. A tradução entre os dois contextos acontece no contrato, em que Exames pergunta se o beneficiário com um identificador tem cobertura e recebe uma resposta simples, sim ou não. Se Elegibilidade passar a considerar uma nova regra da operadora, o modelo de Exames continua igual.
+
+Capacidade e *bounded context* respondem a perguntas diferentes. A capacidade responde ao que a organização faz, enquanto o *bounded context* responde até onde vale um modelo e a sua linguagem. Na rede hospitalar, as duas fronteiras coincidem. Em outros domínios, uma capacidade ampla pode conter vários contextos, assim como um contexto pode atender a várias capacidades pequenas.
 
 Um *bounded context* não é sinônimo de microsserviço, porque ele é antes de tudo uma fronteira semântica. Ele pode ser implementado como módulo de um monólito, como parte coesa de um macrosserviço ou como serviço implantável. Confundir o modelo lógico com a topologia física leva equipes a criar centenas de processos antes de existir necessidade operacional para eles.
 
