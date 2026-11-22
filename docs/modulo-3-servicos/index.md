@@ -22,7 +22,7 @@ Ao final do módulo, você será capaz de justificar uma fronteira de serviço e
 8. Em [Síntese e referências](sintese-e-referencias.md), consolidamos heurísticas e fontes públicas.
 
 ```mermaid
-flowchart LR
+flowchart TB
     A[Capacidades do negócio] --> B[Limites lógicos]
     B --> C[Propriedade dos dados]
     C --> D[Forma de implantação]

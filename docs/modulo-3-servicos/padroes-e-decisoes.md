@@ -386,14 +386,22 @@ Uma **SAGA** coordena uma sequência de transações locais em serviços diferen
 Na **coreografia**, cada serviço executa o seu passo e publica um evento ao qual os serviços seguintes reagem, sem componente central.
 
 ```mermaid
-flowchart LR
-    A[Agenda: reserva horário] -->|HorarioReservado| B[Autorização: autoriza procedimento]
-    B -->|ProcedimentoAutorizado| C[Preparo de Sala: reserva recurso]
-    C -->|PreparoRecusado| B2[Autorização: cancela autorização]
-    B2 -->|AutorizacaoCancelada| A2[Agenda: libera horário]
+sequenceDiagram
+    participant A as Agenda
+    participant U as Autorização
+    participant P as Preparo de Sala
+    Note over A: reserva o horário
+    A-)U: evento HorarioReservado
+    Note over U: autoriza o procedimento
+    U-)P: evento ProcedimentoAutorizado
+    Note over P: não consegue reservar a sala
+    P-)U: evento PreparoRecusado
+    Note over U: cancela a autorização
+    U-)A: evento AutorizacaoCancelada
+    Note over A: libera o horário
 ```
 
-**Texto alternativo:** fluxo coreografado em que Agenda, Autorização e Preparo de Sala reagem a eventos publicados uns pelos outros, incluindo a compensação depois da recusa do preparo.
+**Texto alternativo:** diagrama de sequência em que Agenda, Autorização e Preparo de Sala reagem a eventos publicados uns pelos outros, incluindo a compensação depois da recusa do preparo.
 
 *Figura 5 — SAGA coreografada do agendamento de exame. Fonte: curso.*
 
@@ -402,20 +410,28 @@ flowchart LR
 Na **orquestração**, um componente conhece a sequência inteira, chama cada serviço na ordem definida e aciona as compensações dos passos já confirmados em ordem inversa quando um passo falha.
 
 ```mermaid
-flowchart TB
-    O[Orquestrador de agendamento] --> A[Agenda: reserva horário]
-    O --> B[Autorização: autoriza procedimento]
-    O --> C[Preparo de Sala: reserva recurso]
-    C -.falha.-> O
-    O -.compensa.-> B
-    O -.compensa.-> A
+sequenceDiagram
+    participant O as Orquestrador
+    participant A as Agenda
+    participant U as Autorização
+    participant P as Preparo de Sala
+    O->>A: reservar horário
+    A-->>O: horário reservado
+    O->>U: autorizar procedimento
+    U-->>O: procedimento autorizado
+    O->>P: reservar sala
+    P-->>O: falha na reserva
+    O->>U: compensar com cancelamento da autorização
+    U-->>O: autorização cancelada
+    O->>A: compensar com liberação do horário
+    A-->>O: horário liberado
 ```
 
-**Texto alternativo:** orquestrador que chama Agenda, Autorização e Preparo de Sala e compensa a Autorização e a Agenda depois da falha do preparo.
+**Texto alternativo:** diagrama de sequência em que o orquestrador chama Agenda, Autorização e Preparo de Sala e compensa a Autorização e a Agenda depois da falha do preparo.
 
 *Figura 6 — SAGA orquestrada do agendamento de exame. Fonte: curso.*
 
-**Leitura textual da figura:** o orquestrador chama a Agenda, a Autorização e o Preparo de Sala. A falha do Preparo de Sala volta ao orquestrador, que aciona a compensação da Autorização e depois a compensação da Agenda.
+**Leitura textual da figura:** o orquestrador pede à Agenda a reserva do horário e à Autorização a autorização do procedimento, que os dois serviços confirmam. O Preparo de Sala informa a falha na reserva da sala. O orquestrador pede então o cancelamento da autorização e depois a liberação do horário, na ordem inversa à dos passos confirmados.
 
 | Critério | Coreografia | Orquestração |
 | --- | --- | --- |
@@ -554,7 +570,7 @@ O padrão **CQRS**, sigla de *Command Query Responsibility Segregation*, foi des
 Por isso, **não aplique CQRS por padrão**. CQRS e SAGA resolvem problemas diferentes, porque a SAGA coordena uma mudança distribuída e o CQRS separa as responsabilidades de leitura e de escrita.
 
 ```mermaid
-flowchart LR
+flowchart TB
     R[Recepção] -->|solicitar ou cancelar| C[Modelo de comando]
     C -->|grava| W[(Banco das solicitações)]
     C -->|acrescenta| F[Lista de fatos]

@@ -22,27 +22,19 @@ A transferência de máquinas virtuais para um provedor de nuvem muda o propriet
 
 Em 6 de janeiro de 2016, com o serviço distribuído em várias regiões da AWS, a empresa passou a operar em mais de 130 países ao mesmo tempo.
 
-```mermaid
-timeline
-    2008 : Corrupção do banco central
-         : Início da migração para a AWS
-    2011 : Chaos Monkey e a Simian Army
-         : Isthmus, resiliência a falhas de balanceador
-    2012 : Open Connect entra no ar com 5% do tráfego
-    2013 : Arquitetura ativa-ativa entre regiões
-         : Chaos Kong desativa uma região inteira
-    2015 : Codificação ajustada título a título
-         : Artigo sobre o sistema de recomendação
-    2016 : Último componente sai do datacenter próprio
-         : Serviço ligado em mais de 130 países
-    2018 : Hystrix entra em modo de manutenção
-```
+A tabela resume as decisões arquiteturais da Netflix entre 2008 e 2018, a partir das publicações oficiais citadas ao final.
 
-**Texto alternativo:** linha do tempo da Netflix de 2008 a 2018 com a corrupção do banco e o início da migração em 2008. A linha marca as ferramentas de resiliência de 2011 e 2013 e a entrada do Open Connect em 2012. Também marca a codificação por título e o artigo de recomendação em 2015, a conclusão da migração em 2016 e o Hystrix em modo de manutenção em 2018.
+| Ano | Decisão ou evento |
+| --- | --- |
+| 2008 | Corrupção do banco central e início da migração para a AWS |
+| 2011 | Chaos Monkey e Isthmus, voltado à resiliência a falhas de balanceador |
+| 2012 | Open Connect entra no ar com 5% do tráfego |
+| 2013 | Arquitetura ativa-ativa entre regiões e primeiros ensaios do Chaos Kong |
+| 2015 | Codificação ajustada título a título e artigo sobre o sistema de recomendação |
+| 2016 | Último componente sai do datacenter próprio e o serviço passa a operar em mais de 130 países |
+| 2018 | Hystrix entra em modo de manutenção |
 
-*Figura 1 — Decisões arquiteturais da Netflix entre 2008 e 2018. Fonte: curso, a partir das publicações oficiais citadas ao final.*
-
-**Leitura textual da figura:** a migração para a nuvem ocupou quase toda a década e ocorreu em paralelo às demais decisões. As ferramentas de resiliência a falhas surgiram antes da conclusão da migração. A rede própria de entrega começou a operar em 2012, quatro anos antes dessa conclusão. A expansão internacional de 2016 dependeu da operação do serviço em várias regiões ao mesmo tempo.
+A migração para a nuvem ocupou quase toda a década e ocorreu em paralelo às demais decisões. A expansão internacional de 2016 dependeu da operação do serviço em várias regiões ao mesmo tempo.
 
 ## Rede de entrega contratada
 
@@ -120,7 +112,7 @@ sequenceDiagram
 
 **Texto alternativo:** diagrama de sequência em que o aplicativo autentica e pede o título aos serviços na AWS, que verificam direitos, escolhem o formato e devolvem uma lista de aparelhos candidatos. O aplicativo mede a rede até os aparelhos e escolhe um deles. Em seguida, recebe o primeiro trecho, pede os trechos seguintes e relata qualidade e progresso aos serviços na nuvem.
 
-*Figura 2 — Caminho de uma reprodução entre a AWS e o Open Connect. Fonte: curso, a partir do anúncio de migração e da documentação do programa Open Connect.*
+*Figura 1 — Caminho de uma reprodução entre a AWS e o Open Connect. Fonte: curso, a partir do anúncio de migração e da documentação do programa Open Connect.*
 
 **Leitura textual da figura:** a decisão e os metadados vêm da nuvem pública, enquanto os bytes do vídeo vêm de um equipamento dentro do provedor de acesso. A nuvem informa de onde buscar o vídeo, enquanto o aplicativo mede e escolhe entre as opções recebidas. Quando um aparelho perde desempenho, o aplicativo troca de aparelho sem consultar a nuvem novamente.
 

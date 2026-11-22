@@ -133,7 +133,7 @@ def health():
 ```
 
 ```mermaid
-flowchart LR
+flowchart TB
     U[Consumidor] -->|POST /exames| X[Serviço Exames]
     X -->|GET /elegibilidades/id| E[Serviço Elegibilidade]
     E -->|SELECT próprio| DE[(PostgreSQL elegibilidade)]
