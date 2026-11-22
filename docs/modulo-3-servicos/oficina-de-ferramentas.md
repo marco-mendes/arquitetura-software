@@ -1,26 +1,26 @@
-# Oficina de ferramentas: dois serviços, dois bancos e uma falha parcial
+# Oficina de ferramentas
 
-Esta oficina coloca no ar dois serviços separados, cada um com seu próprio banco de dados, e provoca de propósito a situação que define arquitetura distribuída: **um serviço cai e o outro continua funcionando pela metade**. Não é um exercício de Docker. É a chance de ver, em execução, três decisões que o livro-texto discute em teoria: propriedade de dados, fronteira física e falha parcial.
+A oficina executa dois serviços separados com bancos de dados próprios e provoca a falha de um deles enquanto o outro continua em execução. A atividade torna observáveis três decisões discutidas nas páginas de teoria do módulo, que são a propriedade dos dados, a fronteira física e a falha parcial.
 
-O caso é o mesmo das páginas anteriores. **Elegibilidade** decide se um beneficiário pode usar o plano. **Exames** registra uma solicitação clínica, e para isso precisa consultar a decisão de Elegibilidade. São duas capacidades de negócio distintas, com dados e ciclos de mudança próprios, o que as torna adequadas para demonstrar uma fronteira.
+O caso é o mesmo das páginas anteriores do módulo e envolve duas capacidades de negócio. **Elegibilidade** decide se um beneficiário pode usar o plano de saúde. **Exames** registra uma solicitação clínica depois de consultar a decisão de Elegibilidade. As duas capacidades têm dados e ciclos de mudança próprios, o que permite usá-las para demonstrar uma fronteira entre serviços.
 
-### O que a oficina demonstra
+### Objetivo da oficina {#o-que-a-oficina-demonstra}
 
-| O que a oficina mostra | O conceito do módulo |
+| Observação na oficina | Conceito do módulo |
 | --- | --- |
 | Cada serviço só alcança o próprio banco, por construção da rede | [Propriedade dos dados](conceitos.md#propriedade-dos-dados) e banco por serviço |
-| Exames responde `200` na verificação de saúde e `503` na operação | [Falha parcial](conceitos.md#chamadas-sincronas-e-falhas-parciais): o sistema degrada em partes e continua parcialmente disponível |
+| Exames responde `200` na verificação de saúde e `503` na operação | [Falha parcial](conceitos.md#chamadas-sincronas-e-falhas-parciais), em que o sistema degrada em partes e continua parcialmente disponível |
 | A chamada entre serviços tem prazo de espera e traduz o erro do vizinho | O custo da [fronteira física](conceitos.md#fronteira-logica-e-fronteira-fisica), que a chamada local não tinha |
 
 ![Serviços e bancos isolados com degradação durante uma falha parcial](../assets/images/m03-oficina-falha-parcial.png)
 
-*Figura 5 — Fronteira de dados definida pela construção da rede e serviço que degrada durante a falha da dependência. Fonte: curso.*
+*Figura 5 — Fronteira de dados definida pela rede e degradação de um serviço durante a falha da dependência. Fonte: curso.*
 
-**Leitura textual da figura:** três faixas horizontais representam redes distintas. Na rede de serviços, a API de Exames chama a API de Elegibilidade por httpx com prazo de espera declarado. Na rede de banco de dados, cada serviço tem seu próprio Postgres privado, e não existe caminho de rede entre os dois bancos. Abaixo, o resultado observável durante a falha: `GET /health` responde 200 enquanto a operação responde 503, porque Elegibilidade está fora do ar e Exames continua respondendo de forma degradada.
+**Leitura textual da figura:** três faixas horizontais representam redes distintas. Na rede de serviços, a API de Exames chama a API de Elegibilidade pela biblioteca httpx com prazo de espera declarado. Na rede de banco de dados, cada serviço tem o próprio PostgreSQL privado, sem caminho de rede entre os dois bancos. A parte inferior mostra o resultado observável durante a falha, com `GET /health` respondendo 200 enquanto a operação responde 503, porque Elegibilidade está fora do ar.
 
-### A topologia que você vai montar
+### Topologia da oficina {#a-topologia-que-voce-vai-montar}
 
-O desenho abaixo é o que o arquivo de composição declara, e vale entendê-lo antes de escrever qualquer linha.
+O diagrama abaixo representa a topologia declarada no arquivo de composição, que convém entender antes de escrever os arquivos da oficina.
 
 ```mermaid
 flowchart TB
@@ -34,15 +34,15 @@ flowchart TB
     RX --> DX[(Postgres exames)]
 ```
 
-**Texto alternativo:** o terminal alcança os dois serviços por uma rede de aplicação, exames chama elegibilidade por HTTP com prazo de espera, e cada serviço tem uma rede interna própria que leva ao seu banco, sem ligação entre as duas redes de banco.
+**Texto alternativo:** o terminal alcança os dois serviços por uma rede de aplicação, em que Exames chama Elegibilidade por HTTP com prazo de espera. Cada serviço tem uma rede interna própria que leva ao seu banco, sem ligação entre as duas redes de banco.
 
-*Figura 11 — As três redes da oficina e o motivo pelo qual um serviço não alcança o banco do outro. Fonte: curso.*
+*Figura 11 — Redes da oficina e isolamento entre um serviço e o banco do outro. Fonte: curso.*
 
-**Leitura textual da figura:** você chega pelo terminal às portas publicadas dos dois serviços, que estão na rede de aplicação. Nessa mesma rede, o serviço de exames chama o de elegibilidade por HTTP, com prazo de espera declarado de dois segundos. Cada serviço pertence também a uma segunda rede, marcada como interna, que leva ao seu próprio Postgres. As duas redes de banco não se tocam e não têm saída para fora, e é por isso que o serviço de exames não consegue nem resolver o nome do banco de elegibilidade. A fronteira de dados aqui é garantida pela construção da rede e independe da disciplina do programador.
+**Leitura textual da figura:** o terminal alcança as portas publicadas dos dois serviços, que estão na rede de aplicação. Nessa rede, o serviço de Exames chama o serviço de Elegibilidade por HTTP com prazo de espera de dois segundos. Cada serviço pertence também a uma segunda rede, marcada como interna, que leva ao próprio PostgreSQL. As duas redes de banco não têm ligação entre si nem saída externa, por isso o serviço de Exames não consegue resolver o nome do banco de Elegibilidade. A fronteira de dados é garantida pela construção da rede e não depende da disciplina de quem escreve o código.
 
-### Onde cada arquivo mora
+### Arquivos da oficina {#onde-cada-arquivo-mora}
 
-Você vai criar uma pasta vazia e escrever os nove arquivos abaixo. Todos os comandos rodam a partir de `oficina-servicos`.
+A oficina começa por uma pasta vazia chamada `oficina-servicos`, na qual são escritos os nove arquivos abaixo. Todos os comandos rodam a partir dessa pasta.
 
 ```text
 oficina-servicos/                   ← execute os comandos a partir daqui
@@ -64,23 +64,23 @@ oficina-servicos/                   ← execute os comandos a partir daqui
 └── evidencias/modulo-3/            você criará esta pasta na preparação
 ```
 
-Cada arquivo aparece nesta página inteiro, pronto para copiar. O título de cada bloco é um link para o mesmo arquivo no repositório do curso, byte a byte igual ao que está aqui.
+Cada arquivo aparece completo nesta página. O título de cada bloco é um link para o mesmo arquivo no repositório do curso, com conteúdo idêntico ao da página.
 
-Crie a estrutura antes de escrever. No macOS e no Linux:
+No macOS e no Linux, os comandos abaixo criam a estrutura de pastas antes da escrita dos arquivos.
 
 ```bash
 mkdir -p oficina-servicos/infra/postgres oficina-servicos/src/hospital/servicos oficina-servicos/tests
 cd oficina-servicos
 ```
 
-No PowerShell:
+No PowerShell, a mesma estrutura é criada com os comandos abaixo.
 
 ```powershell
 mkdir oficina-servicos\infra\postgres, oficina-servicos\src\hospital\servicos, oficina-servicos\tests
 cd oficina-servicos
 ```
 
-O `pyproject.toml` declara as bibliotecas e torna o pacote instalável, o que faz `hospital.servicos.exames` resolver tanto dentro do contêiner quanto nos testes.
+O `pyproject.toml` declara as bibliotecas e torna o pacote instalável, o que permite importar `hospital.servicos.exames` dentro do contêiner e nos testes.
 
 [`pyproject.toml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/pyproject.toml)
 
@@ -115,7 +115,7 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 ```
 
-O `Dockerfile` produz a imagem que os dois serviços compartilham. Eles diferem apenas no comando que o arquivo de composição passa a cada um.
+O `Dockerfile` produz a imagem compartilhada pelos dois serviços, que diferem apenas no comando que o arquivo de composição passa a cada um.
 
 [`Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/Dockerfile)
 
@@ -134,7 +134,7 @@ USER app
 EXPOSE 8000
 ```
 
-Os dois `__init__.py` ficam vazios e existem para tornar as pastas pacotes Python importáveis.
+Os dois arquivos `__init__.py` ficam vazios e transformam as pastas em pacotes Python importáveis pelos serviços e pelos testes.
 
 [`src/hospital/__init__.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/src/hospital/__init__.py)
 
@@ -148,7 +148,7 @@ Os dois `__init__.py` ficam vazios e existem para tornar as pastas pacotes Pytho
 
 ```
 
-O `elegibilidade.py` é o serviço que decide. Ele consulta somente a própria base e não conhece exames.
+O `elegibilidade.py` implementa o serviço que decide a elegibilidade. Ele consulta somente a própria base e não conhece o serviço de Exames.
 
 [`src/hospital/servicos/elegibilidade.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/src/hospital/servicos/elegibilidade.py)
 
@@ -199,7 +199,7 @@ def consultar_elegibilidade(beneficiario_id: str):
     return {"beneficiario_id": beneficiario_id, "elegivel": row[0]}
 ```
 
-O `exames.py` é o serviço que depende do primeiro, e é onde o tratamento de falha parcial está escrito. Repare que cada situação do vizinho vira um código de resposta diferente: indisponibilidade vira `503`, beneficiário desconhecido vira `422`, e resposta fora do contrato vira `502`.
+O `exames.py` implementa o serviço que depende de Elegibilidade e contém o tratamento da falha parcial. Cada situação de Elegibilidade gera um código de resposta diferente em Exames. A indisponibilidade gera `503`, o beneficiário desconhecido gera `422` e a resposta fora do contrato gera `502`.
 
 [`src/hospital/servicos/exames.py`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/src/hospital/servicos/exames.py)
 
@@ -330,7 +330,7 @@ def solicitar_exame(
     )
 ```
 
-O `infra/postgres/init.sql` roda na primeira subida de cada banco. O mesmo arquivo serve aos dois, e o bloco condicional no topo decide o que criar conforme o nome do banco. Repare nos papéis: eles nascem sem privilégio de superusuário e sem poder criar banco, papel ou replicação.
+O `infra/postgres/init.sql` roda na primeira inicialização de cada banco. O mesmo arquivo atende aos dois bancos porque o bloco condicional do início decide o que criar conforme o nome do banco. Os papéis de acesso são criados sem privilégio de superusuário e sem permissão para criar banco, papel ou replicação.
 
 [`infra/postgres/init.sql`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/infra/postgres/init.sql)
 
@@ -366,7 +366,7 @@ RESET ROLE;
 \endif
 ```
 
-O `infra/postgres/Dockerfile` apenas coloca esse script no lugar onde a imagem oficial do Postgres o executa automaticamente.
+O `infra/postgres/Dockerfile` copia esse script para o diretório em que a imagem oficial do PostgreSQL o executa automaticamente.
 
 [`infra/postgres/Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/infra/postgres/Dockerfile)
 
@@ -376,7 +376,7 @@ FROM postgres:16-alpine
 COPY infra/postgres/init.sql /docker-entrypoint-initdb.d/init.sql
 ```
 
-O `infra/compose.servicos.yml` é o arquivo central da oficina. É nele que as três redes ficam declaradas, e é a marcação `internal: true` nas duas redes de banco que produz o isolamento da Figura 11.
+O `infra/compose.servicos.yml` é o arquivo central da oficina. Ele declara as três redes, entre as quais as duas redes de banco marcadas com `internal: true`, marcação que produz o isolamento mostrado na Figura 11.
 
 [`infra/compose.servicos.yml`](https://github.com/marco-mendes/arquitetura-software/blob/main/oficinas/modulo-3/infra/compose.servicos.yml)
 
@@ -587,7 +587,7 @@ def test_exames_source_cannot_access_eligibility_table_directly():
     assert "db_elegibilidade" not in source
 ```
 
-As senhas valem só para esta demonstração local e os dados são inventados. Ao final, `down -v` remove contêineres, redes e volumes.
+As senhas valem somente para esta demonstração local com dados inventados. Ao final, o comando `down -v` remove contêineres, redes e volumes.
 
 ## Ferramenta
 
@@ -599,7 +599,7 @@ As senhas valem só para esta demonstração local e os dados são inventados. A
 | **FastAPI e Uvicorn** | A biblioteca que implementa as rotas e o servidor que as atende, já usados no Módulo 2. | Servir as duas APIs. |
 | **httpx** | Uma biblioteca Python para fazer chamadas HTTP. | É por ela que Exames chama Elegibilidade, com prazo de espera configurado. |
 
-Dois termos se repetem ao longo da oficina e vale fixá-los agora. Um **contêiner** é um processo empacotado com tudo de que precisa para rodar, isolado do resto da máquina. Uma **verificação de saúde** (*health check*) é um comando que o Docker executa periodicamente para decidir se aquele contêiner está saudável. A distinção entre "no ar" e "saudável" será o assunto do momento mais importante desta oficina.
+Um **contêiner** é um processo empacotado com as dependências de que precisa para rodar e isolado do restante da máquina. Uma **verificação de saúde**, em inglês *health check*, é um comando que o Docker executa periodicamente para decidir se o contêiner está saudável. A diferença entre um contêiner em execução e um contêiner saudável é o assunto central da etapa de falha parcial desta oficina.
 
 **Objetivo**
 
@@ -617,7 +617,7 @@ Verifique `docker version`, `docker compose version` e `python --version` antes 
 
 ### Windows
 
-Instale Docker Desktop e Python; use `py` quando `python` não estiver no PATH.
+Instale o Docker Desktop e o Python. Use o comando `py` quando o comando `python` não estiver no PATH do sistema.
 
 ### macOS
 
@@ -629,7 +629,7 @@ Instale Docker Engine, o plugin Compose e Python 3 pelo método da sua distribui
 
 ## Preparação do laboratório
 
-Entre na pasta da oficina e prepare um local para evidências. Em Windows use `py` no lugar de `python`, se necessário.
+Os comandos abaixo entram na pasta da oficina e criam o diretório de evidências. No Windows, o comando `py` substitui `python` quando necessário.
 
 ```bash
 cd oficina-servicos
@@ -639,11 +639,11 @@ mkdir -p evidencias/modulo-3
 
 No PowerShell, o equivalente para o diretório é `New-Item -ItemType Directory -Force evidencias\modulo-3`.
 
-## A fronteira declarada no Compose
+## Fronteira declarada no Compose {#a-fronteira-declarada-no-compose}
 
-Antes de subir qualquer coisa, vale ler o arquivo que define a topologia, porque **a fronteira entre os dois serviços está escrita ali**, fora do código Python.
+A fronteira entre os dois serviços está escrita no arquivo de composição, fora do código Python. Por esse motivo, a leitura desse arquivo vem antes da execução dos serviços.
 
-Comece pelo bloco de redes, no fim do arquivo:
+O bloco de redes fica no fim do arquivo de composição.
 
 ```yaml
 networks:
@@ -654,7 +654,7 @@ networks:
     internal: true
 ```
 
-O arquivo declara três redes, e cada serviço é ligado a exatamente duas delas:
+O arquivo declara três redes e liga cada serviço a exatamente duas delas.
 
 ```yaml
   elegibilidade:
@@ -668,11 +668,11 @@ O arquivo declara três redes, e cada serviço é ligado a exatamente duas delas
       - exames-db-net           # o banco de Exames, e nenhum outro
 ```
 
-Repare no que isso produz. O serviço de Exames **não tem rota de rede** até `db_elegibilidade`: mesmo que alguém escrevesse no código uma consulta ao banco alheio, a conexão falharia por não haver caminho. A propriedade dos dados deixa de depender de disciplina da equipe e passa a ser uma propriedade da infraestrutura.
+Com essa declaração, o serviço de Exames não tem rota de rede até `db_elegibilidade`. Uma consulta ao banco de Elegibilidade escrita no código de Exames falharia por falta de caminho de rede. A propriedade dos dados passa a ser garantida pela infraestrutura e deixa de depender da disciplina da equipe.
 
-É essa a tese que o módulo defende ao dizer que banco por serviço é uma decisão de **autoridade** sobre os dados, independente da tecnologia escolhida. Os dois bancos aqui rodam o mesmo PostgreSQL, com a mesma versão. O que os separa é quem tem permissão de alcançá-los.
+O módulo trata o banco por serviço como uma decisão de autoridade sobre os dados, independente da tecnologia escolhida. Os dois bancos da oficina rodam o mesmo PostgreSQL na mesma versão e se distinguem apenas pelos serviços que têm permissão de alcançá-los.
 
-O bloco de dependências declara a ordem de inicialização:
+O bloco de dependências declara a ordem de inicialização dos serviços.
 
 ```yaml
   exames:
@@ -683,7 +683,7 @@ O bloco de dependências declara a ordem de inicialização:
         condition: service_healthy      # espera o outro serviço também
 ```
 
-E cada serviço declara como provar que está saudável:
+Cada serviço também declara o comando que verifica a sua saúde.
 
 ```yaml
     healthcheck:
@@ -693,23 +693,23 @@ E cada serviço declara como provar que está saudável:
       retries: 15         # marca como não saudável após 15 falhas
 ```
 
-Guarde este detalhe, porque ele volta adiante: o comando de saúde chama `/health` do **próprio** serviço. Ele não verifica se as dependências estão de pé.
+O comando de saúde chama a operação `/health` do próprio serviço e não verifica se as dependências estão disponíveis. Esse detalhe explica o resultado da etapa de falha parcial.
 
 ## Execução
 
-O percurso tem quatro momentos: subir tudo e ver o estado nominal, criar uma solicitação que funciona, derrubar Elegibilidade e observar a falha parcial, e por fim recuperar.
+A execução começa pela subida dos quatro contêineres e pela observação do estado nominal. Em seguida, uma solicitação elegível é criada, Elegibilidade é interrompida para provocar a falha parcial e o ambiente é recuperado.
 
 **Execute**
 
-Siga as etapas na ordem da tabela abaixo. Cada uma tem estado de entrada, evidência esperada e o que fazer se divergir.
+As etapas seguem a ordem da tabela abaixo, com estado de entrada, evidência esperada e contingência para o caso de divergência.
 
 **Observe**
 
-Em cada etapa, olhe para duas coisas ao mesmo tempo: o que o `docker compose ps` diz sobre a saúde dos contêineres e o que a API responde a uma requisição real. O momento em que essas duas leituras discordam é o assunto da oficina.
+Em cada etapa, a observação compara a saúde dos contêineres informada pelo `docker compose ps` com a resposta da API a uma requisição real. A falha parcial aparece no momento em que essas duas leituras divergem.
 
 **Compare**
 
-Compare o estado nominal, com os quatro contêineres saudáveis, com o estado degradado, em que Exames continua saudável para o Docker mas não consegue concluir a operação que depende de Elegibilidade. A diferença entre "o processo está vivo" e "a capacidade está disponível" é o que distingue falha parcial de queda do sistema.
+O estado nominal tem os quatro contêineres saudáveis. No estado degradado, Exames continua saudável para o Docker e não consegue concluir a operação que depende de Elegibilidade. A diferença entre um processo em execução e uma capacidade disponível distingue a falha parcial da queda do sistema.
 
 **Questões exploratórias**
 
@@ -719,22 +719,22 @@ Qual dependência permanece saudável e qual capacidade deixa de ser concluída?
 
 | Etapa | Estado de entrada | Ação e evidência esperada | Contingência |
 | --- | --- | --- | --- |
-| Validar configuração | Os quatro serviços estão parados. | Execute os dois comandos `config`; `--quiet` termina sem texto e `--services` lista `elegibilidade`, `exames`, `db_elegibilidade` e `db_exames`. | Se o Docker não responder, guarde a saída e faça só a validação estática. |
-| Iniciar e inspecionar | Compose válido e serviços parados. | Suba a demonstração; `ps` mostra quatro serviços `healthy` e os dois `/health` retornam `200`. | Se uma porta estiver ocupada, escolha outras portas; não remova recursos fora deste projeto. |
-| Demonstrar falha parcial | As duas aplicações e bases estão saudáveis. | Pare `elegibilidade`; Exames permanece saudável, mas `POST /exames` retorna `503 dependencia_indisponivel`. | Se o resultado divergir, guarde `ps` e logs antes de reiniciar. |
-| Recuperar e verificar | Elegibilidade está parada e Exames continua saudável. | Execute `up -d --wait`; os dois `/health` voltam a `200`, então rode o teste de fronteiras. | Se o daemon não responder, execute somente os testes Python e registre a limitação. |
-| Limpar | A demonstração pode estar em qualquer estado anterior. | `down -v` remove contêineres, redes e volumes; `ps -a` não lista recursos ativos. | Se houver resíduo, repita apenas esse `down -v`. |
+| Validar configuração | Os quatro serviços estão parados. | Execute os dois comandos `config`. O `--quiet` termina sem texto e `--services` lista `elegibilidade`, `exames`, `db_elegibilidade` e `db_exames`. | Se o Docker não responder, guarde a saída e faça só a validação estática. |
+| Iniciar e inspecionar | Compose válido e serviços parados. | Suba a demonstração. O `ps` mostra quatro serviços `healthy` e os dois `/health` retornam `200`. | Se uma porta estiver ocupada, escolha outras portas. Nenhum recurso fora deste projeto deve ser removido. |
+| Demonstrar falha parcial | As duas aplicações e bases estão saudáveis. | Pare `elegibilidade`. Exames permanece saudável e `POST /exames` retorna `503 dependencia_indisponivel`. | Se o resultado divergir, guarde `ps` e logs antes de reiniciar. |
+| Recuperar e verificar | Elegibilidade está parada e Exames continua saudável. | Execute `up -d --wait`. Os dois `/health` voltam a `200` e o teste de fronteiras é executado. | Se o daemon não responder, execute somente os testes Python e registre a limitação. |
+| Limpar | A demonstração pode estar em qualquer estado anterior. | `down -v` remove contêineres, redes e volumes. O `ps -a` não lista recursos ativos. | Se houver resíduo, repita apenas esse `down -v`. |
 
 ### Escolher portas e validar a configuração
 
-Defina portas livres para não disputar os padrões 8001 e 8002. Em shells POSIX:
+As variáveis abaixo definem portas livres para evitar conflito com as portas padrão 8001 e 8002 em *shells* POSIX.
 
 ```bash
 export ELEGIBILIDADE_PORT=18001
 export EXAMES_PORT=18002
 ```
 
-No PowerShell:
+No PowerShell, as mesmas variáveis são definidas com os comandos abaixo.
 
 ```powershell
 $env:ELEGIBILIDADE_PORT = 18001
@@ -745,13 +745,13 @@ $env:EXAMES_PORT = 18002
 docker compose -f infra/compose.servicos.yml config --quiet
 ```
 
-Resultado: nenhum texto e código zero significam que a configuração é sintaticamente válida. Essa validação não demonstra que Docker está em execução nem que os serviços estão saudáveis.
+A ausência de texto com código de saída zero indica que a configuração é sintaticamente válida. Essa validação não demonstra que o Docker está em execução nem que os serviços estão saudáveis.
 
 ```bash
 docker compose -f infra/compose.servicos.yml config --services
 ```
 
-Confirme os quatro nomes apresentados. O comando ajuda a evitar iniciar um arquivo Compose diferente por engano.
+A saída deve listar os quatro nomes de serviço, o que evita iniciar por engano um arquivo de composição diferente.
 
 ## Iniciar e observar a demonstração
 
@@ -761,13 +761,13 @@ docker compose -f infra/compose.servicos.yml up -d --build --wait
 
 ## Resultado esperado
 
-O `--wait` termina quando os quatro health checks ficam saudáveis. Se uma imagem não puder ser baixada ou uma porta estiver ocupada, guarde a saída e escolha outra porta; não remova recursos Docker fora deste projeto.
+A opção `--wait` faz o comando terminar quando as quatro verificações de saúde ficam saudáveis. Se uma imagem não puder ser baixada ou uma porta estiver ocupada, a saída deve ser guardada e outra porta deve ser escolhida, sem remover recursos do Docker que não pertencem a este projeto.
 
 ```bash
 docker compose -f infra/compose.servicos.yml ps
 ```
 
-A saída deve ser esta, com os quatro serviços saudáveis:
+A saída esperada mostra os quatro serviços saudáveis.
 
 ```text
 SERVICE            STATUS                    PORTS
@@ -777,23 +777,23 @@ elegibilidade      Up 15 seconds (healthy)   0.0.0.0:18001->8000/tcp
 exames             Up 12 seconds (healthy)   0.0.0.0:18002->8000/tcp
 ```
 
-Duas leituras importam aqui. Os dois bancos mostram apenas `5432/tcp`, **sem** o prefixo `0.0.0.0:` — eles não têm porta publicada para a sua máquina, o que significa que você não consegue alcançá-los diretamente do seu terminal. Só quem está na rede interna deles chega lá. Já as aplicações mostram `0.0.0.0:18001->8000`, que se lê como "a porta 18001 da sua máquina encaminha para a porta 8000 dentro do contêiner".
+Os dois bancos mostram apenas `5432/tcp`, sem o prefixo `0.0.0.0:`, porque não têm porta publicada para a máquina local e só podem ser alcançados a partir da rede interna de cada um. As aplicações mostram `0.0.0.0:18001->8000`, que indica o encaminhamento da porta 18001 da máquina local para a porta 8000 dentro do contêiner.
 
-Confirme a saúde a partir da sua máquina:
+Os comandos abaixo verificam a saúde dos dois serviços a partir da máquina local.
 
 ```bash
 curl -i "http://localhost:${ELEGIBILIDADE_PORT}/health"
 curl -i "http://localhost:${EXAMES_PORT}/health"
 ```
 
-No PowerShell, `curl.exe` evita o alias `curl` para `Invoke-WebRequest`:
+No PowerShell, o comando `curl.exe` evita o alias `curl`, que aponta para `Invoke-WebRequest`.
 
 ```powershell
 curl.exe -i "http://localhost:$env:ELEGIBILIDADE_PORT/health"
 curl.exe -i "http://localhost:$env:EXAMES_PORT/health"
 ```
 
-Cada resposta deve ser `200`. Agora crie uma solicitação elegível:
+Cada resposta deve ter o status `200`. Em seguida, o comando abaixo cria uma solicitação para um beneficiário elegível.
 
 ```bash
 curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
@@ -801,7 +801,7 @@ curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
-PowerShell (201):
+No PowerShell, o comando abaixo cria a mesma solicitação e deve retornar `201`.
 
 ```powershell
 curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
@@ -809,7 +809,7 @@ curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
-A resposta completa:
+A resposta completa da solicitação é a seguinte.
 
 ```text
 HTTP/1.1 201 Created
@@ -819,9 +819,9 @@ content-type: application/json
 {"beneficiario_id":"paciente-001","codigo_exame":"HEM-001","solicitacao_id":1,"situacao":"solicitado"}
 ```
 
-O `201 Created` afirma que o recurso passou a existir, diferente do `202` do Módulo 2, que apenas aceitava o pedido para processar depois. Aqui a solicitação já está gravada quando a resposta chega.
+O status `202` usado no Módulo 2 indicava somente que o pedido tinha sido aceito para processamento posterior. O status `201 Created` desta oficina indica que o recurso passou a existir, porque a solicitação já está gravada no banco de Exames quando a resposta chega ao consumidor.
 
-Para produzir esse `201`, o serviço de Exames fez duas coisas nesta ordem: chamou Elegibilidade por HTTP e, só depois de receber a aprovação, gravou na própria base. O `solicitacao_id` vem dessa gravação e reinicia a contagem após `down -v`, porque o volume é removido junto.
+Antes de responder `201`, o serviço de Exames chamou Elegibilidade por HTTP e gravou a solicitação na própria base depois de receber a aprovação. O `solicitacao_id` vem dessa gravação e volta a começar em 1 depois do comando `down -v`, que remove o volume do banco.
 
 ## Interpretação
 
@@ -835,7 +835,7 @@ docker compose -f infra/compose.servicos.yml stop elegibilidade
 docker compose -f infra/compose.servicos.yml ps
 ```
 
-O desenho abaixo mostra o que acabou de acontecer com o serviço de Exames.
+O diagrama abaixo representa o estado do serviço de Exames depois da interrupção de Elegibilidade.
 
 ```mermaid
 flowchart TB
@@ -846,13 +846,13 @@ flowchart TB
     OK -.->|mesma instância, ao mesmo tempo| ERR
 ```
 
-**Texto alternativo:** a verificação de saúde de Exames consulta apenas o próprio banco e responde 200, enquanto a operação de negócio depende de Elegibilidade e responde 503, e uma seta tracejada indica que as duas respostas vêm da mesma instância ao mesmo tempo.
+**Texto alternativo:** a verificação de saúde de Exames consulta apenas o próprio banco e responde 200, enquanto a operação de negócio depende de Elegibilidade e responde 503. Uma seta tracejada indica que as duas respostas vêm da mesma instância ao mesmo tempo.
 
-*Figura 12 — Por que a mesma instância responde 200 e 503 ao mesmo tempo. Fonte: curso.*
+*Figura 12 — Respostas 200 e 503 da mesma instância de Exames. Fonte: curso.*
 
-**Leitura textual da figura:** dois caminhos partem do mesmo processo. O primeiro é a verificação de saúde, que só consulta o banco de Exames, encontra tudo no lugar e responde 200. O segundo é a operação de negócio, que precisa perguntar a Elegibilidade se o beneficiário pode ser atendido, não obtém resposta dentro do prazo e devolve 503 com o código de dependência indisponível. Uma seta tracejada liga as duas respostas, registrando que elas saem da mesma instância no mesmo instante. Esse comportamento caracteriza degradação parcial, que difere da queda do sistema inteiro. Uma verificação de saúde que também consultasse Elegibilidade apagaria essa distinção e faria o orquestrador reiniciar um processo que está funcionando.
+**Leitura textual da figura:** dois caminhos partem do mesmo processo de Exames. O primeiro é a verificação de saúde, que consulta apenas o banco de Exames e responde 200. O segundo é a operação de negócio, que consulta Elegibilidade sobre o beneficiário, não recebe resposta dentro do prazo e devolve 503 com o código de dependência indisponível. Uma seta tracejada liga as duas respostas para indicar que elas saem da mesma instância no mesmo instante. Esse comportamento caracteriza uma degradação parcial, diferente da queda do sistema inteiro. Uma verificação de saúde que também consultasse Elegibilidade eliminaria essa distinção e levaria o orquestrador a reiniciar um processo que está funcionando.
 
-Repita a chamada abaixo. Ela deve retornar `503 Service Unavailable` e o código `dependencia_indisponivel`, enquanto `GET /health` de Exames ainda retorna `200`:
+Com Elegibilidade parada, a chamada abaixo deve retornar `503 Service Unavailable` com o código `dependencia_indisponivel`, enquanto o `GET /health` de Exames continua retornando `200`.
 
 ```bash
 curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
@@ -860,7 +860,7 @@ curl -i -X POST "http://localhost:${EXAMES_PORT}/exames" \
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
-PowerShell (503):
+No PowerShell, o comando abaixo repete a chamada e deve retornar `503`.
 
 ```powershell
 curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
@@ -868,7 +868,7 @@ curl.exe -i -X POST "http://localhost:$env:EXAMES_PORT/exames" `
   -d '{"beneficiario_id":"paciente-001","codigo_exame":"HEM-001"}'
 ```
 
-Esta é a saída que interessa:
+A saída da chamada mostra o status e o código da falha.
 
 ```text
 HTTP/1.1 503 Service Unavailable
@@ -878,7 +878,7 @@ content-type: application/json
 {"detail":{"codigo":"dependencia_indisponivel"}}
 ```
 
-E, ao mesmo tempo, a verificação de saúde do próprio Exames continua respondendo:
+No mesmo momento, a verificação de saúde de Exames continua respondendo com sucesso.
 
 ```text
 HTTP/1.1 200 OK
@@ -888,13 +888,13 @@ HTTP/1.1 200 OK
 
 A emissão de duas respostas contraditórias pelo mesmo serviço no mesmo instante caracteriza a falha parcial.
 
-O serviço de Exames está saudável pela definição dele mesmo: o processo responde e a base própria está acessível. O que ele não consegue é concluir uma operação que depende de um vizinho. Numa arquitetura de serviços, "estar no ar" e "conseguir atender" deixam de ser a mesma coisa. Por esse motivo, o monitoramento que verifica apenas se os processos estão vivos indica saúde mesmo quando uma capacidade está indisponível.
+O serviço de Exames está saudável segundo a própria verificação, porque o processo responde e a base própria está acessível. O serviço não consegue concluir a operação que depende de Elegibilidade. Numa arquitetura de serviços, um processo em execução pode estar incapaz de atender a uma capacidade. Por esse motivo, um monitoramento que verifica apenas se os processos estão em execução indica saúde mesmo quando uma capacidade está indisponível.
 
-Repare no que **não** aconteceu. O sistema não caiu inteiro: consultas a Elegibilidade que já tivessem sido feitas não foram desfeitas, a base de Exames continua íntegra, e qualquer operação de Exames que não dependa do vizinho seguiria funcionando. A falha ficou contida no caminho que atravessa a fronteira.
+O sistema não ficou indisponível por inteiro. As consultas a Elegibilidade feitas antes da parada não foram desfeitas e a base de Exames continua íntegra. As operações de Exames que não dependem de Elegibilidade continuariam funcionando, porque a falha ficou restrita ao caminho que atravessa a fronteira entre os serviços.
 
-### Por que o erro é `503` e não `500`
+### Escolha do status 503 {#por-que-o-erro-e-503-e-nao-500}
 
-Olhe como `exames.py` trata a chamada ao vizinho:
+O trecho abaixo mostra o tratamento da chamada a Elegibilidade em `exames.py`.
 
 ```python
 try:
@@ -906,31 +906,29 @@ except httpx.HTTPError as error:                    # a rede falhou
     ) from error
 ```
 
-A escolha do `503` comunica algo específico: **o defeito é temporário e não é culpa de quem chamou**. Um `500` diria "quebrei por dentro"; um `400` culparia o consumidor por um pedido correto. O `503` diz "tente de novo mais tarde", que é a informação verdadeira e permite ao consumidor decidir quando repetir a chamada.
+O status `503` comunica que o defeito é temporário e não foi causado pelo consumidor. Um `500` indicaria um erro interno de Exames, enquanto um `400` atribuiria ao consumidor a responsabilidade por um pedido correto. O `503` indica que a chamada pode ser repetida mais tarde e permite ao consumidor decidir quando fazer a nova tentativa.
 
-O mesmo arquivo traduz cada falha possível do vizinho num significado próprio, e essa tabela é o cerne da aula:
+O mesmo arquivo traduz cada resposta possível de Elegibilidade num status próprio de Exames, conforme a tabela.
 
-| O que acontece com Elegibilidade | Exames responde | Por quê |
+| Situação em Elegibilidade | Resposta de Exames | Justificativa |
 | --- | --- | --- |
-| Não responde, ou a rede falha | `503 dependencia_indisponivel` | Problema transitório de infraestrutura. |
-| Responde `5xx` | `503 dependencia_indisponivel` | O vizinho quebrou; para o consumidor de Exames é a mesma indisponibilidade. |
-| Responde `404`, beneficiário desconhecido | `422 beneficiario_desconhecido` | O pedido é que está errado, então a culpa volta para quem chamou. |
-| Responde algo fora do contrato esperado | `502 contrato_invalido` | Exames recebeu resposta ilegível de um serviço a montante. |
-| Responde que o beneficiário não é elegível | `422 beneficiario_inelegivel` | Não é falha técnica: é uma decisão de negócio negativa. |
+| Não responde ou a rede falha | `503 dependencia_indisponivel` | Problema transitório de infraestrutura. |
+| Responde `5xx` | `503 dependencia_indisponivel` | Para o consumidor de Exames, o erro do provedor equivale a uma indisponibilidade. |
+| Responde `404` para beneficiário desconhecido | `422 beneficiario_desconhecido` | O pedido identifica um beneficiário inexistente, de modo que o problema está no pedido do consumidor. |
+| Responde fora do contrato esperado | `502 contrato_invalido` | Exames recebeu uma resposta ilegível de um serviço do qual depende. |
+| Responde que o beneficiário não é elegível | `422 beneficiario_inelegivel` | A resposta é uma decisão de negócio negativa, sem falha técnica. |
 
-Duas lições de arquitetura de serviços estão embutidas nessa tabela.
+Exames não repassa o código de status recebido de Elegibilidade. Um `404` de Elegibilidade não se torna `404` de Exames, porque a rota `/exames` existe e o recurso inexistente é o beneficiário. O repasse do status de um serviço interno acoplaria o consumidor à topologia interna do sistema.
 
-A primeira: **Exames nunca repassa o código de status do vizinho**. Um `404` de Elegibilidade não vira `404` de Exames, porque significariam coisas diferentes — o recurso `/exames` existe; quem não existe é o beneficiário. Vazar o status do serviço interno acopla o consumidor à topologia interna do sistema.
+A tabela também separa falha técnica de decisão de negócio. O beneficiário inelegível é a resposta correta a uma pergunta legítima e recebe o status `422` com código próprio, enquanto o `503` fica reservado para a indisponibilidade técnica.
 
-A segunda: falha técnica e decisão de negócio recebem tratamentos distintos. Beneficiário inelegível não é erro; é a resposta correta a uma pergunta legítima, e por isso recebe o status `422` com código próprio, enquanto o `503` fica reservado para a indisponibilidade técnica.
-
-Repare também no prazo de espera declarado na criação do cliente HTTP:
+O prazo de espera é declarado na criação do cliente HTTP, como mostra o trecho abaixo.
 
 ```python
 with httpx.Client(base_url=ELIGIBILIDADE_URL, timeout=2.0) as client:
 ```
 
-Sem esse `timeout`, uma chamada a um serviço que não responde ficaria pendurada indefinidamente, prendendo o processo de Exames e transformando a indisponibilidade de um serviço na indisponibilidade dos dois. É o custo da fronteira física. Numa chamada dentro do mesmo processo, a espera indefinida pela rede simplesmente não é um cenário possível.
+Sem esse prazo de espera, uma chamada a um serviço que não responde ficaria aguardando indefinidamente e ocuparia o processo de Exames. A indisponibilidade de Elegibilidade passaria a ser também uma indisponibilidade de Exames. Esse risco é um custo da fronteira física, que não existe numa chamada de função dentro do mesmo processo.
 
 ```bash
 docker compose -f infra/compose.servicos.yml up -d --wait
@@ -938,13 +936,13 @@ docker compose -f infra/compose.servicos.yml up -d --wait
 
 ## Verificar as fronteiras sem depender do Compose
 
-Com os serviços saudáveis, execute:
+Com os serviços saudáveis, o comando abaixo executa os testes de fronteira.
 
 ```bash
 python -m pytest tests/test_service_boundaries.py -q
 ```
 
-Espere `4 passed`, incluindo `test_exames_makes_its_own_database_failure_observable`. Os testes verificam o contrato HTTP, a falha parcial, a falha da base própria e a ausência de SQL contra a tabela de Elegibilidade. Em Windows sem ambiente ativado, use `py -m pytest tests/test_service_boundaries.py -q`.
+A saída esperada é `4 passed`, com o teste `test_exames_makes_its_own_database_failure_observable` entre os aprovados. Os testes verificam o contrato HTTP e a falha parcial, além da falha da base própria e da ausência de SQL contra a tabela de Elegibilidade. No Windows sem ambiente virtual ativado, o comando é `py -m pytest tests/test_service_boundaries.py -q`.
 
 ## Limpeza e contingência
 
@@ -960,4 +958,4 @@ docker compose -f infra/compose.servicos.yml ps -a
 
 ## Evidência a entregar
 
-Guarde em `oficina-servicos/evidencias/modulo-3/` as saídas de versões, health checks, `201`, `503` e testes. Se o daemon nunca respondeu, faça somente `config --quiet` e os testes Python e registre: “Compose validado estaticamente; execução de contêineres não realizada porque o daemon não respondeu”. Não afirme que observou health checks sem uma execução real.
+A pasta `oficina-servicos/evidencias/modulo-3/` deve guardar as saídas dos comandos de versão e das verificações de saúde. Também deve guardar as respostas `201` e `503` e a saída dos testes. Se o daemon do Docker nunca respondeu, a evidência consiste na saída de `config --quiet` e dos testes Python, com o registro “Compose validado estaticamente. Execução de contêineres não realizada porque o daemon não respondeu”. Verificações de saúde só podem constar da evidência quando foram observadas numa execução real dos contêineres.

@@ -1,4 +1,4 @@
-# Conceitos de fronteira de serviço
+# Conceitos
 
 Dividir um sistema é escolher o que deve permanecer junto e o que pode evoluir separadamente. Pastas, classes e contêineres são mecanismos de implementação, enquanto a justificativa de uma fronteira vem do domínio e dos atributos de qualidade exigidos pelo negócio.
 
@@ -88,7 +88,7 @@ No laboratório, dois PostgreSQL deixam a regra visível, porque a credencial de
 
 Compartilhar uma tabela parece conveniente para relatórios e transações e cria um contrato implícito entre os serviços. Uma alteração de coluna pode quebrar consumidores que o proprietário desconhece. Uma escrita externa pode violar invariantes que o proprietário deixou de controlar. Para a leitura integrada, a equipe avalia as alternativas descritas na Figura 4 e deixa explícitas a defasagem e a origem do dado.
 
-## Persistência como decisão de fronteira
+## Persistência poliglota {#persistencia-como-decisao-de-fronteira}
 
 **Persistência poliglota** significa escolher mecanismos de armazenamento diferentes quando a forma do dado e os seus acessos justificam essa escolha. Um exemplo é usar uma base relacional para regras transacionais, um mecanismo de busca para documentos e uma série temporal para medições. O conceito não significa dar um banco novo a cada serviço nem trocar de tecnologia por prestígio. Cada mecanismo adicional exige *backup* e segurança próprios, além de observabilidade, migrações e competência operacional da equipe.
 

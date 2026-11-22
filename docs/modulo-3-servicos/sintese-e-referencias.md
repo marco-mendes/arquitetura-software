@@ -8,15 +8,15 @@ O banco por serviço protege a autoridade de cada serviço sobre os próprios da
 
 A consistência entre serviços requer estados intermediários legítimos e mecanismos de reconciliação. O teorema CAP explica a escolha de comportamento durante uma partição e não funciona como rótulo universal de um produto. A pergunta útil sobre um armazenamento é o que ele faz quando os nós deixam de se comunicar, porque a resposta do fornecedor se torna restrição do desenho de quem o adota. Quando a escolha é continuar respondendo, a resolução de conflitos usa o carimbo de tempo, uma estrutura que converge por construção ou uma regra de mesclagem do domínio. A SAGA coordena transações locais com compensações que também podem falhar e declara passos, compensações e coordenação por coreografia ou orquestração. O CQRS separa os modelos de comando e de consulta quando a assimetria entre leitura e escrita justifica a duplicação. Nenhum dos dois padrões é requisito para adotar microsserviços, como mostram os programas da ODA 06 executados num único processo.
 
-## Checklist de decisão
+## Lista de verificação da decisão {#checklist-de-decisao}
 
 - O limite corresponde a linguagem, invariantes e capacidade reconhecíveis?
 - Há um proprietário para cada dado e somente ele escreve?
 - Existe necessidade comprovada de implantação independente?
-- Chamadas síncronas têm timeout, erros e observação definidos?
+- Chamadas síncronas têm prazo de espera, códigos de erro e telemetria definidos?
 - Estados intermediários e modelo de consistência são aceitáveis ao negócio?
 - A equipe consegue operar a quantidade de unidades proposta?
-- Existem testes de contrato e fronteira sem dependência de internals?
+- Existem testes de contrato e fronteira sem dependência de detalhes internos dos serviços?
 - A decisão registra sinais para consolidar ou extrair no futuro?
 
 ## Referências fundamentais e oficiais
@@ -40,7 +40,7 @@ A consistência entre serviços requer estados intermediários legítimos e meca
 - FastAPI, [documentação oficial](https://fastapi.tiangolo.com/) — aplicações, dependências e testes HTTP.
 - Python, [guia de ambientes e plataformas](https://docs.python.org/3/using/index.html) — instalação nos sistemas usados na oficina.
 
-## O que não decide a arquitetura
+## Framework e estilo arquitetural {#o-que-nao-decide-a-arquitetura}
 
 Escolher um *framework* por familiaridade é uma decisão aceitável que não define o estilo arquitetural do sistema. A evidência relevante continua sendo a direção das dependências, a propriedade do estado, a autonomia de implantação necessária e o comportamento durante falhas.
 

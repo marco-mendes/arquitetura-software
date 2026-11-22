@@ -1,26 +1,26 @@
-# Netflix: migração para a nuvem e rede própria de entrega
+# Casos reais
 
-Entre o toque no play e o primeiro quadro na tela passam cerca de dois segundos. Nesse intervalo, o aplicativo conversa com serviços hospedados em três regiões da Amazon, recebe uma lista de servidores candidatos, mede a rede até eles, escolhe um, pede o primeiro trecho do vídeo e começa a decodificar. O servidor que entrega esse trecho quase nunca está na Amazon. Costuma estar dentro do prédio do seu provedor de internet, num equipamento que a Netflix montou e enviou ao provedor sem cobrar por ele.
+O caso real deste módulo trata da migração da Netflix para a nuvem pública da Amazon, concluída em 2016. O caso trata também da construção da rede própria de entrega de vídeo chamada Open Connect, iniciada em 2012. As informações vêm das publicações oficiais listadas na seção Fontes, que também identifica a cobertura de imprensa usada como fonte secundária.
 
-Nada disso existia em 2008. A história de como passou a existir é uma sequência de decisões que deram errado antes de darem certo, documentada nas publicações oficiais citadas ao final da página.
+Na arquitetura atual, o intervalo entre o comando de reprodução e o primeiro quadro na tela é de cerca de dois segundos. Nesse intervalo, o aplicativo consulta serviços hospedados em três regiões da Amazon e recebe uma lista de servidores candidatos. Em seguida, mede a rede até esses servidores, escolhe um deles e pede o primeiro trecho do vídeo. Na maior parte dos casos, o servidor que entrega o trecho fica dentro da rede do provedor de internet do assinante, num equipamento que a Netflix fornece gratuitamente ao provedor.
 
-## Agosto de 2008: três dias sem enviar DVDs
+## Incidente de agosto de 2008
 
-A Netflix ainda era, em boa medida, uma locadora pelo correio. O anúncio oficial que a empresa publicaria oito anos depois descreve o que aconteceu em uma frase seca: *"We experienced a major database corruption and for three days could not ship DVDs to our members."*
+Em 2008, a Netflix ainda operava em boa parte como locadora de DVDs pelo correio. O anúncio oficial publicado em 2016 descreve o incidente na frase *"We experienced a major database corruption and for three days could not ship DVDs to our members."*
 
-Um banco de dados relacional, com escala vertical, instalado no datacenter da própria empresa, corrompeu-se e interrompeu a operação inteira durante três dias. A falha não se limitou a uma degradação parcial, a uma região ou a um subconjunto de clientes.
+O banco de dados relacional central da empresa, com escala vertical e instalado no datacenter próprio, sofreu uma corrupção que interrompeu o envio de DVDs durante três dias. A falha atingiu a operação inteira, sem limitar-se a uma região ou a um subconjunto de clientes.
 
-A empresa tirou duas conclusões do incidente, e os resumos do caso costumam citar apenas a primeira. A primeira: escalar verticalmente um banco único era uma aposta perdida. A segunda: comprar e instalar servidores num ritmo compatível com o crescimento do streaming era um problema que a Netflix não queria resolver.
+A empresa tirou duas conclusões do incidente. A primeira foi que a escala vertical de um banco único não acompanharia o crescimento do negócio. A segunda foi que a compra e a instalação de servidores no ritmo exigido pelo crescimento do *streaming* não deveriam ser responsabilidade da própria Netflix.
 
-## A decisão que levou sete anos
+## Migração para a AWS entre 2008 e 2016
 
-A migração para a AWS começou em 2008 e terminou em janeiro de 2016, quando os últimos componentes do serviço de streaming foram desligados nos datacenters próprios.
+A migração para a AWS começou em 2008 e terminou em janeiro de 2016, quando os últimos componentes do serviço de *streaming* foram desligados nos datacenters próprios.
 
-O anúncio declara o motivo de a migração ter levado sete anos: a Netflix adotou *"a cloud-native approach, rebuilding virtually all of our technology"*. A empresa não moveu o que tinha. Reescreveu quase tudo, trocando o banco relacional central por armazenamentos NoSQL sob propriedade de cada serviço e quebrando o monólito em serviços independentes.
+O anúncio de 2016 atribui a duração de sete anos à abordagem adotada, descrita como *"a cloud-native approach, rebuilding virtually all of our technology"*. A Netflix reescreveu quase toda a tecnologia, substituiu o banco relacional central por armazenamentos NoSQL sob a propriedade de cada serviço e dividiu o monólito em serviços independentes.
 
-A diferença entre as duas abordagens é a lição central deste caso. Mover máquinas virtuais para um provedor troca o dono do datacenter e preserva a arquitetura. Foi a reescrita que produziu os resultados que a Netflix declara: oito vezes mais assinantes de streaming do que em 2008, visualização crescendo três ordens de grandeza em oito anos, disponibilidade se aproximando de quatro noves e custo de nuvem por início de reprodução equivalente a uma fração do custo em datacenter próprio.
+A transferência de máquinas virtuais para um provedor de nuvem muda o proprietário do datacenter e mantém a arquitetura existente. A Netflix atribui à reescrita os resultados que declara no anúncio. O número de assinantes de *streaming* ficou oito vezes maior do que em 2008. A visualização cresceu três ordens de grandeza em oito anos, enquanto a disponibilidade se aproximou de quatro noves. O custo de nuvem por início de reprodução ficou em uma fração do custo do datacenter próprio.
 
-Em 6 de janeiro de 2016, apoiada em múltiplas regiões da AWS, a empresa ligou o serviço em mais de 130 países de uma vez.
+Em 6 de janeiro de 2016, com o serviço distribuído em várias regiões da AWS, a empresa passou a operar em mais de 130 países ao mesmo tempo.
 
 ```mermaid
 timeline
@@ -30,7 +30,7 @@ timeline
          : Isthmus, resiliência a falhas de balanceador
     2012 : Open Connect entra no ar com 5% do tráfego
     2013 : Arquitetura ativa-ativa entre regiões
-         : Chaos Kong derruba uma região inteira
+         : Chaos Kong desativa uma região inteira
     2015 : Codificação ajustada título a título
          : Artigo sobre o sistema de recomendação
     2016 : Último componente sai do datacenter próprio
@@ -38,75 +38,71 @@ timeline
     2018 : Hystrix entra em modo de manutenção
 ```
 
-**Texto alternativo:** linha do tempo da Netflix de 2008 a 2018, marcando a corrupção do banco e o início da migração, o Chaos Monkey e o Isthmus, a entrada do Open Connect, a arquitetura ativa-ativa e o Chaos Kong, a codificação ajustada título a título e o artigo de recomendação, a conclusão da migração com a expansão internacional, e o Hystrix em modo de manutenção.
+**Texto alternativo:** linha do tempo da Netflix de 2008 a 2018 com a corrupção do banco e o início da migração em 2008. A linha marca as ferramentas de resiliência de 2011 e 2013 e a entrada do Open Connect em 2012. Também marca a codificação por título e o artigo de recomendação em 2015, a conclusão da migração em 2016 e o Hystrix em modo de manutenção em 2018.
 
-*Figura 1 — Dez anos de decisões arquiteturais na Netflix. Fonte: curso, a partir das publicações oficiais citadas ao final.*
+*Figura 1 — Decisões arquiteturais da Netflix entre 2008 e 2018. Fonte: curso, a partir das publicações oficiais citadas ao final.*
 
-**Leitura textual da figura:** a sequência mostra que a migração para a nuvem se estendeu por quase toda a década e ocorreu em paralelo às demais decisões. Resiliência a falhas veio antes da conclusão da migração, a rede própria de entrega começou no meio do caminho, e a expansão internacional só foi possível depois que o serviço passou a rodar em várias regiões ao mesmo tempo.
+**Leitura textual da figura:** a migração para a nuvem ocupou quase toda a década e ocorreu em paralelo às demais decisões. As ferramentas de resiliência a falhas surgiram antes da conclusão da migração. A rede própria de entrega começou a operar em 2012, quatro anos antes dessa conclusão. A expansão internacional de 2016 dependeu da operação do serviço em várias regiões ao mesmo tempo.
 
-## A rede de entrega contratada
+## Rede de entrega contratada
 
-O streaming transfere bytes de vídeo em grande volume, o que o diferencia de um tráfego de chamadas de API. Nos primeiros anos a Netflix contratou o que o mercado oferecia: Akamai, Level 3 e Limelight, três das maiores redes de distribuição de conteúdo do mundo.
+O *streaming* transfere bytes de vídeo em grande volume, o que o diferencia do tráfego de chamadas de API. Nos primeiros anos, a Netflix contratou as redes de distribuição de conteúdo da Akamai, da Level 3 e da Limelight.
 
-Funcionou enquanto o volume coube. Deixou de funcionar por duas razões que a imprensa especializada da época registrou. Os fornecedores tinham dificuldade de expandir a infraestrutura no ritmo em que a demanda da Netflix crescia. E o custo de terceirizar entrega de vídeo, num negócio cuja atividade principal é entregar vídeo, subia mais rápido do que a receita.
+A imprensa especializada de 2012 registrou duas razões para a saída desses fornecedores. A primeira foi a dificuldade dos fornecedores em ampliar a infraestrutura no ritmo de crescimento da demanda da Netflix. A segunda foi o custo de terceirizar a entrega de vídeo, que crescia mais rápido do que a receita num negócio cuja atividade principal é entregar vídeo.
 
-A situação contém uma pergunta arquitetural que reaparece em qualquer empresa: o que comprar e o que construir? A resposta que a Netflix deu foi construir, porque distribuição de conteúdo tinha deixado de ser custo de operação e virado vantagem competitiva.
+A situação corresponde à decisão arquitetural entre comprar e construir um componente. A Netflix decidiu construir a rede de entrega, porque a distribuição de conteúdo tinha passado a ser uma fonte de vantagem competitiva para a empresa.
 
-## 2012: a Netflix vira uma fabricante de hardware
+## Open Connect a partir de 2012
 
-O Open Connect entrou no ar em 2012, servindo cerca de 5% do tráfego. O desenho é heterodoxo para uma empresa de software.
+O Open Connect entrou em operação em 2012 com cerca de 5% do tráfego da Netflix. No programa, a própria Netflix projeta e monta os servidores de entrega, em duas famílias de equipamento.
 
-A Netflix projeta e monta servidores. São duas famílias. O aparelho de armazenamento é um equipamento de duas unidades de rack que a documentação oficial descreve com até 120 TB de capacidade, cerca de 200 Gbps de vazão, consumo aproximado de 400 W e conectividade de seis interfaces de 10 Gbps agregadas ou até duas de 100 Gbps. O aparelho global é menor e mais barato, com até 60 TB, cerca de 80 Gbps e 250 W, projetado explicitamente para provedores menores e mercados emergentes, projetado para operar de quatro a seis anos sem intervenção presencial.
+O aparelho de armazenamento ocupa duas unidades de rack e tem, segundo a documentação oficial, até 120 TB de capacidade e cerca de 200 Gbps de vazão. O consumo é de aproximadamente 400 W, com seis interfaces de 10 Gbps agregadas ou até duas interfaces de 100 Gbps. O aparelho global é menor e mais barato, com até 60 TB, cerca de 80 Gbps e 250 W. Ele foi projetado para provedores menores e mercados emergentes e para operar de quatro a seis anos sem intervenção presencial.
 
-Esses equipamentos vão para dois lugares. Alguns ficam em instalações da própria Netflix e em locais de interconexão (IXP), que a empresa declara somarem mais de 60 datacenters globais. Outros são embarcados dentro da rede dos provedores de acesso, e a Netflix entrega esses aparelhos sem cobrar nada por eles.
+Os equipamentos ficam em dois tipos de local. Uma parte fica em instalações da própria Netflix e em locais de troca de tráfego entre redes, que somam mais de 60 datacenters segundo a empresa. A outra parte fica dentro da rede de mais de mil provedores de acesso parceiros, que recebem os aparelhos gratuitamente.
 
-A troca é econômica dos dois lados. O provedor economiza tráfego caro nos enlaces de trânsito, porque o vídeo passa a sair de dentro da própria rede. A Netflix ganha latência baixa e deixa de pagar pela entrega. A empresa declara parceria com mais de mil provedores.
+O provedor reduz o tráfego nos enlaces de trânsito, que têm custo alto, porque o vídeo passa a sair de dentro da sua própria rede. A Netflix obtém latência baixa e deixa de pagar pela entrega a terceiros.
 
-## O catálogo viaja de madrugada
+## Preenchimento antecipado dos aparelhos
 
-O detalhe que transforma o Open Connect de "servidor de cache" em decisão arquitetural é quando o conteúdo chega.
+Um cache convencional é reativo, porque o primeiro usuário que pede um arquivo provoca a busca na origem e os pedidos seguintes aproveitam a cópia. O Open Connect é proativo e carrega o conteúdo antes do pedido. A documentação oficial descreve o preenchimento noturno dos aparelhos e informa que a Netflix pré-carrega cada equipamento novo com o conteúdo adequado à região geográfica de destino, num processo de uma a duas semanas.
 
-Um cache convencional é reativo: o primeiro usuário que pede um arquivo paga a conta de buscá-lo na origem, e os seguintes aproveitam. O Open Connect é proativo. A documentação oficial descreve preenchimento noturno dos aparelhos, e informa que a Netflix faz a configuração inicial dos equipamentos embarcados e os pré-carrega com o conteúdo apropriado para a região geográfica de destino, num processo que leva de uma a duas semanas conforme o tamanho do catálogo.
+Durante a madrugada, a Netflix copia para os aparelhos de cada região os títulos com maior probabilidade de serem assistidos no dia seguinte. Quando o assinante inicia a reprodução, o vídeo já está armazenado no aparelho instalado no provedor.
 
-Ou seja: na madrugada anterior, a Netflix já decidiu o que provavelmente será assistido na sua cidade amanhã, e colocou esses arquivos a poucos quilômetros de você. Quando você aperta o play, o vídeo já está armazenado no aparelho instalado no provedor.
+O preenchimento antecipado depende de uma propriedade do negócio da Netflix, que é a previsibilidade da demanda sobre um catálogo conhecido.
 
-Isso só é possível porque o catálogo é conhecido e a demanda é previsível o bastante para ser antecipada. A decisão se apoia em uma propriedade do negócio, a previsibilidade da demanda sobre um catálogo conhecido.
+## Codificação por título a partir de 2015
 
-## Cada título vira muitos arquivos
+Entre o arquivo entregue pelo estúdio e o arquivo que chega ao aparelho existe uma etapa de transcodificação. Cada título precisa existir em várias resoluções e taxas de bits, com formatos de áudio e legendas compatíveis com aparelhos que vão de televisores recentes a celulares de entrada.
 
-Entre o arquivo que o estúdio entrega e o que chega ao aparelho existe uma etapa de transcodificação que multiplica o conteúdo. Cada título precisa existir em várias resoluções, várias taxas de bits, vários formatos de áudio, várias legendas e vários envelopes compatíveis com aparelhos que vão de um televisor recente a um celular de entrada.
+Em dezembro de 2015, a Netflix publicou a substituição da escada fixa de taxas de bits pela codificação por título, chamada em inglês de *per-title encoding*. Essa técnica define as taxas de bits de cada título a partir de uma análise do próprio conteúdo. Uma animação com áreas planas de cor e um filme de ação com granulação e movimento rápido precisam de taxas de bits diferentes para atingir a mesma qualidade percebida. A codificação igual para os dois títulos desperdiça banda no primeiro e reduz a qualidade do segundo.
 
-Em 2015 a Netflix publicou que trocou a escada fixa de taxas de bits por uma análise feita título a título, técnica que a empresa batizou de *per-title encoding*, ou codificação por título. O raciocínio é simples de enunciar e caro de executar: uma animação com áreas planas de cor e um filme de ação com granulação e movimento rápido não precisam da mesma taxa de bits para atingir a mesma qualidade percebida. Tratar os dois igual desperdiça banda num caso e entrega qualidade ruim no outro.
+## Resiliência entre regiões de 2011 a 2016
 
-## 2011 a 2016: aprender a perder uma região inteira
+A resiliência da Netflix costuma ser resumida à ferramenta Chaos Monkey. A evolução registrada nas publicações da empresa teve várias etapas entre 2011 e 2016.
 
-A resiliência da Netflix costuma ser resumida a "eles têm o Chaos Monkey", o que achata uma evolução de cinco anos em uma ferramenta.
+O **Isthmus** foi publicado em 2013 e tratou da falha do balanceador de carga de uma região inteira, com o tráfego de entrada roteado por outra região. Ele cobria um único modo de falha conhecido.
 
-A sequência real tem etapas. O **Isthmus**, publicado em 2013, atacou um caso específico: sobreviver à falha do balanceador de carga de uma região inteira, roteando o tráfego de entrada por outra. Era resiliência parcial, para um modo de falha conhecido.
+Em dezembro de 2013, a Netflix adotou a **arquitetura ativa-ativa**, com o serviço em execução simultânea em mais de uma região da AWS e cada região capaz de atender os assinantes da outra. Essa arquitetura exigiu replicação do Cassandra entre regiões e invalidação de cache remoto no EVCache quando uma escrita ocorre na outra região. Também exigiu roteamento no Zuul com mudança em tempo de execução.
 
-Em dezembro de 2013 veio a **arquitetura ativa-ativa**, com o serviço rodando simultaneamente em mais de uma região da AWS e cada região capaz de atender os membros da outra. Isso obriga a resolver problemas que não existem em uma região só: replicação do Cassandra entre regiões, invalidação de cache remoto no EVCache quando uma escrita acontece do outro lado, e roteamento no Zuul capaz de mudar em tempo de execução.
+Com duas regiões atendendo tráfego real, a empresa passou a ensaiar a perda de uma delas. O **Chaos Kong** evacua uma região inteira da AWS com tráfego real e verifica se a outra região absorve a carga.
 
-Com duas regiões atendendo de verdade, virou possível ensaiar a perda de uma delas. O **Chaos Kong** faz exatamente isso: evacua uma região inteira da AWS com tráfego real e observa se a outra região absorve a carga.
+Os ensaios mostraram que a evacuação de uma região levava cerca de 50 minutos, prazo longo demais para um incidente real. O **Project Nimble** reduziu esse prazo para 8 minutos com uma equipe de duas pessoas durante cerca de seis meses, segundo a publicação da Netflix.
 
-O ensaio revelou o problema seguinte. Evacuar uma região levava cerca de 50 minutos, tempo demais para um incidente real. O **Project Nimble** reduziu isso para 8 minutos. O dado que mais interessa a quem vai propor algo parecido está na descrição do esforço, que envolveu uma equipe de duas pessoas durante cerca de seis meses.
+## Chaos Monkey e a dependência do Spinnaker
 
-## O macaco derruba servidores porque alguém precisa estar acordado
+O Chaos Monkey encerra máquinas em produção de forma aleatória. O repositório oficial justifica a ferramenta com a frase *"Exposing engineers to failures more frequently incentivizes them to build resilient services."*
 
-O Chaos Monkey encerra máquinas em produção de forma aleatória. A justificativa oficial cabe numa frase do repositório: *"Exposing engineers to failures more frequently incentivizes them to build resilient services."*
+O mesmo repositório registra a restrição *"You must be managing your apps with Spinnaker to use Chaos Monkey to terminate instances."* A ferramenta depende do Spinnaker, plataforma de entrega contínua da Netflix, o que impede a instalação isolada do Chaos Monkey em outro sistema. Uma equipe que adote o Chaos Monkey sem essa plataforma de entrega e sem as práticas de engenharia associadas reproduz apenas uma parte do método da Netflix.
 
-O mesmo repositório traz uma restrição que quase nunca aparece nos resumos: *"You must be managing your apps with Spinnaker to use Chaos Monkey to terminate instances."* A ferramenta pressupõe a plataforma de entrega contínua da Netflix. Ela não se instala num sistema qualquer. Uma equipe que adote o Chaos Monkey sem a plataforma de entrega e sem a prática de engenharia que o acompanham reproduz apenas a parte visível do método da Netflix.
+## Sistema de recomendação em 2015
 
-## Oito de cada dez horas assistidas vêm de recomendação
+Em dezembro de 2015, Carlos Gomez-Uribe e Neil Hunt publicaram na *ACM Transactions on Management Information Systems* o artigo que descreve o sistema de recomendação da empresa. Segundo o artigo, a recomendação influencia cerca de 80% das horas assistidas, enquanto a busca responde pelos 20% restantes. Os autores estimam que o efeito combinado de personalização e recomendação economiza mais de um bilhão de dólares por ano.
 
-Em dezembro de 2015, Carlos Gomez-Uribe e Neil Hunt publicaram na *ACM Transactions on Management Information Systems* o artigo que descreve o sistema de recomendação da empresa. Dois números do artigo mudam a leitura arquitetural do sistema.
-
-A recomendação influencia cerca de 80% das horas assistidas; a busca responde pelos 20% restantes. E os autores estimam que o efeito combinado de personalização e recomendação economiza mais de um bilhão de dólares por ano.
-
-Se 80% do consumo depende de um subsistema, ele deixa de ser um recurso acessório. Passa a ter requisito de disponibilidade equivalente ao da reprodução de vídeo, e isso força a separação entre o caminho de leitura, que precisa responder em milissegundos com um modelo já calculado, e o caminho de treinamento, que roda longe da requisição do usuário.
+Um subsistema do qual depende 80% do consumo precisa de requisito de disponibilidade equivalente ao da reprodução de vídeo. Esse requisito leva à separação entre o caminho de leitura e o caminho de treinamento do subsistema de recomendação. O caminho de leitura responde em milissegundos com um modelo já calculado, enquanto o caminho de treinamento é executado fora da requisição do usuário.
 
 ## Sequência de eventos ao iniciar um vídeo
 
-Com os componentes descritos nas seções anteriores, a sequência pode ser lida em ordem.
+O diagrama de sequência reúne os componentes descritos nas seções anteriores na ordem em que participam de uma reprodução.
 
 ```mermaid
 sequenceDiagram
@@ -122,43 +118,41 @@ sequenceDiagram
     Cli->>Api: relata qualidade e progresso
 ```
 
-**Texto alternativo:** diagrama de sequência em que o aplicativo autentica e pede o título aos serviços na AWS, que verificam direitos, escolhem o formato e devolvem uma lista de aparelhos candidatos. O aplicativo mede a rede até eles, escolhe um, recebe o primeiro trecho e segue pedindo os seguintes, enquanto relata qualidade e progresso aos serviços na nuvem.
+**Texto alternativo:** diagrama de sequência em que o aplicativo autentica e pede o título aos serviços na AWS, que verificam direitos, escolhem o formato e devolvem uma lista de aparelhos candidatos. O aplicativo mede a rede até os aparelhos e escolhe um deles. Em seguida, recebe o primeiro trecho, pede os trechos seguintes e relata qualidade e progresso aos serviços na nuvem.
 
-*Figura 2 — O caminho de uma reprodução entre as duas nuvens da Netflix. Fonte: curso, a partir do anúncio de migração e da documentação do programa Open Connect.*
+*Figura 2 — Caminho de uma reprodução entre a AWS e o Open Connect. Fonte: curso, a partir do anúncio de migração e da documentação do programa Open Connect.*
 
-**Leitura textual da figura:** a decisão e os metadados vêm da nuvem pública; os bytes do vídeo vêm de um equipamento dentro do provedor de acesso. A nuvem não entrega vídeo. Ela diz de onde buscá-lo, e o aplicativo tem autonomia para medir e escolher entre as opções recebidas. Se um aparelho degrada, o próprio aplicativo troca sem consultar a nuvem de novo.
+**Leitura textual da figura:** a decisão e os metadados vêm da nuvem pública, enquanto os bytes do vídeo vêm de um equipamento dentro do provedor de acesso. A nuvem informa de onde buscar o vídeo, enquanto o aplicativo mede e escolhe entre as opções recebidas. Quando um aparelho perde desempenho, o aplicativo troca de aparelho sem consultar a nuvem novamente.
 
-O detalhe final é que o cliente decide. A Netflix escreve o aplicativo para os mais de dois mil modelos de aparelho que suporta, e isso permite empurrar inteligência para a ponta: medir a banda disponível, trocar de servidor, baixar a resolução em vez de travar. Uma empresa que não controla o cliente não tem essa opção.
+A Netflix desenvolve o aplicativo para mais de dois mil modelos de aparelho, o que permite transferir decisões para o cliente. O aplicativo mede a banda disponível, troca de servidor e reduz a resolução quando a rede piora, decisões que exigem o controle do software cliente.
 
-## O que envelheceu
+## Partes do caso que envelheceram
 
-Um caso de referência descreve uma situação datada, e esta seção registra as partes do caso que já não devem ser copiadas.
-
-O Hystrix, biblioteca de disjuntor de circuito que a Netflix abriu e que virou padrão de fato no ecossistema Java, está em modo de manutenção desde novembro de 2018, com o próprio repositório indicando projetos ativos como o Resilience4j para novos desenvolvimentos. A plataforma de ferramentas de 2012 continua sendo citada em apresentações como se fosse o estado atual da engenharia da Netflix.
+Algumas decisões do caso estão datadas e não devem ser copiadas na forma original. O Hystrix, biblioteca de disjuntor publicada pela Netflix e adotada amplamente no ecossistema Java, está em modo de manutenção desde novembro de 2018. O próprio repositório do Hystrix indica projetos ativos, como o Resilience4j, para novos desenvolvimentos. As ferramentas que a Netflix usava em 2012 ainda aparecem em apresentações como se descrevessem a engenharia atual da empresa.
 
 ## Questões para discussão
 
-Releia o caso com a lente do arquiteto. As questões abaixo pedem recuperar os fatos, explicar os mecanismos e comparar as escolhas descritas no próprio caso.
+As questões leem o caso com a lente do arquiteto e pedem a recuperação dos fatos, a explicação dos mecanismos e a comparação das escolhas descritas.
 
 **1.** Segundo o anúncio oficial, o que aconteceu em 2008 e qual operação da empresa ficou parada por três dias?
 
-**2.** A Netflix declara ter reconstruído a tecnologia em vez de transportá-la. Explique a diferença entre as duas coisas e o que cada uma muda na arquitetura resultante.
+**2.** Explique a diferença entre a reconstrução da tecnologia declarada pela Netflix na migração para a nuvem e a transferência da tecnologia existente para o novo ambiente, com o efeito de cada abordagem na arquitetura resultante.
 
-**3.** O Open Connect inverte a lógica de cache: o conteúdo chega antes do pedido. Que propriedade do negócio da Netflix torna isso possível, e que tipo de serviço jamais conseguiria fazer o mesmo?
+**3.** Explique qual propriedade do negócio da Netflix permite que o Open Connect carregue o conteúdo nos aparelhos antes do pedido do assinante e indique um tipo de serviço que não conseguiria fazer o mesmo.
 
-**4.** Compare Isthmus, arquitetura ativa-ativa e Chaos Kong quanto ao modo de falha que cada um endereça.
+**4.** Compare Isthmus, arquitetura ativa-ativa e Chaos Kong quanto ao modo de falha tratado por cada um.
 
-**5.** O Chaos Monkey exige a plataforma Spinnaker e o Hystrix está em modo de manutenção desde 2018. Explique o que cada um desses fatos diz sobre reaproveitar a plataforma de ferramentas de outra empresa.
+**5.** Explique o que a dependência do Chaos Monkey em relação ao Spinnaker e o modo de manutenção do Hystrix desde 2018 indicam sobre o reaproveitamento da plataforma de ferramentas de outra empresa.
 
 ## Fontes
 
-- Netflix, [Completing the Netflix Cloud Migration](https://about.netflix.com/en/news/completing-the-netflix-cloud-migration) — anúncio oficial de fevereiro de 2016. Origem do incidente de 2008, dos sete anos, da abordagem *cloud-native* e das métricas de resultado.
-- Netflix, [Open Connect](https://openconnect.netflix.com/en/) — programa oficial: preenchimento noturno, pré-carga por região, mais de mil provedores parceiros e mais de 60 datacenters.
-- Netflix, [Open Connect Appliances](https://openconnect.netflix.com/en/appliances/) — especificações oficiais de capacidade, vazão e consumo dos dois modelos de aparelho.
-- Netflix Technology Blog, [Isthmus — Resiliency against ELB outages](https://netflixtechblog.com/isthmus-resiliency-against-elb-outages-d9e0623484f3) e [Active-Active for Multi-Regional Resiliency](https://netflixtechblog.com/active-active-for-multi-regional-resiliency-c47719f6685b) — as duas etapas da resiliência entre regiões.
-- Netflix Technology Blog, [Project Nimble: Region Evacuation Reimagined](https://netflixtechblog.com/project-nimble-region-evacuation-reimagined-d0d0568254d4) — a redução do tempo de evacuação e o tamanho da equipe envolvida.
-- Netflix Technology Blog, [Per-Title Encode Optimization](https://netflixtechblog.com/per-title-encode-optimization-7e99442b62a2) — dezembro de 2015, a substituição da escada fixa de taxas de bits.
-- Netflix, [Chaos Monkey](https://github.com/Netflix/chaosmonkey) e [Hystrix](https://github.com/Netflix/Hystrix) — repositórios oficiais, origem das duas citações e do aviso de modo de manutenção.
-- Carlos A. Gomez-Uribe e Neil Hunt, [The Netflix Recommender System: Algorithms, Business Value, and Innovation](https://dl.acm.org/doi/10.1145/2843948) — *ACM Transactions on Management Information Systems*, v. 6, n. 4, artigo 13, dezembro de 2015.
-- Fonte secundária, identificada como tal: a cobertura de imprensa de junho de 2012 sobre a entrada do Open Connect e a saída dos fornecedores contratados, registrada por [TechCrunch](https://techcrunch.com/2012/06/04/netflix-open-connect/) e [Forbes](https://www.forbes.com/sites/ericsavitz/2012/06/05/netflix-shifts-traffic-to-its-own-cdn-akamai-limelight-shrs-hit/). Os nomes Akamai, Level 3 e Limelight e a fatia de 5% vêm daí.
-- Todd Hoff, [Netflix: What Happens When You Press Play?](https://highscalability.com/netflix-what-happens-when-you-press-play/) — síntese jornalística extensa, útil como panorama e como exemplo de reconstrução narrativa a partir de apresentações públicas.
+- Netflix, [Completing the Netflix Cloud Migration](https://about.netflix.com/en/news/completing-the-netflix-cloud-migration), anúncio oficial de fevereiro de 2016. Origem do incidente de 2008, da duração de sete anos, da abordagem *cloud-native* e das métricas de resultado.
+- Netflix, [Open Connect](https://openconnect.netflix.com/en/), página oficial do programa com o preenchimento noturno e a pré-carga por região.
+- Netflix, [Open Connect Appliances](https://openconnect.netflix.com/en/appliances/), especificações oficiais de capacidade e consumo dos dois modelos de aparelho.
+- Netflix Technology Blog, [Isthmus — Resiliency against ELB outages](https://netflixtechblog.com/isthmus-resiliency-against-elb-outages-d9e0623484f3) e [Active-Active for Multi-Regional Resiliency](https://netflixtechblog.com/active-active-for-multi-regional-resiliency-c47719f6685b), as duas etapas da resiliência entre regiões.
+- Netflix Technology Blog, [Project Nimble: Region Evacuation Reimagined](https://netflixtechblog.com/project-nimble-region-evacuation-reimagined-d0d0568254d4), redução do tempo de evacuação e tamanho da equipe envolvida.
+- Netflix Technology Blog, [Per-Title Encode Optimization](https://netflixtechblog.com/per-title-encode-optimization-7e99442b62a2), publicação de dezembro de 2015 sobre a substituição da escada fixa de taxas de bits.
+- Netflix, [Chaos Monkey](https://github.com/Netflix/chaosmonkey) e [Hystrix](https://github.com/Netflix/Hystrix), repositórios oficiais que contêm as duas citações e o aviso de modo de manutenção.
+- Carlos A. Gomez-Uribe e Neil Hunt, [The Netflix Recommender System: Algorithms, Business Value, and Innovation](https://dl.acm.org/doi/10.1145/2843948). Artigo publicado em dezembro de 2015 na *ACM Transactions on Management Information Systems*, volume 6, número 4.
+- Fonte secundária: cobertura de imprensa de junho de 2012 sobre a entrada do Open Connect e a saída dos fornecedores contratados, publicada por [TechCrunch](https://techcrunch.com/2012/06/04/netflix-open-connect/) e [Forbes](https://www.forbes.com/sites/ericsavitz/2012/06/05/netflix-shifts-traffic-to-its-own-cdn-akamai-limelight-shrs-hit/). Os nomes Akamai, Level 3 e Limelight e a fatia de 5% vêm dessas reportagens.
+- Todd Hoff, [Netflix: What Happens When You Press Play?](https://highscalability.com/netflix-what-happens-when-you-press-play/), síntese jornalística útil como panorama da arquitetura a partir de apresentações públicas.

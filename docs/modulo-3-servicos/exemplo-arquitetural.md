@@ -1,12 +1,12 @@
-# Exemplo arquitetural: elegibilidade e exames
+# Exemplo arquitetural
 
-O laboratório concretiza dois bounded contexts em processos FastAPI independentes. Cada processo possui um PostgreSQL e uma credencial própria. O objetivo é expor um limite verificável, sem simular a plataforma hospitalar inteira: Exames conhece o contrato HTTP de Elegibilidade e não conhece sua tabela.
+O laboratório implementa os *bounded contexts* de Elegibilidade e de Exames em dois processos FastAPI independentes, cada um com o próprio PostgreSQL e a própria credencial de acesso. O exemplo expõe um limite verificável entre os dois serviços sem simular a plataforma hospitalar inteira. Exames conhece o contrato HTTP de Elegibilidade e não conhece a tabela em que Elegibilidade guarda os dados.
 
-## Onde está o bounded context
+## Bounded contexts do exemplo {#onde-esta-o-bounded-context}
 
-Como [conceitos](conceitos.md) define, um bounded context delimita onde um modelo e sua linguagem têm significado consistente. Ele é uma fronteira semântica e não exige processo separado. Neste laboratório, cada bounded context também se tornou um processo (um microsserviço) por uma escolha de implantação feita para tornar a fronteira observável, e essa escolha não constitui regra geral.
+Um *bounded context* delimita a parte do sistema em que um modelo e a sua linguagem têm significado consistente, como define a página de [Conceitos](conceitos.md). Ele é uma fronteira semântica e não exige processo separado. Neste laboratório, cada *bounded context* também foi implantado como processo próprio, decisão tomada para tornar a fronteira observável e que não constitui regra geral.
 
-Dentro de cada contexto existe um vocabulário próprio que o outro lado não precisa conhecer. Em Elegibilidade, `elegivel` resume vínculo, vigência e regra da operadora — um cálculo que pode mudar por completo sem que nada além do campo booleano seja exposto. Em Exames, `situacao` descreve uma etapa do fluxo clínico da solicitação, sem relação com o vocabulário de Elegibilidade. A única tradução entre os dois modelos acontece no contrato HTTP; nenhum dos dois enxerga o schema, a tabela ou o código interno do outro.
+Cada contexto tem um vocabulário próprio que o outro contexto não precisa conhecer. Em Elegibilidade, o campo `elegivel` resume vínculo, vigência e regra da operadora num cálculo que pode mudar por completo sem alterar o campo booleano exposto. Em Exames, o campo `situacao` descreve uma etapa do fluxo clínico da solicitação e não tem relação com o vocabulário de Elegibilidade. A tradução entre os dois modelos ocorre somente no contrato HTTP, sem acesso de um contexto ao *schema*, às tabelas ou ao código interno do outro.
 
 ```mermaid
 flowchart LR
@@ -23,17 +23,17 @@ flowchart LR
     AX -->|único contrato entre os dois| AE
 ```
 
-**Texto alternativo:** dois bounded contexts lado a lado, Elegibilidade e Exames, cada um com seu próprio código-fonte e seu próprio PostgreSQL; a única ligação entre eles é a chamada HTTP do contrato.
+**Texto alternativo:** os *bounded contexts* Elegibilidade e Exames lado a lado, cada um com o próprio código-fonte e o próprio PostgreSQL, ligados apenas pela chamada HTTP do contrato.
 
-*Figura 1 — Os dois bounded contexts do laboratório e o código de cada um. Fonte: curso.*
+*Figura 1 — Bounded contexts do laboratório e código de cada um. Fonte: curso.*
 
-**Leitura textual da figura:** o bounded context Elegibilidade contém `elegibilidade.py` e seu próprio PostgreSQL; o bounded context Exames contém `exames.py` e seu próprio PostgreSQL; a única seta entre os dois contextos é a chamada HTTP do contrato, sem acesso direto a banco ou código interno.
+**Leitura textual da figura:** o *bounded context* Elegibilidade contém `elegibilidade.py` e o próprio PostgreSQL, enquanto o *bounded context* Exames contém `exames.py` e outro PostgreSQL. A única seta entre os dois contextos representa a chamada HTTP do contrato, sem acesso direto a banco ou a código interno.
 
-As seções a seguir mostram o código de cada lado desta figura: primeiro os componentes, depois o fluxo entre eles.
+As seções seguintes mostram primeiro o código dos componentes de cada lado da figura e depois o fluxo de uma solicitação entre eles.
 
 ## Componentes
 
-O serviço **Elegibilidade** oferece `GET /elegibilidades/{beneficiario_id}`. Seu schema contém beneficiários sintéticos e a decisão booleana. Cada processo é uma aplicação FastAPI própria, com sua própria conexão PostgreSQL, e os dois códigos se comunicam apenas por HTTP, sem import nem chamada de função entre eles.
+O serviço **Elegibilidade** oferece a operação `GET /elegibilidades/{beneficiario_id}`. O *schema* do serviço contém beneficiários sintéticos com a decisão booleana de elegibilidade de cada um. Cada serviço é uma aplicação FastAPI com a própria conexão ao PostgreSQL, enquanto os códigos dos dois serviços se comunicam apenas por HTTP, sem `import` ou chamada de função entre eles.
 
 ```python
 # hospital/servicos/elegibilidade.py
@@ -78,7 +78,7 @@ def consultar_elegibilidade(beneficiario_id: str):
     return {"beneficiario_id": beneficiario_id, "elegivel": row[0]}
 ```
 
-O serviço **Exames** oferece `POST /exames`, consulta o primeiro serviço por HTTP e, se a resposta for positiva, registra uma solicitação no próprio schema. O contrato de entrada e saída é declarado em Pydantic, como no exemplo do módulo 2:
+O serviço **Exames** oferece a operação `POST /exames`, que consulta Elegibilidade por HTTP e registra a solicitação no próprio *schema* quando a resposta é positiva. O contrato de entrada e de saída é declarado com Pydantic, como no exemplo do Módulo 2.
 
 ```python
 # hospital/servicos/exames.py
@@ -112,9 +112,9 @@ def obter_cliente_elegibilidade():
         yield client
 ```
 
-`ELIGIBILIDADE_URL` é a única informação que Exames recebe sobre o outro serviço: um endereço HTTP, injetado por variável de ambiente. Nenhuma URL de banco alheio é passada a Exames, e essa ausência de configuração impede o acesso direto sem depender de uma regra no código.
+A variável de ambiente `ELIGIBILIDADE_URL` contém um endereço HTTP e é a única informação que Exames recebe sobre o outro serviço. Exames não recebe a URL do banco de Elegibilidade, de modo que a própria configuração impede o acesso direto sem depender de uma regra no código.
 
-Ambos oferecem `GET /health`. O health check comprova conexão com seu banco local; ele não declara nenhuma dependência remota saudável. Essa escolha permite ver uma falha parcial: Exames continua com processo e banco ativos, embora uma operação que depende de Elegibilidade retorne `503`.
+Os dois serviços oferecem a operação `GET /health`, que verifica apenas a conexão com o banco local e não declara a saúde de nenhuma dependência remota. Essa escolha torna a falha parcial visível, porque Exames continua com processo e banco ativos enquanto a operação que depende de Elegibilidade retorna `503`.
 
 ```python
 @app.get("/health")
@@ -139,15 +139,15 @@ flowchart LR
     X -. proibido .-> DE
 ```
 
-**Texto alternativo:** o consumidor solicita exames; Exames consulta Elegibilidade por HTTP e cada serviço acessa exclusivamente seu próprio banco PostgreSQL.
+**Texto alternativo:** o consumidor solicita exames, Exames consulta Elegibilidade por HTTP e cada serviço acessa somente o próprio banco PostgreSQL.
 
 *Figura 2 — Contrato entre serviços e propriedade de dados. Fonte: curso.*
 
-**Leitura textual da figura:** o consumidor chama Exames; Exames consulta Elegibilidade por HTTP; cada serviço acessa apenas seu PostgreSQL, e o caminho direto entre Exames e o banco de Elegibilidade é explicitamente proibido.
+**Leitura textual da figura:** o consumidor chama Exames, que consulta Elegibilidade por HTTP antes de gravar a solicitação no próprio PostgreSQL. O caminho direto entre Exames e o banco de Elegibilidade aparece marcado como proibido na figura.
 
 ## Fluxo nominal
 
-O consumidor envia:
+O consumidor envia o pedido abaixo para a operação `POST /exames` de Exames.
 
 ```json
 {
@@ -156,7 +156,7 @@ O consumidor envia:
 }
 ```
 
-O Pydantic valida a forma do pedido antes de a rota rodar (o mesmo mecanismo do módulo 2). Dentro da rota, Exames chama `GET /elegibilidades/paciente-001` pelo cliente HTTP injetado, sem conhecer nenhum detalhe interno de Elegibilidade além do contrato:
+O Pydantic valida a forma do pedido antes da execução da rota, com o mesmo mecanismo usado no Módulo 2. Dentro da rota, Exames chama `GET /elegibilidades/paciente-001` pelo cliente HTTP injetado e não usa nenhum detalhe de Elegibilidade além do contrato.
 
 ```python
 # hospital/servicos/exames.py
@@ -179,7 +179,7 @@ def solicitar_exame(
     )
 ```
 
-`registrar_solicitacao` é a única função de Exames que toca seu próprio banco — e só o seu:
+A função `registrar_solicitacao` é a única função de Exames que acessa banco de dados, sempre o banco do próprio Exames.
 
 ```python
 def registrar_solicitacao(beneficiario_id: str, codigo_exame: str) -> int:
@@ -196,7 +196,7 @@ def registrar_solicitacao(beneficiario_id: str, codigo_exame: str) -> int:
     return row[0]
 ```
 
-Do lado de Elegibilidade, a mesma chamada executa uma consulta parametrizada em `elegibilidade.beneficiarios` e responde:
+Em Elegibilidade, a mesma chamada executa uma consulta parametrizada na tabela `elegibilidade.beneficiarios` e devolve a resposta abaixo.
 
 ```json
 {
@@ -205,7 +205,7 @@ Do lado de Elegibilidade, a mesma chamada executa uma consulta parametrizada em 
 }
 ```
 
-Exames aceita a decisão, chama `registrar_solicitacao` (mostrado acima) e retorna `201 Created`:
+Exames aceita a decisão de elegibilidade, chama a função `registrar_solicitacao` e retorna `201 Created` com o corpo abaixo.
 
 ```json
 {
@@ -216,11 +216,11 @@ Exames aceita a decisão, chama `registrar_solicitacao` (mostrado acima) e retor
 }
 ```
 
-O identificador pode aumentar em nova execução. Depois de `down -v`, o volume é removido e a primeira solicitação da próxima execução volta a usar o identificador `1`.
+O identificador da solicitação aumenta a cada nova execução enquanto o volume do banco existir. Depois do comando `down -v`, o volume é removido e a primeira solicitação da execução seguinte volta a receber o identificador `1`.
 
 ## Fluxos alternativos
 
-Cada linha do parágrafo anterior sobre falhas é, no código, uma verificação explícita antes do caminho feliz. É a mesma rota `solicitar_exame`, agora com os trechos que a versão resumida do fluxo nominal ocultou:
+A rota `solicitar_exame` completa contém uma verificação explícita para cada resposta de Elegibilidade que impede o registro da solicitação. O trecho abaixo mostra a rota com as verificações que a versão resumida do fluxo nominal omitiu.
 
 ```python
 # hospital/servicos/exames.py
@@ -273,7 +273,17 @@ def solicitar_exame(
     )
 ```
 
-Cada `raise` corresponde a um dos casos do parágrafo anterior: `paciente-002` cai no último bloco (`200` com `elegivel: false` → `422 beneficiario_inelegivel`); um identificador inexistente cai no bloco de `404` (`422 beneficiario_desconhecido`); uma estrutura incompatível na resposta cai no bloco de `contrato_invalido`; e uma conexão que falha (`httpx.HTTPError`, por exemplo um timeout) ou um erro `5xx` do próprio provedor caem nos dois blocos de `dependencia_indisponivel`, produzindo:
+Cada `raise` da rota corresponde a uma das situações da tabela.
+
+| Situação | Resposta de Elegibilidade | Resposta de Exames |
+| --- | --- | --- |
+| Beneficiário `paciente-002` | `200` com `elegivel: false` | `422 beneficiario_inelegivel` |
+| Identificador inexistente | `404` | `422 beneficiario_desconhecido` |
+| Estrutura incompatível com o contrato | `200` com corpo inválido | `502 contrato_invalido` |
+| Falha de conexão ou estouro do prazo de espera | exceção `httpx.HTTPError` | `503 dependencia_indisponivel` |
+| Erro do provedor | `5xx` | `503 dependencia_indisponivel` |
+
+A falha de conexão e o erro do provedor produzem a resposta abaixo.
 
 ```json
 {
@@ -283,13 +293,13 @@ Cada `raise` corresponde a um dos casos do parágrafo anterior: `paciente-002` c
 }
 ```
 
-Essa resposta não afirma que o processo de Exames parou. Ela comunica que a capacidade solicitada não pode ser concluída enquanto uma dependência necessária está indisponível — o teste `test_exames_makes_partial_failure_observable_when_dependency_is_down` simula exatamente essa queda de conexão e verifica o `503` com esse código.
+A resposta informa que a capacidade solicitada não pode ser concluída enquanto uma dependência necessária está indisponível, sem indicar que o processo de Exames parou. O teste `test_exames_makes_partial_failure_observable_when_dependency_is_down` simula essa queda de conexão e verifica o status `503` com o código `dependencia_indisponivel`.
 
 ### Execução de ponta a ponta dos dois serviços
 
-Os blocos desta página formam dois arquivos que rodam na mesma pasta. O arquivo `elegibilidade.py` recebe o primeiro bloco da seção Componentes. O arquivo `exames.py` recebe, nesta ordem, o bloco de `PedidoExame`, o bloco de `/health`, o bloco de `registrar_solicitacao` e a rota completa desta seção, e a versão resumida do fluxo nominal fica fora dele porque declara a mesma rota. Os pacotes necessários são os do laboratório (`fastapi`, `httpx`, `pydantic` e `psycopg`), e a instalação é feita com `pip install fastapi httpx pydantic "psycopg[binary]"`.
+Os blocos de código desta página formam dois arquivos que rodam na mesma pasta. O arquivo `elegibilidade.py` recebe o primeiro bloco da seção Componentes. O arquivo `exames.py` recebe os blocos de `PedidoExame` e de `/health`, seguidos do bloco de `registrar_solicitacao` e da rota completa desta seção. A versão resumida do fluxo nominal fica fora de `exames.py`, porque declara a mesma rota. O comando `pip install fastapi httpx pydantic "psycopg[binary]"` instala os quatro pacotes do laboratório usados pelos dois arquivos e pelo programa de demonstração.
 
-O programa abaixo, salvo como `demo_servicos.py` na mesma pasta e executado com `python3 demo_servicos.py`, substitui o PostgreSQL de cada serviço por um banco SQLite em memória próprio e entrega as chamadas HTTP de Exames a um `TestClient` de Elegibilidade, para que o exemplo rode sem contêiner e sem rede com a ligação entre os serviços restrita ao contrato HTTP. No laboratório, cada serviço usa o PostgreSQL real e a chamada atravessa a rede do Compose.
+O programa abaixo deve ser salvo como `demo_servicos.py` na mesma pasta e executado com `python3 demo_servicos.py`. Ele substitui o PostgreSQL de cada serviço por um banco SQLite em memória e entrega as chamadas HTTP de Exames a um `TestClient` de Elegibilidade. Com essa substituição, o exemplo roda sem contêiner e sem rede e mantém a ligação entre os serviços restrita ao contrato HTTP. No laboratório, cada serviço usa o PostgreSQL real e a chamada atravessa a rede do Compose.
 
 ```python
 # demo_servicos.py
@@ -404,7 +414,7 @@ if __name__ == "__main__":
     main()
 ```
 
-A execução imprime:
+A execução do programa imprime a saída abaixo.
 
 ```text
 1. Health check de cada serviço
@@ -428,11 +438,11 @@ GET /health (Exames) -> 200 {"status": "ok", "servico": "exames"}
 [(1, 'paciente-001', 'HEM-001')]
 ```
 
-O caso 5 reproduz a falha parcial descrita acima: a solicitação recebe `503 dependencia_indisponivel`, o `/health` de Exames continua com `200` e o banco de Exames guarda apenas a solicitação aprovada no caso 2.
+O caso 5 reproduz a falha parcial descrita na seção anterior, com a solicitação recusada com `503 dependencia_indisponivel` enquanto o `/health` de Exames continua com `200`. O banco de Exames guarda apenas a solicitação aprovada no caso 2.
 
 ## Fronteira de dados executável
 
-O arquivo Compose cria dois servidores PostgreSQL. No primeiro existe somente o schema `elegibilidade`; no segundo, somente `exames`. O script de inicialização cria uma credencial própria para cada schema e a usa para criá-lo, de modo que cada aplicação só enxerga sua própria autoridade sobre os dados:
+O arquivo do Compose cria dois servidores PostgreSQL, o primeiro somente com o *schema* `elegibilidade` e o segundo somente com o *schema* `exames`. O script de inicialização cria uma credencial própria para cada *schema* e usa essa credencial para criar o *schema*, de modo que cada aplicação só tem autoridade sobre os próprios dados.
 
 ```sql
 -- infra/postgres/init.sql (executado uma vez, contra o banco "elegibilidade")
@@ -447,9 +457,9 @@ INSERT INTO elegibilidade.beneficiarios (id, elegivel)
 VALUES ('paciente-001', true), ('paciente-002', false);
 ```
 
-O mesmo script, contra o banco `exames`, cria a role `exames` e a tabela `exames.solicitacoes`, sem nenhuma referência ao schema `elegibilidade`. Cada banco usa rede interna e alias próprio; cada aplicação recebe apenas sua URL e só participa da rede do banco que possui. A rede de aplicação é separada e serve ao HTTP entre serviços. Não há porta de banco publicada para a máquina durante a oficina, reduzindo caminhos acidentais.
+No banco `exames`, o mesmo script cria a *role* `exames` e a tabela `exames.solicitacoes` sem nenhuma referência ao *schema* `elegibilidade`. Cada banco usa uma rede interna e um nome de rede próprios. Cada aplicação recebe apenas a URL do próprio banco e participa somente da rede desse banco, enquanto uma rede de aplicação separada atende às chamadas HTTP entre os serviços. A oficina não publica nenhuma porta de banco para a máquina local, o que elimina caminhos de acesso acidentais aos bancos.
 
-O teste `test_exames_source_cannot_access_eligibility_table_directly` funciona como uma guarda simples: ele lê o próprio arquivo-fonte de Exames como texto e procura referências que não deveriam existir.
+O teste `test_exames_source_cannot_access_eligibility_table_directly` é uma verificação textual que lê o arquivo-fonte de Exames e procura referências que não deveriam existir nele.
 
 ```python
 # tests/test_service_boundaries.py
@@ -471,9 +481,9 @@ def test_exames_source_cannot_access_eligibility_table_directly():
     assert "db_elegibilidade" not in source
 ```
 
-Guardas textuais não substituem permissões: a separação física e as credenciais oferecem a proteção efetiva; este teste só documenta a intenção e detecta regressões óbvias, como alguém colar um `SELECT` direto na tabela alheia.
+A proteção efetiva vem da separação física e das credenciais, que uma verificação textual não substitui. O teste documenta a intenção da fronteira e detecta regressões evidentes, como um `SELECT` escrito diretamente sobre a tabela de Elegibilidade.
 
-O teste de contrato usa um transporte HTTP controlado (`httpx.MockTransport`) para responder como Elegibilidade, mas importa somente `hospital.servicos.exames` — nunca o código do provedor:
+O teste de contrato usa o transporte HTTP controlado `httpx.MockTransport` para responder no lugar de Elegibilidade. O teste importa somente o módulo `hospital.servicos.exames` e não importa o código do provedor.
 
 ```python
 # tests/test_service_boundaries.py
@@ -493,9 +503,9 @@ def test_exames_consumes_eligibility_only_through_http_contract(monkeypatch):
     assert response.json()["solicitacao_id"] == 41
 ```
 
-`_client_for_eligibility` troca, via `dependency_overrides`, o cliente HTTP real por um que responde com o payload controlado acima — Exames nunca percebe a diferença, porque só enxerga o contrato. Assim o teste avalia o que o consumidor espera do contrato, sem chamar função interna nem instanciar repositório do provedor. Se a implementação de Elegibilidade mudar mantendo status e corpo, o teste do consumidor permanece válido.
+A função `_client_for_eligibility` usa `dependency_overrides` para trocar o cliente HTTP real por um cliente que responde com o conteúdo controlado acima. Exames não distingue os dois clientes, porque depende apenas do contrato. O teste avalia o que o consumidor espera do contrato sem chamar função interna nem instanciar repositório do provedor. Uma mudança na implementação de Elegibilidade que mantenha o status e o corpo da resposta não invalida o teste do consumidor.
 
-O bloco abaixo completa o arquivo de testes com `_client_for_eligibility` e um `main`. Para executar, salve os dois blocos de teste anteriores seguidos deste bloco em `test_fronteira.py`, na mesma pasta de `exames.py`, e rode `python3 test_fronteira.py`. O `main` chama as funções de teste diretamente, usa `pytest.MonkeyPatch` (o pacote `pytest` faz parte das dependências de desenvolvimento do laboratório e é instalado com `pip install pytest`) e, ao final, aponta a guarda para um arquivo com `SELECT` na tabela de Elegibilidade para mostrar a reprovação.
+O bloco abaixo completa o arquivo de testes com a função `_client_for_eligibility` e uma função `main`. Os dois blocos de teste anteriores e este bloco devem ser salvos em sequência no arquivo `test_fronteira.py` da mesma pasta de `exames.py` e executados com `python3 test_fronteira.py`. A função `main` chama as funções de teste diretamente e usa `pytest.MonkeyPatch`. O pacote `pytest` faz parte das dependências de desenvolvimento do laboratório e é instalado com `pip install pytest`. Ao final, a função aponta a verificação textual para um arquivo com `SELECT` na tabela de Elegibilidade para mostrar a reprovação.
 
 ```python
 def _client_for_eligibility(response: httpx.Response) -> TestClient:
@@ -539,7 +549,7 @@ if __name__ == "__main__":
             print("Guarda textual sobre um exames.py com SELECT na tabela alheia: reprovado")
 ```
 
-A execução imprime:
+A execução do programa imprime a saída abaixo.
 
 ```text
 Guarda textual sobre exames.py: aprovado
@@ -547,16 +557,16 @@ Contrato HTTP consumido por Exames: aprovado
 Guarda textual sobre um exames.py com SELECT na tabela alheia: reprovado
 ```
 
-## O que o exemplo deliberadamente não inclui
+## Escopo do exemplo {#o-que-o-exemplo-deliberadamente-nao-inclui}
 
-Não há autenticação, dados pessoais reais, descoberta dinâmica, TLS, migrações versionadas ou telemetria distribuída. Também não há SAGA, CQRS ou mensageria. O fluxo faz uma consulta síncrona antes de uma única transação local; adicionar padrões avançados esconderia a lição principal.
+O exemplo não inclui autenticação, dados pessoais reais ou descoberta dinâmica de serviços. Também não inclui TLS e migrações versionadas, nem telemetria distribuída ou mensageria. O fluxo faz uma consulta síncrona antes de uma única transação local, situação em que padrões como SAGA e CQRS acrescentariam componentes sem benefício para o objetivo do exemplo.
 
-Em produção, a equipe precisaria definir SLOs, propagação de correlação, limites de recursos, política de logs, proteção de dados e restauração. O código também adotaria migrações em vez de um script de inicialização descartável. O Compose serve como ambiente didático reproduzível e não foi preparado para produção.
+Em produção, a equipe precisaria definir os objetivos de nível de serviço e a propagação de identificadores de correlação entre as chamadas. Também precisaria definir limites de recursos, política de logs, proteção de dados e procedimento de restauração. O código adotaria migrações versionadas no lugar do script de inicialização descartável. O Compose da oficina é um ambiente didático reproduzível e não foi preparado para uso em produção.
 
-## Alternativa: monólito modular
+## Alternativa com monólito modular {#alternativa-monolito-modular}
 
-Os mesmos limites poderiam existir em uma aplicação: `Elegibilidade` exporia uma interface interna e seria o único módulo autorizado a acessar suas tabelas; `Exames` dependeria dessa interface. A chamada não sofreria falha de rede e uma implantação seria suficiente. Se as equipes e os requisitos de escala fossem iguais, essa alternativa provavelmente teria menor custo.
+Os mesmos limites poderiam existir numa única aplicação. Nesse desenho, o módulo `Elegibilidade` exporia uma interface interna e seria o único módulo autorizado a acessar as suas tabelas, enquanto o módulo `Exames` dependeria dessa interface. A chamada entre os módulos não estaria sujeita a falha de rede e uma única implantação atenderia aos dois módulos. Com as mesmas equipes e os mesmos requisitos de escala para os dois módulos, essa alternativa teria provavelmente um custo operacional menor.
 
-A versão distribuída é escolhida aqui para observar propriedades que só aparecem com rede e processos independentes. Não transforma a alternativa modular em desenho inferior.
+O laboratório usa a versão distribuída para tornar observáveis as propriedades que só aparecem com rede e processos independentes, o que não torna a alternativa modular um desenho inferior.
 
-Qualquer que seja a forma escolhida, a regra central permanece: a configuração de Exames recebe a URL HTTP de Elegibilidade e a URL de seu próprio banco e não recebe a URL do banco alheio.
+Nas duas formas, a configuração de Exames recebe a URL HTTP de Elegibilidade e a URL do próprio banco, sem receber a URL do banco de Elegibilidade.

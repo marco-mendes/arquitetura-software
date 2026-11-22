@@ -1,133 +1,172 @@
-# Exercícios: decidir antes de distribuir
+# Exercícios
 
-Tente responder antes de abrir cada feedback. Nas atividades avançadas não há gabarito: os nove campos tornam explícitos o contexto, a entrega e a forma de avaliar uma decisão justificável.
+As questões dos níveis recordar e compreender têm uma resposta comentada, que deve ser aberta depois da tentativa de resposta. As atividades dos quatro níveis seguintes da taxonomia de Bloom não têm gabarito. Elas usam campos padronizados que tornam explícitos o contexto, a entrega e a forma de avaliar uma decisão justificável.
 
 ## Recordar
 
-1\. Uma capacidade de negócio descreve algo que a organização sabe fazer para produzir um resultado. "Verificar elegibilidade" é uma capacidade; "salvar no PostgreSQL" não é. Por quê? Dê outro exemplo hospitalar de capacidade e um de mecanismo técnico.
+1\. Explique por que a expressão "verificar elegibilidade" descreve uma capacidade de negócio enquanto "salvar no PostgreSQL" descreve um mecanismo técnico e dê outro exemplo hospitalar de cada tipo.
 
 <details>
 <summary>Ver resposta</summary>
 
-Capacidade de negócio é definida pelo resultado que ela produz para alguém, independentemente da tecnologia usada para produzi-lo; "salvar no PostgreSQL" descreve como um dado é persistido e não indica o resultado que a organização entrega. Exemplos de capacidade: "agendar atendimento", "solicitar exame". Exemplo de mecanismo técnico: "enviar JSON", "consultar cache" — eles podem mudar sem que a capacidade que servem mude de nome.
+Uma capacidade de negócio é definida pelo resultado que produz para alguém, independentemente da tecnologia usada. A expressão "salvar no PostgreSQL" descreve a forma de persistir um dado e não indica o resultado entregue pela organização. "Agendar atendimento" e "solicitar exame" são exemplos de capacidades de negócio do caso hospitalar. "Enviar JSON" e "consultar cache" são exemplos de mecanismos técnicos, que podem ser trocados por outros mecanismos sem alterar o nome da capacidade atendida.
+
 </details>
 
-2\. Uma equipe decide que, como Elegibilidade e Exames são bounded contexts diferentes, cada um precisa virar um microsserviço imediatamente. Que erro de raciocínio essa equipe está cometendo?
+2\. Identifique o erro de raciocínio de uma equipe que decide transformar Elegibilidade e Exames em microsserviços imediatamente porque os dois são *bounded contexts* diferentes.
 
 <details>
 <summary>Ver resposta</summary>
 
-A equipe está confundindo fronteira semântica com topologia física. Bounded context delimita onde um modelo e sua linguagem têm significado consistente, e essa delimitação trata de significado e independe da forma de implantação. Um bounded context pode viver como módulo dentro de um monólito, como parte de um macrosserviço ou como um serviço implantável; a extração física só se justifica quando há necessidade comprovada de autonomia, escala ou falha independentes. Tratar toda fronteira lógica como um serviço separado cria processos, redes e operação antes de existir qualquer benefício demonstrado.
+A equipe confunde fronteira semântica com topologia física. Um *bounded context* delimita a parte do sistema em que um modelo e a sua linguagem têm significado consistente, delimitação que independe da forma de implantação. Um *bounded context* pode ser implementado como módulo de um monólito, como parte de um macrosserviço ou como serviço implantável. A extração física só se justifica quando há necessidade comprovada de autonomia de implantação, de escala ou de falha independente. Tratar cada fronteira lógica como um serviço separado cria processos, redes e trabalho de operação antes de existir benefício demonstrado.
+
 </details>
 
-3\. O módulo descreve cinco formas de acoplamento entre serviços: de contrato, temporal, de dados, de implantação e organizacional. Escolha duas delas e explique, com um exemplo, o que cada uma faz um serviço depender do outro.
+3\. Escolha duas das cinco formas de acoplamento entre serviços descritas no módulo e explique com um exemplo a dependência que cada uma cria entre os serviços.
 
 <details>
 <summary>Ver resposta</summary>
 
-São cinco: acoplamento de contrato (o consumidor depende de campos, semântica e códigos de resposta expostos pelo provedor — mudar um campo pode quebrar quem consome); acoplamento temporal (o consumidor precisa que o provedor esteja disponível no momento da chamada, como numa chamada síncrona); acoplamento de dados (duas unidades dependem da mesma estrutura de armazenamento ou alteram a mesma informação); acoplamento de implantação (uma mudança obriga a publicar várias unidades juntas); e acoplamento organizacional (equipes precisam negociar continuamente para entregar uma única capacidade). Exemplo do laboratório: Exames aceita acoplamento temporal com Elegibilidade — espera uma resposta síncrona —, mas evita acoplamento de dados, porque não lê a tabela do outro serviço diretamente.
+As cinco formas de acoplamento estão descritas na tabela.
+
+| Forma | Dependência criada |
+| --- | --- |
+| De contrato | O consumidor depende de campos, semântica e códigos de resposta do provedor. A mudança de um campo pode quebrar o consumidor |
+| Temporal | O consumidor precisa que o provedor esteja disponível no momento da chamada, como numa chamada síncrona |
+| De dados | Duas unidades dependem da mesma estrutura de armazenamento ou alteram a mesma informação |
+| De implantação | Uma mudança obriga a publicar várias unidades em conjunto |
+| Organizacional | Equipes precisam negociar continuamente para entregar uma única capacidade |
+
+No laboratório, Exames aceita acoplamento temporal com Elegibilidade porque espera uma resposta síncrona antes de gravar a solicitação. Exames evita o acoplamento de dados, porque não lê diretamente a tabela de Elegibilidade.
+
 </details>
 
-4\. Uma pessoa desenvolvedora de Faturamento precisa de um relatório e decide fazer uma consulta SQL direta nas tabelas do banco de Elegibilidade, sem passar pelo contrato de API. Qual regra de propriedade de dados essa consulta viola, e que acoplamento oculto ela cria?
+4\. Uma pessoa desenvolvedora de Faturamento precisa de um relatório e faz uma consulta SQL direta nas tabelas do banco de Elegibilidade, sem passar pelo contrato de API. Indique a regra de propriedade de dados violada pela consulta e o acoplamento oculto que ela cria.
 
 <details>
 <summary>Ver resposta</summary>
 
-Ela viola banco por serviço: a regra de que somente o serviço proprietário acessa diretamente o próprio armazenamento, e qualquer outro consumidor deve passar por contrato, evento ou réplica projetada. A consulta direta cria um acoplamento de dados oculto — Faturamento passa a depender da estrutura interna das tabelas de Elegibilidade, que nenhum contrato declara e ninguém revisa. Uma mudança de coluna feita por Elegibilidade, sem saber que Faturamento a lê, pode quebrar o relatório sem aviso; o proprietário perde o controle sobre a evolução do próprio esquema.
+A consulta viola o banco por serviço, regra segundo a qual somente o serviço proprietário acessa diretamente o próprio armazenamento. Os demais consumidores devem usar contrato, evento ou réplica projetada. A consulta direta cria um acoplamento de dados oculto, porque Faturamento passa a depender da estrutura interna das tabelas de Elegibilidade sem nenhum contrato que declare essa dependência. Uma mudança de coluna feita por Elegibilidade pode quebrar o relatório sem aviso, o que retira do proprietário o controle sobre a evolução do próprio *schema*.
+
 </details>
 
-5\. O módulo compara monólito modular, macrosserviço e microsserviço como formas de implantação. O que muda entre elas não é o tamanho do código — é outra coisa. O que é?
+5\. Indique a característica que distingue o monólito modular, o macrosserviço e o microsserviço como formas de implantação, considerando que o tamanho do código não é essa característica.
 
 <details>
 <summary>Ver resposta</summary>
 
-O que muda é a autonomia física de implantação e de falha. O volume de linhas ou de pessoas não distingue as três formas. No monólito modular, os módulos têm fronteiras lógicas claras, mas publicam e falham juntos, numa única unidade implantável. No macrosserviço, algumas fronteiras já viram processos separados, mas ainda agrupam mais de uma capacidade por unidade. No microsserviço, cada unidade implantável está alinhada a uma única responsabilidade de negócio e é dona do próprio estado, podendo publicar e falhar de forma independente das demais. "Micro" não é uma medida de tamanho: é um sinal de autonomia com coesão.
+A característica que distingue as três formas é a autonomia física de implantação e de falha. No monólito modular, os módulos têm fronteiras lógicas claras e são publicados e falham juntos numa única unidade implantável. No macrosserviço, algumas fronteiras já correspondem a processos separados que agrupam mais de uma capacidade por unidade. No microsserviço, cada unidade implantável corresponde a uma responsabilidade de negócio, é dona do próprio estado e pode ser publicada e falhar de forma independente. O prefixo "micro" não corresponde a nenhum limite de linhas de código ou de pessoas.
+
 </details>
 
-6\. Exames continua respondendo consultas ao próprio banco, mas passa a recusar novas solicitações porque Elegibilidade está fora do ar. Que nome se dá a essa situação, e por que ela não deveria ser tratada apenas como "o sistema caiu"?
+6\. Indique o nome da situação em que Exames continua respondendo a consultas ao próprio banco e passa a recusar novas solicitações porque Elegibilidade está fora do ar e explique por que ela não deve ser tratada apenas como queda do sistema.
 
 <details>
 <summary>Ver resposta</summary>
 
-Chama-se falha parcial: uma parte do sistema distribuído continua saudável enquanto outra parte, indisponível, impede que uma capacidade específica seja concluída. Tratar isso como "o sistema caiu" esconde informação que o consumidor precisa para agir — ele não sabe se pode tentar de novo, se deve esperar ou se o problema é seu. Por isso a resposta deveria expor a causa real, como um `503` com o código `dependencia_indisponivel`, em vez de um `500` genérico que trata falha de dependência como se fosse erro interno do próprio Exames.
+A situação se chama falha parcial, em que uma parte do sistema distribuído continua saudável enquanto outra parte indisponível impede a conclusão de uma capacidade específica. Tratar a situação como queda do sistema esconde a informação de que o consumidor precisa para agir, como saber se pode repetir o pedido ou se o problema está no próprio pedido. Por isso, a resposta deve expor a causa real com o status `503` e o código `dependencia_indisponivel`. Um `500` genérico trataria a falha da dependência como erro interno de Exames.
+
 </details>
 
-7\. Uma chamada síncrona sem timeout está esperando a resposta de Elegibilidade, que ficou lenta. O que acontece com Exames enquanto essa espera não tem limite, e que papel um timeout cumpre nessa situação?
+7\. Descreva o que acontece com Exames quando uma chamada síncrona sem prazo de espera aguarda sem limite a resposta de Elegibilidade lenta e explique o papel do prazo de espera, conhecido como *timeout*, nessa situação.
 
 <details>
 <summary>Ver resposta</summary>
 
-Sem timeout, a requisição de Exames fica presa esperando indefinidamente a resposta de Elegibilidade — a thread, conexão ou recurso alocado para essa chamada continua ocupado, e se isso se repetir em várias solicitações simultâneas, a lentidão de Elegibilidade se propaga e pode esgotar os recursos de Exames também. Um timeout limita quanto tempo Exames espera antes de desistir e tratar a chamada como falha, contendo o problema em vez de deixar que a lentidão de uma dependência derrube quem depende dela.
+Sem prazo de espera, a requisição de Exames aguarda indefinidamente a resposta de Elegibilidade e mantém ocupados a *thread*, a conexão e os demais recursos alocados para a chamada. Quando isso se repete em várias solicitações simultâneas, a lentidão de Elegibilidade se propaga e pode esgotar os recursos de Exames. O prazo de espera limita o tempo que Exames aguarda antes de tratar a chamada como falha, o que restringe o problema à operação que depende de Elegibilidade.
+
 </details>
 
-8\. O banco de Elegibilidade está replicado em dois data centers da rede hospitalar. O enlace entre eles cai por três minutos: as duas réplicas continuam de pé e atendendo, mas param de conversar entre si. Nesse intervalo, o sistema pode recusar escritas para manter uma visão única e atual do dado, ou seguir aceitando escritas nas duas pontas correndo o risco de divergir. Que nome o teorema CAP dá a essa interrupção de comunicação, e entre quais duas propriedades ela obriga a escolher?
+8\. O banco de Elegibilidade está replicado em dois datacenters da rede hospitalar. O enlace entre eles fica indisponível por três minutos, período em que as duas réplicas continuam atendendo sem comunicação entre si. Nesse intervalo, o sistema pode recusar escritas para manter uma visão única e atual do dado ou continuar aceitando escritas nas duas réplicas com risco de divergência. Indique o nome que o teorema CAP dá a essa interrupção de comunicação e as duas propriedades entre as quais ela obriga a escolher.
 
 <details>
 <summary>Ver resposta</summary>
 
-O nome é partição — o CAP trata de um armazenamento distribuído justamente quando mensagens entre nós ou grupos de nós são perdidas ou atrasadas. Durante os três minutos de partição, a escolha é entre consistência (recusar ou atrasar operações para preservar uma visão única e atual) e disponibilidade (cada réplica não falha continua respondendo, aceitando possível divergência). Restabelecido o enlace, CAP deixa de estar em jogo: latência e consistência continuam gerando decisões, mas descritas por outros modelos. Por isso CAP não é uma escolha livre entre duas de três letras que um produto faz a qualquer momento, nem serve para justificar qualquer dado desatualizado numa integração comum — ali é preciso nomear o mecanismo e a promessa reais.
+O teorema CAP chama essa interrupção de partição, situação em que mensagens entre nós ou grupos de nós são perdidas ou atrasadas. Durante os três minutos de partição, a escolha é entre consistência e disponibilidade. A consistência recusa ou atrasa operações para preservar uma visão única e atual do dado. A disponibilidade mantém cada réplica respondendo com a possibilidade de divergência entre elas. Depois que o enlace volta, a escolha descrita pelo CAP deixa de existir e as decisões entre latência e consistência passam a ser descritas por outros modelos. Por isso, o CAP não é uma escolha permanente de duas das três letras e não justifica dado desatualizado numa integração comum, que exige um mecanismo e uma promessa de convergência declarados.
+
 </details>
 
-9\. O fluxo de Agendamento tem três etapas, cada uma gravando no próprio banco, em transações locais separadas: reservar o horário na Agenda, autorizar o procedimento e pedir o preparo da sala. As duas primeiras confirmam; a terceira falha. Não existe nenhuma transação abrangente capaz de desfazer as duas que já foram confirmadas. Como se chama a ação que uma SAGA aciona para neutralizar o efeito dessas etapas anteriores, e quais são as duas formas de coordenar a sequência descritas no módulo?
+9\. O fluxo de Agendamento tem três etapas, cada uma com transação local no próprio banco. A Agenda reserva o horário, a Autorização autoriza o procedimento e o Preparo de Sala reserva a sala. As duas primeiras etapas confirmam e a terceira falha, sem nenhuma transação abrangente capaz de desfazer as duas etapas confirmadas. Indique o nome da ação que uma SAGA executa para neutralizar o efeito das etapas anteriores e as duas formas de coordenação da sequência descritas no módulo.
 
 <details>
 <summary>Ver resposta</summary>
 
-A ação é a compensação: ações compensatórias, semanticamente adequadas ao domínio, que neutralizam o efeito das etapas já confirmadas — liberar o horário reservado e cancelar a autorização, neste exemplo. As duas formas de coordenação são a coreografia, em que cada participante reage aos eventos que os outros publicam, e a orquestração, em que um componente conhece toda a sequência e a conduz. Compensar não é desfazer: a compensação é um novo fato na história, pode ela mesma falhar, e outros participantes podem já ter observado o estado intermediário — por isso o desenho precisa declarar estados explícitos, comandos idempotentes, política de repetição e trilha de auditoria.
+A ação é a compensação, uma operação definida pelo domínio que neutraliza o efeito de uma etapa já confirmada. Neste exemplo, as compensações liberam o horário reservado e cancelam a autorização. A coreografia coordena a sequência por eventos, aos quais cada participante reage. A orquestração usa um componente que conhece a sequência inteira e conduz cada passo. A compensação acrescenta um fato novo à história do fluxo e também pode falhar. Outros participantes podem ter observado o estado intermediário, por isso o desenho da SAGA declara estados explícitos e comandos idempotentes, além da política de repetição e da trilha de auditoria.
+
 </details>
 
-10\. Em Laudos, assinar um laudo exige validar regras clínicas antes de gravar; já a tela que lista os laudos do mês só precisa de uma lista pronta para leitura. A equipe separou as duas coisas em classes e interfaces distintas, mas ambas continuam no mesmo processo e no mesmo banco PostgreSQL. Quais são os dois modelos que o CQRS separa, e uma separação feita assim, dentro de um único banco, já conta como CQRS?
+10\. Em Laudos, a assinatura de um laudo exige validar regras clínicas antes de gravar, enquanto a tela que lista os laudos do mês precisa apenas de uma lista pronta para leitura. A equipe separou as duas operações em classes e interfaces distintas, mantidas no mesmo processo e no mesmo banco PostgreSQL. Indique os dois modelos que o CQRS separa e diga se essa separação dentro de um único banco já conta como CQRS.
 
 <details>
 <summary>Ver resposta</summary>
 
-Os dois modelos são o de comando e o de consulta: comandos expressam intenção e precisam preservar invariantes de negócio; consultas existem para oferecer uma projeção adequada a quem lê. E sim, a separação de Laudos já conta como CQRS — o padrão não exige dois bancos, nem mensageria, nem Event Sourcing, e pode começar exatamente assim, como objetos e interfaces distintos dentro do mesmo processo e do mesmo banco. O que cobra caro é o passo seguinte: um modelo de leitura materializado atende consultas de alto volume, mas traz atualização, defasagem, reconstrução e monitoramento. Só vale introduzi-lo quando a assimetria entre leitura e escrita, a complexidade dos modelos ou a escala justificarem esse custo.
+Os dois modelos são o de comando e o de consulta. Os comandos expressam uma intenção e preservam as invariantes de negócio, enquanto as consultas oferecem uma projeção adequada a quem lê. A separação feita em Laudos já conta como CQRS, porque o padrão não exige dois bancos nem mensageria ou *event sourcing* e pode começar com objetos e interfaces distintos no mesmo processo e no mesmo banco. O custo aparece no passo seguinte, quando um modelo de leitura materializado passa a exigir atualização e monitoramento e introduz defasagem e necessidade de reconstrução. Esse modelo materializado só se justifica quando a assimetria entre leitura e escrita, a complexidade dos modelos ou a escala compensam esse custo.
+
 </details>
 
 ## Compreender
 
-1\. Explique por que mover duas funções para processos diferentes não reduz automaticamente acoplamento.
+1\. Explique por que mover duas funções para processos diferentes não reduz automaticamente o acoplamento entre elas.
 
 <details>
 <summary>Ver resposta</summary>
 
-Separar duas funções em processos diferentes não elimina a dependência entre elas — ela só muda de forma: o que antes era uma chamada de função na memória vira um contrato de rede, com serialização, latência e disponibilidade envolvidas. Se as duas partes continuam mudando pelas mesmas razões e precisam ser implantadas juntas para uma alteração funcionar, o acoplamento de contrato, temporal e de implantação continua alto — só que agora com o custo adicional de rede e coordenação remota, sem o benefício de autonomia que a distribuição prometia.
+A separação de duas funções em processos diferentes mantém a dependência entre elas e muda a sua forma. A chamada de função em memória passa a ser um contrato de rede, com serialização, latência e disponibilidade envolvidas. Se as duas partes continuam mudando pelos mesmos motivos e precisam ser implantadas juntas, os acoplamentos de contrato, temporal e de implantação continuam altos. A distribuição acrescenta o custo da rede e da coordenação remota e não entrega autonomia de implantação, porque as duas partes continuam sendo publicadas juntas.
+
 </details>
 
-2\. Descreva como alta coesão pode ser prejudicada por serviços pequenos demais.
+2\. Descreva como serviços pequenos demais podem prejudicar a coesão de uma capacidade.
 
 <details>
 <summary>Ver resposta</summary>
 
-Coesão é o grau em que os elementos de uma unidade contribuem para uma mesma responsabilidade; regras que mudam pelo mesmo motivo tendem a pertencer junto. Quando um serviço é fatiado em pedaços menores que essas regras relacionadas, uma alteração simples de negócio passa a exigir mudar vários serviços ao mesmo tempo — cada um com seu próprio contrato, pipeline de implantação e possibilidade de falha isolada. O resultado é o oposto da autonomia que a distribuição buscava: mais coordenação, mais superfícies de falha e mais contexto mental para entender o que deveria ser uma única mudança coesa.
+Coesão é o grau em que os elementos de uma unidade contribuem para uma mesma responsabilidade. Por isso, as regras que mudam pelo mesmo motivo tendem a ficar juntas na mesma unidade. Quando um serviço é dividido em partes menores do que esse conjunto de regras, uma alteração simples de negócio passa a exigir mudanças em vários serviços ao mesmo tempo. Cada um desses serviços tem contrato, esteira de implantação e falha próprios. O resultado é mais coordenação, mais componentes sujeitos a falha e mais contexto necessário para entender uma mudança que deveria ser única.
+
 </details>
 
-3\. Dois serviços do laboratório usam dois PostgreSQL diferentes, um para cada um. Isso já garante, por si só, que a propriedade dos dados está protegida? O que mais precisa ser verdade além da separação física?
+3\. Explique se o uso de bancos PostgreSQL diferentes pelos dois serviços do laboratório garante sozinho a proteção da propriedade dos dados e indique o que mais precisa ser verdade para essa proteção existir.
 
 <details>
 <summary>Ver resposta</summary>
 
-Não garante sozinho. Propriedade responde quem tem autoridade para interpretar e alterar uma informação e, por isso, define uma regra de acesso e de responsabilidade que independe do local onde o arquivo do banco está gravado. A separação física (bancos, schemas ou instâncias distintas) só protege a propriedade quando vem acompanhada de isolamento de rede e de credenciais que realmente impedem o outro serviço de conectar diretamente — como no laboratório, em que a credencial de Exames só conhece o banco `exames`, e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões reais, dois bancos fisicamente separados ainda podem ser acessados livremente por qualquer serviço que descubra a string de conexão, e a propriedade continua sendo apenas uma convenção não aplicada.
+A separação física não garante a proteção sozinha. A propriedade dos dados define quem tem autoridade para interpretar e alterar uma informação e corresponde a uma regra de acesso e de responsabilidade, independente do local em que o banco está gravado. Bancos, *schemas* ou instâncias separados só protegem a propriedade quando acompanhados de isolamento de rede e de credenciais que impedem a conexão direta de outro serviço. No laboratório, a credencial de Exames conhece apenas o banco `exames` e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões, dois bancos separados fisicamente podem ser acessados por qualquer serviço que conheça a *string* de conexão, o que reduz a propriedade a uma convenção sem aplicação.
+
 </details>
 
-4\. Faturamento mantém uma réplica projetada do dado de Elegibilidade, alimentada pelos eventos que Elegibilidade publica. A promessa é de consistência eventual: sem novas escritas, a réplica acaba chegando ao mesmo estado da origem. Só que essa promessa não diz como nem quando isso acontece — quem faz acontecer são as **regras de convergência**, um conjunto de decisões explícitas de desenho: o identificador que amarra cada evento ao mesmo registro; a ordenação, quando a ordem de aplicação altera o resultado; a idempotência, para que o mesmo evento aplicado duas vezes não produza o efeito duas vezes; a política de repetição, para mensagens perdidas ou atrasadas; e a reconciliação, para detectar e corrigir a divergência que sobrar. Escolha três dessas regras e diga, para cada uma, o que acontece com a réplica de Faturamento se ela faltar.
+4\. Faturamento mantém uma réplica projetada dos dados de Elegibilidade, alimentada pelos eventos que Elegibilidade publica. A promessa é de consistência eventual, em que a réplica chega ao mesmo estado da origem quando não há novas escritas. Essa promessa não define como nem quando a convergência acontece, o que depende das **regras de convergência** listadas abaixo.
+
+- O identificador associa cada evento ao registro correto.
+- A ordenação garante a ordem de aplicação quando ela altera o resultado.
+- A idempotência impede que o mesmo evento aplicado duas vezes produza o efeito duas vezes.
+- A política de repetição trata mensagens perdidas ou atrasadas.
+- A reconciliação detecta e corrige a divergência restante.
+
+Escolha três dessas regras e descreva, para cada uma, o que acontece com a réplica de Faturamento quando ela falta.
 
 <details>
 <summary>Ver resposta</summary>
 
-Sem identificador, os eventos não podem ser amarrados ao mesmo registro: a réplica cria linhas duplicadas para a mesma pessoa, ou atualiza a linha errada, e não há como saber qual é a versão corrente. Sem ordenação, um evento antigo que chega atrasado sobrescreve um mais recente — uma elegibilidade cancelada volta a aparecer como válida. Sem idempotência, a mesma mensagem reentregue aplica o efeito duas vezes, e a réplica acumula um estado que nunca existiu na origem. Sem política de repetição, uma mensagem perdida simplesmente nunca chega, e a réplica fica defasada para sempre — "eventual" passa a significar "nunca". Sem reconciliação, nenhuma das divergências acima é detectada: Faturamento segue operando sobre dado errado sem sinal nenhum. O que as cinco têm em comum é revelar que consistência eventual, sozinha, não resolve nada: ela nomeia o resultado desejado, e as regras de convergência são o que o produz.
+- Sem identificador, a réplica cria linhas duplicadas para a mesma pessoa ou atualiza a linha errada, sem como saber qual é a versão corrente.
+- Sem ordenação, um evento antigo que chega atrasado sobrescreve um evento mais recente, de modo que uma elegibilidade cancelada volta a aparecer como válida.
+- Sem idempotência, a mesma mensagem entregue duas vezes aplica o efeito duas vezes e a réplica acumula um estado que nunca existiu na origem.
+- Sem política de repetição, uma mensagem perdida nunca chega à réplica, que fica defasada por tempo indeterminado.
+- Sem reconciliação, nenhuma das divergências anteriores é detectada e Faturamento opera sobre dados incorretos sem nenhum sinal de alerta.
+
+A consistência eventual descreve o resultado desejado, enquanto as regras de convergência são os mecanismos que produzem esse resultado.
+
 </details>
 
-5\. Dê um cenário da plataforma hospitalar em que o monólito modular seja a forma preferível, e outro em que microsserviços, com implantação independente, sejam realmente necessários. Em cada cenário, diga qual fato decide a escolha — lembrando que não é o tamanho do código.
+5\. Descreva um cenário da plataforma hospitalar em que o monólito modular seja a forma preferível e outro em que microsserviços com implantação independente sejam necessários. Em cada cenário, indique o fato que decide a escolha, considerando que o tamanho do código não é esse fato.
 
 <details>
 <summary>Ver resposta</summary>
 
-Monólito modular tende a ser preferível quando as mudanças em duas capacidades costumam acontecer juntas e compartilham uma mesma transação — por exemplo, assinar um laudo e publicá-lo, que precisam ser consistentes no mesmo instante e são alteradas pela mesma equipe. Aqui as fronteiras lógicas valem a pena, mas separar em processos só acrescentaria rede e coordenação.
+O monólito modular tende a ser preferível quando as mudanças em duas capacidades acontecem juntas e compartilham uma mesma transação. Um exemplo é a assinatura e a publicação de um laudo, que precisam ser consistentes no mesmo instante e são alteradas pela mesma equipe. Nesse caso, as fronteiras lógicas são úteis e a separação em processos acrescentaria apenas rede e coordenação.
 
-Microsserviços, com implantação e falha independentes, passam a se justificar quando duas capacidades têm equipes diferentes, cargas de trabalho muito distintas ou ciclos de mudança e de risco que não deveriam bloquear um ao outro — por exemplo, Agenda, que recebe picos e muda com frequência, e Preparo de Sala, de outra equipe, que tolera alguns minutos de atraso e não deveria ser publicada de novo toda vez que Agenda muda.
+Os microsserviços passam a se justificar quando duas capacidades têm equipes diferentes, cargas de trabalho distintas ou ciclos de mudança e de risco que não deveriam bloquear um ao outro. Um exemplo é a Agenda, que recebe picos de carga e muda com frequência. O Preparo de Sala pertence a outra equipe, tolera alguns minutos de atraso e não deveria ser publicado de novo a cada mudança da Agenda.
 
-Em ambos os casos, o que decide é a autonomia necessária de implantação e de falha, mais o padrão de coevolução entre as capacidades — nunca o volume de linhas.
+Nos dois cenários, a escolha depende da autonomia de implantação e de falha necessária e do padrão de evolução conjunta das capacidades.
+
 </details>
 
 6\. Explique por que uma compensação de SAGA não apaga fatos já observados.
@@ -135,15 +174,17 @@ Em ambos os casos, o que decide é a autonomia necessária de implantação e de
 <details>
 <summary>Ver resposta</summary>
 
-Uma compensação de SAGA cria um novo fato que neutraliza o efeito de negócio de uma etapa anterior — ela não volta o tempo nem apaga o que já foi observado por outras partes do sistema. Se uma solicitação de exame já foi confirmada e notificada, cancelá-la depois não significa que ela nunca existiu: quem recebeu a confirmação já pode ter agido com base nela, e mensagens de cancelamento podem chegar duplicadas ou fora de ordem. É por isso que o desenho de uma SAGA precisa declarar estados explícitos, comandos idempotentes e uma trilha de auditoria, já que a compensação acrescenta mais um evento à história do fluxo e mantém os eventos anteriores registrados.
+Uma compensação de SAGA cria um fato novo que neutraliza o efeito de negócio de uma etapa anterior, sem desfazer o que outras partes do sistema já observaram. Se uma solicitação de exame já foi confirmada e notificada, o cancelamento posterior não significa que ela nunca existiu. Quem recebeu a confirmação pode ter agido com base nela, enquanto as mensagens de cancelamento podem chegar duplicadas ou fora de ordem. Por isso, o desenho da SAGA declara estados explícitos, comandos idempotentes e uma trilha de auditoria que mantém os eventos anteriores registrados ao lado da compensação.
+
 </details>
 
-7\. Uma equipe quer introduzir tanto SAGA quanto CQRS no fluxo de Agendamento só porque "qualquer sistema distribuído sério usa os dois". Que problema real cada um resolveria, e por que adotar um não implica precisar do outro?
+7\. Uma equipe quer introduzir SAGA e CQRS no fluxo de Agendamento com o argumento de que os sistemas distribuídos usam os dois padrões. Indique o problema que cada padrão resolveria e explique por que a adoção de um não implica a necessidade do outro.
 
 <details>
 <summary>Ver resposta</summary>
 
-SAGA resolveria o problema de coordenar uma mudança que atravessa múltiplas transações locais — por exemplo, reservar horário, autorizar procedimento e preparar um recurso, em que uma falha numa etapa posterior exige compensar as anteriores. CQRS resolveria um problema diferente: a assimetria entre como o sistema escreve (comandos, que precisam preservar invariantes) e como ele lê (consultas, que podem exigir uma projeção otimizada e de alto volume). Um fluxo pode precisar de SAGA sem nenhuma necessidade de separar leitura e escrita, e pode precisar de CQRS sem nenhuma coordenação distribuída entre transações — adotar os dois por hábito, sem uma necessidade concreta demonstrada para cada um, só adiciona componentes, estados e novas formas de falhar que ninguém pediu.
+A SAGA resolveria a coordenação de uma mudança que atravessa várias transações locais, situação em que a falha de uma etapa posterior exige compensar as etapas anteriores. A reserva de horário seguida da autorização do procedimento e do preparo de um recurso é um exemplo dessa situação. O CQRS resolveria a assimetria entre a escrita por comandos que preservam invariantes e a leitura por consultas que podem exigir uma projeção de alto volume. Um fluxo pode precisar de SAGA sem precisar separar leitura e escrita, assim como pode precisar de CQRS sem nenhuma coordenação entre transações. A adoção dos dois padrões sem uma necessidade demonstrada para cada um acrescenta componentes, estados e formas de falha sem benefício para o fluxo.
+
 </details>
 
 ## Aplicar
@@ -151,17 +192,17 @@ SAGA resolveria o problema de coordenar uma mudança que atravessa múltiplas tr
 
 **Objetivo**
 
-Recomendar uma entre quatro arquiteturas propostas para a clínica, sustentando a escolha nos fatos apurados e declarando o que cada alternativa ganha e o que cobra.
+Recomendar uma entre quatro arquiteturas propostas para a clínica, com a escolha sustentada nos fatos apurados e o benefício e o custo de cada alternativa declarados.
 
 **Situação**
 
-Uma clínica de diagnóstico por imagem roda tudo num sistema único: um processo, um banco, uma implantação. Duas coisas acontecem ali dentro. **Laudos** recebe o resultado técnico do equipamento, registra a assinatura do médico radiologista e publica o documento no portal do paciente. **Notificações** avisa o paciente por SMS e por e-mail depois que o laudo foi publicado.
+Uma clínica de diagnóstico por imagem opera com um sistema único, executado num só processo, com um só banco e uma só implantação. O sistema contém duas funcionalidades principais. **Laudos** recebe o resultado técnico do equipamento, registra a assinatura do médico radiologista e publica o documento no portal do paciente. **Notificações** avisa o paciente por SMS e por e-mail depois que o laudo é publicado.
 
-As duas funcionalidades leem e escrevem as mesmas tabelas, e nenhuma tabela tem dono declarado. A tabela `laudo` carrega, lado a lado, o conteúdo clínico e o controle de envio, nas colunas `sms_enviado_em` e `tentativas_envio`. O mesmo trecho de código que publica o documento também dispara o aviso, dentro da mesma transação.
+As duas funcionalidades leem e escrevem as mesmas tabelas, sem dono declarado para nenhuma delas. A tabela `laudo` contém o conteúdo clínico e o controle de envio nas colunas `sms_enviado_em` e `tentativas_envio`. O mesmo trecho de código que publica o documento também dispara o aviso ao paciente dentro da mesma transação.
 
-Na semana passada o provedor de SMS ficou lento. A publicação de laudos travou junto, e o plantão levou quarenta minutos para descobrir que o problema não estava no laudo. A diretoria pediu uma recomendação para a próxima reunião.
+Na semana anterior, a lentidão do provedor de SMS também paralisou a publicação de laudos. A equipe de plantão levou quarenta minutos para descobrir que o problema estava no provedor de SMS. A diretoria pediu uma recomendação de arquitetura para a reunião seguinte, com prazo de uma semana.
 
-Seis fatos foram apurados na clínica e valem para a decisão:
+A lista abaixo reúne os fatos apurados na clínica que valem para a decisão de arquitetura.
 
 1. Uma equipe só mantém o sistema inteiro.
 2. A implantação é semanal, com tudo junto.
@@ -170,62 +211,62 @@ Seis fatos foram apurados na clínica e valem para a decisão:
 5. O volume é estável, sem pico previsto para os próximos meses.
 6. Não existe fila, *broker* ou serviço separado no ambiente hoje.
 
-Os termos necessários para responder:
+A tabela define os termos necessários para responder à atividade.
 
 | Termo | Definição em uma linha |
 | --- | --- |
-| Dono do dado | quem tem autoridade para interpretar e alterar a informação; os demais pedem por interface |
+| Dono do dado | quem tem autoridade para interpretar e alterar a informação, enquanto os demais consumidores pedem a informação por interface |
 | Fronteira lógica | módulos com interface e propriedade definidas dentro do mesmo processo |
 | Fronteira física | processo, rede e implantação separados, com falha independente |
 | Acoplamento temporal | uma unidade só conclui o próprio trabalho depois que outra responde |
 
-As quatro alternativas em avaliação:
+A tabela descreve as alternativas em avaliação pela clínica.
 
 | Alternativa | O que muda no desenho |
 | --- | --- |
-| **A. Tempo limite no envio** | Nada de estrutura. A chamada ao provedor de SMS ganha tempo limite curto e o erro é registrado. Uma implantação, um banco, mesma transação. |
-| **B. Módulos com dono declarado** | Laudos e Notificações viram módulos separados no mesmo processo, cada um dono das próprias tabelas. A publicação continua chamando a notificação de forma direta e síncrona. |
-| **C. Módulos com entrega adiada** | Como a B, e a publicação passa a apenas registrar o aviso numa tabela de pendências do módulo de Notificações. Um processo em segundo plano envia depois. Uma implantação só. |
-| **D. Notificações como serviço** | Notificações vira processo próprio, com banco próprio, recebendo os avisos por um *broker* novo no ambiente. |
+| **A. Prazo de espera no envio** | A estrutura não muda. A chamada ao provedor de SMS recebe um prazo de espera curto e o erro é registrado, com uma implantação, um banco e a mesma transação. |
+| **B. Módulos com dono declarado** | Laudos e Notificações passam a ser módulos separados no mesmo processo, cada um dono das próprias tabelas. A publicação continua chamando a notificação de forma direta e síncrona. |
+| **C. Módulos com entrega adiada** | Mesma separação da alternativa B, com a publicação apenas registrando o aviso numa tabela de pendências do módulo de Notificações. Um processo em segundo plano envia o aviso depois, com uma única implantação. |
+| **D. Notificações como serviço** | Notificações passa a ser um processo próprio com banco próprio e recebe os avisos por um *broker* novo no ambiente. |
 
-Os seis fatos apurados, os quatro termos definidos e as quatro alternativas descritas estão nesta página e bastam para responder.
+Os fatos, os termos e as alternativas descritos nesta página são suficientes para responder a todos os itens da atividade.
 
 **Seu papel**
 
-Você é a pessoa arquiteta convidada a recomendar um caminho. A equipe da clínica implementa depois, e espera de você a escolha e a justificativa, com os riscos declarados.
+Você é a pessoa arquiteta convidada a recomendar um caminho. A equipe da clínica implementa a solução depois e espera de você a escolha e a justificativa, com os riscos declarados.
 
 **O que fazer**
 
 Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende uma das quatro alternativas para a clínica, em uma frase.
-2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do incidente da semana passada e o que ela cobra em troca.
+2. Escreva duas frases sobre cada uma das quatro alternativas, com o que ela resolve do incidente da semana anterior e o custo que ela impõe.
 3. As alternativas B e C separam a propriedade dos dados do mesmo jeito. Explique o que só a C resolve.
 4. Aponte a alternativa que você descartaria de imediato e diga qual fato a derruba.
 5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria a clínica trocar de alternativa. Data no calendário não vale como sinal.
 
 **Evidência esperada**
 
-O artefato traz o quadro comparativo completo, com ganho e custo declarados para cada uma das quatro alternativas, a recomendação escrita em uma frase, o fato que sustenta a escolha, o risco aceito e o sinal de revisão como condição observável.
+O artefato traz o quadro comparativo completo, com benefício e custo declarados para cada uma das quatro alternativas. Também traz a recomendação em uma frase com o fato que a sustenta, além do risco aceito e do sinal de revisão descrito como condição observável.
 
 ## Analisar
 ### Diagnosticar a rede de clínicas
 
 **Objetivo**
 
-Explicar o mecanismo por trás de cada sintoma relatado, separando o que é fato apurado do que é inferência sua, e comparar duas correções propostas.
+Explicar o mecanismo de cada sintoma relatado com a separação entre fato apurado e inferência própria, além de comparar duas correções propostas.
 
 **Situação**
 
-Uma rede de clínicas separou seu sistema em quatro serviços há dois anos: **Cadastro**, **Agenda**, **Atendimento** e **Faturamento**. Cada um roda no próprio processo, com repositório próprio e esteira de implantação própria. No papel, são quatro microsserviços.
+Uma rede de clínicas separou o seu sistema há dois anos nos serviços **Cadastro**, **Agenda**, **Atendimento** e **Faturamento**. Cada serviço roda no próprio processo, com repositório e esteira de implantação próprios, o que corresponde formalmente a quatro microsserviços.
 
-A cada consulta registrada, Atendimento chama Cadastro, depois Agenda, depois Faturamento, em sequência, e só responde ao usuário quando as três voltam.
+A cada consulta registrada, Atendimento chama em sequência Cadastro, Agenda e Faturamento e só responde ao usuário quando os três serviços retornam.
 
-Os quatro processos apontam para o mesmo *schema* PostgreSQL, com as mesmas credenciais. Acrescentar um campo no cadastro do paciente, no mês passado, exigiu quatro implantações coordenadas na mesma janela de sábado.
+Os quatro processos usam o mesmo *schema* PostgreSQL com as mesmas credenciais. No mês anterior, a inclusão de um campo no cadastro do paciente exigiu quatro implantações coordenadas na mesma janela de sábado.
 
-O painel de cada equipe mostra 99,9% de disponibilidade, e mesmo assim o fluxo de atendimento acumulou incidentes o suficiente para virar pauta na diretoria. Ninguém fez a conta que explica o painel: quatro chamadas síncronas em série, cada uma com 99,9%, entregam 99,6% no fluxo inteiro, o que significa cerca de 35 horas indisponíveis por ano contra as 9 horas que cada equipe promete isoladamente.
+O painel de cada equipe mostra 99,9% de disponibilidade, enquanto o fluxo de atendimento acumulou incidentes suficientes para entrar na pauta da diretoria. Quatro chamadas síncronas em série com 99,9% de disponibilidade cada resultam em 99,6% no fluxo completo. Esse valor corresponde a 35 horas de indisponibilidade por ano. Cada equipe promete isoladamente cerca de 9 horas de indisponibilidade por ano.
 
-Sete fatos foram apurados na rede. Trate cada um como dado verificado:
+Os fatos abaixo foram apurados na rede e devem ser tratados como dados verificados.
 
 1. Setenta por cento das mudanças em Cadastro e em Atendimento são publicadas juntas.
 2. Agenda recebe dez vezes mais carga entre 07h e 09h, quando os pacientes chegam.
@@ -235,7 +276,7 @@ Sete fatos foram apurados na rede. Trate cada um como dado verificado:
 6. Não existe evento, idempotência nem repetição automática em lugar nenhum.
 7. Os quatro processos usam o mesmo *schema* e as mesmas credenciais.
 
-Cinco tipos de acoplamento aparecem nesta análise, e as definições abaixo bastam para respondê-la:
+A tabela define as formas de acoplamento usadas nesta análise.
 
 | Tipo | O que significa |
 | --- | --- |
@@ -245,63 +286,63 @@ Cinco tipos de acoplamento aparecem nesta análise, e as definições abaixo bas
 | de implantação | uma mudança obriga a publicar várias unidades na mesma janela |
 | organizacional | duas equipes precisam negociar continuamente para entregar uma capacidade |
 
-Duas correções estão sobre a mesa, e a diretoria quer sua leitura sobre as duas:
+A diretoria pediu uma avaliação das duas correções propostas a seguir.
 
-#### Correção 1 — consolidar Cadastro e Atendimento
+#### Correção 1. Consolidação de Cadastro e Atendimento
 
-Os dois viram um serviço só, com transação local, banco próprio e uma esteira. Agenda e Faturamento continuam separados como estão hoje.
+Cadastro e Atendimento passam a formar um único serviço, com transação local, banco próprio e uma única esteira de implantação. Agenda e Faturamento continuam separados como estão hoje.
 
-#### Correção 2 — tirar Faturamento do caminho crítico
+#### Correção 2. Retirada de Faturamento do caminho crítico
 
-Os quatro processos continuam existindo. Atendimento passa a responder ao usuário assim que Cadastro e Agenda confirmam, e o aviso a Faturamento sai depois, fora da espera.
+Os quatro processos continuam existindo. Atendimento passa a responder ao usuário assim que Cadastro e Agenda confirmam, enquanto o aviso a Faturamento é enviado depois da resposta.
 
-Os sete fatos, o mapa de chamadas, a conta de disponibilidade, as definições de acoplamento e as duas correções propostas estão nesta página.
+Os fatos, o mapa de chamadas e a conta de disponibilidade estão nesta página, assim como as definições de acoplamento e as duas correções propostas.
 
 **Seu papel**
 
-Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de código será alterada esta semana; a diretoria quer entender o problema antes de autorizar trabalho.
+Você lidera a análise antes de qualquer reestruturação. Nenhuma linha de código será alterada nesta semana, porque a diretoria quer entender o problema antes de autorizar o trabalho.
 
 **O que fazer**
 
 Escreva em texto corrido, um parágrafo por resposta. Sempre que afirmar algo, diga se está apoiado num dos sete fatos ou se é inferência sua.
 
-1. Três sintomas foram relatados: um campo novo exigiu quatro implantações coordenadas, Cadastro e Atendimento saem sempre juntos, e Atendimento espera Faturamento para responder. Explique o mecanismo de cada um e diga que tipo de acoplamento ele revela.
-2. Explique por que quatro painéis marcando 99,9% convivem com um fluxo de 99,6%, e diga o que essa conta revela sobre medir disponibilidade serviço por serviço.
-3. Um dos quatro processos tem razão legítima para continuar separado mesmo depois da reestruturação. Identifique qual, e sustente com o fato que dá essa razão.
-4. Compare as duas correções propostas: o que cada uma resolve, o que ela deixa em pé e qual fato apurado sustenta cada avaliação. Se recomendar as duas, diga em que ordem e por quê.
+1. Explique o mecanismo de cada sintoma relatado e diga que tipo de acoplamento ele revela. Os sintomas são as quatro implantações coordenadas para um campo novo e a publicação conjunta de Cadastro e Atendimento, além da espera de Atendimento por Faturamento.
+2. Explique por que quatro painéis com 99,9% convivem com um fluxo de 99,6% e diga o que essa conta revela sobre a medição de disponibilidade serviço por serviço.
+3. Identifique o processo que tem razão legítima para continuar separado mesmo depois da reestruturação e sustente a escolha com o fato que dá essa razão.
+4. Compare as duas correções propostas quanto ao que cada uma resolve, ao problema que ela mantém e ao fato apurado que sustenta cada avaliação. Se recomendar as duas, diga em que ordem e por quê.
 5. Hoje, quando Faturamento está fora do ar e alguém registra um atendimento, Atendimento devolve um erro genérico. Explique que informação essa resposta esconde e diga qual resposta seria honesta em cada uma das duas correções.
 6. Aponte uma conclusão sua que os sete fatos não sustentam, rotule-a como hipótese e diga qual dado a confirmaria.
 
 **Evidência esperada**
 
-O texto explica o mecanismo de cada sintoma em vez de apenas nomeá-lo, associa cada afirmação a um fato ou a uma inferência declarada, compara as duas correções com ganho e limite de cada uma, e traz a resposta de falha parcial escrita com o comportamento que o usuário observa.
+O texto explica o mecanismo de cada sintoma e associa cada afirmação a um fato ou a uma inferência declarada. O texto também compara as duas correções com o benefício e o limite de cada uma e descreve a resposta de falha parcial pelo comportamento que o usuário observa.
 
 ## Avaliar
 ### Decidir a resposta à indisponibilidade da autorização
 
 **Objetivo**
 
-Julgar quatro respostas possíveis a uma indisponibilidade externa, usando critérios que você mesmo pondera, e defender a escolha diante de um risco clínico.
+Julgar quatro respostas possíveis a uma indisponibilidade externa com critérios ponderados por você mesmo e defender a escolha diante de um risco clínico.
 
 **Situação**
 
-Uma rede de clínicas depende de um provedor externo de autorizações. Antes de executar um procedimento, a clínica consulta esse provedor por uma chamada HTTP e recebe autorizado ou negado. Não existe evento nem aviso de mudança, e a resposta pode variar de um dia para o outro conforme a situação do beneficiário.
+Uma rede de clínicas depende de um provedor externo de autorizações. Antes de executar um procedimento, a clínica consulta esse provedor por uma chamada HTTP e recebe autorizado ou negado. Não existe evento nem aviso de mudança, enquanto a resposta pode variar de um dia para o outro conforme a situação do beneficiário.
 
 O provedor fica indisponível por até quinze minutos, algumas vezes por mês, sem hora marcada. Nesses períodos, hoje, a clínica simplesmente para de receber solicitações.
 
-Duas condições são inaceitáveis para a rede, e reduzir o risco de uma delas tende a aumentar o risco da outra. Executar um procedimento sem autorização válida cria risco clínico e prejuízo financeiro, porque a operadora pode recusar o pagamento depois. Perder a solicitação do paciente também é inaceitável, porque ele já está na clínica e vai embora sem atendimento.
+A rede considera inaceitáveis duas condições, de modo que reduzir o risco de uma delas tende a aumentar o risco da outra. Executar um procedimento sem autorização válida cria risco clínico e prejuízo financeiro, porque a operadora pode recusar o pagamento depois. Perder a solicitação do paciente também é inaceitável, porque ele já está na clínica e vai embora sem atendimento.
 
 O comitê de arquitetura se reúne na quinta-feira para decidir.
 
-Cinco restrições valem para a decisão:
+As restrições abaixo valem para a decisão do comitê.
 
 1. Cada solicitação já nasce com um identificador único gerado pela clínica.
 2. A rede aceita manter uma solicitação em estado pendente por até trinta minutos.
-3. A comunicação com o provedor é consulta HTTP; ele não notifica mudanças.
+3. A comunicação com o provedor é feita por consulta HTTP, sem notificação de mudanças.
 4. A equipe de operação trabalha em horário comercial, sem plantão noturno.
-5. Não existe transação distribuída entre a clínica e o provedor, e a rede não pretende criar uma.
+5. A rede não tem nem pretende criar uma transação distribuída entre a clínica e o provedor.
 
-As quatro alternativas em avaliação:
+As alternativas em avaliação estão descritas abaixo.
 
 #### A. Falha explícita
 
@@ -332,14 +373,14 @@ Escreva em texto corrido. O comitê vai ler o documento antes da reunião, entã
 1. Antes de comparar, declare os critérios que você vai usar e diga qual deles pesa mais nesta decisão. Justifique a ponderação pelo risco do domínio, sem recorrer a preferência técnica.
 2. Avalie as quatro alternativas contra os seus critérios, uma por parágrafo, dizendo o que cada uma protege e o que ela expõe.
 3. Recomende uma delas e escreva, em uma frase, o que a clínica está aceitando ao segui-la.
-4. Descreva os estados pelos quais uma solicitação passa na sua recomendação, e diga o que a recepção enxerga em cada estado.
+4. Descreva os estados pelos quais uma solicitação passa na sua recomendação e diga o que a recepção enxerga em cada estado.
 5. Explique como o identificador único da restrição 1 impede que uma repetição vire procedimento duplicado.
-6. Uma das quatro é inaceitável para esta rede. Diga qual, e sustente com uma das duas condições inaceitáveis da situação.
-7. Escreva o sinal observável que levaria a rede a rever a decisão, e diga quem olharia esse sinal, dado que não há plantão noturno.
+6. Indique a alternativa inaceitável para esta rede e sustente a resposta com uma das duas condições inaceitáveis da situação.
+7. Escreva o sinal observável que levaria a rede a rever a decisão e diga quem acompanharia esse sinal, considerando que não há plantão noturno.
 
 **Evidência esperada**
 
-O documento traz critérios declarados e ponderados antes da comparação, as quatro alternativas avaliadas contra esses critérios, a recomendação com o custo aceito escrito em uma frase, a tabela de estados com o que a recepção observa, e o sinal de revisão com o responsável por observá-lo.
+O documento traz critérios declarados e ponderados antes da comparação e as quatro alternativas avaliadas contra esses critérios. Também traz a recomendação com o custo aceito escrito em uma frase e a tabela de estados com o que a recepção observa. O documento termina com o sinal de revisão e o papel responsável por acompanhá-lo, considerando a ausência de plantão noturno.
 
 ## Criar
 ### Propor a arquitetura inicial do agendamento
@@ -352,21 +393,21 @@ Propor a arquitetura de uma capacidade nova, escolhendo entre três topologias e
 
 A plataforma hospitalar vai ganhar uma capacidade nova: **Agendamento**. Quando um paciente marca um procedimento, o agendamento precisa fazer três coisas, nesta ordem.
 
-Primeiro, consultar **Elegibilidade**, que já existe e responde por HTTP se o beneficiário pode usar o plano. Segundo, reservar o horário na agenda do equipamento, garantindo que ninguém mais ocupe aquele intervalo. Terceiro, avisar **Preparo de Sala**, que pertence a outra equipe e cuida de material, higienização e equipe de apoio.
+O primeiro passo consulta **Elegibilidade**, que já existe e responde por HTTP se o beneficiário pode usar o plano. O segundo passo reserva o horário na agenda do equipamento, de modo que ninguém mais ocupe aquele intervalo. O terceiro passo avisa **Preparo de Sala**, serviço de outra equipe que cuida de material e higienização, além da equipe de apoio.
 
-Três coisas diferenciam essas partes. A agenda muda o tempo inteiro e recebe picos concentrados no início da manhã. Elegibilidade é estável e raramente muda. Preparo de Sala tem outro dono, outro ritmo de entrega, e tolera receber o aviso com até dois minutos de atraso.
+A agenda muda com frequência e recebe picos de carga concentrados no início da manhã. Elegibilidade é estável e raramente muda. Preparo de Sala tem outro dono e outro ritmo de entrega e tolera receber o aviso com até dois minutos de atraso.
 
 O paciente precisa ver a confirmação da reserva em até três segundos.
 
-Cinco restrições valem para a proposta:
+As restrições abaixo valem para a proposta.
 
 1. A resposta ao paciente sai em até três segundos.
 2. O identificador da solicitação é gerado pelo consumidor e chega pronto.
 3. PostgreSQL está disponível e é a base padrão da plataforma.
-4. Mensageria é permitida, e não existe nenhum *broker* instalado hoje.
+4. Mensageria é permitida, embora nenhum *broker* esteja instalado hoje.
 5. No máximo três unidades implantáveis novas podem existir neste semestre.
 
-As três topologias esboçadas:
+As topologias esboçadas para o Agendamento estão descritas abaixo.
 
 #### A. Agendamento como módulo
 
@@ -374,11 +415,11 @@ Agendamento nasce como módulo dentro de um serviço existente, chamando Elegibi
 
 #### B. Agendamento como serviço com avisos síncronos
 
-Agendamento vira serviço próprio com banco próprio. Continua chamando Elegibilidade e Preparo de Sala por HTTP, e só confirma ao paciente depois que os dois responderem.
+Agendamento passa a ser um serviço próprio com banco próprio. Continua chamando Elegibilidade e Preparo de Sala por HTTP e só confirma ao paciente depois que os dois responderem.
 
 #### C. Agendamento como serviço com aviso adiado
 
-Agendamento vira serviço próprio com banco próprio. Consulta Elegibilidade por HTTP, reserva o horário, confirma ao paciente, e registra o aviso a Preparo de Sala numa tabela de saída processada logo depois.
+Agendamento passa a ser um serviço próprio com banco próprio. O serviço consulta Elegibilidade por HTTP, reserva o horário e confirma ao paciente, depois de registrar o aviso a Preparo de Sala numa tabela de saída processada logo depois.
 
 As cinco restrições, as três capacidades descritas, as diferenças de ritmo entre elas e as três topologias estão nesta página.
 
@@ -388,23 +429,23 @@ Você é a pessoa arquiteta responsável pela proposta inicial. Ela será discut
 
 **O que fazer**
 
-Escreva em texto corrido, com um título por resposta. A proposta é um documento de decisão; o detalhe técnico fica para a equipe que implementa.
+Escreva em texto corrido, com um título por resposta. A proposta é um documento de decisão, enquanto o detalhe técnico fica a cargo da equipe que implementa.
 
 1. Escolha uma das três topologias e defenda a escolha usando pelo menos três das cinco restrições, citando cada uma pelo número.
 2. Explique o que as outras duas topologias custariam, uma por parágrafo, para deixar registrado que foram consideradas.
-3. Diga quem é o dono de cada dado que aparece na história: a reserva de horário, a resposta de elegibilidade e o estado do preparo de sala. Justifique cada dono.
+3. Indique o dono da reserva de horário, da resposta de elegibilidade e do estado do preparo de sala e justifique cada dono.
 4. Descreva o caminho de sucesso do agendamento em texto corrido, do pedido do paciente até a confirmação, indicando onde a resposta de três segundos é gasta.
-5. Descreva três falhas parciais e o que o paciente vê em cada uma: Elegibilidade fora do ar, horário já ocupado por outra pessoa entre a consulta e a reserva, e Preparo de Sala fora do ar. Para cada uma, diga se a reserva permanece válida.
-6. A restrição 4 permite mensageria e não a entrega instalada. Diga se a sua proposta precisa dela agora, e o que aconteceria se a equipe adotasse um *broker* apenas para este caso.
+5. Descreva o que o paciente vê em três falhas parciais e diga, para cada uma, se a reserva permanece válida. As falhas são Elegibilidade fora do ar, horário ocupado por outra pessoa entre a consulta e a reserva e Preparo de Sala fora do ar.
+6. A restrição 4 permite mensageria sem que exista um *broker* instalado. Diga se a sua proposta precisa de mensageria agora e o que aconteceria se a equipe adotasse um *broker* apenas para este caso.
 7. Escreva dois sinais observáveis que levariam a rede a mudar a topologia escolhida, um na direção de mais separação e outro na direção de menos.
 
 **Evidência esperada**
 
-O documento traz a topologia escolhida com pelo menos três restrições citadas pelo número, as outras duas avaliadas e descartadas, um dono declarado para cada dado, o caminho de sucesso descrito com o orçamento de tempo, três falhas parciais com o que o paciente observa e o destino da reserva, e dois sinais de mudança em direções opostas.
+O documento traz a topologia escolhida com pelo menos três restrições citadas pelo número e as outras duas topologias avaliadas e descartadas. Também traz um dono declarado para cada dado e o caminho de sucesso descrito com o orçamento de tempo. O documento descreve ainda três falhas parciais com o que o paciente observa e o destino da reserva, além de dois sinais de mudança em direções opostas.
 
 ## Questões de múltipla escolha
 
-As vinte questões a seguir formam a atividade de fixação da Unidade 3 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes: as simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
+As vinte questões a seguir formam a atividade de fixação da Unidade 3 no Canvas e cobrem o conteúdo das páginas deste módulo. Cada questão tem uma única alternativa correta e traz o nível de dificuldade entre colchetes. As questões simples verificam definições, as médias aplicam os conceitos a uma situação e as difíceis pedem análise de alternativas e consequências.
 
 ### Questões simples
 
@@ -419,7 +460,7 @@ O que é uma capacidade de negócio?
 
 #### Questão 2 [Simples]
 
-Em Domain-Driven Design, o que delimita um bounded context?
+Em *Domain-Driven Design*, o que delimita um *bounded context*?
 
 - (a) O conjunto de servidores em que um serviço é implantado.
 - (b) A área em que um modelo e sua linguagem têm significado consistente.
@@ -442,7 +483,7 @@ O que significa o padrão banco por serviço?
 - (a) Que cada serviço precisa de um servidor físico de banco de dados próprio.
 - (b) Que cada serviço deve usar uma tecnologia de banco diferente.
 - (c) Que todos os serviços escrevem em um banco central com tabelas separadas por prefixo.
-- (d) Que somente o serviço proprietário acessa diretamente seu armazenamento, e os demais usam contratos, eventos ou réplicas projetadas.
+- (d) Que somente o serviço proprietário acessa diretamente o seu armazenamento, enquanto os demais usam contratos, eventos ou réplicas projetadas.
 
 #### Questão 5 [Simples]
 
@@ -473,7 +514,7 @@ O que o padrão CQRS separa?
 
 #### Questão 8 [Simples]
 
-O que faz o padrão estrangulador (strangler)?
+O que faz o padrão estrangulador, em inglês *strangler fig*?
 
 - (a) Interrompe chamadas a uma dependência instável depois de um número de falhas.
 - (b) Encaminha gradualmente partes de uma interface antiga para uma implementação nova, preservando o contrato.
@@ -484,7 +525,7 @@ O que faz o padrão estrangulador (strangler)?
 
 #### Questão 9 [Média]
 
-No laboratório, Exames chama Elegibilidade de forma síncrona antes de gravar uma solicitação, mas não lê a tabela de Elegibilidade. Quais acoplamentos Exames aceita e evita?
+No laboratório, Exames chama Elegibilidade de forma síncrona antes de gravar uma solicitação e não lê a tabela de Elegibilidade. Quais acoplamentos Exames aceita e evita?
 
 - (a) Aceita acoplamento temporal e evita acoplamento de dados.
 - (b) Aceita acoplamento de dados e evita acoplamento temporal.
@@ -493,7 +534,7 @@ No laboratório, Exames chama Elegibilidade de forma síncrona antes de gravar u
 
 #### Questão 10 [Média]
 
-Elegibilidade parou, e Exames não consegue aceitar novas solicitações. Qual resposta o módulo considera adequada para tornar essa condição observável?
+Elegibilidade parou e Exames não consegue aceitar novas solicitações. Qual resposta o módulo considera adequada para tornar essa condição observável?
 
 - (a) 500 genérico, para não expor detalhes internos.
 - (b) 503 Service Unavailable com o código dependencia_indisponivel.
@@ -502,7 +543,7 @@ Elegibilidade parou, e Exames não consegue aceitar novas solicitações. Qual r
 
 #### Questão 11 [Média]
 
-Uma organização tem dezenas de serviços, mas toda alteração exige publicação coordenada e vários deles escrevem no mesmo banco. Como o módulo classifica essa situação?
+Uma organização tem dezenas de serviços, cada alteração exige publicação coordenada e vários serviços escrevem no mesmo banco. Como o módulo classifica essa situação?
 
 - (a) Como uma arquitetura de microsserviços madura.
 - (b) Como um monólito modular.
@@ -511,12 +552,12 @@ Uma organização tem dezenas de serviços, mas toda alteração exige publicaç
 
 #### Questão 12 [Média]
 
-A palavra situação significa vigência cadastral em Elegibilidade e etapa operacional em Exames. O que o módulo recomenda?
+A palavra "situação" significa vigência cadastral em Elegibilidade e etapa operacional em Exames. O que o módulo recomenda?
 
 - (a) Unificar o termo em um modelo único para toda a organização.
 - (b) Proibir o uso da palavra nos dois serviços.
 - (c) Compartilhar a tabela de situações entre os dois serviços.
-- (d) Manter cada significado dentro do seu bounded context e fazer tradução explícita entre os contextos.
+- (d) Manter cada significado dentro do seu *bounded context* e fazer tradução explícita entre os contextos.
 
 #### Questão 13 [Média]
 
@@ -524,7 +565,7 @@ Um relatório gerencial precisa combinar dados de Elegibilidade e de Exames. Qua
 
 - (a) Dar ao serviço de relatório credenciais de leitura nos dois bancos.
 - (b) Fazer JOIN entre as tabelas dos dois serviços em uma visão compartilhada.
-- (c) Usar composição por API, eventos, réplica analítica ou modelo de leitura, declarando defasagem e origem.
+- (c) Usar composição por API, eventos, réplica analítica ou modelo de leitura com defasagem e origem declaradas.
 - (d) Copiar manualmente as tabelas para o banco de Exames toda noite, sem registro.
 
 #### Questão 14 [Média]
@@ -538,11 +579,11 @@ Uma equipe quer adotar persistência poliglota e dar um tipo de banco diferente 
 
 #### Questão 15 [Média]
 
-Uma equipe propõe usar CQRS e afirma que, para isso, precisa de dois bancos de dados e de mensageria. O que o módulo afirma?
+Uma equipe propõe usar CQRS e afirma que precisa de dois bancos de dados e de mensageria para isso. O que o módulo afirma?
 
-- (a) Que CQRS não exige dois bancos, mensageria ou Event Sourcing, e a separação pode começar em objetos e interfaces no mesmo processo.
-- (b) Que CQRS exige dois bancos, mas não mensageria.
-- (c) Que CQRS exige Event Sourcing.
+- (a) Que CQRS não exige dois bancos, mensageria ou *event sourcing*, porque a separação pode começar em objetos e interfaces no mesmo processo.
+- (b) Que CQRS exige dois bancos e dispensa a mensageria.
+- (c) Que CQRS exige *event sourcing*.
 - (d) Que CQRS só funciona com SAGA orquestrada.
 
 ### Questões difíceis
@@ -558,10 +599,10 @@ Como o módulo interpreta o teorema CAP em um sistema distribuído real?
 
 #### Questão 17 [Difícil]
 
-Um sistema aceita escritas durante uma partição, e duas réplicas recebem alterações concorrentes no registro de um paciente. O critério para decidir qual versão vale é clínico. Qual estratégia de resolução é a única capaz de acertar nesse caso?
+Durante uma partição, um sistema aceita escritas e duas réplicas recebem alterações concorrentes no registro de um paciente, cuja versão válida deve ser decidida por critério clínico. Qual estratégia de resolução é a única capaz de acertar nesse caso?
 
 - (a) Última escrita vence, pelo carimbo de tempo.
-- (b) CRDTs, porque convergem por construção.
+- (b) Tipos de dados que convergem por construção, conhecidos como CRDTs.
 - (c) Descartar as duas versões e restaurar o último backup.
 - (d) Função de mesclagem do domínio, com regra explícita definida pela aplicação.
 
@@ -576,7 +617,7 @@ Em uma SAGA, o passo de autorizar procedimento falhou depois que a agenda já ha
 
 #### Questão 19 [Difícil]
 
-Um fluxo de agendamento tem muitas ramificações e a equipe de suporte precisa saber, em um único lugar, em que estado está cada agendamento. Qual forma de coordenação da SAGA é mais indicada, e qual custo ela traz?
+Um fluxo de agendamento tem muitas ramificações e a equipe de suporte precisa saber, em um único lugar, em que estado está cada agendamento. Qual forma de coordenação da SAGA é mais indicada e qual custo ela traz?
 
 - (a) Coreografia, ao custo de concentrar a lógica em um componente central.
 - (b) Orquestração, ao custo de manter um componente que se torna dependência de todos os passos.

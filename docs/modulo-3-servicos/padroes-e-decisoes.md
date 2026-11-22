@@ -1,6 +1,6 @@
-# Padrões e decisões sobre o grau de distribuição
+# Padrões e decisões
 
-Arquitetura de serviços não define uma progressão em que microsserviços representam o estágio final de maturidade. Monólito modular, macrosserviço e microsserviço são formas diferentes de empacotar limites lógicos em unidades de implantação. A escolha entre elas deve ligar as forças do contexto a consequências que a equipe consegue verificar em testes, métricas e incidentes.
+Esta página compara o monólito modular, o macrosserviço e o microsserviço como formas de empacotar limites lógicos em unidades de implantação. A página também apresenta os padrões que tratam das consequências da distribuição, entre eles a SAGA, o CQRS e o orçamento de falha das chamadas síncronas. A escolha entre as três formas de empacotamento depende das forças do contexto e deve ter consequências que a equipe consiga verificar em testes, métricas e incidentes.
 
 ## Monólito modular, macrosserviços e microsserviços
 
@@ -21,7 +21,7 @@ Um **microsserviço** busca autonomia de implantação, de operação e de dados
 
 A distribuição física se justifica quando há necessidade de implantação independente ou de escala diferente entre capacidades. Também se justifica por isolamento regulatório, por tecnologia especializada ou por equipes com propriedade real sobre a capacidade. Sem nenhuma dessas forças, a fronteira interna de um monólito modular preserva o isolamento lógico com menor custo operacional.
 
-## Banco por serviço como proteção da autoridade
+## Banco por serviço {#banco-por-servico-como-protecao-da-autoridade}
 
 O padrão banco por serviço protege as invariantes e a evolução de cada serviço, que decide sozinho o *schema*, as migrações e as regras de escrita dos próprios dados. Nenhum outro serviço executa `SELECT`, `JOIN` ou `UPDATE` diretamente sobre esse banco. A proteção se materializa em credenciais distintas por serviço, em permissões mínimas e em testes arquiteturais que falham quando a fronteira é violada.
 
@@ -37,17 +37,17 @@ Dentro de um serviço, uma transação ACID preserva as invariantes locais e des
 
 A consistência forte é necessária quando uma leitura precisa refletir a escrita mais recente. A consistência eventual admite uma janela de defasagem que o domínio aceita, que a operação consegue observar e que termina com as réplicas convergindo para o mesmo valor. **Consistência eventual não significa** ausência de regras. A convergência depende de identidade dos registros e de ordem quando ela for necessária, além de idempotência, repetição e reconciliação.
 
-## CAP sem o triângulo simplista
+## Teorema CAP {#cap-sem-o-triangulo-simplista}
 
 O teorema CAP foi formulado por Eric Brewer em 2000 e demonstrado por Seth Gilbert e Nancy Lynch em 2002 para um armazenamento distribuído sujeito a partição de comunicação. Nesse modelo, consistência significa que os nós apresentam uma visão única e atual do dado. Disponibilidade significa que cada nó que não falhou responde a cada requisição que recebe. Tolerância à partição significa que o sistema continua operando quando mensagens entre grupos de nós se perdem ou atrasam. Em uma rede sujeita a partições, o sistema precisa decidir entre recusar ou atrasar operações para preservar a consistência e responder com a possibilidade de divergência entre réplicas.
 
 Por isso, **CAP se torna uma decisão durante uma partição** e não serve como classificação permanente em que um produto escolhe duas das três letras. Fora da partição, a relação entre latência e consistência continua gerando decisões, que são descritas por outros modelos. O teorema também não justifica qualquer dado desatualizado numa integração, porque a equipe precisa especificar o mecanismo de convergência e o prazo prometido ao consumidor.
 
-A leitura que manda escolher duas das três letras trata a tolerância à partição como opcional. Num sistema distribuído real, a partição é um evento da rede que vai ocorrer em algum momento, de modo que a equipe não tem como descartá-la do desenho. A combinação de consistência com disponibilidade descreve, portanto, um sistema que não é distribuído ou que deixa de responder quando o enlace cai. A escolha real da equipe é o comportamento do sistema durante a partição, que a tabela seguinte mostra para quatro armazenamentos conhecidos.
+A leitura que manda escolher duas das três letras do teorema trata a tolerância à partição como uma propriedade opcional. Num sistema distribuído real, a partição é um evento da rede que vai ocorrer em algum momento, de modo que a equipe não tem como descartá-la do desenho. A combinação de consistência com disponibilidade descreve, portanto, um sistema que não é distribuído ou que deixa de responder quando o enlace cai. Por esse motivo, a decisão que cabe à equipe é o comportamento do sistema durante a partição, descrito na tabela seguinte para quatro armazenamentos conhecidos.
 
-### O que os armazenamentos conhecidos fazem durante uma partição
+### Comportamento de armazenamentos durante uma partição {#o-que-os-armazenamentos-conhecidos-fazem-durante-uma-particao}
 
-A pergunta útil sobre um armazenamento distribuído é o que ele faz quando os nós deixam de se comunicar entre si.
+A tabela descreve o comportamento de quatro armazenamentos distribuídos quando os nós deixam de se comunicar entre si.
 
 | Armazenamento | Comportamento durante a partição | O que isso custa |
 | --- | --- | --- |
@@ -56,9 +56,9 @@ A pergunta útil sobre um armazenamento distribuído é o que ele faz quando os 
 | Apache Cassandra | Continua atendendo, com o nível de consistência ajustável por operação e o quórum configurado em cada chamada | A promessa muda de chamada para chamada, e a equipe precisa saber qual delas pediu |
 | MongoDB | Permite configurar a garantia, da escrita confirmada por maioria à leitura em réplica secundária possivelmente atrasada | A garantia efetiva depende da configuração escolhida em cada implantação |
 
-As linhas da tabela não são recomendações. Elas mostram que cada fornecedor resolveu de forma diferente o comportamento do armazenamento quando a rede falha. A resposta do fornecedor passa a ser uma restrição do desenho de quem adota o produto. O padrão banco por serviço traz a mesma decisão para o desenho mesmo sem nenhum banco replicado globalmente, porque dados relacionados que vivem em serviços diferentes levam tempo para se alinhar.
+A tabela não recomenda nenhum dos produtos e registra que cada fornecedor resolveu de forma diferente o comportamento do armazenamento quando a rede falha. O comportamento escolhido pelo fornecedor passa a ser uma restrição do desenho de quem adota o produto. O padrão banco por serviço traz a mesma decisão para o desenho mesmo sem nenhum banco replicado globalmente, porque dados relacionados que vivem em serviços diferentes levam tempo para se alinhar.
 
-### Quando a escolha foi continuar respondendo
+### Resolução de conflitos depois da partição {#quando-a-escolha-foi-continuar-respondendo}
 
 Quando o sistema continua aceitando escritas durante a partição, duas réplicas podem receber alterações concorrentes sobre a mesma informação. Depois que a comunicação volta, uma regra de resolução decide qual alteração prevalece ou como as duas se combinam.
 
@@ -70,7 +70,7 @@ A consistência eventual é uma promessa com prazo que depende das regras descri
 
 No estudo de caso deste módulo, a equipe decidiu a elegibilidade sem nenhuma dessas estratégias, porque reuniu as regras fortemente relacionadas num único macrosserviço e recuperou uma transação local com consistência forte dentro do processo. A consistência eventual ficou restrita à projeção do painel gerencial, em que a defasagem é aceitável e observável.
 
-#### Partição simulada com três réplicas
+#### Exemplo de partição com três réplicas em Python {#particao-simulada-com-tres-replicas}
 
 O programa `codigo/oda-06/particao/demo_particao.py` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) simula três réplicas que guardam a lista de alergias de um paciente. Durante a partição, que separa as réplicas A e B da réplica C, a unidade Centro grava dipirona no lado da maioria e a unidade Barreiro grava penicilina no lado da minoria. O programa usa apenas a biblioteca padrão do Python e fixa os carimbos de tempo, de modo que a saída é a mesma em cada execução.
 
@@ -125,7 +125,7 @@ Uma **SAGA** coordena uma sequência de transações locais em serviços diferen
 
 **SAGA não é uma transação ACID distribuída**, porque uma compensação não apaga o passado e também pode falhar. Cancelar uma solicitação de exame não equivale a ela nunca ter existido, já que outros participantes podem ter observado o estado intermediário e mensagens podem chegar duplicadas. Por isso, o desenho de uma SAGA declara os estados possíveis e a política de repetição de comandos idempotentes. Ele também declara o caminho de intervenção operacional e a trilha de auditoria usada para investigar fluxos interrompidos.
 
-### Elementos que toda SAGA declara {#os-tres-elementos-que-toda-saga-declara}
+### Elementos de uma SAGA {#os-tres-elementos-que-toda-saga-declara}
 
 Uma SAGA se descreve por passos, operações compensatórias e coordenação. A ausência de qualquer um desses elementos é o defeito mais comum das primeiras implementações, conforme a coluna de erros frequentes da tabela.
 
@@ -159,9 +159,9 @@ flowchart TB
     O -.compensa.-> A
 ```
 
-A coreografia distribui a lógica e dispensa um componente central. Por outro lado, nenhum lugar único do sistema mostra em que estado está um agendamento, o que dificulta o suporte e facilita a criação acidental de ciclos de eventos entre serviços. A orquestração concentra a sequência num lugar auditável, ao custo de um componente que precisa ser mantido e implantado e que se torna dependência de todos os passos. Fluxos curtos e estáveis toleram a coreografia, enquanto fluxos com muitas ramificações e com necessidade de suporte operacional costumam pedir orquestração.
+A coreografia distribui a lógica e dispensa um componente central. Na coreografia, nenhum lugar único do sistema mostra em que estado está um agendamento, o que dificulta o suporte e facilita a criação acidental de ciclos de eventos entre serviços. A orquestração concentra a sequência num lugar auditável, ao custo de um componente que precisa ser mantido e implantado e que se torna dependência de todos os passos. Fluxos curtos e estáveis toleram a coreografia, enquanto fluxos com muitas ramificações e com necessidade de suporte operacional costumam pedir orquestração.
 
-### O que a SAGA cobra
+### Custos da SAGA {#o-que-a-saga-cobra}
 
 | Ganho | Custo correspondente |
 | --- | --- |
@@ -171,7 +171,7 @@ A coreografia distribui a lógica e dispensa um componente central. Por outro la
 
 No caso hospitalar, uma SAGA pode coordenar a reserva de horário na Agenda, a autorização do procedimento e o preparo da sala. O laboratório da oficina não precisa de SAGA, porque Exames consulta Elegibilidade antes de gravar localmente e só existe uma escrita no fluxo. A SAGA se justifica quando a mudança atravessa mais de um proprietário de dados e não há como reunir esses dados num só serviço. A consolidação dos passos num único serviço com transação local, adotada no estudo de caso, é mais barata e deve ser avaliada antes da SAGA.
 
-### Orquestração do agendamento de exame em Python
+### Exemplo de SAGA orquestrada em Python {#orquestracao-do-agendamento-de-exame-em-python}
 
 O programa da pasta `codigo/oda-06/saga` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) implementa a orquestração desse agendamento com Agenda, Autorização e Preparo de Sala como participantes. Cada participante guarda o próprio estado num dicionário privado que representa o banco do serviço, sem acesso ao banco dos outros participantes. O orquestrador declara a sequência dos passos num único lugar e registra cada evento numa trilha de auditoria.
 
@@ -283,7 +283,7 @@ Um modelo de leitura materializado reduz composições remotas e atende consulta
 
 CQRS e SAGA resolvem problemas diferentes, porque a SAGA coordena uma mudança distribuída e o CQRS separa as responsabilidades de leitura e de escrita. Os dois padrões podem coexistir num mesmo sistema sem que um dependa do outro.
 
-### Comando e projeção no mesmo processo
+### Exemplo de CQRS em Python {#comando-e-projecao-no-mesmo-processo}
 
 O programa da pasta `codigo/oda-06/cqrs` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) separa o modelo de comando do modelo de consulta nas solicitações de exame, sem segundo banco e sem mensageria. A classe `SolicitacoesDeExame` recebe as intenções `solicitar` e `cancelar`, verifica as invariantes e acrescenta um fato a uma lista a cada mudança aceita. A classe `PainelGerencial` consome essa lista e mantém a contagem de solicitações ativas por unidade, que é a forma de dado pronta para a consulta do painel.
 
@@ -345,7 +345,7 @@ O segundo cancelamento de EX-2 é recusado pelo modelo de comando, porque a inva
 
 A lista de fatos deste exemplo só alimenta a projeção, enquanto o estado das solicitações continua no dicionário do modelo de comando. Por essa razão, o exemplo aplica CQRS sem aplicar *event sourcing*, padrão descrito na seção seguinte. A [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) usa este programa no laboratório sobre defasagem e reconstrução da projeção.
 
-## Event sourcing como registro de fatos {#event-sourcing-quando-os-fatos-sao-o-registro-necessario}
+## Event sourcing {#event-sourcing-quando-os-fatos-sao-o-registro-necessario}
 
 No **event sourcing**, o estado atual de uma entidade é reconstruído a partir de fatos imutáveis do domínio, como “solicitação recebida” e “autorização concedida”. O padrão é útil quando a história, a auditoria e a reprodução de decisões são requisitos centrais do produto. Publicar eventos para integração é uma prática diferente, porque um serviço pode emitir eventos e guardar o próprio estado numa tabela transacional.
 
@@ -365,7 +365,7 @@ No laboratório da oficina, Exames usa prazo de espera de dois segundos e conver
 
 Os programas desta seção estão na pasta `codigo/oda-05` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) e usam apenas a biblioteca padrão do Python. Nesses programas, Elegibilidade roda como servidor HTTP numa porta livre do computador e Exames consulta esse servidor pela rede antes de gravar a solicitação. A [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) percorre os mesmos programas num laboratório guiado de 12 minutos.
 
-### Prazo de espera e falha parcial
+### Prazo de espera e falha parcial {#prazo-de-espera-e-falha-parcial}
 
 O prazo de espera, conhecido como *timeout*, é o tempo máximo que Exames aceita esperar pela resposta de Elegibilidade. No programa, o prazo é passado à função `urlopen` da biblioteca padrão. Recusa de conexão, estouro do prazo e resposta `5xx` de Elegibilidade são convertidos na exceção `ConnectionError`, que o método `solicitar_exame` traduz no status `503` com o código `dependencia_indisponivel`.
 

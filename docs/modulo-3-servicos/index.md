@@ -47,7 +47,7 @@ As ODAs da disciplina são atividades individuais de 25 minutos que executam pro
 
 A seção [Partição simulada com três réplicas](padroes-e-decisoes.md#particao-simulada-com-tres-replicas) usa um terceiro programa da pasta `codigo/oda-06/particao`, que mostra o comportamento de um armazenamento durante uma partição e não faz parte do laboratório da ODA 06.
 
-## O que não será presumido
+## Premissas e limites do módulo {#o-que-nao-sera-presumido}
 
 Microsserviços não são objetivo em si, porque um limite de domínio pode existir dentro de um único processo. A tecnologia de um serviço pode ser a mesma dos serviços vizinhos sem prejuízo à fronteira entre eles. Trocar uma chamada local por uma chamada REST mantém o acoplamento entre as duas partes e apenas muda a sua forma. Banco por serviço define a propriedade dos dados e não implica persistência poliglota. A consistência eventual atenua alguns riscos e não resolve sozinha uma transação distribuída. SAGA e CQRS entram no módulo como opções com custo, adotadas somente quando o contexto justifica esse custo.
 
