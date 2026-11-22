@@ -290,22 +290,26 @@ Quando o sistema continua aceitando escritas durante a partição, duas réplica
 
 #### Exemplo de partição com três réplicas em Python {#particao-simulada-com-tres-replicas}
 
-Na rede hospitalar, a lista de alergias de um paciente fica replicada nos servidores das unidades, de modo que cada unidade consulta a lista mesmo sem comunicação com as demais. O programa `codigo/oda-06/particao/demo_particao.py` simula três réplicas dessa lista. Durante a partição, a unidade Centro grava dipirona no lado da maioria e a unidade Barreiro grava penicilina no lado da minoria, como mostra a Figura 4.
+Na rede hospitalar do caso, a lista de alergias de cada paciente fica gravada em três réplicas. As réplicas A e B ficam no datacenter da unidade Centro, enquanto a réplica C fica no servidor local da unidade Barreiro. A cópia local permite que a equipe de Barreiro consulte as alergias de um paciente quando o enlace de rede com o Centro fica fora do ar, situação em que um médico sem acesso à lista poderia prescrever um medicamento perigoso.
+
+Uma paciente está internada em Barreiro durante uma madrugada em que o enlace entre as duas unidades fica fora do ar por 40 minutos. Nesse intervalo, a enfermagem de Barreiro registra na réplica C uma alergia a penicilina relatada pela própria paciente. A farmácia central fica no Centro e revisa as prescrições de toda a rede. No mesmo intervalo, ela registra nas réplicas A e B uma alergia a dipirona encontrada no histórico de um atendimento anterior. As duas escritas são legítimas e foram feitas sem que um lado soubesse do outro, como mostra a Figura 4.
 
 ```mermaid
 flowchart LR
-    Centro[Unidade Centro grava dipirona] --> A[Réplica A]
-    Centro --> B[Réplica B]
-    Barreiro[Unidade Barreiro grava penicilina] --> C[Réplica C]
-    A -. partição .- C
-    B -. partição .- C
+    Centro[Farmácia central no Centro grava dipirona] --> A[Réplica A no Centro]
+    Centro --> B[Réplica B no Centro]
+    Barreiro[Enfermagem de Barreiro grava penicilina] --> C[Réplica C em Barreiro]
+    A -. enlace fora do ar .- C
+    B -. enlace fora do ar .- C
 ```
 
-**Texto alternativo:** três réplicas separadas por uma partição, com as réplicas A e B recebendo a escrita da unidade Centro e a réplica C recebendo a escrita da unidade Barreiro.
+**Texto alternativo:** três réplicas da lista de alergias separadas por uma falha de rede, com as réplicas A e B do Centro recebendo a escrita da farmácia central e a réplica C de Barreiro recebendo a escrita da enfermagem local.
 
-*Figura 4 — Escritas concorrentes durante uma partição. Fonte: curso.*
+*Figura 4 — Registros de alergia feitos durante a falha do enlace entre Centro e Barreiro. Fonte: curso.*
 
-**Leitura textual da figura:** a unidade Centro grava dipirona nas réplicas A e B, que formam a maioria. A unidade Barreiro grava penicilina na réplica C, que fica sozinha do outro lado da partição. Linhas tracejadas marcam a partição entre a réplica C e as réplicas A e B.
+**Leitura textual da figura:** a farmácia central grava a alergia a dipirona nas réplicas A e B do Centro, que formam a maioria. A enfermagem de Barreiro grava a alergia a penicilina na réplica C, que fica sozinha do outro lado da falha. Linhas tracejadas marcam o enlace fora do ar entre a réplica C e as réplicas A e B.
+
+O programa `codigo/oda-06/particao/demo_particao.py` reproduz essa madrugada com três réplicas em memória e carimbos de tempo fixos, de modo que a saída é a mesma em cada execução. Cada lista começa com látex, uma alergia registrada antes da falha. O programa compara os três comportamentos possíveis do armazenamento descritos na tabela que segue a saída.
 
 ```python
 # codigo/oda-06/particao/demo_particao.py
@@ -348,7 +352,11 @@ Durante a partição: A=['látex', 'dipirona'] C=['látex', 'penicilina']
 Depois da partição: ['dipirona', 'látex', 'penicilina']
 ```
 
-No primeiro cenário, a réplica C está sozinha no seu lado da partição e recusa a escrita por falta de quórum. No segundo, a regra da última escrita vence escolhe a lista da réplica C pelo carimbo 11, de modo que a dipirona registrada no Centro é descartada sem aviso. No terceiro, a função de mesclagem mantém dipirona e penicilina na lista final, porque a regra do domínio não descarta nenhuma alergia registrada.
+| Cenário | Resultado para a paciente |
+| --- | --- |
+| 1. Recusar sem quórum | A réplica C está sozinha e recusa a escrita, de modo que a enfermagem de Barreiro não consegue registrar a alergia a penicilina durante os 40 minutos da falha |
+| 2. Última escrita vence | A lista da réplica C prevalece pelo carimbo 11, de modo que a alergia a dipirona registrada pela farmácia é descartada sem aviso e a paciente pode receber dipirona depois que a rede volta |
+| 3. Mesclagem pela regra do domínio | A lista final mantém dipirona e penicilina, porque a regra clínica não descarta nenhuma alergia registrada em qualquer unidade |
 
 ## SAGA
 
