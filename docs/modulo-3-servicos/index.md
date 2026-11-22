@@ -12,8 +12,8 @@ Ao final do módulo, você será capaz de justificar uma fronteira de serviço e
 
 ## Percurso de aprendizagem
 
-1. [Conceitos](conceitos.md) apresenta capacidade de negócio, *bounded context*, coesão e acoplamento.
-2. [Padrões e decisões](padroes-e-decisoes.md) compara unidades de implantação e propriedade de dados e apresenta CAP, SAGA e CQRS com código executável.
+1. [Conceitos](conceitos.md) define as fronteiras de serviço, a falha parcial e os termos de consistência usados nas ODAs 05 e 06.
+2. [Padrões e decisões](padroes-e-decisoes.md) apresenta os padrões de resiliência da ODA 05, os padrões de consistência da ODA 06 e as formas de implantação, com código executável.
 3. Em [Exemplo arquitetural](exemplo-arquitetural.md), acompanhamos uma solicitação de exame pelos dois serviços.
 4. Em [Estudo de caso](estudo-de-caso.md), avaliamos uma decomposição excessiva e uma consolidação responsável.
 5. Em [Casos reais](casos-reais.md), acompanhamos a Netflix reconstruir tudo na nuvem e aprender a perder uma região inteira.
@@ -42,10 +42,10 @@ As ODAs da disciplina são atividades individuais de 25 minutos que executam pro
 
 | ODA | Tema | Seções do módulo |
 | --- | --- | --- |
-| [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) | Falha parcial, prazo de espera, nova tentativa com chave de idempotência e disjuntor | [Chamadas síncronas e falhas parciais](conceitos.md#chamadas-sincronas-e-falhas-parciais) e [Orçamento de falha das chamadas síncronas](padroes-e-decisoes.md#chamadas-sincronas-orcamento-de-falha) |
-| [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) | SAGA orquestrada com compensação e projeção CQRS com defasagem e reconstrução | [Orquestração do agendamento de exame em Python](padroes-e-decisoes.md#orquestracao-do-agendamento-de-exame-em-python) e [Comando e projeção no mesmo processo](padroes-e-decisoes.md#comando-e-projecao-no-mesmo-processo) |
+| [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) | Falha parcial, prazo de espera, nova tentativa com chave de idempotência e disjuntor | [Falha parcial](conceitos.md#chamadas-sincronas-e-falhas-parciais) e [Resiliência da chamada síncrona](padroes-e-decisoes.md#chamadas-sincronas-orcamento-de-falha) |
+| [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) | SAGA orquestrada com compensação e projeção CQRS com defasagem e reconstrução | [Consistência e partição](conceitos.md#consistencia-e-particao), [SAGA](padroes-e-decisoes.md#saga) e [CQRS](padroes-e-decisoes.md#cqrs) |
 
-A seção [Partição simulada com três réplicas](padroes-e-decisoes.md#particao-simulada-com-tres-replicas) usa um terceiro programa da pasta `codigo/oda-06/particao`, que mostra o comportamento de um armazenamento durante uma partição e não faz parte do laboratório da ODA 06.
+A seção [Exemplo de partição com três réplicas em Python](padroes-e-decisoes.md#particao-simulada-com-tres-replicas) usa um terceiro programa da pasta `codigo/oda-06/particao`, que mostra o comportamento de um armazenamento durante uma partição e não faz parte do laboratório da ODA 06.
 
 ## Premissas e limites do módulo {#o-que-nao-sera-presumido}
 

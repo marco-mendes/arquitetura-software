@@ -1,78 +1,309 @@
 # Padrões e decisões
 
-Esta página compara o monólito modular, o macrosserviço e o microsserviço como formas de empacotar limites lógicos em unidades de implantação. A página também apresenta os padrões que tratam das consequências da distribuição, entre eles a SAGA, o CQRS e o orçamento de falha das chamadas síncronas. A escolha entre as três formas de empacotamento depende das forças do contexto e deve ter consequências que a equipe consiga verificar em testes, métricas e incidentes.
+Esta página reúne os padrões que tratam das consequências da distribuição de um sistema em serviços. Os conceitos de acoplamento temporal e falha parcial e os de transação local e partição estão definidos na página de [Conceitos](conceitos.md). A tabela mostra a organização da página em três blocos, na ordem em que os assuntos aparecem nas atividades do módulo.
 
-## Monólito modular, macrosserviços e microsserviços
-
-Um **monólito modular** possui uma única unidade de implantação e separa o código em módulos com interfaces e dependências controladas. Uma transação local pode atravessar módulos sob regras explícitas, o que simplifica a operação e a depuração. Em contrapartida, o monólito modular exige disciplina para impedir referências arbitrárias entre módulos e um banco de dados sem proprietário definido.
-
-Um **macrosserviço** é uma unidade implantável maior que reúne capacidades fortemente relacionadas, em geral uma área de negócio mantida por uma equipe e organizada em módulos internos. O termo descreve a posição intermediária entre o sistema inteiro numa unidade e dezenas de serviços com uma responsabilidade cada. O macrosserviço reduz as chamadas de rede e a coordenação operacional, ao custo de cada implantação afetar uma superfície maior de código.
-
-Um **microsserviço** busca autonomia de implantação, de operação e de dados para uma responsabilidade coesa. O estilo favorece escalabilidade seletiva, isolamento de mudanças e propriedade clara por equipe quando esses benefícios existem no contexto. Em troca, o estilo exige automação de entrega e contratos versionados, além de observabilidade e de capacidade de resposta a incidentes e a falhas parciais.
-
-| Aspecto | Monólito modular | Macrosserviço | Microsserviço |
-| --- | --- | --- | --- |
-| Implantação | uma para o sistema | uma por conjunto amplo | uma por limite menor |
-| Chamada dominante | local | local e remota | remota entre limites |
-| Transação | local com maior alcance | local dentro do conjunto | local por proprietário |
-| Operação | menor variedade | intermediária | maior variedade |
-| Autonomia | lógica | por área ampla | física e organizacional |
-| Risco típico | erosão dos módulos | unidade crescer sem revisão | monólito distribuído |
-
-A distribuição física se justifica quando há necessidade de implantação independente ou de escala diferente entre capacidades. Também se justifica por isolamento regulatório, por tecnologia especializada ou por equipes com propriedade real sobre a capacidade. Sem nenhuma dessas forças, a fronteira interna de um monólito modular preserva o isolamento lógico com menor custo operacional.
-
-## Banco por serviço {#banco-por-servico-como-protecao-da-autoridade}
-
-O padrão banco por serviço protege as invariantes e a evolução de cada serviço, que decide sozinho o *schema*, as migrações e as regras de escrita dos próprios dados. Nenhum outro serviço executa `SELECT`, `JOIN` ou `UPDATE` diretamente sobre esse banco. A proteção se materializa em credenciais distintas por serviço, em permissões mínimas e em testes arquiteturais que falham quando a fronteira é violada.
-
-A expressão “por serviço” descreve a propriedade dos dados e não exige uma máquina dedicada a cada serviço. As opções vão de *schemas* separados no mesmo PostgreSQL a bancos separados no mesmo servidor ou a instâncias separadas, com isolamento e custo operacional crescendo na mesma direção. O laboratório da oficina usa dois contêineres PostgreSQL com *schemas* homônimos, de modo que qualquer acesso indevido de um serviço ao banco do outro fica evidente.
-
-Uma consulta que atravessa limites de serviço pode ser resolvida por composição síncrona, por cópia orientada a eventos, por plataforma analítica ou por modelo materializado. Cada alternativa equilibra de modo diferente o frescor do dado, a disponibilidade, a complexidade e o custo. O acesso direto ao banco de outro serviço não entra nessa lista, porque cria um contrato implícito que o proprietário dos dados não controla.
-
-Quando as necessidades de acesso diferem de modo comprovado, a persistência poliglota permite que cada proprietário use a tecnologia de armazenamento adequada aos seus dados. A pergunta a responder é qual mecanismo mantém as invariantes e a operação compreensíveis para a equipe. Começar com uma tecnologia conhecida e registrar o sinal que levaria à revisão costuma ser mais reversível do que multiplicar bancos sem uma necessidade mensurável.
-
-## Consistência local e consistência entre serviços
-
-Dentro de um serviço, uma transação ACID preserva as invariantes locais e desfaz todas as alterações quando uma delas falha. Entre serviços não existe *rollback* automático de todas as decisões, porque cada serviço confirma a própria transação no próprio banco. O desenho precisa definir em que momento o usuário considera o fluxo aceito, quais estados intermediários são legítimos e como as divergências são detectadas e reparadas.
-
-A consistência forte é necessária quando uma leitura precisa refletir a escrita mais recente. A consistência eventual admite uma janela de defasagem que o domínio aceita, que a operação consegue observar e que termina com as réplicas convergindo para o mesmo valor. **Consistência eventual não significa** ausência de regras. A convergência depende de identidade dos registros e de ordem quando ela for necessária, além de idempotência, repetição e reconciliação.
-
-## Teorema CAP {#cap-sem-o-triangulo-simplista}
-
-O teorema CAP foi formulado por Eric Brewer em 2000 e demonstrado por Seth Gilbert e Nancy Lynch em 2002 para um armazenamento distribuído sujeito a partição de comunicação. Nesse modelo, consistência significa que os nós apresentam uma visão única e atual do dado. Disponibilidade significa que cada nó que não falhou responde a cada requisição que recebe. Tolerância à partição significa que o sistema continua operando quando mensagens entre grupos de nós se perdem ou atrasam. Em uma rede sujeita a partições, o sistema precisa decidir entre recusar ou atrasar operações para preservar a consistência e responder com a possibilidade de divergência entre réplicas.
-
-Por isso, **CAP se torna uma decisão durante uma partição** e não serve como classificação permanente em que um produto escolhe duas das três letras. Fora da partição, a relação entre latência e consistência continua gerando decisões, que são descritas por outros modelos. O teorema também não justifica qualquer dado desatualizado numa integração, porque a equipe precisa especificar o mecanismo de convergência e o prazo prometido ao consumidor.
-
-A leitura que manda escolher duas das três letras do teorema trata a tolerância à partição como uma propriedade opcional. Num sistema distribuído real, a partição é um evento da rede que vai ocorrer em algum momento, de modo que a equipe não tem como descartá-la do desenho. A combinação de consistência com disponibilidade descreve, portanto, um sistema que não é distribuído ou que deixa de responder quando o enlace cai. Por esse motivo, a decisão que cabe à equipe é o comportamento do sistema durante a partição, descrito na tabela seguinte para quatro armazenamentos conhecidos.
-
-### Comportamento de armazenamentos durante uma partição {#o-que-os-armazenamentos-conhecidos-fazem-durante-uma-particao}
-
-A tabela descreve o comportamento de quatro armazenamentos distribuídos quando os nós deixam de se comunicar entre si.
-
-| Armazenamento | Comportamento durante a partição | O que isso custa |
+| Bloco | Seções | Atividade que o bloco prepara |
 | --- | --- | --- |
-| Google Spanner | Recusa ou atrasa operações do lado que não consegue formar quórum, para preservar uma visão única e ordenada. Usa relógios sincronizados globalmente, chamados TrueTime, para ordenar transações com garantia temporal | Parte da disponibilidade, porque algumas requisições falham durante a partição para não responder com dado incerto |
-| Amazon DynamoDB | Aceita escritas e reconcilia depois. A consistência eventual é o comportamento padrão, com leitura fortemente consistente disponível como opção explícita | Divergência temporária e necessidade de resolver conflitos entre versões concorrentes |
-| Apache Cassandra | Continua atendendo, com o nível de consistência ajustável por operação e o quórum configurado em cada chamada | A promessa muda de chamada para chamada, e a equipe precisa saber qual delas pediu |
-| MongoDB | Permite configurar a garantia, da escrita confirmada por maioria à leitura em réplica secundária possivelmente atrasada | A garantia efetiva depende da configuração escolhida em cada implantação |
+| Resiliência da chamada síncrona | Orçamento de falha, prazo de espera, nova tentativa, disjuntor e resposta alternativa | [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) |
+| Consistência, SAGA e CQRS | Teorema CAP, resolução de conflitos, SAGA e CQRS | [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) |
+| Unidades de implantação e dados | Monólito modular, macrosserviço e microsserviço, banco por serviço, persistência poliglota, *event sourcing*, chassi e estrangulador | Estudo de caso e exercícios |
 
-A tabela não recomenda nenhum dos produtos e registra que cada fornecedor resolveu de forma diferente o comportamento do armazenamento quando a rede falha. O comportamento escolhido pelo fornecedor passa a ser uma restrição do desenho de quem adota o produto. O padrão banco por serviço traz a mesma decisão para o desenho mesmo sem nenhum banco replicado globalmente, porque dados relacionados que vivem em serviços diferentes levam tempo para se alinhar.
+Os programas citados estão nas pastas `codigo/oda-05` e `codigo/oda-06` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software). Eles usam apenas a biblioteca padrão do Python. As saídas reproduzidas nesta página vêm de execuções reais desses programas.
+
+## Resiliência da chamada síncrona {#chamadas-sincronas-orcamento-de-falha}
+
+Este bloco prepara a ODA 05. Os padrões do bloco limitam o efeito de uma falha parcial quando um serviço depende da resposta síncrona de outro, como Exames depende de Elegibilidade antes de gravar uma solicitação.
+
+| Padrão | Problema tratado | Mecanismo | Custo principal |
+| --- | --- | --- | --- |
+| Prazo de espera | Espera indefinida por uma dependência lenta ou parada | Limite de tempo para a resposta | Escolher um valor que não recuse respostas normais |
+| Nova tentativa | Falha transitória da dependência | Repetição da chamada com espera crescente | Carga extra sobre a dependência e exigência de idempotência |
+| Disjuntor | Repetições contra uma dependência instável | Recusa imediata das chamadas depois de um limite de falhas | Pedidos recusados durante o tempo de abertura |
+| Resposta alternativa | Necessidade de responder sem a dependência | Resposta substituta definida pelo negócio | Risco de resposta inválida para o domínio |
+
+### Orçamento de falha {#orcamento-de-falha}
+
+O orçamento de falha de uma chamada síncrona é o conjunto de decisões que a equipe documenta antes de adicionar a chamada. Ele define o prazo de espera, a política de repetição e a exigência de idempotência. Ele também define a propagação de identidade, os códigos de erro e a telemetria da chamada. Uma cadeia de cinco serviços chamados em sequência acumula a latência de cada chamada e tem disponibilidade inferior à de cada participante, porque a falha de qualquer um deles interrompe a cadeia.
+
+No laboratório da oficina, Exames usa prazo de espera de dois segundos e converte a indisponibilidade de Elegibilidade no status `503`. O serviço não repete a chamada automaticamente, porque a consulta é rápida e um volume grande de repetições durante uma queda poderia atrasar a recuperação de Elegibilidade.
+
+### Prazo de espera e falha parcial {#prazo-de-espera-e-falha-parcial}
+
+O prazo de espera, conhecido como *timeout*, é o tempo máximo que Exames aceita esperar pela resposta de Elegibilidade. Quando o prazo termina sem resposta, Exames trata a chamada como falha e responde `503` com o código `dependencia_indisponivel`, como mostra a Figura 1.
+
+```mermaid
+sequenceDiagram
+    participant R as Recepção
+    participant E as Exames
+    participant L as Elegibilidade
+    R->>E: POST /exames
+    E->>L: GET /elegibilidades/B-001
+    Note over E,L: prazo de espera de 300 ms
+    L--xE: sem resposta dentro do prazo
+    E-->>R: 503 dependencia_indisponivel
+```
+
+**Texto alternativo:** diagrama de sequência em que Exames consulta Elegibilidade com prazo de espera de 300 milissegundos e devolve 503 à recepção quando a resposta não chega dentro do prazo.
+
+*Figura 1 — Prazo de espera numa chamada síncrona. Fonte: curso.*
+
+**Leitura textual da figura:** a recepção envia `POST /exames` a Exames, que consulta Elegibilidade antes de gravar a solicitação. Uma nota marca o prazo de espera de 300 milissegundos entre Exames e Elegibilidade. Como a resposta de Elegibilidade não chega dentro do prazo, Exames devolve à recepção o status 503 com o código `dependencia_indisponivel`.
+
+No programa da ODA 05, o prazo é passado à função `urlopen` da biblioteca padrão. Recusa de conexão, estouro do prazo e resposta `5xx` de Elegibilidade são convertidos na exceção `ConnectionError`, que o método `solicitar_exame` traduz no status `503`.
+
+```python
+# codigo/oda-05/exames.py
+def consultar_elegibilidade(self, beneficiario_id):
+    url = f"{self.url_elegibilidade}/elegibilidades/{beneficiario_id}"
+    try:
+        with urllib.request.urlopen(url, timeout=self.prazo) as resposta:
+            return resposta.status, json.load(resposta)
+    except urllib.error.HTTPError as erro:
+        if erro.code >= 500:
+            raise ConnectionError(f"Elegibilidade respondeu {erro.code}") from erro
+        return erro.code, json.load(erro)
+    except (urllib.error.URLError, TimeoutError) as erro:
+        raise ConnectionError("Elegibilidade não respondeu dentro do prazo") from erro
+
+def solicitar_exame(self, beneficiario_id, codigo_exame, chave=None):
+    # ... verificação da chave de idempotência, mostrada adiante
+    try:
+        status, corpo = self.politica(lambda: self.consultar_elegibilidade(beneficiario_id))
+    except ConnectionError:
+        return 503, {"codigo": "dependencia_indisponivel"}
+    if status == 404:
+        return 422, {"codigo": "beneficiario_desconhecido"}
+    if not corpo["elegivel"]:
+        return 422, {"codigo": "beneficiario_inelegivel"}
+    # ... gravação da solicitação no banco de Exames e resposta 201
+```
+
+O comando `python demo_falha_parcial.py`, executado na pasta `codigo/oda-05`, passa por três situações da dependência e imprime a saída abaixo.
+
+```text
+Elegibilidade no ar
+  POST /exames B-001 -> 201 {'solicitacao_id': 1, 'beneficiario_id': 'B-001', 'codigo_exame': 'HEMOGRAMA'}
+  POST /exames B-002 -> 422 {'codigo': 'beneficiario_inelegivel'}
+  POST /exames B-999 -> 422 {'codigo': 'beneficiario_desconhecido'}
+
+Elegibilidade fora do ar
+  GET /health        -> 200 {'status': 'ok', 'servico': 'exames'}
+  POST /exames B-001 -> 503 {'codigo': 'dependencia_indisponivel'}
+  solicitações gravadas em Exames: 1
+
+Elegibilidade lenta com resposta em 1 s e prazo de 300 ms em Exames
+  POST /exames B-001 -> 503 {'codigo': 'dependencia_indisponivel'}
+  Exames desistiu antes de 500 ms: sim
+```
+
+Com Elegibilidade fora do ar, o `GET /health` de Exames continua respondendo `200` enquanto a solicitação nova recebe `503`, o que caracteriza a falha parcial. Com Elegibilidade lenta, o prazo de 300 milissegundos faz Exames desistir antes da chegada da resposta, de modo que a espera da recepção passa a depender do prazo escolhido por Exames.
+
+### Nova tentativa com espera exponencial e chave de idempotência
+
+A nova tentativa, conhecida como *retry*, repete a chamada quando a falha parece transitória. A espera entre as tentativas dobra a cada falha. A técnica de espera exponencial, em inglês *exponential backoff*, reduz a frequência das repetições contra um serviço em recuperação. A chave de idempotência é um identificador que o consumidor gera uma vez para cada intenção e repete em cada envio, de modo que Exames reconhece um pedido repetido e devolve a solicitação já registrada.
+
+```mermaid
+sequenceDiagram
+    participant R as Recepção
+    participant E as Exames
+    participant L as Elegibilidade
+    R->>E: POST /exames com chave req-7f3a
+    E->>L: tentativa 1
+    L-->>E: 503
+    E->>L: tentativa 2 depois de 0,1 s
+    L-->>E: 503
+    E->>L: tentativa 3 depois de 0,2 s
+    L-->>E: 200 elegível
+    E-->>R: 201 solicitação 1
+    R->>E: POST repetido com chave req-7f3a
+    E-->>R: 201 solicitação 1 já registrada
+```
+
+**Texto alternativo:** diagrama de sequência com três tentativas de Exames contra Elegibilidade, das quais só a terceira recebe resposta 200. Em seguida, a recepção repete o pedido com a mesma chave de idempotência e recebe a solicitação já registrada.
+
+*Figura 2 — Nova tentativa com espera exponencial e chave de idempotência. Fonte: curso.*
+
+**Leitura textual da figura:** a recepção envia um pedido com a chave `req-7f3a`. Exames espera um décimo de segundo antes da segunda tentativa e dois décimos antes da terceira, que recebe a resposta 200. Exames grava a solicitação 1 e responde 201. Quando a recepção repete o pedido com a mesma chave, Exames devolve a solicitação 1 sem gravar uma segunda solicitação.
+
+```python
+# codigo/oda-05/resiliencia.py
+def com_novas_tentativas(tentativas, espera_inicial, dormir, relatar=print):
+    def politica(chamada):
+        espera = espera_inicial
+        for numero in range(1, tentativas + 1):
+            try:
+                resultado = chamada()
+                relatar(f"  tentativa {numero}: respondeu {resultado[0]}")
+                return resultado
+            except ConnectionError as erro:
+                relatar(f"  tentativa {numero}: falhou ({erro})")
+                if numero == tentativas:
+                    raise
+                dormir(espera)
+                espera *= 2  # espera exponencial: 0,1 s, depois 0,2 s, depois 0,4 s
+    return politica
+```
+
+```python
+# codigo/oda-05/exames.py
+def solicitar_exame(self, beneficiario_id, codigo_exame, chave=None):
+    if chave in self._por_chave:  # pedido repetido: devolve o que já foi registrado
+        return 201, self._por_chave[chave]
+    # ... consulta a Elegibilidade e regras de negócio, mostradas acima
+    solicitacao = {"solicitacao_id": len(self.solicitacoes) + 1,
+                   "beneficiario_id": beneficiario_id, "codigo_exame": codigo_exame}
+    self.solicitacoes.append(solicitacao)
+    if chave is not None:
+        self._por_chave[chave] = solicitacao
+    return 201, solicitacao
+```
+
+No programa `demo_novas_tentativas.py`, Elegibilidade responde `503` nas duas primeiras chamadas e volta ao normal na terceira. A segunda parte do programa descarta a primeira resposta de um `POST` para simular a perda na rede e repete o pedido.
+
+```text
+Sem nova tentativa
+  POST /exames B-001 -> 503
+
+Com até três tentativas
+  tentativa 1: falhou (Elegibilidade respondeu 503)
+  tentativa 2: falhou (Elegibilidade respondeu 503)
+  tentativa 3: respondeu 200
+  POST /exames B-001 -> 201
+  chamadas que chegaram a Elegibilidade: 3
+
+Recepção repete o POST sem chave de idempotência
+  solicitações gravadas: 2
+
+Recepção repete o POST com a chave de idempotência req-7f3a
+  segunda resposta -> 201 {'solicitacao_id': 1, 'beneficiario_id': 'B-001', 'codigo_exame': 'RAIO-X'}
+  solicitações gravadas: 1
+```
+
+Sem chave de idempotência, a repetição do `POST` grava duas solicitações para o mesmo raio-x do mesmo beneficiário. Com a chave `req-7f3a`, a segunda resposta devolve a solicitação de número 1 e o banco de Exames permanece com um único registro. Cada nova tentativa é uma requisição a mais para um serviço que já está com dificuldade, por isso o número de tentativas e a espera entre elas fazem parte do orçamento de falha.
+
+### Disjuntor
+
+O disjuntor, conhecido como *circuit breaker*, foi descrito por Michael Nygard em 2007 no livro *Release It!*. Ele conta as falhas seguidas de uma dependência e passa a recusar as chamadas sem usar a rede quando a contagem atinge um limite configurado. A Figura 3 mostra os três estados do disjuntor e as transições entre eles.
+
+```mermaid
+stateDiagram-v2
+    state "Meio-aberto" as MeioAberto
+    [*] --> Fechado
+    Fechado --> Aberto: limite de falhas atingido
+    Aberto --> MeioAberto: fim do tempo de abertura
+    MeioAberto --> Fechado: chamada de teste responde
+    MeioAberto --> Aberto: chamada de teste falha
+```
+
+**Texto alternativo:** diagrama de estados do disjuntor com os estados fechado, aberto e meio-aberto e as transições entre eles.
+
+*Figura 3 — Estados do disjuntor. Fonte: curso.*
+
+**Leitura textual da figura:** o disjuntor começa no estado fechado, em que as chamadas seguem para a rede. Quando o limite de falhas é atingido, ele passa ao estado aberto e recusa as chamadas sem usar a rede. Ao fim do tempo de abertura, passa ao estado meio-aberto e libera uma chamada de teste. Se a chamada de teste responde, o disjuntor volta ao estado fechado. Se a chamada de teste falha, o disjuntor volta ao estado aberto e recomeça a contagem do tempo de abertura.
+
+```python
+# codigo/oda-05/resiliencia.py
+class Disjuntor:
+    def __init__(self, limite_falhas, tempo_aberto, relogio):
+        self.limite_falhas = limite_falhas
+        self.tempo_aberto = tempo_aberto
+        self.relogio = relogio
+        self.estado = "fechado"
+        self.falhas = 0
+        self.aberto_em = None
+
+    def __call__(self, chamada):
+        if self.estado == "aberto":
+            if self.relogio() - self.aberto_em < self.tempo_aberto:
+                raise ConnectionError("disjuntor aberto, chamada recusada sem usar a rede")
+            self.estado = "meio_aberto"  # o prazo passou: uma chamada de teste é liberada
+        try:
+            resultado = chamada()
+        except ConnectionError:
+            self.falhas += 1
+            if self.estado == "meio_aberto" or self.falhas >= self.limite_falhas:
+                self.estado, self.aberto_em = "aberto", self.relogio()
+            raise
+        self.estado, self.falhas = "fechado", 0
+        return resultado
+```
+
+O programa `demo_disjuntor.py` configura o limite de três falhas e o tempo de abertura de 30 segundos, com um relógio simulado que avança 30 segundos sem espera real.
+
+```text
+Elegibilidade fora do ar, limite de 3 falhas
+  pedido 1: 503, usou a rede: sim, disjuntor fechado
+  pedido 2: 503, usou a rede: sim, disjuntor fechado
+  pedido 3: 503, usou a rede: sim, disjuntor aberto
+  pedido 4: 503, usou a rede: não, disjuntor aberto
+  pedido 5: 503, usou a rede: não, disjuntor aberto
+  tentativas de conexão: 3 de 5 pedidos
+
+30 s depois, Elegibilidade de volta
+  pedido 6: 201, chamada de teste liberada, disjuntor fechado
+  chamadas que chegaram a Elegibilidade: 1
+```
+
+Os pedidos 4 e 5 recebem `503` sem tentativa de conexão, de modo que a recepção não espera o prazo de 300 milissegundos e Elegibilidade não recebe carga enquanto se recupera. Depois de 30 segundos simulados, o sexto pedido passa como chamada de teste do estado meio-aberto, Elegibilidade responde e o disjuntor volta ao estado fechado.
+
+### Resposta alternativa
+
+A resposta alternativa, conhecida como *fallback*, substitui a resposta da dependência quando ela não está disponível. No caso clínico, presumir elegibilidade positiva seria uma resposta alternativa inválida, porque permitiria um exame sem cobertura do plano. Por isso, Exames continua respondendo `503` mesmo com o disjuntor aberto. A atividade [Decidir a resposta à indisponibilidade da autorização](exercicios.md#decidir-a-resposta-a-indisponibilidade-da-autorizacao) compara quatro respostas possíveis a uma indisponibilidade semelhante.
+
+## Consistência entre serviços {#consistencia-local-e-consistencia-entre-servicos}
+
+Este bloco e as seções SAGA e CQRS preparam a ODA 06. Entre serviços com bancos próprios não existe *rollback* automático de todas as decisões, porque cada serviço confirma a própria transação no próprio banco. O desenho precisa definir em que momento o usuário considera o fluxo aceito, quais estados intermediários são legítimos e como as divergências são detectadas e reparadas.
+
+**Consistência eventual não significa** ausência de regras. A convergência das réplicas na consistência eventual depende de identidade dos registros e de ordem quando ela for necessária, além de idempotência, repetição e reconciliação.
+
+### Teorema CAP {#cap-sem-o-triangulo-simplista}
+
+O teorema CAP foi formulado por Eric Brewer em 2000 e demonstrado por Seth Gilbert e Nancy Lynch em 2002 para um armazenamento distribuído sujeito a partição de comunicação. Durante uma partição, o sistema precisa escolher entre recusar ou atrasar operações para preservar a consistência e continuar respondendo com a possibilidade de divergência entre réplicas. Por isso, **CAP se torna uma decisão durante uma partição** e não serve como classificação permanente em que um produto escolhe duas das três letras.
+
+| Comportamento durante a partição | Propriedade preservada | Custo |
+| --- | --- | --- |
+| Recusar ou atrasar operações do lado sem quórum | Consistência | Parte das requisições falha durante a partição |
+| Continuar aceitando escritas nos dois lados | Disponibilidade | Réplicas divergem e precisam de regra de resolução |
+
+#### Comportamento de armazenamentos durante uma partição {#o-que-os-armazenamentos-conhecidos-fazem-durante-uma-particao}
+
+| Armazenamento | Comportamento durante a partição | Custo |
+| --- | --- | --- |
+| Google Spanner | Recusa ou atrasa operações do lado que não forma quórum e ordena transações com relógios sincronizados chamados TrueTime | Algumas requisições falham durante a partição |
+| Amazon DynamoDB | Aceita escritas e reconcilia depois, com leitura fortemente consistente disponível como opção explícita | Divergência temporária e conflitos entre versões |
+| Apache Cassandra | Continua atendendo, com o nível de consistência configurado em cada operação | A promessa muda de chamada para chamada |
+| MongoDB | Permite configurar a garantia, da escrita confirmada por maioria à leitura em réplica secundária | A garantia depende da configuração de cada implantação |
+
+A tabela não recomenda nenhum dos produtos. O comportamento escolhido pelo fornecedor passa a ser uma restrição do desenho de quem adota o produto.
 
 ### Resolução de conflitos depois da partição {#quando-a-escolha-foi-continuar-respondendo}
 
 Quando o sistema continua aceitando escritas durante a partição, duas réplicas podem receber alterações concorrentes sobre a mesma informação. Depois que a comunicação volta, uma regra de resolução decide qual alteração prevalece ou como as duas se combinam.
 
-- A estratégia **última escrita vence**, em inglês *last write wins*, escolhe a atualização com o carimbo de tempo mais recente. Ela é a mais simples de implementar e descarta a outra alteração sem aviso, além de depender de relógios de máquinas diferentes, que não são confiáveis para ordenar eventos.
-- Os **tipos de dados que convergem por construção**, conhecidos pela sigla CRDT de *conflict-free replicated data types*, são estruturas em que a ordem de aplicação das operações não altera o resultado final. Eles servem para contadores, conjuntos e listas e não resolvem uma regra de negócio que precise julgar qual versão está correta.
-- A **função de mesclagem do domínio** aplica uma regra explícita da aplicação, como preferir a alteração registrada na unidade em que o paciente foi atendido. Ela é a estratégia mais trabalhosa e a única capaz de acertar quando o critério de escolha é clínico ou contratual.
-
-A consistência eventual é uma promessa com prazo que depende das regras descritas na seção sobre consistência entre serviços. Sem essas regras de convergência, as réplicas divergem e nenhum mecanismo as leva de volta ao mesmo valor.
-
-No estudo de caso deste módulo, a equipe decidiu a elegibilidade sem nenhuma dessas estratégias, porque reuniu as regras fortemente relacionadas num único macrosserviço e recuperou uma transação local com consistência forte dentro do processo. A consistência eventual ficou restrita à projeção do painel gerencial, em que a defasagem é aceitável e observável.
+| Estratégia | Funcionamento | Limite |
+| --- | --- | --- |
+| Última escrita vence, em inglês *last write wins* | Escolhe a alteração com o carimbo de tempo mais recente | Descarta a outra alteração sem aviso e depende de relógios de máquinas diferentes |
+| Tipos de dados que convergem por construção, conhecidos pela sigla CRDT | Usa estruturas em que a ordem das operações não altera o resultado | Não julga qual versão de uma regra de negócio está correta |
+| Função de mesclagem do domínio | Aplica uma regra explícita da aplicação | É a mais trabalhosa e a única capaz de acertar quando o critério é clínico ou contratual |
 
 #### Exemplo de partição com três réplicas em Python {#particao-simulada-com-tres-replicas}
 
-O programa `codigo/oda-06/particao/demo_particao.py` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) simula três réplicas que guardam a lista de alergias de um paciente. Durante a partição, que separa as réplicas A e B da réplica C, a unidade Centro grava dipirona no lado da maioria e a unidade Barreiro grava penicilina no lado da minoria. O programa usa apenas a biblioteca padrão do Python e fixa os carimbos de tempo, de modo que a saída é a mesma em cada execução.
+O programa `codigo/oda-06/particao/demo_particao.py` simula três réplicas que guardam a lista de alergias de um paciente. Durante a partição, a unidade Centro grava dipirona no lado da maioria e a unidade Barreiro grava penicilina no lado da minoria, como mostra a Figura 4.
+
+```mermaid
+flowchart LR
+    Centro[Unidade Centro grava dipirona] --> A[Réplica A]
+    Centro --> B[Réplica B]
+    Barreiro[Unidade Barreiro grava penicilina] --> C[Réplica C]
+    A -. partição .- C
+    B -. partição .- C
+```
+
+**Texto alternativo:** três réplicas separadas por uma partição, com as réplicas A e B recebendo a escrita da unidade Centro e a réplica C recebendo a escrita da unidade Barreiro.
+
+*Figura 4 — Escritas concorrentes durante uma partição. Fonte: curso.*
+
+**Leitura textual da figura:** a unidade Centro grava dipirona nas réplicas A e B, que formam a maioria. A unidade Barreiro grava penicilina na réplica C, que fica sozinha do outro lado da partição. Linhas tracejadas marcam a partição entre a réplica C e as réplicas A e B.
 
 ```python
 # codigo/oda-06/particao/demo_particao.py
@@ -96,8 +327,6 @@ def mesclar_alergias(replicas):
     return sorted({a for r in replicas for a in r.alergias})
 ```
 
-O comando `python demo_particao.py`, executado na pasta `codigo/oda-06/particao`, compara os três comportamentos e imprime a saída abaixo.
-
 ```text
 == 1. Recusar sem quórum
 Centro grava dipirona: aceita em A+B
@@ -117,27 +346,32 @@ Durante a partição: A=['látex', 'dipirona'] C=['látex', 'penicilina']
 Depois da partição: ['dipirona', 'látex', 'penicilina']
 ```
 
-No primeiro cenário, a réplica C está sozinha no seu lado da partição e recusa a escrita por falta de quórum, comportamento equivalente ao do Spanner na tabela anterior. No segundo cenário, as duas escritas são aceitas e a regra da última escrita vence escolhe a lista da réplica C pelo carimbo 11, de modo que a dipirona registrada no Centro é descartada sem aviso. No terceiro cenário, a função de mesclagem aplica a regra do domínio segundo a qual nenhuma alergia registrada é descartada, o que mantém dipirona e penicilina na lista final.
+No primeiro cenário, a réplica C está sozinha no seu lado da partição e recusa a escrita por falta de quórum. No segundo, a regra da última escrita vence escolhe a lista da réplica C pelo carimbo 11, de modo que a dipirona registrada no Centro é descartada sem aviso. No terceiro, a função de mesclagem mantém dipirona e penicilina na lista final, porque a regra do domínio não descarta nenhuma alergia registrada.
 
 ## SAGA
 
-Uma **SAGA** coordena uma sequência de transações locais em serviços diferentes, em que cada etapa confirma o próprio estado no banco do seu serviço. Quando uma etapa posterior falha, ações compensatórias definidas pelo negócio tentam neutralizar o efeito das etapas já confirmadas. A coordenação pode ser coreografada por eventos ou orquestrada por um componente que conhece a sequência inteira. O termo foi proposto por Hector Garcia-Molina e Kenneth Salem em 1987 para transações de longa duração em bancos de dados.
+Uma **SAGA** coordena uma sequência de transações locais em serviços diferentes, em que cada etapa confirma o próprio estado no banco do seu serviço. Quando uma etapa posterior falha, ações compensatórias definidas pelo negócio neutralizam o efeito das etapas já confirmadas. O termo foi proposto por Hector Garcia-Molina e Kenneth Salem em 1987 para transações de longa duração em bancos de dados.
 
-**SAGA não é uma transação ACID distribuída**, porque uma compensação não apaga o passado e também pode falhar. Cancelar uma solicitação de exame não equivale a ela nunca ter existido, já que outros participantes podem ter observado o estado intermediário e mensagens podem chegar duplicadas. Por isso, o desenho de uma SAGA declara os estados possíveis e a política de repetição de comandos idempotentes. Ele também declara o caminho de intervenção operacional e a trilha de auditoria usada para investigar fluxos interrompidos.
+| Aspecto | Descrição |
+| --- | --- |
+| Problema tratado | Mudança que atravessa mais de um proprietário de dados sem transação comum |
+| Mecanismo | Sequência de transações locais com compensação em ordem inversa quando uma etapa falha |
+| Custo principal | Compensações escritas e testadas para cada passo, estados intermediários visíveis e diagnóstico entre serviços |
+| Quando usar | Quando os dados não podem ser reunidos num único serviço com transação local |
+
+**SAGA não é uma transação ACID distribuída**, porque uma compensação não apaga o passado e também pode falhar. Outros participantes podem ter observado o estado intermediário, enquanto mensagens podem chegar duplicadas. Por isso, o desenho de uma SAGA declara os estados possíveis e os comandos idempotentes, além do caminho de intervenção operacional e da trilha de auditoria.
 
 ### Elementos de uma SAGA {#os-tres-elementos-que-toda-saga-declara}
 
-Uma SAGA se descreve por passos, operações compensatórias e coordenação. A ausência de qualquer um desses elementos é o defeito mais comum das primeiras implementações, conforme a coluna de erros frequentes da tabela.
-
-| Elemento | O que é | Erro frequente |
+| Elemento | Definição | Erro frequente |
 | --- | --- | --- |
 | Passos | Cada transação local, executada e confirmada por um serviço no próprio banco | Tratar o passo como parte de uma transação maior que alguém ainda poderia abortar |
-| Operações compensatórias | A ação de negócio que neutraliza o efeito de um passo já confirmado | Escrever "desfazer" sem definir o que desfazer significa naquele domínio |
-| Coordenação | O mecanismo que decide qual passo vem depois e o que fazer na falha, por meio de eventos ou de um orquestrador | Deixar a sequência implícita no código de cada serviço, sem lugar único que a descreva |
+| Operações compensatórias | A ação de negócio que neutraliza o efeito de um passo já confirmado | Escrever "desfazer" sem definir o significado de desfazer naquele domínio |
+| Coordenação | O mecanismo que decide o passo seguinte e o tratamento da falha, por meio de eventos ou de um orquestrador | Deixar a sequência implícita no código de cada serviço |
 
 ### Coreografia e orquestração
 
-Na **coreografia**, cada serviço executa o seu passo e publica um evento ao qual os serviços seguintes reagem. Não existe componente central, de modo que a sequência resulta das assinaturas de eventos de cada serviço.
+Na **coreografia**, cada serviço executa o seu passo e publica um evento ao qual os serviços seguintes reagem, sem componente central.
 
 ```mermaid
 flowchart LR
@@ -147,7 +381,13 @@ flowchart LR
     B2 -->|AutorizacaoCancelada| A2[Agenda: libera horário]
 ```
 
-Na **orquestração**, um componente conhece a sequência inteira e chama cada serviço na ordem definida. Quando um passo falha, esse componente aciona as compensações dos passos já confirmados em ordem inversa.
+**Texto alternativo:** fluxo coreografado em que Agenda, Autorização e Preparo de Sala reagem a eventos publicados uns pelos outros, incluindo a compensação depois da recusa do preparo.
+
+*Figura 5 — SAGA coreografada do agendamento de exame. Fonte: curso.*
+
+**Leitura textual da figura:** a Agenda reserva o horário e publica `HorarioReservado`, ao qual a Autorização reage autorizando o procedimento. O evento `ProcedimentoAutorizado` leva o Preparo de Sala a tentar reservar o recurso necessário ao exame. Quando o preparo é recusado, o evento `PreparoRecusado` leva a Autorização a cancelar a autorização. O evento `AutorizacaoCancelada` leva a Agenda a liberar o horário.
+
+Na **orquestração**, um componente conhece a sequência inteira, chama cada serviço na ordem definida e aciona as compensações dos passos já confirmados em ordem inversa quando um passo falha.
 
 ```mermaid
 flowchart TB
@@ -159,7 +399,18 @@ flowchart TB
     O -.compensa.-> A
 ```
 
-A coreografia distribui a lógica e dispensa um componente central. Na coreografia, nenhum lugar único do sistema mostra em que estado está um agendamento, o que dificulta o suporte e facilita a criação acidental de ciclos de eventos entre serviços. A orquestração concentra a sequência num lugar auditável, ao custo de um componente que precisa ser mantido e implantado e que se torna dependência de todos os passos. Fluxos curtos e estáveis toleram a coreografia, enquanto fluxos com muitas ramificações e com necessidade de suporte operacional costumam pedir orquestração.
+**Texto alternativo:** orquestrador que chama Agenda, Autorização e Preparo de Sala e compensa a Autorização e a Agenda depois da falha do preparo.
+
+*Figura 6 — SAGA orquestrada do agendamento de exame. Fonte: curso.*
+
+**Leitura textual da figura:** o orquestrador chama a Agenda, a Autorização e o Preparo de Sala. A falha do Preparo de Sala volta ao orquestrador, que aciona a compensação da Autorização e depois a compensação da Agenda.
+
+| Critério | Coreografia | Orquestração |
+| --- | --- | --- |
+| Lugar da sequência | Distribuída pelas assinaturas de eventos | Concentrada no orquestrador |
+| Estado de um agendamento | Nenhum lugar único mostra o estado | O orquestrador registra o estado e a trilha de auditoria |
+| Risco típico | Ciclos de eventos criados sem perceber | Um componente que precisa ser mantido e implantado e que se torna dependência de todos os passos |
+| Situação favorável | Fluxos curtos e estáveis | Fluxos com muitas ramificações e necessidade de suporte operacional |
 
 ### Custos da SAGA {#o-que-a-saga-cobra}
 
@@ -167,13 +418,13 @@ A coreografia distribui a lógica e dispensa um componente central. Na coreograf
 | --- | --- |
 | Cada serviço mantém o próprio banco e a própria autoridade, sem transação distribuída | É preciso escrever e testar uma compensação de negócio para cada passo, sabendo que ela também pode falhar |
 | O fluxo continua avançando mesmo com um participante lento | Existe uma janela em que o estado intermediário é legítimo e pode ser observado por outros participantes |
-| Passos evoluem e escalam de forma independente | Diagnosticar um fluxo travado exige correlação entre serviços, porque sem identificador propagado e trilha de auditoria a investigação depende de logs dispersos |
+| Passos evoluem e escalam de forma independente | Diagnosticar um fluxo travado exige identificador propagado e trilha de auditoria entre serviços |
 
-No caso hospitalar, uma SAGA pode coordenar a reserva de horário na Agenda, a autorização do procedimento e o preparo da sala. O laboratório da oficina não precisa de SAGA, porque Exames consulta Elegibilidade antes de gravar localmente e só existe uma escrita no fluxo. A SAGA se justifica quando a mudança atravessa mais de um proprietário de dados e não há como reunir esses dados num só serviço. A consolidação dos passos num único serviço com transação local, adotada no estudo de caso, é mais barata e deve ser avaliada antes da SAGA.
+No caso hospitalar, a SAGA se justifica porque a reserva de horário, a autorização do procedimento e o preparo da sala pertencem a proprietários de dados diferentes. A consolidação dos passos num único serviço com transação local, adotada no estudo de caso, é mais barata e deve ser avaliada antes da SAGA.
 
 ### Exemplo de SAGA orquestrada em Python {#orquestracao-do-agendamento-de-exame-em-python}
 
-O programa da pasta `codigo/oda-06/saga` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) implementa a orquestração desse agendamento com Agenda, Autorização e Preparo de Sala como participantes. Cada participante guarda o próprio estado num dicionário privado que representa o banco do serviço, sem acesso ao banco dos outros participantes. O orquestrador declara a sequência dos passos num único lugar e registra cada evento numa trilha de auditoria.
+O programa da pasta `codigo/oda-06/saga` implementa a orquestração do agendamento com Agenda, Autorização e Preparo de Sala como participantes. Cada participante guarda o próprio estado num dicionário privado que representa o banco do serviço. O orquestrador declara a sequência num único lugar e registra cada evento numa trilha de auditoria com o identificador do agendamento.
 
 ```python
 # codigo/oda-06/saga/orquestrador.py
@@ -227,7 +478,7 @@ def _aplicar(self, comando_id, operacao, agendamento_id, situacao):
     return situacao
 ```
 
-O comando `python demo.py`, executado na pasta `codigo/oda-06/saga`, percorre quatro cenários. A saída abaixo mostra os cenários 2 a 4, em que a SAGA compensa os passos, pede intervenção e recebe comandos repetidos.
+O comando `python demo.py`, executado na pasta `codigo/oda-06/saga`, percorre quatro cenários. A saída abaixo mostra os cenários 2 a 4.
 
 ```text
 == 2. Falha no Preparo de Sala
@@ -269,23 +520,43 @@ Bancos locais:
   Preparo de Sala: sala_reservada
 ```
 
-No cenário 2, o Preparo de Sala recusa a reserva e o orquestrador compensa os dois passos já confirmados em ordem inversa, primeiro a Autorização e depois a Agenda. Os bancos locais terminam com `horario_liberado` e `autorizacao_cancelada`, situações de negócio novas que registram o cancelamento sem apagar a reserva e a autorização anteriores.
-
-No cenário 3, a própria compensação da Autorização falha. O orquestrador interrompe as compensações e grava a situação `requer_intervencao`, porque a Agenda mantém um horário reservado e a Autorização mantém um procedimento autorizado para um exame que não vai acontecer. Essa divergência entre os bancos locais precisa de tratamento por uma pessoa da operação, que localiza o agendamento pela trilha de auditoria.
-
-No cenário 4, o orquestrador reinicia e reenvia os mesmos comandos do agendamento AG-104. Os participantes reconhecem os identificadores já aplicados e respondem `comando_repetido_sem_efeito`, de modo que nenhum passo é aplicado duas vezes. A [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) usa este programa no laboratório sobre os quatro cenários da SAGA.
+| Cenário | Comportamento observado | Conceito ilustrado |
+| --- | --- | --- |
+| 2 | O orquestrador compensa a Autorização e depois a Agenda | Compensação em ordem inversa, com situações novas que não apagam as anteriores |
+| 3 | A compensação da Autorização falha e a SAGA para com `requer_intervencao` | Compensação que falha e exige intervenção operacional |
+| 4 | Os comandos reenviados respondem `comando_repetido_sem_efeito` | Idempotência dos comandos |
 
 ## CQRS
 
-O padrão **CQRS**, sigla de *Command Query Responsibility Segregation*, foi descrito por Greg Young e separa o modelo de comando do modelo de consulta quando os dois têm necessidades diferentes. Os comandos expressam uma intenção e preservam as invariantes, enquanto as consultas leem projeções organizadas para a leitura. **CQRS não exige dois bancos** nem mensageria ou *event sourcing*, porque a separação pode começar em objetos e interfaces dentro do mesmo processo.
+O padrão **CQRS**, sigla de *Command Query Responsibility Segregation*, foi descrito por Greg Young e separa o modelo de comando do modelo de consulta quando os dois têm necessidades diferentes. **CQRS não exige dois bancos** nem mensageria ou *event sourcing*, porque a separação pode começar em objetos e interfaces dentro do mesmo processo.
 
-Um modelo de leitura materializado reduz composições remotas e atende consultas de alto volume. Ele também cria trabalho de atualização e de monitoramento, além de defasagem entre os modelos e necessidade de reconstrução. Por isso, **não aplique CQRS por padrão**. O padrão se justifica quando a assimetria entre leitura e escrita, a complexidade dos modelos ou a escala justificam o custo da duplicação e da sua governança.
+| Aspecto | Descrição |
+| --- | --- |
+| Problema tratado | Assimetria entre a escrita, que preserva invariantes, e a leitura, que precisa de dados prontos para a consulta |
+| Mecanismo | Modelo de comando que valida e grava, e projeção de leitura alimentada pelas mudanças aceitas |
+| Custo principal | Atualização, defasagem, reconstrução e monitoramento da projeção |
+| Quando usar | Quando a assimetria entre leitura e escrita, a complexidade dos modelos ou a escala justificam a duplicação |
 
-CQRS e SAGA resolvem problemas diferentes, porque a SAGA coordena uma mudança distribuída e o CQRS separa as responsabilidades de leitura e de escrita. Os dois padrões podem coexistir num mesmo sistema sem que um dependa do outro.
+Por isso, **não aplique CQRS por padrão**. CQRS e SAGA resolvem problemas diferentes, porque a SAGA coordena uma mudança distribuída e o CQRS separa as responsabilidades de leitura e de escrita.
+
+```mermaid
+flowchart LR
+    R[Recepção] -->|solicitar ou cancelar| C[Modelo de comando]
+    C -->|grava| W[(Banco das solicitações)]
+    C -->|acrescenta| F[Lista de fatos]
+    F -->|processa com defasagem| P[Projeção do painel]
+    G[Gestor] -->|consulta| P
+```
+
+**Texto alternativo:** fluxo do CQRS em que a recepção envia comandos ao modelo de comando, que grava no banco e acrescenta fatos a uma lista consumida pela projeção do painel consultada pelo gestor.
+
+*Figura 7 — Modelo de comando e projeção de leitura das solicitações de exame. Fonte: curso.*
+
+**Leitura textual da figura:** a recepção envia os comandos de solicitar e de cancelar ao modelo de comando. O modelo de comando grava cada mudança aceita no banco das solicitações e acrescenta um fato à lista de fatos. A projeção do painel processa a lista com defasagem e é a única fonte consultada pelo gestor.
 
 ### Exemplo de CQRS em Python {#comando-e-projecao-no-mesmo-processo}
 
-O programa da pasta `codigo/oda-06/cqrs` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) separa o modelo de comando do modelo de consulta nas solicitações de exame, sem segundo banco e sem mensageria. A classe `SolicitacoesDeExame` recebe as intenções `solicitar` e `cancelar`, verifica as invariantes e acrescenta um fato a uma lista a cada mudança aceita. A classe `PainelGerencial` consome essa lista e mantém a contagem de solicitações ativas por unidade, que é a forma de dado pronta para a consulta do painel.
+O programa da pasta `codigo/oda-06/cqrs` implementa a Figura 7 num único processo, sem segundo banco e sem mensageria. A classe `SolicitacoesDeExame` é o modelo de comando, enquanto a classe `PainelGerencial` é a projeção que conta as solicitações ativas por unidade.
 
 ```python
 # codigo/oda-06/cqrs/comandos.py
@@ -325,8 +596,6 @@ class PainelGerencial:
         return dict(sorted(self.ativas_por_unidade.items())), defasagem
 ```
 
-O comando `python demo.py`, executado na pasta `codigo/oda-06/cqrs`, envia quatro comandos aceitos e um comando recusado. Em seguida, o programa consulta o painel antes e depois de processar os fatos e reconstrói a projeção a partir da lista.
-
 ```text
 Comando recusado: EX-2 não pode ser cancelada
 Fatos publicados:
@@ -341,201 +610,48 @@ Projeção corrompida: {'Centro': 99} | fatos aplicados 4 de 4 | defasagem 0
 Projeção reconstruída: {'Barreiro': 1, 'Centro': 1} | fatos aplicados 4 de 4 | defasagem 0
 ```
 
-O segundo cancelamento de EX-2 é recusado pelo modelo de comando, porque a invariante só permite cancelar uma solicitação que está na situação `solicitada`. Na consulta com atraso, a projeção aplicou dois dos quatro fatos e informa defasagem 2, de modo que o painel mostra duas solicitações ativas no Centro enquanto o modelo de comando já registra uma. A posição do último fato aplicado torna essa defasagem mensurável e permite reconstruir a projeção a partir da lista de fatos, como mostra a última linha depois da corrupção simulada do painel.
+Na consulta com atraso, a projeção aplicou dois dos quatro fatos e informa defasagem 2, de modo que o painel mostra duas solicitações ativas no Centro enquanto o modelo de comando já registra uma. A posição do último fato aplicado torna a defasagem mensurável e permite reconstruir a projeção a partir da lista de fatos. A lista de fatos só alimenta a projeção e o estado continua no modelo de comando, por isso o exemplo aplica CQRS sem aplicar *event sourcing*.
 
-A lista de fatos deste exemplo só alimenta a projeção, enquanto o estado das solicitações continua no dicionário do modelo de comando. Por essa razão, o exemplo aplica CQRS sem aplicar *event sourcing*, padrão descrito na seção seguinte. A [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) usa este programa no laboratório sobre defasagem e reconstrução da projeção.
+## Monólito modular, macrosserviços e microsserviços
+
+Este bloco e os seguintes apoiam o estudo de caso e os exercícios do módulo. Monólito modular, macrosserviço e microsserviço são formas diferentes de empacotar limites lógicos em unidades de implantação.
+
+| Aspecto | Monólito modular | Macrosserviço | Microsserviço |
+| --- | --- | --- | --- |
+| Definição | Uma unidade de implantação com módulos de interfaces controladas | Unidade implantável maior que reúne capacidades fortemente relacionadas | Unidade implantável independente, alinhada a uma responsabilidade e dona do próprio estado |
+| Implantação | uma para o sistema | uma por conjunto amplo | uma por limite menor |
+| Chamada dominante | local | local e remota | remota entre limites |
+| Transação | local com maior alcance | local dentro do conjunto | local por proprietário |
+| Autonomia | lógica | por área ampla | física e organizacional |
+| Risco típico | erosão dos módulos | unidade crescer sem revisão | monólito distribuído |
+
+A distribuição física se justifica quando há necessidade de implantação independente ou de escala diferente entre capacidades. Também se justifica por isolamento regulatório, por tecnologia especializada ou por equipes com propriedade real sobre a capacidade. Sem nenhuma dessas forças, a fronteira interna de um monólito modular preserva o isolamento lógico com menor custo operacional.
+
+## Banco por serviço {#banco-por-servico-como-protecao-da-autoridade}
+
+| Aspecto | Descrição |
+| --- | --- |
+| Problema tratado | Serviços que leem e alteram as tabelas uns dos outros e perdem o controle das próprias invariantes |
+| Mecanismo | Somente o serviço proprietário acessa o próprio banco, com credenciais distintas, permissões mínimas e testes arquiteturais |
+| Custo principal | Consultas que atravessam serviços passam a exigir composição por API, cópia por eventos, plataforma analítica ou modelo materializado |
+| Variações | *Schemas* separados no mesmo servidor, bancos separados ou instâncias separadas, com isolamento e custo crescendo na mesma direção |
+
+O laboratório da oficina usa dois contêineres PostgreSQL com *schemas* homônimos, de modo que qualquer acesso indevido de um serviço ao banco do outro fica evidente. O acesso direto ao banco de outro serviço cria um contrato implícito que o proprietário dos dados não controla.
+
+## Persistência poliglota {#persistencia-como-decisao-de-fronteira}
+
+**Persistência poliglota** é a escolha de mecanismos de armazenamento diferentes quando a forma do dado e os seus acessos justificam essa escolha, como uma base relacional para regras transacionais e um mecanismo de busca para documentos. O padrão não significa dar um banco novo a cada serviço, porque cada mecanismo adicional exige *backup*, segurança e observabilidade próprios. No laboratório, os dois PostgreSQL demonstram propriedade de dados e não demonstram persistência poliglota.
 
 ## Event sourcing {#event-sourcing-quando-os-fatos-sao-o-registro-necessario}
 
-No **event sourcing**, o estado atual de uma entidade é reconstruído a partir de fatos imutáveis do domínio, como “solicitação recebida” e “autorização concedida”. O padrão é útil quando a história, a auditoria e a reprodução de decisões são requisitos centrais do produto. Publicar eventos para integração é uma prática diferente, porque um serviço pode emitir eventos e guardar o próprio estado numa tabela transacional.
-
-O custo inclui o versionamento dos eventos, a reconstrução das projeções e o tratamento de privacidade sobre fatos que não podem ser apagados. Correções também entram como fatos novos, porque um fato já publicado não é alterado. Para a solicitação de exame deste módulo, uma tabela transacional é mais direta. O *event sourcing* só entraria no caso hospitalar se o histórico de decisões fosse parte essencial do produto e a equipe conseguisse operar as consequências descritas nesta seção.
+No **event sourcing**, o estado atual de uma entidade é reconstruído a partir de fatos imutáveis do domínio, como “solicitação recebida” e “autorização concedida”. O padrão é útil quando a história, a auditoria e a reprodução de decisões são requisitos centrais do produto. O custo inclui o versionamento dos eventos, a reconstrução das projeções e o tratamento de privacidade sobre fatos que não podem ser apagados. Para a solicitação de exame deste módulo, uma tabela transacional atende ao requisito com menos componentes, porque o histórico de decisões não é parte essencial do produto.
 
 ## Chassi arquitetural e padrão estrangulador {#chassi-e-estrangulador-evoluir-sem-reescrever-no-escuro}
 
-Um **chassi arquitetural** é um conjunto de bibliotecas e modelos de projeto que entrega a cada serviço novo as capacidades transversais repetidas, como configuração, observabilidade e autenticação. O chassi oferece padrões e bibliotecas e não concentra a regra de negócio dos serviços. Quando cada mudança de serviço precisa de uma alteração no chassi, a equipe que mantém o chassi passa a limitar o ritmo de entrega das demais equipes.
-
-O padrão **estrangulador**, em inglês *strangler fig*, encaminha aos poucos partes de uma interface antiga para uma implementação nova e preserva o contrato enquanto os consumidores migram. Ele reduz o risco da substituição quando cada etapa mantém uma única fonte de verdade e define a data e a evidência para remover o caminho antigo. Sem essas definições, o roteador mantém dois sistemas divergentes em operação por tempo indeterminado.
-
-## Orçamento de falha das chamadas síncronas {#chamadas-sincronas-orcamento-de-falha}
-
-O orçamento de falha de uma chamada síncrona é o conjunto de decisões que a equipe documenta antes de adicionar a chamada. Ele define o prazo de espera, a política de repetição e a exigência de idempotência. Ele também define a propagação de identidade, os códigos de erro e a telemetria da chamada. Uma cadeia de cinco serviços chamados em sequência acumula a latência de cada chamada e tem disponibilidade inferior à de cada participante, porque a falha de qualquer um deles interrompe a cadeia. A execução paralela de chamadas independentes reduz o tempo total em alguns casos, sem eliminar a dependência de cada participante.
-
-No laboratório da oficina, Exames usa prazo de espera de dois segundos e converte a indisponibilidade de Elegibilidade no status `503`. O serviço não repete a chamada automaticamente, porque a consulta é rápida e um volume grande de repetições durante uma queda poderia atrasar a recuperação de Elegibilidade. O contrato de Exames distingue beneficiário desconhecido, beneficiário inelegível, resposta inválida e dependência fora do ar.
-
-Os programas desta seção estão na pasta `codigo/oda-05` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software) e usam apenas a biblioteca padrão do Python. Nesses programas, Elegibilidade roda como servidor HTTP numa porta livre do computador e Exames consulta esse servidor pela rede antes de gravar a solicitação. A [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) percorre os mesmos programas num laboratório guiado de 12 minutos.
-
-### Prazo de espera e falha parcial {#prazo-de-espera-e-falha-parcial}
-
-O prazo de espera, conhecido como *timeout*, é o tempo máximo que Exames aceita esperar pela resposta de Elegibilidade. No programa, o prazo é passado à função `urlopen` da biblioteca padrão. Recusa de conexão, estouro do prazo e resposta `5xx` de Elegibilidade são convertidos na exceção `ConnectionError`, que o método `solicitar_exame` traduz no status `503` com o código `dependencia_indisponivel`.
-
-```python
-# codigo/oda-05/exames.py
-def consultar_elegibilidade(self, beneficiario_id):
-    url = f"{self.url_elegibilidade}/elegibilidades/{beneficiario_id}"
-    try:
-        with urllib.request.urlopen(url, timeout=self.prazo) as resposta:
-            return resposta.status, json.load(resposta)
-    except urllib.error.HTTPError as erro:
-        if erro.code >= 500:
-            raise ConnectionError(f"Elegibilidade respondeu {erro.code}") from erro
-        return erro.code, json.load(erro)
-    except (urllib.error.URLError, TimeoutError) as erro:
-        raise ConnectionError("Elegibilidade não respondeu dentro do prazo") from erro
-
-def solicitar_exame(self, beneficiario_id, codigo_exame, chave=None):
-    # ... verificação da chave de idempotência, mostrada adiante
-    try:
-        status, corpo = self.politica(lambda: self.consultar_elegibilidade(beneficiario_id))
-    except ConnectionError:
-        return 503, {"codigo": "dependencia_indisponivel"}
-    if status == 404:
-        return 422, {"codigo": "beneficiario_desconhecido"}
-    if not corpo["elegivel"]:
-        return 422, {"codigo": "beneficiario_inelegivel"}
-    # ... gravação da solicitação no banco de Exames e resposta 201
-```
-
-O comando `python demo_falha_parcial.py`, executado na pasta `codigo/oda-05`, passa por três situações da dependência e imprime a saída abaixo.
-
-```text
-Elegibilidade no ar
-  POST /exames B-001 -> 201 {'solicitacao_id': 1, 'beneficiario_id': 'B-001', 'codigo_exame': 'HEMOGRAMA'}
-  POST /exames B-002 -> 422 {'codigo': 'beneficiario_inelegivel'}
-  POST /exames B-999 -> 422 {'codigo': 'beneficiario_desconhecido'}
-
-Elegibilidade fora do ar
-  GET /health        -> 200 {'status': 'ok', 'servico': 'exames'}
-  POST /exames B-001 -> 503 {'codigo': 'dependencia_indisponivel'}
-  solicitações gravadas em Exames: 1
-
-Elegibilidade lenta com resposta em 1 s e prazo de 300 ms em Exames
-  POST /exames B-001 -> 503 {'codigo': 'dependencia_indisponivel'}
-  Exames desistiu antes de 500 ms: sim
-```
-
-Com Elegibilidade fora do ar, o `GET /health` de Exames continua respondendo `200` enquanto a solicitação nova recebe `503`, que é a falha parcial descrita na página de [Conceitos](conceitos.md#chamadas-sincronas-e-falhas-parciais). A contagem de uma solicitação gravada corresponde ao pedido de B-001 aceito na primeira situação, o que confirma que o pedido recusado com `503` não deixou registro no banco de Exames. Com Elegibilidade lenta, o prazo de 300 milissegundos faz Exames desistir antes da chegada da resposta, de modo que a espera da recepção passa a depender do prazo escolhido por Exames.
-
-### Nova tentativa com espera exponencial e chave de idempotência
-
-A nova tentativa, conhecida como *retry*, repete a chamada quando a falha parece transitória. A política `com_novas_tentativas` recebe a chamada como função, tenta até o número configurado de vezes e dobra a espera depois de cada falha. Essa espera crescente recebe o nome de espera exponencial, em inglês *exponential backoff*, porque reduz a frequência das repetições contra um serviço que tenta se recuperar.
-
-```python
-# codigo/oda-05/resiliencia.py
-def com_novas_tentativas(tentativas, espera_inicial, dormir, relatar=print):
-    def politica(chamada):
-        espera = espera_inicial
-        for numero in range(1, tentativas + 1):
-            try:
-                resultado = chamada()
-                relatar(f"  tentativa {numero}: respondeu {resultado[0]}")
-                return resultado
-            except ConnectionError as erro:
-                relatar(f"  tentativa {numero}: falhou ({erro})")
-                if numero == tentativas:
-                    raise
-                dormir(espera)
-                espera *= 2  # espera exponencial: 0,1 s, depois 0,2 s, depois 0,4 s
-    return politica
-```
-
-Cada nova tentativa é uma requisição a mais para um serviço que já está com dificuldade. Quando muitos consumidores repetem ao mesmo tempo, a carga extra pode atrasar a recuperação da dependência. Por esse motivo, o número de tentativas e a espera entre elas fazem parte do orçamento de falha da chamada.
-
-A repetição também pode partir do consumidor de Exames. Se a resposta de um `POST /exames` se perde na rede, a recepção não sabe se a solicitação foi gravada e envia o mesmo pedido outra vez. A chave de idempotência é um identificador que o consumidor gera uma vez para cada intenção e repete em cada envio, de modo que Exames reconhece o pedido repetido e devolve a solicitação já registrada.
-
-```python
-# codigo/oda-05/exames.py
-def solicitar_exame(self, beneficiario_id, codigo_exame, chave=None):
-    if chave in self._por_chave:  # pedido repetido: devolve o que já foi registrado
-        return 201, self._por_chave[chave]
-    # ... consulta a Elegibilidade e regras de negócio, mostradas acima
-    solicitacao = {"solicitacao_id": len(self.solicitacoes) + 1,
-                   "beneficiario_id": beneficiario_id, "codigo_exame": codigo_exame}
-    self.solicitacoes.append(solicitacao)
-    if chave is not None:
-        self._por_chave[chave] = solicitacao
-    return 201, solicitacao
-```
-
-No programa `demo_novas_tentativas.py`, Elegibilidade responde `503` nas duas primeiras chamadas e volta ao normal na terceira. A segunda parte do programa descarta a primeira resposta de um `POST` para simular a perda na rede e repete o pedido.
-
-```text
-Sem nova tentativa
-  POST /exames B-001 -> 503
-
-Com até três tentativas
-  tentativa 1: falhou (Elegibilidade respondeu 503)
-  tentativa 2: falhou (Elegibilidade respondeu 503)
-  tentativa 3: respondeu 200
-  POST /exames B-001 -> 201
-  chamadas que chegaram a Elegibilidade: 3
-
-Recepção repete o POST sem chave de idempotência
-  solicitações gravadas: 2
-
-Recepção repete o POST com a chave de idempotência req-7f3a
-  segunda resposta -> 201 {'solicitacao_id': 1, 'beneficiario_id': 'B-001', 'codigo_exame': 'RAIO-X'}
-  solicitações gravadas: 1
-```
-
-Sem política de nova tentativa, a primeira resposta `503` de Elegibilidade chega à recepção como `503` de Exames. Com até três tentativas, a terceira chamada encontra Elegibilidade de volta e a solicitação é registrada depois de três requisições pela rede. Sem chave de idempotência, a repetição do `POST` grava duas solicitações para o mesmo raio-x do mesmo beneficiário. Com a chave `req-7f3a`, a segunda resposta devolve a solicitação de número 1 e o banco de Exames permanece com um único registro.
-
-### Disjuntor
-
-O disjuntor, conhecido como *circuit breaker*, foi descrito por Michael Nygard em 2007 no livro *Release It!*. Ele conta as falhas seguidas de uma dependência e passa a recusar as chamadas sem usar a rede quando a contagem atinge um limite configurado.
-
-| Estado | Comportamento | Transição |
+| Padrão | Mecanismo | Risco |
 | --- | --- | --- |
-| Fechado | Cada chamada segue para a rede e cada falha seguida incrementa o contador | Passa a aberto quando o contador atinge o limite de falhas |
-| Aberto | Cada chamada é recusada imediatamente, sem tentativa de conexão | Passa a meio-aberto quando termina o tempo de abertura |
-| Meio-aberto | Uma única chamada de teste é liberada para a rede | Volta a fechado se a chamada de teste responde e volta a aberto se ela falha |
-
-```python
-# codigo/oda-05/resiliencia.py
-class Disjuntor:
-    def __init__(self, limite_falhas, tempo_aberto, relogio):
-        self.limite_falhas = limite_falhas
-        self.tempo_aberto = tempo_aberto
-        self.relogio = relogio
-        self.estado = "fechado"
-        self.falhas = 0
-        self.aberto_em = None
-
-    def __call__(self, chamada):
-        if self.estado == "aberto":
-            if self.relogio() - self.aberto_em < self.tempo_aberto:
-                raise ConnectionError("disjuntor aberto, chamada recusada sem usar a rede")
-            self.estado = "meio_aberto"  # o prazo passou: uma chamada de teste é liberada
-        try:
-            resultado = chamada()
-        except ConnectionError:
-            self.falhas += 1
-            if self.estado == "meio_aberto" or self.falhas >= self.limite_falhas:
-                self.estado, self.aberto_em = "aberto", self.relogio()
-            raise
-        self.estado, self.falhas = "fechado", 0
-        return resultado
-```
-
-O programa `demo_disjuntor.py` configura o limite de três falhas e o tempo de abertura de 30 segundos. O relógio é simulado, de modo que a demonstração avança 30 segundos sem esperar esse tempo.
-
-```text
-Elegibilidade fora do ar, limite de 3 falhas
-  pedido 1: 503, usou a rede: sim, disjuntor fechado
-  pedido 2: 503, usou a rede: sim, disjuntor fechado
-  pedido 3: 503, usou a rede: sim, disjuntor aberto
-  pedido 4: 503, usou a rede: não, disjuntor aberto
-  pedido 5: 503, usou a rede: não, disjuntor aberto
-  tentativas de conexão: 3 de 5 pedidos
-
-30 s depois, Elegibilidade de volta
-  pedido 6: 201, chamada de teste liberada, disjuntor fechado
-  chamadas que chegaram a Elegibilidade: 1
-```
-
-No terceiro pedido, o contador alcança o limite de três falhas e o disjuntor passa ao estado aberto. Os pedidos 4 e 5 recebem `503` sem tentativa de conexão, de modo que a recepção não espera o prazo de 300 milissegundos e Elegibilidade não recebe carga enquanto se recupera. Depois que o relógio simulado avança 30 segundos, o sexto pedido passa como chamada de teste do estado meio-aberto, Elegibilidade responde e o disjuntor volta ao estado fechado.
-
-O disjuntor aberto não muda a decisão de negócio do caso clínico. Exames continua respondendo `503` porque a resposta alternativa de presumir elegibilidade positiva, chamada de *fallback*, seria inválida para o domínio clínico. A atividade [Decidir a resposta à indisponibilidade da autorização](exercicios.md#decidir-a-resposta-a-indisponibilidade-da-autorizacao) compara quatro respostas possíveis a essa indisponibilidade.
+| Chassi arquitetural | Bibliotecas e modelos de projeto que entregam a cada serviço novo configuração, observabilidade e autenticação | A equipe do chassi passa a limitar o ritmo das demais quando cada mudança de serviço exige alterar o chassi |
+| Estrangulador, em inglês *strangler fig* | Encaminhamento gradual de partes de uma interface antiga para uma implementação nova, com o contrato preservado | Dois sistemas divergentes em operação por tempo indeterminado quando falta uma fonte de verdade única e uma data para desligar o caminho antigo |
 
 ## Registro de decisão
 

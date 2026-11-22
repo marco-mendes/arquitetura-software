@@ -88,27 +88,31 @@ No laboratório, dois PostgreSQL deixam a regra visível, porque a credencial de
 
 Compartilhar uma tabela parece conveniente para relatórios e transações e cria um contrato implícito entre os serviços. Uma alteração de coluna pode quebrar consumidores que o proprietário desconhece. Uma escrita externa pode violar invariantes que o proprietário deixou de controlar. Para a leitura integrada, a equipe avalia as alternativas descritas na Figura 4 e deixa explícitas a defasagem e a origem do dado.
 
-## Persistência poliglota {#persistencia-como-decisao-de-fronteira}
+## Falha parcial {#chamadas-sincronas-e-falhas-parciais}
 
-**Persistência poliglota** significa escolher mecanismos de armazenamento diferentes quando a forma do dado e os seus acessos justificam essa escolha. Um exemplo é usar uma base relacional para regras transacionais, um mecanismo de busca para documentos e uma série temporal para medições. O conceito não significa dar um banco novo a cada serviço nem trocar de tecnologia por prestígio. Cada mecanismo adicional exige *backup* e segurança próprios, além de observabilidade, migrações e competência operacional da equipe.
+Uma **chamada síncrona** é uma chamada em que o consumidor espera a resposta do provedor antes de continuar o próprio trabalho. Ela cria o acoplamento temporal descrito na seção [Acoplamento](#acoplamento), porque a operação do consumidor só termina quando o provedor responde. No laboratório, a disponibilidade percebida por Exames depende da própria aplicação e do próprio banco, da rede e também de Elegibilidade e do banco de Elegibilidade.
 
-A análise começa pela autoridade e pelo contrato, com as perguntas sobre quem escreve, quais invariantes precisam de transação e quais leituras podem ser projetadas. No exemplo, os dois PostgreSQL não demonstram poliglotismo e sim propriedade de dados. A decisão de persistência só muda quando as forças do domínio e da operação justificam o custo de um mecanismo adicional.
+Uma **falha parcial** ocorre quando uma parte do sistema distribuído funciona e outra não. Exames pode estar saudável para consultar o próprio banco e incapaz de aceitar uma nova solicitação porque Elegibilidade parou. O status `503 Service Unavailable` com o código `dependencia_indisponivel` torna essa condição observável para o consumidor. Um `500` genérico ou o registro da solicitação como concluída esconderia a natureza da falha.
 
-## Chamadas síncronas e falhas parciais
+| Situação de Exames | Verificação de saúde | Nova solicitação | Leitura correta |
+| --- | --- | --- | --- |
+| Elegibilidade no ar | `200` | `201` | Sistema disponível |
+| Elegibilidade parada | `200` | `503 dependencia_indisponivel` | Falha parcial |
+| Banco de Exames parado | `503` | `503` | Falha do próprio Exames |
 
-Numa chamada síncrona, o consumidor espera a resposta antes de continuar. O modelo é simples para fluxos que precisam de decisão imediata e oferece um caminho de erro direto ao consumidor. O custo é o acoplamento temporal, porque a disponibilidade percebida por Exames passa a depender da sua aplicação e do seu banco, da rede e também de Elegibilidade e do banco de Elegibilidade.
+Uma **resposta alternativa**, chamada em inglês de *fallback*, é uma resposta que o consumidor recebe quando a dependência não responde. Ela precisa ser válida para o negócio além de conveniente para a técnica. No exemplo clínico, presumir elegibilidade positiva seria perigoso, porque o paciente poderia realizar um exame sem cobertura do plano. Por isso, Exames responde `503` com o código `dependencia_indisponivel` enquanto Elegibilidade estiver indisponível.
 
-Uma **falha parcial** ocorre quando uma parte do sistema distribuído funciona e outra não. Exames pode estar saudável para consultar o próprio banco e incapaz de aceitar uma nova solicitação porque Elegibilidade parou. Retornar `503 Service Unavailable` com o código `dependencia_indisponivel` torna essa condição observável para o consumidor. Devolver um `500` genérico ou registrar a solicitação como concluída esconderia a semântica da falha.
+O prazo de espera, a nova tentativa e o disjuntor limitam o efeito de uma falha parcial e estão descritos com código na seção [Resiliência da chamada síncrona](padroes-e-decisoes.md#chamadas-sincronas-orcamento-de-falha). A [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) aplica esses mecanismos num laboratório guiado.
 
-O trecho abaixo é a saída do programa `demo_falha_parcial.py`, da pasta `codigo/oda-05` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software), no momento em que Elegibilidade está fora do ar.
+## Consistência e partição {#consistencia-e-particao}
 
-```text
-Elegibilidade fora do ar
-  GET /health        -> 200 {'status': 'ok', 'servico': 'exames'}
-  POST /exames B-001 -> 503 {'codigo': 'dependencia_indisponivel'}
-  solicitações gravadas em Exames: 1
-```
+Uma **transação local** é uma transação ACID dentro do banco de um único serviço, que confirma ou desfaz todas as alterações juntas. Entre serviços com bancos próprios não existe transação local comum, porque cada serviço confirma a própria transação no próprio banco.
 
-O `GET /health` de Exames responde `200` porque o processo e o banco de Exames continuam saudáveis durante a parada de Elegibilidade. O `POST /exames` responde `503` porque a decisão de elegibilidade não está disponível. A contagem de solicitações gravadas permanece em 1, valor que corresponde a um pedido aceito antes da parada de Elegibilidade. O código completo e as outras situações da dependência estão na seção [Orçamento de falha das chamadas síncronas](padroes-e-decisoes.md#chamadas-sincronas-orcamento-de-falha). A [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) executa os mesmos programas num laboratório guiado.
+| Termo | Definição |
+| --- | --- |
+| Consistência forte | Uma leitura reflete sempre a escrita mais recente |
+| Consistência eventual | As réplicas podem divergir durante um intervalo aceito pelo domínio e convergem para o mesmo valor quando não há novas escritas |
+| Partição | Interrupção da comunicação entre grupos de nós de um sistema distribuído, com mensagens perdidas ou atrasadas |
+| Compensação | Ação de negócio que neutraliza o efeito de uma transação local já confirmada, sem apagar o registro dessa transação |
 
-O prazo de espera limita o tempo que o consumidor aguarda a resposta. A nova tentativa ajuda em falhas transitórias, embora aumente a carga sobre a dependência e exija idempotência da operação repetida. O disjuntor, conhecido como *circuit breaker*, interrompe as tentativas enquanto a dependência está instável. Uma resposta alternativa, chamada de *fallback*, precisa ser válida para o negócio além de conveniente para a técnica. No exemplo clínico, presumir elegibilidade positiva seria perigoso. Por isso, Exames falha de forma explícita com `503` e o código `dependencia_indisponivel`, que informa ao consumidor qual dependência está indisponível.
+Esses termos são usados pela [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) e pelas seções [Consistência entre serviços](padroes-e-decisoes.md#consistencia-local-e-consistencia-entre-servicos), [SAGA](padroes-e-decisoes.md#saga) e [CQRS](padroes-e-decisoes.md#cqrs) da página de padrões.
