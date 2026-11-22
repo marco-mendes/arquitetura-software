@@ -2,7 +2,7 @@
 
 Um sistema não se torna bem arquitetado porque foi dividido em muitos executáveis. Antes de distribuir software, a equipe precisa descobrir responsabilidades que façam sentido para o negócio e manter juntas as regras que mudam pelo mesmo motivo. Este módulo trata primeiro da decomposição lógica dessas responsabilidades e depois da distribuição física em serviços, bancos e contêineres.
 
-O caso condutor do módulo é uma plataforma hospitalar com duas capacidades de negócio relacionadas. A capacidade **verificar elegibilidade** responde se um beneficiário pode utilizar o plano de saúde. A capacidade **solicitar exames** registra uma intenção clínica depois de consultar essa decisão de elegibilidade. As duas capacidades se relacionam sem compartilhar os mesmos dados ou o mesmo ciclo de mudança, o que permite discutir limites de serviço sem supor que cada limite exige um microsserviço.
+O caso condutor do módulo é a plataforma de uma rede hospitalar fictícia que atende pacientes de planos de saúde. Quando um médico pede um exame, a recepção registra o pedido na capacidade **solicitar exames**. Antes de gravar o pedido, essa capacidade consulta a capacidade **verificar elegibilidade**, que responde se o paciente tem cobertura do plano naquele momento. Nos planos de saúde, o paciente coberto é chamado de beneficiário. As duas capacidades se relacionam sem compartilhar os mesmos dados ou o mesmo ciclo de mudança, o que permite discutir limites de serviço sem supor que cada limite exige um microsserviço.
 
 ## Pergunta orientadora
 

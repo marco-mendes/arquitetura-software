@@ -1,5 +1,7 @@
 # Exercícios
 
+As questões usam o caso do módulo, a plataforma de uma rede hospitalar fictícia que atende pacientes de planos de saúde. Nesse caso, o serviço de Exames registra os pedidos de exame feitos pelos médicos e consulta o serviço de Elegibilidade para saber se o paciente tem cobertura do plano antes de gravar cada pedido.
+
 As questões dos níveis recordar e compreender têm uma resposta comentada, que deve ser aberta depois da tentativa de resposta. As atividades dos quatro níveis seguintes da taxonomia de Bloom não têm gabarito. Elas usam campos padronizados que tornam explícitos o contexto, a entrega e a forma de avaliar uma decisão justificável.
 
 ## Recordar
@@ -37,7 +39,7 @@ As cinco formas de acoplamento estão descritas na tabela.
 | De implantação | Uma mudança obriga a publicar várias unidades em conjunto |
 | Organizacional | Equipes precisam negociar continuamente para entregar uma única capacidade |
 
-No laboratório, Exames aceita acoplamento temporal com Elegibilidade porque espera uma resposta síncrona antes de gravar a solicitação. Exames evita o acoplamento de dados, porque não lê diretamente a tabela de Elegibilidade.
+No laboratório da Oficina de ferramentas, Exames aceita acoplamento temporal com Elegibilidade porque espera a resposta sobre a cobertura do paciente antes de gravar o pedido de exame. Exames evita o acoplamento de dados, porque não lê diretamente a tabela de Elegibilidade.
 
 </details>
 
@@ -129,7 +131,7 @@ Coesão é o grau em que os elementos de uma unidade contribuem para uma mesma r
 <details>
 <summary>Ver resposta</summary>
 
-A separação física não garante a proteção sozinha. A propriedade dos dados define quem tem autoridade para interpretar e alterar uma informação e corresponde a uma regra de acesso e de responsabilidade, independente do local em que o banco está gravado. Bancos, *schemas* ou instâncias separados só protegem a propriedade quando acompanhados de isolamento de rede e de credenciais que impedem a conexão direta de outro serviço. No laboratório, a credencial de Exames conhece apenas o banco `exames` e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões, dois bancos separados fisicamente podem ser acessados por qualquer serviço que conheça a *string* de conexão, o que reduz a propriedade a uma convenção sem aplicação.
+A separação física não garante a proteção sozinha. A propriedade dos dados define quem tem autoridade para interpretar e alterar uma informação e corresponde a uma regra de acesso e de responsabilidade, independente do local em que o banco está gravado. Bancos, *schemas* ou instâncias separados só protegem a propriedade quando acompanhados de isolamento de rede e de credenciais que impedem a conexão direta de outro serviço. No laboratório da Oficina de ferramentas, a credencial de Exames conhece apenas o banco `exames` e a rede interna de cada banco não é alcançável pelo outro processo. Sem essas permissões, dois bancos separados fisicamente podem ser acessados por qualquer serviço que conheça a *string* de conexão, o que reduz a propriedade a uma convenção sem aplicação.
 
 </details>
 

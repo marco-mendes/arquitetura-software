@@ -8,11 +8,13 @@ Esta página reúne os padrões que tratam das consequências da distribuição 
 | Consistência, SAGA e CQRS | Teorema CAP, resolução de conflitos, SAGA e CQRS | [ODA 06](https://aulas-marco.github.io/odas-arquitetura-software/oda-06/) |
 | Unidades de implantação e dados | Monólito modular, macrosserviço e microsserviço, banco por serviço, persistência poliglota, *event sourcing*, chassi e estrangulador | Estudo de caso e exercícios |
 
+Os exemplos usam o caso do módulo, a plataforma de uma rede hospitalar fictícia que atende pacientes de planos de saúde. Quando um médico pede um exame, a recepção registra o pedido no serviço de Exames, que antes de gravar consulta o serviço de Elegibilidade para saber se o paciente tem cobertura do plano. Essa consulta é uma chamada síncrona, porque a recepção só recebe a confirmação do pedido depois da resposta de Elegibilidade.
+
 Os programas citados estão nas pastas `codigo/oda-05` e `codigo/oda-06` do [repositório das ODAs da disciplina](https://github.com/aulas-marco/odas-arquitetura-software). Eles usam apenas a biblioteca padrão do Python. As saídas reproduzidas nesta página vêm de execuções reais desses programas.
 
 ## Resiliência da chamada síncrona {#chamadas-sincronas-orcamento-de-falha}
 
-Este bloco prepara a ODA 05. Os padrões do bloco limitam o efeito de uma falha parcial quando um serviço depende da resposta síncrona de outro, como Exames depende de Elegibilidade antes de gravar uma solicitação.
+Este bloco prepara a ODA 05. Na rede hospitalar do caso, a recepção só confirma ao paciente o pedido de exame depois que Exames recebe de Elegibilidade a resposta sobre a cobertura do plano. Quando Elegibilidade fica lenta ou para de responder, Exames continua em funcionamento sem conseguir concluir o pedido. Nessa situação, o paciente aguarda no balcão sem saber se o exame foi registrado. Os padrões deste bloco definem quanto tempo Exames espera pela resposta, quando repete a consulta e quando deixa de consultar Elegibilidade até a recuperação dela, sempre com uma resposta clara para a recepção.
 
 | Padrão | Problema tratado | Mecanismo | Custo principal |
 | --- | --- | --- | --- |
@@ -25,7 +27,7 @@ Este bloco prepara a ODA 05. Os padrões do bloco limitam o efeito de uma falha 
 
 O orçamento de falha de uma chamada síncrona é o conjunto de decisões que a equipe documenta antes de adicionar a chamada. Ele define o prazo de espera, a política de repetição e a exigência de idempotência. Ele também define a propagação de identidade, os códigos de erro e a telemetria da chamada. Uma cadeia de cinco serviços chamados em sequência acumula a latência de cada chamada e tem disponibilidade inferior à de cada participante, porque a falha de qualquer um deles interrompe a cadeia.
 
-No laboratório da oficina, Exames usa prazo de espera de dois segundos e converte a indisponibilidade de Elegibilidade no status `503`. O serviço não repete a chamada automaticamente, porque a consulta é rápida e um volume grande de repetições durante uma queda poderia atrasar a recuperação de Elegibilidade.
+Na [Oficina de ferramentas](oficina-de-ferramentas.md) deste módulo, que executa Exames e Elegibilidade em contêineres, Exames usa prazo de espera de dois segundos e converte a indisponibilidade de Elegibilidade no status `503`. O serviço não repete a chamada automaticamente, porque a consulta é rápida e um volume grande de repetições durante uma queda poderia atrasar a recuperação de Elegibilidade.
 
 ### Prazo de espera e falha parcial {#prazo-de-espera-e-falha-parcial}
 
@@ -248,11 +250,11 @@ Os pedidos 4 e 5 recebem `503` sem tentativa de conexão, de modo que a recepç�
 
 ### Resposta alternativa
 
-A resposta alternativa, conhecida como *fallback*, substitui a resposta da dependência quando ela não está disponível. No caso clínico, presumir elegibilidade positiva seria uma resposta alternativa inválida, porque permitiria um exame sem cobertura do plano. Por isso, Exames continua respondendo `503` mesmo com o disjuntor aberto. A atividade [Decidir a resposta à indisponibilidade da autorização](exercicios.md#decidir-a-resposta-a-indisponibilidade-da-autorizacao) compara quatro respostas possíveis a uma indisponibilidade semelhante.
+A resposta alternativa, conhecida como *fallback*, substitui a resposta da dependência quando ela não está disponível. Na rede hospitalar do caso, registrar o pedido como se o paciente tivesse cobertura seria uma resposta alternativa inválida, porque o paciente poderia realizar um exame que o plano depois se recusaria a pagar. Por isso, Exames continua respondendo `503` mesmo com o disjuntor aberto. A atividade [Decidir a resposta à indisponibilidade da autorização](exercicios.md#decidir-a-resposta-a-indisponibilidade-da-autorizacao) compara quatro respostas possíveis a uma indisponibilidade semelhante.
 
 ## Consistência entre serviços {#consistencia-local-e-consistencia-entre-servicos}
 
-Este bloco e as seções SAGA e CQRS preparam a ODA 06. Entre serviços com bancos próprios não existe *rollback* automático de todas as decisões, porque cada serviço confirma a própria transação no próprio banco. O desenho precisa definir em que momento o usuário considera o fluxo aceito, quais estados intermediários são legítimos e como as divergências são detectadas e reparadas.
+Este bloco e as seções SAGA e CQRS preparam a ODA 06. Na rede hospitalar do caso, cada serviço guarda os próprios dados, como os horários na Agenda e os pedidos de exame em Exames. Quando uma operação altera dados de mais de um serviço, como o agendamento de um exame que exige autorização da operadora, nenhum banco consegue confirmar ou desfazer todas as alterações de uma vez. Entre serviços com bancos próprios não existe *rollback* automático de todas as decisões, porque cada serviço confirma a própria transação no próprio banco. O desenho precisa definir em que momento o usuário considera o fluxo aceito, quais estados intermediários são legítimos e como as divergências são detectadas e reparadas.
 
 **Consistência eventual não significa** ausência de regras. A convergência das réplicas na consistência eventual depende de identidade dos registros e de ordem quando ela for necessária, além de idempotência, repetição e reconciliação.
 
@@ -288,7 +290,7 @@ Quando o sistema continua aceitando escritas durante a partição, duas réplica
 
 #### Exemplo de partição com três réplicas em Python {#particao-simulada-com-tres-replicas}
 
-O programa `codigo/oda-06/particao/demo_particao.py` simula três réplicas que guardam a lista de alergias de um paciente. Durante a partição, a unidade Centro grava dipirona no lado da maioria e a unidade Barreiro grava penicilina no lado da minoria, como mostra a Figura 4.
+Na rede hospitalar, a lista de alergias de um paciente fica replicada nos servidores das unidades, de modo que cada unidade consulta a lista mesmo sem comunicação com as demais. O programa `codigo/oda-06/particao/demo_particao.py` simula três réplicas dessa lista. Durante a partição, a unidade Centro grava dipirona no lado da maioria e a unidade Barreiro grava penicilina no lado da minoria, como mostra a Figura 4.
 
 ```mermaid
 flowchart LR
@@ -349,6 +351,8 @@ Depois da partição: ['dipirona', 'látex', 'penicilina']
 No primeiro cenário, a réplica C está sozinha no seu lado da partição e recusa a escrita por falta de quórum. No segundo, a regra da última escrita vence escolhe a lista da réplica C pelo carimbo 11, de modo que a dipirona registrada no Centro é descartada sem aviso. No terceiro, a função de mesclagem mantém dipirona e penicilina na lista final, porque a regra do domínio não descarta nenhuma alergia registrada.
 
 ## SAGA
+
+Na rede hospitalar, agendar um exame de imagem envolve três serviços com bancos próprios. A **Agenda** reserva o horário do equipamento, a **Autorização** obtém da operadora a autorização do procedimento e o **Preparo de Sala** reserva a sala, o material e a equipe de apoio. Se o Preparo de Sala recusar a reserva, o horário e a autorização já confirmados precisam ser desfeitos por ações de negócio, situação tratada pelo padrão SAGA.
 
 Uma **SAGA** coordena uma sequência de transações locais em serviços diferentes, em que cada etapa confirma o próprio estado no banco do seu serviço. Quando uma etapa posterior falha, ações compensatórias definidas pelo negócio neutralizam o efeito das etapas já confirmadas. O termo foi proposto por Hector Garcia-Molina e Kenneth Salem em 1987 para transações de longa duração em bancos de dados.
 
@@ -420,7 +424,7 @@ flowchart TB
 | O fluxo continua avançando mesmo com um participante lento | Existe uma janela em que o estado intermediário é legítimo e pode ser observado por outros participantes |
 | Passos evoluem e escalam de forma independente | Diagnosticar um fluxo travado exige identificador propagado e trilha de auditoria entre serviços |
 
-No caso hospitalar, a SAGA se justifica porque a reserva de horário, a autorização do procedimento e o preparo da sala pertencem a proprietários de dados diferentes. A consolidação dos passos num único serviço com transação local, adotada no estudo de caso, é mais barata e deve ser avaliada antes da SAGA.
+Na rede hospitalar, a SAGA se justifica porque a reserva de horário, a autorização do procedimento e o preparo da sala pertencem a proprietários de dados diferentes. A consolidação dos passos num único serviço com transação local, adotada no estudo de caso, é mais barata e deve ser avaliada antes da SAGA.
 
 ### Exemplo de SAGA orquestrada em Python {#orquestracao-do-agendamento-de-exame-em-python}
 
@@ -528,6 +532,8 @@ Bancos locais:
 
 ## CQRS
 
+Na rede hospitalar, a recepção registra e cancela pedidos de exame ao longo do dia, enquanto o gestor da rede consulta num painel quantos pedidos estão ativos em cada unidade. A escrita precisa validar cada pedido, enquanto a leitura precisa de uma contagem pronta por unidade.
+
 O padrão **CQRS**, sigla de *Command Query Responsibility Segregation*, foi descrito por Greg Young e separa o modelo de comando do modelo de consulta quando os dois têm necessidades diferentes. **CQRS não exige dois bancos** nem mensageria ou *event sourcing*, porque a separação pode começar em objetos e interfaces dentro do mesmo processo.
 
 | Aspecto | Descrição |
@@ -614,7 +620,7 @@ Na consulta com atraso, a projeção aplicou dois dos quatro fatos e informa def
 
 ## Monólito modular, macrosserviços e microsserviços
 
-Este bloco e os seguintes apoiam o estudo de caso e os exercícios do módulo. Monólito modular, macrosserviço e microsserviço são formas diferentes de empacotar limites lógicos em unidades de implantação.
+Este bloco e os seguintes apoiam o estudo de caso e os exercícios do módulo, que discutem quantos processos a rede hospitalar deve manter para as capacidades de Elegibilidade, Exames e Autorização. Monólito modular, macrosserviço e microsserviço são formas diferentes de empacotar limites lógicos em unidades de implantação.
 
 | Aspecto | Monólito modular | Macrosserviço | Microsserviço |
 | --- | --- | --- | --- |
@@ -640,7 +646,7 @@ O laboratório da oficina usa dois contêineres PostgreSQL com *schemas* homôni
 
 ## Persistência poliglota {#persistencia-como-decisao-de-fronteira}
 
-**Persistência poliglota** é a escolha de mecanismos de armazenamento diferentes quando a forma do dado e os seus acessos justificam essa escolha, como uma base relacional para regras transacionais e um mecanismo de busca para documentos. O padrão não significa dar um banco novo a cada serviço, porque cada mecanismo adicional exige *backup*, segurança e observabilidade próprios. No laboratório, os dois PostgreSQL demonstram propriedade de dados e não demonstram persistência poliglota.
+**Persistência poliglota** é a escolha de mecanismos de armazenamento diferentes quando a forma do dado e os seus acessos justificam essa escolha, como uma base relacional para regras transacionais e um mecanismo de busca para documentos. O padrão não significa dar um banco novo a cada serviço, porque cada mecanismo adicional exige *backup*, segurança e observabilidade próprios. Na Oficina de ferramentas, os dois PostgreSQL de Elegibilidade e de Exames demonstram propriedade de dados e não demonstram persistência poliglota.
 
 ## Event sourcing {#event-sourcing-quando-os-fatos-sao-o-registro-necessario}
 

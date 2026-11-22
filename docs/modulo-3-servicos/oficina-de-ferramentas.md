@@ -2,7 +2,7 @@
 
 A oficina executa dois serviços separados com bancos de dados próprios e provoca a falha de um deles enquanto o outro continua em execução. A atividade torna observáveis três decisões discutidas nas páginas de teoria do módulo, que são a propriedade dos dados, a fronteira física e a falha parcial.
 
-O caso é o mesmo das páginas anteriores do módulo e envolve duas capacidades de negócio. **Elegibilidade** decide se um beneficiário pode usar o plano de saúde. **Exames** registra uma solicitação clínica depois de consultar a decisão de Elegibilidade. As duas capacidades têm dados e ciclos de mudança próprios, o que permite usá-las para demonstrar uma fronteira entre serviços.
+O caso é a plataforma da rede hospitalar fictícia usada nas páginas anteriores do módulo, que atende pacientes de planos de saúde. **Elegibilidade** decide se o paciente tem cobertura do plano naquele momento. **Exames** registra o pedido de exame feito pelo médico depois de consultar a decisão de Elegibilidade, de modo que a recepção só confirma o pedido ao paciente quando Elegibilidade responde. As duas capacidades têm dados e ciclos de mudança próprios, o que permite usá-las para demonstrar uma fronteira entre serviços.
 
 ### Objetivo da oficina {#o-que-a-oficina-demonstra}
 

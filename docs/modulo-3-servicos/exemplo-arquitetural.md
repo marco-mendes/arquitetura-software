@@ -1,5 +1,7 @@
 # Exemplo arquitetural
 
+O exemplo usa o caso do módulo, a plataforma de uma rede hospitalar fictícia que atende pacientes de planos de saúde. Quando um médico pede um exame, a recepção registra o pedido no serviço de Exames, que antes de gravar consulta o serviço de Elegibilidade para saber se o paciente tem cobertura do plano.
+
 O laboratório implementa os *bounded contexts* de Elegibilidade e de Exames em dois processos FastAPI independentes, cada um com o próprio PostgreSQL e a própria credencial de acesso. O exemplo expõe um limite verificável entre os dois serviços sem simular a plataforma hospitalar inteira. Exames conhece o contrato HTTP de Elegibilidade e não conhece a tabela em que Elegibilidade guarda os dados.
 
 ## Bounded contexts do exemplo {#onde-esta-o-bounded-context}

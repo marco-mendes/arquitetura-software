@@ -2,13 +2,15 @@
 
 Dividir um sistema é escolher o que deve permanecer junto e o que pode evoluir separadamente. Pastas, classes e contêineres são mecanismos de implementação, enquanto a justificativa de uma fronteira vem do domínio e dos atributos de qualidade exigidos pelo negócio.
 
+Os exemplos desta página vêm do caso usado ao longo do módulo, a plataforma de uma rede hospitalar fictícia que atende pacientes de planos de saúde. Quando um médico pede um exame, a recepção registra o pedido no serviço de **Exames**. Antes de gravar o pedido, Exames consulta o serviço de **Elegibilidade**, que responde se o paciente tem cobertura do plano naquele momento. A plataforma também tem uma capacidade de **Agendamento**, que reserva o horário dos atendimentos.
+
 ## Capacidade de negócio
 
 Uma **capacidade de negócio** descreve algo que a organização sabe fazer para produzir um resultado, independentemente da tela ou da tecnologia usada hoje. “Verificar elegibilidade”, “agendar atendimento” e “solicitar exame” são capacidades do caso hospitalar. “Salvar no PostgreSQL” e “enviar JSON” são mecanismos técnicos e não descrevem nenhum resultado para o negócio.
 
 As capacidades ajudam a evitar serviços recortados por camadas técnicas, como um serviço só de controladores ou um serviço só de acesso a banco. Um recorte útil reúne o comportamento, as regras e a informação necessários a um resultado, com um nome que costuma permanecer estável mesmo quando o processo muda. Ainda assim, um mapa de capacidades serve à análise estratégica e não define quais executáveis devem existir. Uma capacidade ampla pode conter vários contextos, assim como várias capacidades pequenas podem coexistir num mesmo contexto.
 
-No caso hospitalar, Elegibilidade interpreta vínculo, vigência e regras da operadora. Exames conhece códigos, solicitações e estados do fluxo clínico. O segundo precisa da resposta do primeiro e não precisa conhecer as tabelas, os algoritmos ou os documentos internos usados para produzi-la.
+Na plataforma hospitalar, verificar elegibilidade e solicitar exame são capacidades distintas. Para decidir se o paciente tem cobertura, Elegibilidade interpreta o vínculo do paciente com a operadora do plano, a vigência do plano e as regras do contrato. Para registrar o pedido do médico, Exames conhece os códigos dos exames, as solicitações e as etapas do fluxo clínico. Exames precisa saber se o paciente tem cobertura e não precisa conhecer as tabelas, os algoritmos ou os documentos que Elegibilidade usa para chegar a essa resposta.
 
 ## Bounded context
 
@@ -48,7 +50,7 @@ As heurísticas úteis incluem o vocabulário compartilhado, as invariantes tran
 - O **acoplamento de implantação** existe quando uma mudança exige publicar várias unidades em conjunto.
 - O **acoplamento organizacional** existe quando equipes precisam negociar continuamente para entregar uma capacidade.
 
-Uma dependência explícita e estável pode ser saudável. O problema é o acoplamento que impede a evolução das unidades ou torna as falhas imprevisíveis. No laboratório, Exames aceita acoplamento temporal com Elegibilidade, porque a solicitação espera uma resposta síncrona antes de ser gravada. Em compensação, Exames evita o acoplamento de dados, porque não lê a tabela do outro serviço.
+Uma dependência explícita e estável pode ser saudável. O problema é o acoplamento que impede a evolução das unidades ou torna as falhas imprevisíveis. No laboratório da [Oficina de ferramentas](oficina-de-ferramentas.md), em que os dois serviços rodam em contêineres, Exames aceita acoplamento temporal com Elegibilidade porque a solicitação espera uma resposta síncrona antes de ser gravada. Em compensação, Exames evita o acoplamento de dados, porque não lê a tabela do outro serviço.
 
 ![À esquerda, as regras de vigência, de plano e de operadora de Elegibilidade com alta coesão porque mudam pelo mesmo motivo. As quatro setas à direita partem de Exames e apontam para Elegibilidade, uma para cada forma de acoplamento descrita nesta seção.](../assets/images/m03-coesao-acoplamento.png)
 
@@ -84,7 +86,7 @@ A propriedade dos dados define quem é a autoridade para interpretar e alterar u
 
 **Leitura textual da figura:** Elegibilidade e Exames são capacidades distintas da plataforma hospitalar. Cada uma oferece um contrato de API e mantém o próprio banco protegido. A seta tracejada que ligaria diretamente os dois bancos aparece bloqueada, porque o acesso direto violaria a propriedade dos dados. A única interação permitida passa pelo contrato HTTP ou por evento. Quando uma leitura precisa cruzar as duas capacidades, a figura lista como opções a composição por API e os eventos, além da réplica analítica e do modelo de leitura próprio. A frase final registra que cada serviço é autoridade sobre a informação que interpreta e altera.
 
-No laboratório, dois PostgreSQL deixam a regra visível, porque a credencial de Exames conhece apenas o banco `exames` e a de Elegibilidade conhece apenas o banco `elegibilidade`. Cada banco fica numa rede interna própria, enquanto os dois processos compartilham somente a rede de aplicação necessária ao HTTP. Por isso, mesmo que Exames descubra o nome `elegibilidade-db`, ele não consegue resolvê-lo pela sua rede. Em ambientes maiores, o isolamento lógico no mesmo cluster equilibra custo e proteção quando as permissões e a responsabilidade são reais.
+Na Oficina de ferramentas, dois PostgreSQL deixam a regra visível, porque a credencial de Exames conhece apenas o banco `exames` e a de Elegibilidade conhece apenas o banco `elegibilidade`. Cada banco fica numa rede interna própria, enquanto os dois processos compartilham somente a rede de aplicação necessária ao HTTP. Por isso, mesmo que Exames descubra o nome `elegibilidade-db`, ele não consegue resolvê-lo pela sua rede. Em ambientes maiores, o isolamento lógico no mesmo cluster equilibra custo e proteção quando as permissões e a responsabilidade são reais.
 
 Compartilhar uma tabela parece conveniente para relatórios e transações e cria um contrato implícito entre os serviços. Uma alteração de coluna pode quebrar consumidores que o proprietário desconhece. Uma escrita externa pode violar invariantes que o proprietário deixou de controlar. Para a leitura integrada, a equipe avalia as alternativas descritas na Figura 4 e deixa explícitas a defasagem e a origem do dado.
 
@@ -100,7 +102,7 @@ Uma **falha parcial** ocorre quando uma parte do sistema distribuído funciona e
 | Elegibilidade parada | `200` | `503 dependencia_indisponivel` | Falha parcial |
 | Banco de Exames parado | `503` | `503` | Falha do próprio Exames |
 
-Uma **resposta alternativa**, chamada em inglês de *fallback*, é uma resposta que o consumidor recebe quando a dependência não responde. Ela precisa ser válida para o negócio além de conveniente para a técnica. No exemplo clínico, presumir elegibilidade positiva seria perigoso, porque o paciente poderia realizar um exame sem cobertura do plano. Por isso, Exames responde `503` com o código `dependencia_indisponivel` enquanto Elegibilidade estiver indisponível.
+Uma **resposta alternativa**, chamada em inglês de *fallback*, é uma resposta que o consumidor recebe quando a dependência não responde. Ela precisa ser válida para o negócio além de conveniente para a técnica. Na rede hospitalar do caso, registrar o pedido como se o paciente tivesse cobertura seria perigoso, porque o paciente poderia realizar um exame que o plano depois se recusaria a pagar. Por isso, Exames responde `503` com o código `dependencia_indisponivel` enquanto Elegibilidade estiver indisponível.
 
 O prazo de espera, a nova tentativa e o disjuntor limitam o efeito de uma falha parcial e estão descritos com código na seção [Resiliência da chamada síncrona](padroes-e-decisoes.md#chamadas-sincronas-orcamento-de-falha). A [ODA 05](https://aulas-marco.github.io/odas-arquitetura-software/oda-05/) aplica esses mecanismos num laboratório guiado.
 
